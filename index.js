@@ -1,5 +1,5 @@
 const express = require("express");
-const morgan = require('morgan')
+const morgan = require("morgan");
 // const ZKLib = require("zklib-js");
 const cors = require("cors");
 const { urlArchivos, urlArchivoLogos } = require("./config/constant");
@@ -15,7 +15,7 @@ const {
   insertarDatosSeguimientoDeClientes,
 } = require("./middlewares/eventosCron.js");
 // Programa una tarea para las 9 AM todos los días
-cron.schedule("* * * * *", () => {
+cron.schedule("0 0 * * *", () => {
   // insertaDatosTEST();
 });
 const testtt = async () => {};

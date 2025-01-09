@@ -106,16 +106,18 @@ const postCita = async (req = request, res = response) => {
       hour: "2-digit",
       minute: "2-digit",
     });
-    const fechaCita = dayjs(dateCita.split(", ")[0], "M/DD/YYYY").format(
-      "dddd DD [DE] MMMM"
-    );
-    const horaCita = dateCita.split(", ")[1];
+
+    const dayjsTest = dayjs
+      .utc(fecha_init)
+      .local()
+      .format("dddd DD [DE] MMMM [a las ] hh:mm:ss A");
+
     if (cliente.tel_cli.length > 0) {
       await enviarMensajesWsp(
         cliente.tel_cli,
         `¡Hola ${cliente.nombre_cli.toUpperCase()}! 👋🏻🙂 
 Te confirmamos que tu cita con la nutricionista en CHANGE🔴 está programada 
-para el día *${fechaCita.toUpperCase()}* a las *${horaCita.toUpperCase()}*. 
+para el día *${dayjsTest}*. 
 
 Es muy importante que llegues 10 minutos antes, estés en ayunas o al menos 3 horas después de tu última comida, y que no realices actividad física previa a la cita, para garantizar una evaluación precisa.
 

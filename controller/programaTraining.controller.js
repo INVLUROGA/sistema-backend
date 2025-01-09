@@ -374,7 +374,7 @@ const postSesiones = async (req = request, res = response) => {
     const detalle_sesion = await detalle_sesionxMembresia(
       membresia["detalle_ventaMembresia.id"]
     );
-    
+
     const { sesiones, id_pgm } = req.body.dataVenta.detalle_traspaso[0];
     const nuevaSesion = new SemanasTraining({
       semanas_st: (sesiones / 5).toFixed(0),
@@ -466,6 +466,17 @@ const deleteTarifaProgramasPT = async (req = request, res = response) => {
     });
   }
 };
+const obtenerHorarios = async (req = request, res = response) => {
+  try {
+    const horarios = await HorarioProgramaPT.findAll({
+      where: { flag: true },
+      attributes: ["id_horarioPgm", "id_pgm", "time_HorarioPgm"],
+    });
+    res.status(200).json(horarios);
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
   postProgramaTraining,
   getTBProgramaTraining,
@@ -479,6 +490,7 @@ module.exports = {
   putHorarioProgramasPT,
   deleteHorarioProgramasPT,
   getHorariosProgramasPT,
+  obtenerHorarios,
 
   //Semanas programas
   postSesiones,

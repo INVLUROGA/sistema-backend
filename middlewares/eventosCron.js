@@ -12,6 +12,13 @@ const { request, response } = require("express");
 const qs = require("qs");
 const axios = require("axios");
 const { enviarMensajesWsp } = require("../config/whatssap-web");
+
+
+
+const cumpleaniosSocios = async()=>{
+  
+}
+
 const insertaDatosTEST = async () => {
   try {
     await enviarMensajesWsp(933102718, "PRUEBAAAAASA");
