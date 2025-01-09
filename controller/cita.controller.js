@@ -109,8 +109,8 @@ const postCita = async (req = request, res = response) => {
 
     const dayjsTest = dayjs
       .utc(fecha_init)
-      .local()
-      .format("dddd DD [DE] MMMM [a las ] hh:mm:ss A");
+      .local(es)
+      .format("dddd DD [de] MMMM [a las ] hh:mm A");
 
     if (cliente.tel_cli.length > 0) {
       await enviarMensajesWsp(
