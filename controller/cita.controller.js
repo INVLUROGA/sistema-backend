@@ -106,7 +106,7 @@ const postCita = async (req = request, res = response) => {
       hour: "2-digit",
       minute: "2-digit",
     });
-    const fechaCita = dayjs(dateCita.split(", ")[0], "DD/M/YYYY").format(
+    const fechaCita = dayjs(dateCita.split(", ")[0], "M/DD/YYYY").format(
       "dddd DD [DE] MMMM"
     );
     const horaCita = dateCita.split(", ")[1];
