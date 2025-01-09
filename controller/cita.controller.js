@@ -100,20 +100,16 @@ const postCita = async (req = request, res = response) => {
     //   dayjs.utc(fecha_init).format("hh:mm:ss"),
     //   "post en citasss....."
     // );
-
+    const dateCita = new Date(fecha_init).toLocaleDateString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const fechaCita = dateCita.split(", ")[0];
+    const horaCita = dateCita.split(", ")[1];
     if (cliente.tel_cli.length > 0) {
       await enviarMensajesWsp(
-        933102718,
-        `¡Hola ${
-          cliente.nombre_cli
-        }! Te confirmamos que tu cita está programada para el día ${new Date(
-          fecha_init
-        ).toLocaleDateString([])} a las ${new Date(
-          fecha_init
-        ).toLocaleDateString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}. Por favor, asegúrate de llegar a tiempo. ¡Te esperamos!`
+        cliente.tel_cli,
+        `¡Hola ${cliente.nombre_cli}! Te confirmamos que tu cita está programada para el día ${fechaCita} a las ${horaCita}. Por favor, asegúrate de llegar a tiempo. ¡Te esperamos!`
       );
     }
     res.status(200).json({
