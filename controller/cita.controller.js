@@ -109,6 +109,7 @@ const postCita = async (req = request, res = response) => {
 
     const dayjsTest = dayjs
       .utc(fecha_init)
+      .subtract(5, 'hours')
       .local(es)
       .format("dddd DD [de] MMMM [a las ] hh:mm A");
 
