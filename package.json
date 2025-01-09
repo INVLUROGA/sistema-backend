@@ -1,7 +1,7 @@
 {
   "name": "sistema-backend",
   "version": "1.0.0",
-  "description": "dashboard nuevo PT",
+  "description": "dashboard backend de change y circus",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Running tests...\"",
@@ -46,6 +46,7 @@
     "pdfmake": "^0.2.14",
     "puppeteer": "^22.13.1",
     "sequelize": "^6.37.1",
+    "sistema-backend": "file:",
     "tedious": "^18.6.1",
     "uuid": "^9.0.1"
   },

@@ -6,6 +6,8 @@ const { Servicios } = require("../models/Servicios");
 const { request, response } = require("express");
 const { enviarMensajesWsp } = require("../config/whatssap-web");
 const dayjs = require("dayjs");
+const es = require("dayjs/locale/es")
+dayjs.locale("es"); // Establece el idioma en español
 
 const getCitas = async (req = request, res = response) => {
   const { servicion } = req.body;
@@ -104,7 +106,9 @@ const postCita = async (req = request, res = response) => {
       hour: "2-digit",
       minute: "2-digit",
     });
-    const fechaCita = dateCita.split(", ")[0];
+    const fechaCita = dayjs(dateCita.split(", ")[0], "DD/M/YYYY").format(
+      "dddd DD [DE] MMMM"
+    );
     const horaCita = dateCita.split(", ")[1];
     if (cliente.tel_cli.length > 0) {
       await enviarMensajesWsp(
