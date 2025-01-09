@@ -17,17 +17,35 @@ const enviarMensajesWsp = (numberWsp, bodyMsg) => {
     data: data,
   };
 
-  axios(config)
-    .then(function (response) {
-      console.log(JSON.stringify(response.data));
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
+  axios(config).then(function (response) {
+    console.log(JSON.stringify(response.data));
+  });
+};
+
+const enviarStickerWsp = (numberWsp, sticker) => {
+  var data = qs.stringify({
+    token: "xy1mryu3skys910j",
+    to: numberWsp,
+    sticker: sticker,
+  });
+
+  var config = {
+    method: "post",
+    url: "https://api.ultramsg.com/instance102151/messages/sticker",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    data: data,
+  };
+
+  axios(config).then(function (response) {
+    console.log(JSON.stringify(response.data));
+  });
 };
 
 module.exports = {
   enviarMensajesWsp,
+  enviarStickerWsp,
 };
 
 // const qrcode = require("qrcode-terminal");

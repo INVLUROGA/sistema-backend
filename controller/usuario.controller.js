@@ -23,6 +23,7 @@ const { Servicios } = require("../models/Servicios");
 const { Files, ImagePT } = require("../models/Image");
 const dayjs = require("dayjs");
 const { Distritos } = require("../models/Distritos");
+const { enviarMensajesWsp, enviarStickerWsp } = require("../config/whatssap-web");
 // Función para contar días laborables entre dos fechas
 function contarDiasLaborables(fechaInicio, fechaFin) {
   let inicio = dayjs(fechaInicio);
@@ -129,6 +130,41 @@ const postUsuarioCliente = async (req = request, res = response) => {
       observacion: `Se registro: El cliente de id ${cliente.id_cli}`,
     };
     await capturarAUDIT(formAUDIT);
+    console.log('asdf'.toUpperCase());
+    
+    if (cliente.tel_cli) {
+      await enviarMensajesWsp(
+        cliente.tel_cli,
+        `
+        🎉 ¡BIENVENIDO/A A CHANGE - THE SLIM STUDIO! 🎉
+        `
+      );
+      await enviarStickerWsp(
+        cliente.tel_cli,
+        "https://change-the-slim-studio-sigma.vercel.app/assets/mem_logo-be75730a.png"
+      );
+      await enviarMensajesWsp(
+        cliente.tel_cli,
+        `
+¡Hola, ${cliente.nombre_cli.toUpperCase()}! 👋😃
+
+Estamos emocionados de tenerte como parte de la familia CHANGE !! . 💪✨ Este es TU primer GRAN paso hacia tu CAMBIO, y estamos aquí para acompañarte en todo TU proceso.
+
+🔹 ¿Qué te espera?
+
+* Programas de entrenamiento diseñados para tus objetivos PERSONALES.
+* Entrenamientos efectivos guiados por entrenadores profesionales.
+* Evaluaciones nutricionales y seguimiento constante POR NUTRICIONISTAS FUNCIONALES Y POR NUESTRO SISTEMA COMPUTARIZADO DE MEDICION DE LA COMPOSICION CORPORAL.
+* Un ambiente MODERNO,  cómodo y motivador para QUE NOS DES lo mejor de ti.
+📲 Si tienes alguna consulta o necesitas apoyo, no dudes en comunicarte con nosotros. ¡Estamos aquí para ayudarte AL CAMBIO DE TU VIDA!
+
+¡Prepárate para CHANGE EL CAMBIO que mereces! 🚀
+
+Atentamente,
+CHANGE - The Slim Studio
+        `
+      );
+    }
     res.status(200).json({
       msg: "success",
       cliente,

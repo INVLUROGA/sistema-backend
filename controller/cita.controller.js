@@ -6,7 +6,7 @@ const { Servicios } = require("../models/Servicios");
 const { request, response } = require("express");
 const { enviarMensajesWsp } = require("../config/whatssap-web");
 const dayjs = require("dayjs");
-const es = require("dayjs/locale/es")
+const es = require("dayjs/locale/es");
 dayjs.locale("es"); // Establece el idioma en español
 
 const getCitas = async (req = request, res = response) => {
@@ -113,7 +113,15 @@ const postCita = async (req = request, res = response) => {
     if (cliente.tel_cli.length > 0) {
       await enviarMensajesWsp(
         cliente.tel_cli,
-        `¡Hola ${cliente.nombre_cli}! Te confirmamos que tu cita está programada para el día ${fechaCita} a las ${horaCita}. Por favor, asegúrate de llegar a tiempo. ¡Te esperamos!`
+        `¡Hola ${cliente.nombre_cli.toUpperCase()}! 👋🏻🙂 
+Te confirmamos que tu cita con la nutricionista en CHANGE🔴 está programada 
+para el día *${fechaCita.toUpperCase()}* a las *${horaCita.toUpperCase()}*. 
+
+Es muy importante que llegues 10 minutos antes, estés en ayunas o al menos 3 horas después de tu última comida, y que no realices actividad física previa a la cita, para garantizar una evaluación precisa.
+
+
+¡BIENVENIDA AL CAMBIO!  ¡BIENVENIDA AL CHANGE!💪✨
+`
       );
     }
     res.status(200).json({
