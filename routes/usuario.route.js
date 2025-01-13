@@ -20,6 +20,7 @@ const {
   getUsuariosClientexID,
   revalidarToken,
   obtenerDatosUltimaMembresia,
+  obtenerMarcacionsCliente
 } = require("../controller/usuario.controller");
 const {
   extraerComentarios,
@@ -43,6 +44,7 @@ router.post(
   extraerContactoEmergencia,
   postUsuarioCliente
 );
+router.get("/get-marcacions/cliente", obtenerMarcacionsCliente)
 router.get("/get-seguimiento-cliente", insertarDatosSeguimientoDeClientes);
 router.get(
   "/get-ultima-membresia-cliente/:id_cli",

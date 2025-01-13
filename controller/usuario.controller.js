@@ -27,6 +27,7 @@ const {
   enviarMensajesWsp,
   enviarStickerWsp,
 } = require("../config/whatssap-web");
+const { Marcacion } = require("../models/Marcacion");
 // Función para contar días laborables entre dos fechas
 function contarDiasLaborables(fechaInicio, fechaFin) {
   let inicio = dayjs(fechaInicio);
@@ -134,7 +135,6 @@ const postUsuarioCliente = async (req = request, res = response) => {
       observacion: `Se registro: El cliente de id ${cliente.id_cli}`,
     };
     await capturarAUDIT(formAUDIT);
-    console.log("asdf".toUpperCase());
 
     if (cliente.tel_cli) {
       await enviarMensajesWsp(
@@ -417,6 +417,27 @@ const obtenerDatosUltimaMembresia = async (req = request, res = response) => {
         ultimaMembresia.detalle_ventaMembresia.fec_fin_mem
       ),
       ultimaMembresia,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: `Error en el servidor, en controller de obtenerDatosUltimaMembresia, hable con el administrador: ${error}`,
+    });
+  }
+};
+const obtenerMarcacionsCliente = async (req = request, res = response) => {
+  try {
+    const clientesxMarcacions = await Cliente.findAll({
+      where: { flag: true, estado_cli: true },
+      include: [
+        {
+          model: Marcacion,
+          required: true,
+        },
+      ],
+    });
+    res.status(200).json({
+      msg: "success",
+      clientesxMarcacions,
     });
   } catch (error) {
     res.status(500).json({
@@ -927,6 +948,7 @@ module.exports = {
   putUsuarioCliente,
   getUsuariosClientexID,
   obtenerDatosUltimaMembresia,
+  obtenerMarcacionsCliente,
   //Empleado
   postUsuarioEmpleado,
   getUsuarioEmpleados,

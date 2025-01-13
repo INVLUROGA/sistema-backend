@@ -1496,6 +1496,7 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
         {
           model: detalleVenta_membresias,
           attributes: [
+            "id_venta",
             "horario",
             "tarifa_monto",
             "id_tarifa",
@@ -1603,7 +1604,14 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
       ],
     });
     let membresias = await detalleVenta_membresias.findAll({
-      attributes: ["id", "id_pgm", "fec_inicio_mem", "horario", "fec_fin_mem"],
+      attributes: [
+        "id",
+        "id_venta",
+        "id_pgm",
+        "fec_inicio_mem",
+        "horario",
+        "fec_fin_mem",
+      ],
       order: [["id", "DESC"]],
       include: [
         {
