@@ -477,6 +477,23 @@ const obtenerHorarios = async (req = request, res = response) => {
     console.log(error);
   }
 };
+const obtenerTodaTarifas = async (req = request, res = response) => {
+  try {
+    const Tarifas = await TarifaTraining.findAll({
+      where: { flag: true, estado_tt: true },
+      attributes: [
+        "id_tt",
+        "id_st",
+        "nombreTarifa_tt",
+        "descripcionTarifa_tt",
+        "tarifaCash_tt",
+      ],
+    });
+    res.status(200).json(Tarifas);
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
   postProgramaTraining,
   getTBProgramaTraining,
@@ -504,4 +521,5 @@ module.exports = {
   postTarifaProgramaPT,
   putTarifaProgramasPT,
   deleteTarifaProgramasPT,
+  obtenerTodaTarifas,
 };

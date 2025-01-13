@@ -24,6 +24,7 @@ const { ImagePT } = require("../models/Image");
 const { Producto } = require("../models/Producto");
 const { Servicios } = require("../models/Servicios");
 const { Distritos } = require("../models/Distritos");
+const { Marcacion } = require("../models/Marcacion");
 
 // Función para sumar días hábiles (lunes y viernes) a una fecha
 function addBusinessDays(startDate, numberOfDays) {
@@ -105,6 +106,7 @@ const getReporteSeguimiento = async (req, res) => {
                   ),
                   "nombres_apellidos_cli",
                 ],
+                "numDoc_cli",
                 "nombre_cli",
                 "apPaterno_cli",
                 "apMaterno_cli",
@@ -116,6 +118,9 @@ const getReporteSeguimiento = async (req, res) => {
                 {
                   model: Distritos,
                 },
+                // {
+                //   model: Marcacion,
+                // },
               ],
             },
           ],
@@ -163,13 +168,20 @@ const getReporteSeguimiento = async (req, res) => {
                   ),
                   "nombres_apellidos_cli",
                 ],
+                "nombre_cli",
+                "apPaterno_cli",
+                "apMaterno_cli",
                 "email_cli",
                 "tel_cli",
                 "ubigeo_distrito_cli",
+                "numDoc_cli",
               ],
               include: [
                 {
                   model: Distritos,
+                },
+                {
+                  model: Marcacion,
                 },
               ],
             },

@@ -23,7 +23,10 @@ const { Servicios } = require("../models/Servicios");
 const { Files, ImagePT } = require("../models/Image");
 const dayjs = require("dayjs");
 const { Distritos } = require("../models/Distritos");
-const { enviarMensajesWsp, enviarStickerWsp } = require("../config/whatssap-web");
+const {
+  enviarMensajesWsp,
+  enviarStickerWsp,
+} = require("../config/whatssap-web");
 // Función para contar días laborables entre dos fechas
 function contarDiasLaborables(fechaInicio, fechaFin) {
   let inicio = dayjs(fechaInicio);
@@ -119,6 +122,7 @@ const postUsuarioCliente = async (req = request, res = response) => {
       email_cli,
       tel_cli,
       ubigeo_distrito_cli,
+      ubigeo_distrito_trabajo,
       uid_comentario: comentarioUnico_UID,
       uid_contactsEmergencia: contactoEmerg_UID,
     });
@@ -130,8 +134,8 @@ const postUsuarioCliente = async (req = request, res = response) => {
       observacion: `Se registro: El cliente de id ${cliente.id_cli}`,
     };
     await capturarAUDIT(formAUDIT);
-    console.log('asdf'.toUpperCase());
-    
+    console.log("asdf".toUpperCase());
+
     if (cliente.tel_cli) {
       await enviarMensajesWsp(
         cliente.tel_cli,

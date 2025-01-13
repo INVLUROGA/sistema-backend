@@ -192,6 +192,9 @@ const Cliente = db.define("tb_cliente", {
   ubigeo_distrito_cli: {
     type: DataTypes.INTEGER,
   },
+  ubigeo_distrito_trabajo: {
+    type: DataTypes.INTEGER,
+  },
   direccion_cli: {
     type: DataTypes.STRING,
   },

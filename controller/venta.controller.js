@@ -45,6 +45,7 @@ const {
   mailContratoMembresia,
 } = require("../middlewares/mailContratoMembresia");
 const utc = require("dayjs/plugin/utc");
+const { Marcacion } = require("../models/Marcacion");
 
 // Cargar el plugin
 dayjs.extend(utc);
@@ -1494,7 +1495,13 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
         },
         {
           model: detalleVenta_membresias,
-          attributes: ["horario", "tarifa_monto"],
+          attributes: [
+            "horario",
+            "tarifa_monto",
+            "id_tarifa",
+            "fec_inicio_mem",
+            "fec_fin_mem",
+          ],
           include: [
             {
               model: SemanasTraining,
@@ -1524,6 +1531,18 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
                     {
                       model: Distritos,
                     },
+                    // {
+                    //   model: Marcacion,
+                    //   required: false,
+                    //   where: {
+                    //     tiempo_marcacion_new: {
+                    //       [Op.between]: [
+                    //         new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
+                    //         new Date(fechaFin).setUTCHours(23, 59, 59, 999),
+                    //       ],
+                    //     },
+                    //   },
+                    // },
                   ],
                 },
               ],
@@ -1583,9 +1602,143 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
         },
       ],
     });
+    let membresias = await detalleVenta_membresias.findAll({
+      attributes: ["id", "id_pgm", "fec_inicio_mem", "horario", "fec_fin_mem"],
+      order: [["id", "DESC"]],
+      include: [
+        {
+          model: Venta,
+          attributes: ["id", "fecha_venta", "id_tipoFactura"],
+          where: { id_empresa: 598 },
+          include: [
+            {
+              model: Cliente,
+              attributes: [
+                "id_cli",
+                [
+                  Sequelize.fn(
+                    "CONCAT",
+                    Sequelize.col("nombre_cli"),
+                    " ",
+                    Sequelize.col("apPaterno_cli"),
+                    " ",
+                    Sequelize.col("apMaterno_cli")
+                  ),
+                  "nombres_apellidos_cli",
+                ],
+                "numDoc_cli",
+                "nombre_cli",
+                "apPaterno_cli",
+                "apMaterno_cli",
+                "email_cli",
+                "tel_cli",
+                "ubigeo_distrito_cli",
+              ],
+              include: [
+                {
+                  model: Distritos,
+                },
+                {
+                  model: Marcacion,
+                  required: false,
+                  where: {
+                    tiempo_marcacion_new: {
+                      [Op.between]: [
+                        new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
+                        new Date(fechaFin).setUTCHours(23, 59, 59, 999),
+                      ],
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        {
+          model: ProgramaTraining,
+          attributes: ["id_pgm", "name_pgm"],
+          where: { estado_pgm: true, flag: true },
+          include: [
+            {
+              model: ImagePT,
+              attributes: ["name_image", "width", "height", "id"],
+            },
+          ],
+        },
+        {
+          model: SemanasTraining,
+          attributes: ["id_st", "semanas_st"],
+        },
+      ],
+    });
+
+    // const ventasDeMembresias = await detalleVenta_membresias.findAll({
+    //   attributes: [
+    //     "horario",
+    //     "tarifa_monto",
+    //     "id_tarifa",
+    //     "fec_inicio_mem",
+    //     "fec_fin_mem",
+    //   ],
+    //   where: {
+    //     fec_inicio_mem: {
+    //       [Op.between]: [
+    //         new Date(fechaInicio).toISOString(),
+    //         new Date(fechaFin).toISOString(),
+    //       ],
+    //     },
+    //   },
+    //   include: [
+    //     {
+    //       model: SemanasTraining,
+    //       attributes: ["sesiones"],
+    //     },
+    //     {
+    //       model: Venta,
+    //       where: {
+    //         fecha_venta: {
+    //           [Op.between]: [
+    //             new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
+    //             new Date(fechaFin).setUTCHours(23, 59, 59, 999),
+    //           ],
+    //         },
+    //       },
+    //       attributes: [
+    //         "id_tipoFactura",
+    //         "fecha_venta",
+    //         "id_cli",
+    //         "id",
+    //         "id_origen",
+    //       ],
+    //       include: [
+    //         {
+    //           model: Cliente,
+    //           include: [
+    //             {
+    //               model: Distritos,
+    //             },
+    //             {
+    //               model: Marcacion,
+    //               where: {
+    //                 tiempo_marcacion_new: {
+    //                   [Op.between]: [
+    //                     new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
+    //                     new Date(fechaFin).setUTCHours(23, 59, 59, 999),
+    //                   ],
+    //                 },
+    //               },
+    //             },
+    //           ],
+    //         },
+    //       ],
+    //     },
+    //   ],
+    // });
     res.status(200).json({
       ventasProgramas,
       ventasTransferencias,
+      membresias,
+      // ventasDeMembresias,
     });
   } catch (error) {
     console.log(error);

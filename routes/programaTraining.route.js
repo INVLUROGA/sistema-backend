@@ -20,6 +20,7 @@ const {
   getSemanaxID,
   postSesiones,
   obtenerHorarios,
+  obtenerTodaTarifas
 } = require("../controller/programaTraining.controller");
 const { extraerUpload } = require("../middlewares/extraerComentarios");
 const router = Router();
@@ -52,5 +53,6 @@ router.put("/semana/delete_pgm/:id_sm", deleteSemanaProgramasPT);
 router.post("/tarifa/post_pgm", postTarifaProgramaPT);
 router.put("/tarifa/put_pgm/:id_tt", putTarifaProgramasPT);
 router.put("/tarifa/delete_pgm/:id_tt", deleteTarifaProgramasPT);
+router.get("/tarifa/obtener-toda-tarifas", obtenerTodaTarifas)
 
 module.exports = router;
