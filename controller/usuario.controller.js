@@ -93,6 +93,7 @@ const postUsuarioCliente = async (req = request, res = response) => {
     sexo_cli,
     tipoDoc_cli,
     numDoc_cli,
+    ubigeo_distrito_trabajo,
     nacionalidad_cli,
     ubigeo_distrito_cli,
     direccion_cli,
