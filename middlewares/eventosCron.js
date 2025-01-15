@@ -12,18 +12,18 @@ const { request, response } = require("express");
 const qs = require("qs");
 const axios = require("axios");
 const { enviarMensajesWsp } = require("../config/whatssap-web");
+const dayjs = require("dayjs");
 
+const utc = require("dayjs/plugin/utc");
+// Cargar el plugin
+dayjs.extend(utc);
 
-
-const cumpleaniosSocios = async()=>{
-  
-}
+const cumpleaniosSocios = async () => {};
 
 const insertaDatosTEST = async () => {
   try {
     await enviarMensajesWsp(933102718, "PRUEBAAAAASA");
     console.log("clickeo");
-    
   } catch (error) {
     console.log(error);
   }
@@ -175,7 +175,90 @@ const procesarClientes = (clientes) => {
     };
   });
 };
+const obtenerCumpleaniosCliente = async () => {
+  try {
+    // Obtener la fecha actual (mes y día)
+    const hoy = new Date();
+
+    const mesActual = hoy.getMonth() + 1; // Mes (0-11) → (1-12)
+    const diaActual = hoy.getDate(); // Día del mes (1-31)
+
+    // Consultar clientes que cumplen años hoy
+    const ventas = await Venta.findAll({
+      where: { flag: true, id_empresa: 598 },
+      attributes: [
+        "id",
+        "id_cli",
+        "id_empl",
+        "id_tipoFactura",
+        "numero_transac",
+        "fecha_venta",
+      ],
+      order: [["fecha_venta", "DESC"]],
+      raw: true,
+      include: [
+        {
+          model: Cliente,
+          where: {
+            [Sequelize.Op.and]: [
+              Sequelize.where(
+                Sequelize.fn("MONTH", Sequelize.col("fecha_nacimiento")),
+                mesActual
+              ),
+              Sequelize.where(
+                Sequelize.fn("DAY", Sequelize.col("fecha_nacimiento")),
+                diaActual
+              ),
+            ],
+          },
+          attributes: [
+            ["nombre_cli", "nombres_apellidos_cli"],
+            "fecha_nacimiento",
+            "email_cli",
+            "tel_cli",
+          ],
+        },
+      ],
+    });
+    // console.log(ventas);
+
+    // Crear un array con los nombres completos
+    const cumpleaneros = ventas.map((cliente) => {
+      return {
+        nombres_cli: `${cliente["tb_cliente.nombres_apellidos_cli"]}`,
+        fecha_nacimiento: `${cliente["tb_cliente.fecha_nacimiento"]}`,
+        email_cli: `${cliente["tb_cliente.email_cli"]}`,
+        tel_cli: `${cliente["tb_cliente.tel_cli"]}`,
+      };
+    });
+    cumpleaneros.map((c) => {
+      enviarMensajesWsp(
+        c.tel_cli,
+        `
+        
+🎉 ¡FELIZ CUMPLEAÑOS! 🎉
+
+¡Hola, ${c.nombres_cli}! 👋🎂
+
+En CHANGE - The Slim Studio, estamos muy felices de acompañarte en este día tan especial. 🎈💪 Deseamos que este nuevo año esté lleno de salud, metas alcanzadas y muchos logros personales.
+
+Recuerda que estamos aquí para seguir transformando tu vida. ¡Que tengas un día increíble y lleno de energía! ✨
+
+¡Disfruta al máximo tu día! 🥳
+Atentamente,
+CHANGE - The Slim Studio
+        
+        `
+      );
+    });
+    return cumpleaneros;
+  } catch (error) {
+    console.error("Error al obtener los cumpleanieros:", error);
+    return [];
+  }
+};
 module.exports = {
+  obtenerCumpleaniosCliente,
   insertaDatosTEST,
   insertarDatosSeguimientoDeClientes,
 };

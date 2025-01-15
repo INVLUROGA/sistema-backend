@@ -62,9 +62,9 @@ const mailContratoMembresia = async (
     PaisCliente: "Peru",
     CargoCliente: data_cliente.cargo_cli,
     EmailCliente: data_cliente.email_cli,
-    EdadCliente: `${calcularEdad(data_cliente.fecNac_cli)}`,
+    EdadCliente: `${calcularEdad(data_cliente.fecha_nacimiento)}`,
     DistritoCliente: data_Distrito.distrito,
-    FechaDeNacimientoCliente: `${dayjs(data_cliente.fecNac_cli).format(
+    FechaDeNacimientoCliente: `${dayjs(data_cliente.fecha_nacimiento).format(
       "DD/MM/YYYY"
     )}`,
     CentroDeTrabajoCliente: data_cliente.trabajo_cli,

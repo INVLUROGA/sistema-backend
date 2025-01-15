@@ -1409,6 +1409,7 @@ const getReporteVentas = async (req = request, res = response) => {
             "nacionalidad_cli",
             "tipoCli_cli",
             "fecNac_cli",
+            "fecha_nacimiento",
             "createdAt",
           ],
           include: [

@@ -89,6 +89,7 @@ const postUsuarioCliente = async (req = request, res = response) => {
     apPaterno_cli,
     apMaterno_cli,
     fecNac_cli,
+    fecha_nacimiento,
     estCivil_cli,
     sexo_cli,
     tipoDoc_cli,
@@ -111,6 +112,7 @@ const postUsuarioCliente = async (req = request, res = response) => {
       nombre_cli,
       apMaterno_cli,
       apPaterno_cli,
+      fecha_nacimiento,
       fecNac_cli,
       sexo_cli,
       estCivil_cli,
@@ -360,7 +362,7 @@ const putUsuarioCliente = async (req = request, res = response) => {
     };
     await capturarAUDIT(formAUDIT);
     console.log(cliente);
-    
+
     res.status(200).json({
       msg: "success",
       cliente,

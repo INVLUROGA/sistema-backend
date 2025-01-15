@@ -13,10 +13,12 @@ const {
 const {
   insertaDatosTEST,
   insertarDatosSeguimientoDeClientes,
+  obtenerCumpleaniosCliente,
 } = require("./middlewares/eventosCron.js");
 // Programa una tarea para las 9 AM todos los días
-cron.schedule("0 0 * * *", () => {
+cron.schedule("0 10 * * *", () => {
   // insertaDatosTEST();
+  obtenerCumpleaniosCliente();
 });
 const testtt = async () => {};
 // insertarDatosSeguimientoDeClientes("true");

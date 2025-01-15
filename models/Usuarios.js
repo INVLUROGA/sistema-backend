@@ -174,6 +174,9 @@ const Cliente = db.define("tb_cliente", {
   fecNac_cli: {
     type: DataTypes.DATE,
   },
+  fecha_nacimiento: {
+    type: DataTypes.STRING(12),
+  },
   sexo_cli: {
     type: DataTypes.INTEGER,
   },
