@@ -280,6 +280,9 @@ const getUsuarioCliente = async (req = request, res = response) => {
             },
           ],
         },
+        {
+          model: ImagePT,
+        },
         // {
         //   model: Venta,
         //   include: [
@@ -356,7 +359,8 @@ const putUsuarioCliente = async (req = request, res = response) => {
       observacion: `Se actualizo: El cliente de id ${cliente.id_cli}`,
     };
     await capturarAUDIT(formAUDIT);
-
+    console.log(cliente);
+    
     res.status(200).json({
       msg: "success",
       cliente,

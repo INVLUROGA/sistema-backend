@@ -257,6 +257,10 @@ Empleado.hasMany(ImagePT, {
   sourceKey: "uid_avatar",
 });
 
+Cliente.hasMany(ImagePT, {
+  foreignKey: "uid_location",
+  sourceKey: "uid_avatar",
+});
 Cliente.hasOne(Parametros, {
   foreignKey: "id_param",
   sourceKey: "sexo_cli",
