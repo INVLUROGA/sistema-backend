@@ -77,8 +77,7 @@ detalleVenta_citas.hasOne(CitasAdquiridas, {
   sourceKey: "id", // Clave primaria en detalleVenta_citas
 });
 
-Cita.hasOne(Empleado, { foreignKey: "id_empl" });
-Empleado.belongsTo(Cita, { foreignKey: "id_empl" });
+Cita.hasOne(Empleado, { foreignKey: "id_empl", sourceKey: "id_empl" });
 
 CitasAdquiridas.belongsTo(Cita, {
   foreignKey: "id", // La clave foránea en CitasAdquiridas

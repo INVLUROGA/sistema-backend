@@ -145,15 +145,6 @@ const sendReminderEmail = (email) => {
     transporterU.close();
   });
 };
-const checkMembresiaShips = () => {
-  const today = new Date();
-  const reminderToday = new Date();
-  reminderToday.setDate(today.getDate() + 10);
-  try {
-  } catch (error) {
-    console.error("Error checking memberships:", error);
-  }
-};
 
 const allowedOrigins = [
   "https://change-the-slim-studio-sigma.vercel.app",
@@ -161,7 +152,6 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
 ];
-
 //CORS
 app.use(
   cors({

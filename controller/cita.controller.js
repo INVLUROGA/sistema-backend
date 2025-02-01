@@ -109,7 +109,7 @@ const postCita = async (req = request, res = response) => {
 
     const dayjsTest = dayjs
       .utc(fecha_init)
-      .subtract(5, 'hours')
+      .subtract(5, "hours")
       .local(es)
       .format("dddd DD [de] MMMM [a las ] hh:mm A");
 
@@ -232,6 +232,89 @@ const getCitasxServicios = async (req = request, res = response) => {
     });
   }
 };
+const getCitasxServiciosFilter = async (req = request, res = response) => {
+  const { status_cita, id_cli, id_empl } = req.body;
+  const { tipo_serv } = req.params;
+
+  try {
+    let where = { flag: true };
+
+    // Validar si hay filtros activos
+    const hasFilters =
+      (status_cita && status_cita !== 0) ||
+      (id_cli && id_cli !== 0) ||
+      (id_empl && id_empl !== 0);
+    // ||(arrayDate && Array.isArray(arrayDate) && arrayDate.length === 2);
+
+    if (hasFilters) {
+      if (status_cita && status_cita !== 0) where.status_cita = status_cita;
+      if (id_cli && id_cli !== 0) where.id_cli = id_cli;
+      if (id_empl && id_empl !== 0) where.id_empl = id_empl;
+
+      // Validar y aplicar filtro de fecha
+      // if (arrayDate && Array.isArray(arrayDate) && arrayDate.length === 2) {
+      //   const [startDate, endDate] = arrayDate;
+      //   where.fecha_init = { [Op.between]: [startDate, endDate] };
+      // }
+    }
+
+    // Obtener citas con o sin filtros
+    const citas = await Cita.findAll({
+      where,
+      order: [["fecha_init", "desc"]],
+      attributes: [
+        "id",
+        "id_cli",
+        "id_empl",
+        "fecha_init",
+        "fecha_final",
+        "status_cita",
+      ],
+      include: [
+        {
+          model: Cliente,
+          attributes: [
+            [
+              Sequelize.fn(
+                "CONCAT",
+                Sequelize.col("nombre_cli"),
+                " ",
+                Sequelize.col("apPaterno_cli"),
+                " ",
+                Sequelize.col("apMaterno_cli")
+              ),
+              "nombres_apellidos_cli",
+            ],
+          ],
+        },
+        {
+          model: Empleado,
+          attributes: [
+            [
+              Sequelize.fn(
+                "CONCAT",
+                Sequelize.col("nombre_empl"),
+                " ",
+                Sequelize.col("apPaterno_empl"),
+                " ",
+                Sequelize.col("apMaterno_empl")
+              ),
+              "nombres_apellidos_empl",
+            ],
+          ],
+        },
+      ],
+    });
+
+    res.status(200).json({ ok: true, citas });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      ok: false,
+      msg: "Hable con el administrador: getCitasxServicios",
+    });
+  }
+};
 
 module.exports = {
   getCitas,
@@ -240,4 +323,5 @@ module.exports = {
   deleteCita,
   putCita,
   getCitasxServicios,
+  getCitasxServiciosFilter,
 };

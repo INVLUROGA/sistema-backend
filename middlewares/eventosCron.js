@@ -177,6 +177,12 @@ const procesarClientes = (clientes) => {
 };
 const obtenerCumpleaniosCliente = async () => {
   try {
+    enviarMensajesWsp(
+      933102718,
+      `
+            OBTENIENDO LOS CUMPLEANIOS....
+            `
+    );
     // Obtener la fecha actual (mes y día)
     const hoy = new Date();
 
@@ -231,11 +237,16 @@ const obtenerCumpleaniosCliente = async () => {
         tel_cli: `${cliente["tb_cliente.tel_cli"]}`,
       };
     });
+    enviarMensajesWsp(
+      933102718,
+      `
+      TODO LOS CUMPLEANIOS OBTENIDOS DE HOY DIA: ${cumpleaneros.length}
+      `
+    );
     cumpleaneros.map((c) => {
       enviarMensajesWsp(
         c.tel_cli,
         `
-        
 🎉 ¡FELIZ CUMPLEAÑOS! 🎉
 
 ¡Hola, ${c.nombres_cli}! 👋🎂
@@ -243,6 +254,8 @@ const obtenerCumpleaniosCliente = async () => {
 En CHANGE - The Slim Studio, estamos muy felices de acompañarte en este día tan especial. 🎈💪 Deseamos que este nuevo año esté lleno de salud, metas alcanzadas y muchos logros personales.
 
 Recuerda que estamos aquí para seguir transformando tu vida. ¡Que tengas un día increíble y lleno de energía! ✨
+
+Asi mismo por este dia tan especial te regalamos 10 sesiones consecutivas para ti o para quien tu desees
 
 ¡Disfruta al máximo tu día! 🥳
 Atentamente,

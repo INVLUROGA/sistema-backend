@@ -37,7 +37,12 @@ const {
   postCambioPrograma,
   obtenerTransferenciasResumenxMes,
   obtenerMembresias,
+  obtenerMarcacionesClientexMembresias
 } = require("../controller/venta.controller");
+
+const { 
+  obtenerMembresiasxFecha
+} = require("../controller/venta-membresias.controller");
 const {
   obtenerReporteSociosxDistritos,
   obtenerTransferencias,
@@ -67,6 +72,7 @@ router.get(
 router.post("/post-venta/agregar-firma-en-contrato", agregarFirmaEnContrato);
 // router.post("/send-email/:id_venta", mailMembresia);
 router.get("/reporte/obtener-todo-membresias", obtenerMembresias);
+router.get("/reporte/obtener-todo-membresias-x-fecha", obtenerMembresias);
 router.post("/traspaso-membresia", postTraspasoMembresia);
 router.get("/get-ventas-x-fecha", getVentasxFecha);
 router.get("/get-ventas/:id_empresa", get_VENTAS);
@@ -113,6 +119,9 @@ router.get(
 router.get("/ventas-transferencias", obtenerTransferenciasxFecha);
 router.get("/clientes-membresias", obtenerClientesConMembresia);
 
+
+router.get("/membresias/cliente/marcaciones/:id_enterprice", obtenerMarcacionesClientexMembresias)
+router.get("/reporte/obtenerMembresiasxFecha/:id_enterprice", obtenerMembresiasxFecha)
 // router.post('/')
 // router.get(
 //   "/reporte/obtener-ventas-x-comprobantes-resumen",

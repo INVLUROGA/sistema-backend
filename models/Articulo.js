@@ -29,16 +29,16 @@ const Articulos = db.define("tb_articulos", {
   cantidad: {
     type: DataTypes.INTEGER,
   },
-  valor_unitario_depreciado: {
+  costo_unitario: {
     type: DataTypes.DECIMAL(10, 2),
   },
-  valor_unitario_actual: {
+  costo_total_soles: {
     type: DataTypes.DECIMAL(10, 2),
   },
-  valor_total: {
+  costo_total_dolares: {
     type: DataTypes.DECIMAL(10, 2),
   },
-  valor_total_dolares: {
+  mano_obra_soles: {
     type: DataTypes.DECIMAL(10, 2),
   },
   lugar_compra_cotizacion: {
@@ -47,7 +47,7 @@ const Articulos = db.define("tb_articulos", {
   id_lugar: {
     type: DataTypes.INTEGER,
   },
-  id_nivel: {
+  nivel: {
     type: DataTypes.INTEGER,
   },
   id_empresa: {
@@ -67,11 +67,6 @@ Articulos.hasOne(Parametros, {
   foreignKey: "id_param",
   sourceKey: "id_marca",
   as: "parametro_marca",
-});
-Articulos.hasOne(Parametros, {
-  foreignKey: "id_param",
-  sourceKey: "id_nivel",
-  as: "parametro_nivel",
 });
 Articulos.hasOne(Parametros, {
   foreignKey: "id_param",
@@ -95,21 +90,22 @@ const carcel = async () => {
 
     // Encuentra todas las filas de la tabla
     const filas = await Articulos.findAll();
-  
+
     // Crear un array de promesas para realizar las actualizaciones de manera paralela
-    const promesas = filas.map(fila => {
-      if (fila.uid_image === null) {  // Comparación con null
+    const promesas = filas.map((fila) => {
+      if (fila.uid_image === null) {
+        // Comparación con null
         // Genera un nuevo UUID
         const UUID = uuid.v4();
-  
+
         // Devuelve la promesa de actualización para cada fila
         return fila.update({ uid_image: UUID });
       }
     });
-  
+
     // Ejecuta todas las actualizaciones en paralelo
     await Promise.all(promesas);
-  
+
     console.log("Artículos asignados correctamente.");
   } catch (error) {
     console.error("Error al asignar UUID:", error);

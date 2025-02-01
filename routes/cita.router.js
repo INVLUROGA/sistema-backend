@@ -6,6 +6,7 @@ const {
   deleteCita,
   putCita,
   getCitasxServicios,
+  getCitasxServiciosFilter,
 } = require("../controller/cita.controller.js");
 const { mailNutricion } = require("../middlewares/mails.js");
 // const {
@@ -18,6 +19,10 @@ const router = Router();
 */
 
 router.get("/get-citas/:tipo_serv", getCitasxServicios);
+router.post(
+  "/get-citas-filter/:tipo_serv",
+  getCitasxServiciosFilter
+);
 router.post(
   "/post-cita",
   // verifyWhatsAppNumber,

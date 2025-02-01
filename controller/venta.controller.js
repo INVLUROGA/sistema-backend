@@ -46,6 +46,7 @@ const {
 } = require("../middlewares/mailContratoMembresia");
 const utc = require("dayjs/plugin/utc");
 const { Marcacion } = require("../models/Marcacion");
+const { Cita } = require("../models/Cita");
 
 // Cargar el plugin
 dayjs.extend(utc);
@@ -1493,6 +1494,7 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
     const ventasProgramas = await ProgramaTraining.findAll({
       attributes: ["name_pgm", "id_pgm"],
       where: { flag: true, estado_pgm: true },
+      distinct: true,
       include: [
         {
           model: ImagePT,
@@ -1510,6 +1512,15 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
           ],
           include: [
             {
+              model: TarifaTraining,
+              attributes: [
+                "nombreTarifa_tt",
+                "descripcionTarifa_tt",
+                "tarifaCash_tt",
+              ],
+              as: "tarifa_venta",
+            },
+            {
               model: SemanasTraining,
               attributes: ["sesiones"],
             },
@@ -1521,6 +1532,7 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
                 "id_cli",
                 "id",
                 "id_origen",
+                "observacion",
               ],
               where: {
                 fecha_venta: {
@@ -1550,6 +1562,9 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
                     //   },
                     // },
                   ],
+                },
+                {
+                  model: Empleado,
                 },
               ],
             },
@@ -2461,6 +2476,85 @@ const obtenerMembresias = async (req = request, res = response) => {
     });
   }
 };
+const obtenerMarcacionesClientexMembresias = async (
+  req = request,
+  res = response
+) => {
+  try {
+    const year = 2024;
+    const month = 9; // Octubre (número del mes en formato 1-12)
+    const { id_enterprice } = req.params;
+    const membresias = await Venta.findAll({
+      order: [["fecha_venta", "DESC"]],
+      where: {
+        id_empresa: id_enterprice,
+      },
+      include: [
+        {
+          model: Cliente,
+          attributes: [
+            "id_cli",
+            [
+              Sequelize.fn(
+                "CONCAT",
+                Sequelize.col("nombre_cli"),
+                " ",
+                Sequelize.col("apPaterno_cli"),
+                " ",
+                Sequelize.col("apMaterno_cli")
+              ),
+              "nombres_apellidos_cli",
+            ],
+            "email_cli",
+          ],
+          include: [
+            {
+              model: Marcacion,
+              attributes: [
+                "tiempo_marcacion",
+                "tiempo_marcacion_new",
+                "dni",
+                "nombre_usuario",
+                "apellido_usuario",
+              ],
+              required: false,
+            },
+            {
+              model: Cita,
+              where: { status_cita: 501 },
+              attributes: ["fecha_init", "fecha_final"],
+              required: false,
+            },
+          ],
+        },
+        {
+          model: detalleVenta_membresias,
+          required: true,
+          attributes: ["fec_inicio_mem", "fec_fin_mem", "horario", "id_pgm"],
+          include: [
+            {
+              model: ProgramaTraining,
+              attributes: ["name_pgm"],
+              include: [{ model: ImagePT }],
+            },
+            {
+              model: SemanasTraining,
+              attributes: ["sesiones", "nutricion_st"],
+            },
+          ],
+        },
+      ],
+    });
+    res.status(201).json({
+      membresias,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(501).json({
+      error: "error",
+    });
+  }
+};
 
 function bytesToBase64(bytes) {
   // Convertir bytes a cadena binaria
@@ -2501,4 +2595,5 @@ module.exports = {
   obtenerClientesConMembresia,
   obtenerComparativoResumenxMES,
   obtenerMembresias,
+  obtenerMarcacionesClientexMembresias,
 };

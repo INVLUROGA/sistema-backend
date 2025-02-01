@@ -18,10 +18,10 @@ const obtenerInventario = async (req = request, res = response) => {
           model: Parametros,
           as: "parametro_marca",
         },
-        {
-          model: Parametros,
-          as: "parametro_nivel",
-        },
+        // {
+        //   model: Parametros,
+        //   as: "parametro_nivel",
+        // },
         {
           model: Parametros,
           as: "parametro_lugar_encuentro",

@@ -2,7 +2,11 @@ const { DataTypes } = require("sequelize");
 const uuid = require("uuid");
 const { db } = require("../database/sequelizeConnection");
 const { Cliente, Empleado } = require("./Usuarios");
-const { ProgramaTraining, SemanasTraining } = require("./ProgramaTraining");
+const {
+  ProgramaTraining,
+  SemanasTraining,
+  TarifaTraining,
+} = require("./ProgramaTraining");
 const { Parametros } = require("./Parametros");
 const { ImagePT } = require("./Image");
 
@@ -231,6 +235,12 @@ const detalle_cambioPrograma = db.define("detalle_cambioPrograma", {
   },
 });
 
+detalleVenta_membresias.hasOne(TarifaTraining, {
+  foreignKey: "id_tt",
+  sourceKey: "id_tarifa",
+  as: "tarifa_venta",
+});
+
 detalleVenta_pagoVenta.hasOne(Parametros, {
   foreignKey: "id_param",
   sourceKey: "id_forma_pago",
@@ -270,9 +280,10 @@ SemanasTraining.belongsTo(detalleVenta_membresias, {
   targetKey: "id_st",
 });
 
-detalle_cambioPrograma.hasOne(Venta, {
-  foreignKey: "id",
-  sourceKey: "id_venta",
+Venta.hasMany(detalle_cambioPrograma, {
+  foreignKey: "id_venta",
+  sourceKey: "id",
+  as: "cambio_programa",
 });
 
 detalle_cambioPrograma.hasOne(ProgramaTraining, {

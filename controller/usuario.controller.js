@@ -9,6 +9,7 @@ const {
   detalleVenta_citas,
   detalleVenta_producto,
   detalleVenta_pagoVenta,
+  detalle_cambioPrograma,
 } = require("../models/Venta");
 const {
   ProgramaTraining,
@@ -28,6 +29,7 @@ const {
   enviarStickerWsp,
 } = require("../config/whatssap-web");
 const { Marcacion } = require("../models/Marcacion");
+const { ExtensionMembresia } = require("../models/ExtensionMembresia");
 // Función para contar días laborables entre dos fechas
 function contarDiasLaborables(fechaInicio, fechaFin) {
   let inicio = dayjs(fechaInicio);
@@ -388,6 +390,12 @@ const obtenerDatosUltimaMembresia = async (req = request, res = response) => {
       order: [["id", "DESC"]],
       include: [
         {
+          model: detalle_cambioPrograma,
+          // required: false,
+          as: "cambio_programa",
+          attributes: ["id", "fecha_cambio", "id_pgm"],
+        },
+        {
           required: true,
           model: detalleVenta_membresias,
           attributes: [
@@ -407,6 +415,15 @@ const obtenerDatosUltimaMembresia = async (req = request, res = response) => {
               model: SemanasTraining,
               attributes: ["semanas_st", "sesiones"],
             },
+            {
+              model: ExtensionMembresia,
+              attributes: [
+                "tipo_extension",
+                "id_venta",
+                "extension_inicio",
+                "extension_fin",
+              ],
+            },
           ],
         },
       ],
@@ -418,11 +435,6 @@ const obtenerDatosUltimaMembresia = async (req = request, res = response) => {
     }
     res.status(200).json({
       msg: "success",
-      name_cli: `${cliente.nombre_cli} ${cliente.apPaterno_cli} ${cliente.apMaterno_cli}`,
-      sesiones_restantes: contarDiasLaborables(
-        new Date(),
-        ultimaMembresia.detalle_ventaMembresia.fec_fin_mem
-      ),
       ultimaMembresia,
     });
   } catch (error) {
@@ -434,18 +446,16 @@ const obtenerDatosUltimaMembresia = async (req = request, res = response) => {
 const obtenerMarcacionsCliente = async (req = request, res = response) => {
   try {
     const clientesxMarcacions = await Cliente.findAll({
-      where: { flag: true, estado_cli: true },
+      attributes: ["id_cli", "nombre_cli", "apPaterno_cli", "apMaterno_cli"],
       include: [
         {
           model: Marcacion,
+          attributes: ["id", "tiempo_marcacion", "dni"],
           required: true,
         },
       ],
     });
-    res.status(200).json({
-      msg: "success",
-      clientesxMarcacions,
-    });
+    res.status(200).json(clientesxMarcacions);
   } catch (error) {
     res.status(500).json({
       error: `Error en el servidor, en controller de obtenerDatosUltimaMembresia, hable con el administrador: ${error}`,
