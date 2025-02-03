@@ -46,7 +46,7 @@ const registrarArticulo = async (req = request, res = response) => {
     const articulo = new Articulos({
       ...req.body,
       uid_image: uid_image,
-      id_empresa: 599,
+      id_empresa: id_enterprice,
     });
     await articulo.save();
     res.status(201).json({
@@ -73,7 +73,7 @@ const actualizarArticulo = async (req = request, res = response) => {
     }
     articulo.update(req.body);
     res.status(200).json({
-      msg: "Articulo actualizado correctamente",
+      msg: "Articulo actualizado correctament",
       articulo,
       uid_image: articulo.uid_image,
     });

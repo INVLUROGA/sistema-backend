@@ -278,6 +278,213 @@ const getReporteSeguimiento = async (req, res) => {
     });
   }
 };
+const getReporteSeguimientoClientes = async (req, res) => {
+  const { isClienteActive } = req.query;
+  const { id_empresa } = req.params;
+  try {
+    const currentDate = new Date();
+    let membresias = await detalleVenta_membresias.findAll({
+      attributes: ["id", "fec_inicio_mem", "horario", "fec_fin_mem"],
+      order: [["id", "DESC"]],
+      include: [
+        {
+          model: ExtensionMembresia,
+          attributes: [
+            "tipo_extension",
+            "extension_inicio",
+            "extension_fin",
+            "dias_habiles",
+          ],
+        },
+        {
+          model: Venta,
+          attributes: ["id", "fecha_venta", "id_tipoFactura"],
+          where: { id_empresa: id_empresa },
+          include: [
+            {
+              model: Cliente,
+              attributes: [
+                "id_cli",
+                [
+                  Sequelize.fn(
+                    "CONCAT",
+                    Sequelize.col("nombre_cli"),
+                    " ",
+                    Sequelize.col("apPaterno_cli"),
+                    " ",
+                    Sequelize.col("apMaterno_cli")
+                  ),
+                  "nombres_apellidos_cli",
+                ],
+                "numDoc_cli",
+                "nombre_cli",
+                "apPaterno_cli",
+                "apMaterno_cli",
+                "email_cli",
+                "tel_cli",
+                "ubigeo_distrito_cli",
+              ],
+              include: [
+                {
+                  model: Distritos,
+                },
+                // {
+                //   model: Marcacion,
+                // },
+              ],
+            },
+          ],
+        },
+        {
+          model: ProgramaTraining,
+          attributes: ["id_pgm", "name_pgm"],
+          where: { estado_pgm: true, flag: true },
+          include: [
+            {
+              model: ImagePT,
+              attributes: ["name_image", "width", "height", "id"],
+            },
+          ],
+        },
+        {
+          model: SemanasTraining,
+          attributes: ["id_st", "semanas_st"],
+        },
+      ],
+    });
+
+    let transferenciasMembresias = await detalleVenta_Transferencia.findAll({
+      order: [["id", "DESC"]],
+      raw: true,
+      include: [
+        {
+          model: Venta,
+          attributes: ["id", "fecha_venta"],
+          as: "venta_venta",
+          where: { id_empresa: id_empresa },
+          include: [
+            {
+              model: Cliente,
+              attributes: [
+                "id_cli",
+                [
+                  Sequelize.fn(
+                    "CONCAT",
+                    Sequelize.col("nombre_cli"),
+                    " ",
+                    Sequelize.col("apPaterno_cli"),
+                    " ",
+                    Sequelize.col("apMaterno_cli")
+                  ),
+                  "nombres_apellidos_cli",
+                ],
+                "nombre_cli",
+                "apPaterno_cli",
+                "apMaterno_cli",
+                "email_cli",
+                "tel_cli",
+                "ubigeo_distrito_cli",
+                "numDoc_cli",
+              ],
+              include: [
+                {
+                  model: Distritos,
+                }
+              ],
+            },
+          ],
+        },
+        {
+          model: Venta,
+          as: "venta_transferencia",
+        },
+      ],
+    });
+
+    // 1. Procesamiento de membresías
+    let processedMembresias = membresias.map((item) => {
+      const itemJSON = item.toJSON();
+      const tbExtensionMembresia = itemJSON.tb_extension_membresia || [];
+
+      if (tbExtensionMembresia.length === 0) {
+        // Si tb_extension_membresia está vacío
+        return {
+          ...itemJSON,
+          dias: 0,
+          fec_fin_mem_new: new Date(itemJSON.fec_fin_mem), // La nueva fecha es igual a fec_fin_mem
+        };
+      }
+
+      const totalDiasHabiles = tbExtensionMembresia.reduce(
+        (total, ext) => total + parseInt(ext.dias_habiles, 10),
+        0
+      );
+
+      // Calcular la nueva fecha sumando los días hábiles a 'fec_fin_mem'
+      const fecFinMem = new Date(itemJSON.fec_fin_mem);
+      const fecFinMemNew = addBusinessDays(fecFinMem, totalDiasHabiles);
+
+      return {
+        dias: totalDiasHabiles,
+        fec_fin_mem_new: fecFinMemNew, // Ajusta el formato según tus necesidades
+        ...itemJSON,
+      };
+    });
+
+    // 2. Filtrar por la última membresía de cada cliente
+    let uniqueMembresias = Object.values(
+      processedMembresias.reduce((acc, item) => {
+        const clienteId = item.tb_ventum.tb_cliente.id_cli;
+        const currentEntry = acc[clienteId];
+
+        // Si no existe aún o la nueva membresía tiene una fecha de finalización posterior
+        if (
+          !currentEntry ||
+          new Date(item.fec_fin_mem_new) >
+            new Date(currentEntry.fec_fin_mem_new)
+        ) {
+          acc[clienteId] = item; // Guardar la membresía más reciente
+        }
+        return acc;
+      }, {})
+    );
+
+    // 3. Filtrado basado en `isClienteActive`
+    let filteredMembresias = uniqueMembresias.filter((item) => {
+      const fecFinMemNewDate = new Date(item.fec_fin_mem_new);
+      if (isClienteActive === "true") {
+        return fecFinMemNewDate > currentDate;
+      } else if (isClienteActive === "false") {
+        return fecFinMemNewDate < currentDate;
+      }
+      return true;
+    });
+
+    // 4. Ordenación según `isClienteActive`
+    filteredMembresias.sort((a, b) => {
+      const dateA = new Date(a.fec_fin_mem_new);
+      const dateB = new Date(b.fec_fin_mem_new);
+      if (isClienteActive === "true") {
+        return dateA - dateB; // Ordenar de menor a mayor
+      } else if (isClienteActive === "false") {
+        return dateB - dateA; // Ordenar de mayor a menor
+      }
+      return 0; // No aplicar orden si isClienteActive no está definido
+    });
+
+    res.status(200).json({
+      newMembresias: relacionarTransferencias(
+        transferenciasMembresias,
+        filteredMembresias
+      ),
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(505).json({
+      error: error,
+    });
+  }
+};
 
 const getReporteProgramas = async (req, res) => {};
 const getReporteVentasPrograma_COMPARATIVACONMEJORANO = async (
