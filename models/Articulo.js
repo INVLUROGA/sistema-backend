@@ -23,9 +23,6 @@ const Articulos = db.define("tb_articulos", {
   descripcion: {
     type: DataTypes.STRING(890),
   },
-  observacion: {
-    type: DataTypes.STRING(890),
-  },
   cantidad: {
     type: DataTypes.INTEGER,
   },

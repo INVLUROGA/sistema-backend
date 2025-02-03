@@ -46,6 +46,7 @@
     "pdfmake": "^0.2.14",
     "puppeteer": "^22.13.1",
     "sequelize": "^6.37.1",
+    "sistema-backend": "file:",
     "tedious": "^18.6.1",
     "uuid": "^9.0.1"
   },
