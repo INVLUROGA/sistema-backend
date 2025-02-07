@@ -20,7 +20,7 @@ const {
   getUsuariosClientexID,
   revalidarToken,
   obtenerDatosUltimaMembresia,
-  obtenerMarcacionsCliente
+  obtenerMarcacionsCliente,
 } = require("../controller/usuario.controller");
 const {
   extraerComentarios,
@@ -37,20 +37,20 @@ const router = Router();
  * /api/usuario
  */
 router.post(
-  "/post-cliente",
+  "/post-cliente/:id_empresa",
   validarJWT,
   extraerUpload,
   extraerComentarios,
   extraerContactoEmergencia,
   postUsuarioCliente
 );
-router.get("/get-marcacions/cliente", obtenerMarcacionsCliente)
+router.get("/get-marcacions/cliente", obtenerMarcacionsCliente);
 router.get("/get-seguimiento-cliente", insertarDatosSeguimientoDeClientes);
 router.get(
   "/get-ultima-membresia-cliente/:id_cli",
   obtenerDatosUltimaMembresia
 );
-router.get("/get-clientes", validarJWT, getUsuarioClientes);
+router.get("/get-clientes/:id_empresa", validarJWT, getUsuarioClientes);
 router.get("/get-cliente/:uid_cliente", validarJWT, getUsuarioCliente);
 router.get("/get-cliente/id/:id_cli", validarJWT, getUsuariosClientexID);
 router.put("/put-cliente/:uid_cliente", validarJWT, putUsuarioCliente);

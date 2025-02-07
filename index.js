@@ -261,6 +261,7 @@ app.use("/api/terminologia", require("./routes/terminologia.router.js"));
 
 app.use("/api/parametroGasto", require("./routes/parametroGasto.router.js"));
 //CIRCUS----
+app.use("/api/circus", require("./routes/routersCircus/servicios.router.js"));
 // app.use("/circus/")
 
 //Escuchar peticiones

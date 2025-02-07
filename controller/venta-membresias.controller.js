@@ -12,13 +12,12 @@ const {
 const { Cliente, Empleado } = require("../models/Usuarios");
 const { Distritos } = require("../models/Distritos");
 const { ImagePT } = require("../models/Image");
+const { Op } = require("sequelize");
 
 const obtenerMembresiasxFecha = async (req = request, res = response) => {
-  const { arrayDate } = req.query;
+  // const { arrayDate } = req.query;
   const { id_enterprice } = req.params;
-
-  const fechaInicio = arrayDate[0];
-  const fechaFin = arrayDate[1];
+  const dateRanges = ["2024-09-01 00:00:00", "2025-12-30 00:00:00"];
 
   try {
     const ventasProgramas = await ProgramaTraining.findAll({
@@ -59,6 +58,12 @@ const obtenerMembresiasxFecha = async (req = request, res = response) => {
               model: Venta,
               where: {
                 id_empresa: id_enterprice,
+                fecha_venta: {
+                  [Op.between]: [
+                    new Date(dateRanges[0]).setUTCHours(0, 0, 0, 0),
+                    new Date(dateRanges[1]).setUTCHours(23, 59, 59, 999),
+                  ], // Suponiendo que fecha_inicial y fecha_final son variables con las fechas deseadas
+                },
               },
               attributes: [
                 "id_tipoFactura",

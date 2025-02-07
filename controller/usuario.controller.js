@@ -107,6 +107,7 @@ const postUsuarioCliente = async (req = request, res = response) => {
     email_cli,
   } = req.body;
   const { comentarioUnico_UID, contactoEmerg_UID, avatar_UID } = req;
+  const { id_empresa } = req.params;
   try {
     const cliente = new Cliente({
       uid_avatar: avatar_UID,
@@ -131,6 +132,7 @@ const postUsuarioCliente = async (req = request, res = response) => {
       ubigeo_distrito_trabajo,
       uid_comentario: comentarioUnico_UID,
       uid_contactsEmergencia: contactoEmerg_UID,
+      id_empresa
     });
     await cliente.save();
     let formAUDIT = {
@@ -157,19 +159,18 @@ const postUsuarioCliente = async (req = request, res = response) => {
         `
 ¡Hola, ${cliente.nombre_cli.toUpperCase()}! 👋😃
 
-Estamos emocionados de tenerte como parte de la familia CHANGE !! . 💪✨ Este es TU primer GRAN paso hacia tu CAMBIO, y estamos aquí para acompañarte en todo TU proceso.
+Estamos muy contentos que formes parte de la comunidad de CHANGE !! . 💪✨ Este es TU primer GRAN paso hacia tu CAMBIO, y estamos aquí para acompañarte en todo TU proceso.
 
-🔹 ¿Qué te espera?
+ ¿Qué te espera?
 
 * Programas de entrenamiento diseñados para tus objetivos PERSONALES.
 * Entrenamientos efectivos guiados por entrenadores profesionales.
-* Evaluaciones nutricionales y seguimiento constante POR NUTRICIONISTAS FUNCIONALES Y POR NUESTRO SISTEMA COMPUTARIZADO DE MEDICION DE LA COMPOSICION CORPORAL.
-* Un ambiente MODERNO,  cómodo y motivador para QUE NOS DES lo mejor de ti.
+* Evaluaciones nutricionales y seguimiento constante POR NUTRICIONISTAS Y POR NUESTRO SISTEMA COMPUTARIZADO DE MEDICION DE LA COMPOSICION CORPORAL.
+* Un ambiente moderno, cómodo y motivador para sacar lo mejor de ti.
 📲 Si tienes alguna consulta o necesitas apoyo, no dudes en comunicarte con nosotros. ¡Estamos aquí para ayudarte AL CAMBIO DE TU VIDA!
 
-¡Prepárate para CHANGE EL CAMBIO que mereces! 🚀
+¡Prepárate para CHANGE, EL CAMBIO que mereces!
 
-Atentamente,
 CHANGE - The Slim Studio
         `
       );
@@ -185,6 +186,7 @@ CHANGE - The Slim Studio
   }
 };
 const getUsuarioClientes = async (req = request, res = response) => {
+  const { id_empresa } = req.params;
   try {
     const clientes = await Cliente.findAll({
       attributes: [
@@ -206,7 +208,7 @@ const getUsuarioClientes = async (req = request, res = response) => {
         "tel_cli",
         ["estado_cli", "estado"],
       ],
-      where: { flag: true },
+      where: { flag: true, id_empresa: id_empresa },
       order: [["id_cli", "desc"]],
     });
     res.status(200).json({

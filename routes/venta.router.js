@@ -103,6 +103,7 @@ router.get(
 );
 router.get("/reporte/obtener-transferencias/:id_pgm", obtenerTransferencias);
 router.get("/reporte/obtener-comparativo-resumen", obtenerComparativoResumen);
+// router.get("/reporte/obtener-comparativo-resumen", obtenerComparativoResumen);
 
 router.get(
   "/reporte/obtener-ventas-x-tipo-factura/:idtipofactura",

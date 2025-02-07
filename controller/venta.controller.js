@@ -1517,6 +1517,304 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
                 "nombreTarifa_tt",
                 "descripcionTarifa_tt",
                 "tarifaCash_tt",
+                "fecha_inicio",
+                "fecha_fin",
+                "id_tipo_promocion",
+              ],
+              as: "tarifa_venta",
+            },
+            {
+              model: SemanasTraining,
+              attributes: ["sesiones", "semanas_st"],
+            },
+            {
+              model: Venta,
+              attributes: [
+                "id_tipoFactura",
+                "fecha_venta",
+                "id_cli",
+                "id",
+                "id_origen",
+                "observacion",
+              ],
+              where: {
+                fecha_venta: {
+                  [Op.between]: [
+                    new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
+                    new Date(fechaFin).setUTCHours(23, 59, 59, 999),
+                  ],
+                },
+              },
+              include: [
+                {
+                  model: Cliente,
+                  include: [
+                    {
+                      model: Distritos,
+                    },
+                    // {
+                    //   model: Marcacion,
+                    //   required: false,
+                    //   where: {
+                    //     tiempo_marcacion_new: {
+                    //       [Op.between]: [
+                    //         new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
+                    //         new Date(fechaFin).setUTCHours(23, 59, 59, 999),
+                    //       ],
+                    //     },
+                    //   },
+                    // },
+                  ],
+                },
+                {
+                  model: Empleado,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    const ventasTransferencias = await Venta.findAll({
+      order: [["fecha_venta", "DESC"]],
+      where: {
+        fecha_venta: {
+          [Op.between]: [
+            new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
+            new Date(fechaFin).setUTCHours(23, 59, 59, 999),
+          ],
+        },
+      },
+      include: [
+        {
+          model: detalleVenta_Transferencia,
+          as: "venta_venta",
+          required: true,
+          include: [
+            {
+              model: Venta,
+              as: "venta_transferencia",
+              required: true,
+              include: [
+                {
+                  model: detalleVenta_membresias,
+                  include: [
+                    {
+                      model: ProgramaTraining,
+                      include: [
+                        {
+                          model: ImagePT,
+                        },
+                      ],
+                    },
+                    {
+                      model: SemanasTraining,
+                    },
+                  ],
+                },
+                {
+                  model: Cliente,
+                  include: [
+                    {
+                      model: Distritos,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    let membresias = await detalleVenta_membresias.findAll({
+      attributes: [
+        "id",
+        "id_venta",
+        "id_pgm",
+        "fec_inicio_mem",
+        "horario",
+        "fec_fin_mem",
+      ],
+      order: [["id", "DESC"]],
+      include: [
+        {
+          model: Venta,
+          attributes: ["id", "fecha_venta", "id_tipoFactura"],
+          where: { id_empresa: 598 },
+          include: [
+            {
+              model: Cliente,
+              attributes: [
+                "id_cli",
+                [
+                  Sequelize.fn(
+                    "CONCAT",
+                    Sequelize.col("nombre_cli"),
+                    " ",
+                    Sequelize.col("apPaterno_cli"),
+                    " ",
+                    Sequelize.col("apMaterno_cli")
+                  ),
+                  "nombres_apellidos_cli",
+                ],
+                "numDoc_cli",
+                "nombre_cli",
+                "apPaterno_cli",
+                "apMaterno_cli",
+                "email_cli",
+                "tel_cli",
+                "ubigeo_distrito_cli",
+              ],
+              include: [
+                {
+                  model: Distritos,
+                },
+                {
+                  model: Marcacion,
+                  required: false,
+                  where: {
+                    tiempo_marcacion_new: {
+                      [Op.between]: [
+                        new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
+                        new Date(fechaFin).setUTCHours(23, 59, 59, 999),
+                      ],
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        {
+          model: ProgramaTraining,
+          attributes: ["id_pgm", "name_pgm"],
+          where: { estado_pgm: true, flag: true },
+          include: [
+            {
+              model: ImagePT,
+              attributes: ["name_image", "width", "height", "id"],
+            },
+          ],
+        },
+        {
+          model: SemanasTraining,
+          attributes: ["id_st", "semanas_st"],
+        },
+      ],
+    });
+
+    // const ventasDeMembresias = await detalleVenta_membresias.findAll({
+    //   attributes: [
+    //     "horario",
+    //     "tarifa_monto",
+    //     "id_tarifa",
+    //     "fec_inicio_mem",
+    //     "fec_fin_mem",
+    //   ],
+    //   where: {
+    //     fec_inicio_mem: {
+    //       [Op.between]: [
+    //         new Date(fechaInicio).toISOString(),
+    //         new Date(fechaFin).toISOString(),
+    //       ],
+    //     },
+    //   },
+    //   include: [
+    //     {
+    //       model: SemanasTraining,
+    //       attributes: ["sesiones"],
+    //     },
+    //     {
+    //       model: Venta,
+    //       where: {
+    //         fecha_venta: {
+    //           [Op.between]: [
+    //             new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
+    //             new Date(fechaFin).setUTCHours(23, 59, 59, 999),
+    //           ],
+    //         },
+    //       },
+    //       attributes: [
+    //         "id_tipoFactura",
+    //         "fecha_venta",
+    //         "id_cli",
+    //         "id",
+    //         "id_origen",
+    //       ],
+    //       include: [
+    //         {
+    //           model: Cliente,
+    //           include: [
+    //             {
+    //               model: Distritos,
+    //             },
+    //             {
+    //               model: Marcacion,
+    //               where: {
+    //                 tiempo_marcacion_new: {
+    //                   [Op.between]: [
+    //                     new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
+    //                     new Date(fechaFin).setUTCHours(23, 59, 59, 999),
+    //                   ],
+    //                 },
+    //               },
+    //             },
+    //           ],
+    //         },
+    //       ],
+    //     },
+    //   ],
+    // });
+    res.status(200).json({
+      ventasProgramas,
+      ventasTransferencias,
+      membresias,
+      // ventasDeMembresias,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const obtenerComparativoResumenClientes = async (
+  req = request,
+  res = response
+) => {
+  const { arrayDate } = req.query;
+
+  const fechaInicio = arrayDate[0];
+  const fechaFin = arrayDate[1];
+
+  try {
+    const ventasProgramas = await ProgramaTraining.findAll({
+      attributes: ["name_pgm", "id_pgm"],
+      where: { flag: true, estado_pgm: true },
+      distinct: true,
+      include: [
+        {
+          model: ImagePT,
+          attributes: ["name_image", "height", "width"],
+        },
+        {
+          model: detalleVenta_membresias,
+          attributes: [
+            "id_venta",
+            "horario",
+            "tarifa_monto",
+            "id_tarifa",
+            "fec_inicio_mem",
+            "fec_fin_mem",
+          ],
+          include: [
+            {
+              model: TarifaTraining,
+              attributes: [
+                "nombreTarifa_tt",
+                "descripcionTarifa_tt",
+                "tarifaCash_tt",
+                "fecha_inicio",
+                "fecha_fin",
+                "id_tipo_promocion",
               ],
               as: "tarifa_venta",
             },
@@ -2444,7 +2742,7 @@ const postCambioPrograma = async (req = request, res = response) => {
 };
 
 const obtenerMembresias = async (req = request, res = response) => {
-  const dateRanges = ["2024-09-01 00:00:00", "2024-12-30 00:00:00"];
+  const dateRanges = ["2024-09-01 00:00:00", "2025-12-30 00:00:00"];
 
   try {
     const membresias = await Venta.findAll({
@@ -2455,16 +2753,34 @@ const obtenerMembresias = async (req = request, res = response) => {
             new Date(dateRanges[1]).setUTCHours(23, 59, 59, 999),
           ], // Suponiendo que fecha_inicial y fecha_final son variables con las fechas deseadas
         },
-        id_empresa: 598,
-        flag: true,
       },
       include: [
         {
           model: detalleVenta_membresias,
           flag: true,
+          required: true,
+        },
+        {
+          model: Cliente,
+          attributes: [
+            "id_cli",
+            [
+              Sequelize.fn(
+                "CONCAT",
+                Sequelize.col("nombre_cli"),
+                " ",
+                Sequelize.col("apPaterno_cli"),
+                " ",
+                Sequelize.col("apMaterno_cli")
+              ),
+              "nombres_apellidos_cli",
+            ],
+          ],
         },
       ],
     });
+    console.log(membresias, "memmmmmm");
+
     res.status(201).json({
       message: "Programa cambiado exitosamente",
       membresias,
@@ -2567,6 +2883,7 @@ function bytesToBase64(bytes) {
   return btoa(binaryString);
 }
 module.exports = {
+  obtenerComparativoResumenClientes,
   obtenerTransferenciasResumenxMes,
   postCambioPrograma,
   obtenerClientesxDistritos,

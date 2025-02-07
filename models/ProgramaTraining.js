@@ -27,6 +27,15 @@ const TarifaTraining = db.define(
       type: DataTypes.BOOLEAN,
       defaultValue: true,
     },
+    fecha_inicio: {
+      type: DataTypes.STRING(25),
+    },
+    fecha_fin: {
+      type: DataTypes.STRING(25),
+    },
+    id_tipo_promocion: {
+      type: DataTypes.INTEGER,
+    },
     flag: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,

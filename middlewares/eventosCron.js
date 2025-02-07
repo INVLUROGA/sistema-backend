@@ -247,18 +247,13 @@ const obtenerCumpleaniosCliente = async () => {
       enviarMensajesWsp(
         c.tel_cli,
         `
-🎉 ¡FELIZ CUMPLEAÑOS! 🎉
+🎉 ¡FELIZ CUMPLEAÑOS, ${c.nombres_cli}! 👋🎂
 
-¡Hola, ${c.nombres_cli}! 👋🎂
+En CHANGE - The Slim Studio, estamos felices de celebrar contigo este dia tan especial, por este motivo te regalamos 10 SESIONES CONSECUTIVAS para ti o para quien desees.
 
-En CHANGE - The Slim Studio, estamos muy felices de acompañarte en este día tan especial. 🎈💪 Deseamos que este nuevo año esté lleno de salud, metas alcanzadas y muchos logros personales.
+Recuerda que estamos aquí para seguir cambiando tu vida. ¡Que tengas un día lleno de salud y energía! ✨
 
-Recuerda que estamos aquí para seguir transformando tu vida. ¡Que tengas un día increíble y lleno de energía! ✨
-
-Asi mismo por este dia tan especial te regalamos 10 sesiones consecutivas para ti o para quien tu desees
-
-¡Disfruta al máximo tu día! 🥳
-Atentamente,
+¡Disfruta al máximo tu día! 
 CHANGE - The Slim Studio
         
         `

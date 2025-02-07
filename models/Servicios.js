@@ -30,37 +30,6 @@ const Servicios = db.define("tb_servicios", {
   },
 });
 
-const Servicios2 = db.define("circus_servicios", {
-  id: {
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
-  },
-  nombre_servicio: {
-    type: DataTypes.STRING(5),
-  },
-  categoria: {
-    type: DataTypes.INTEGER,
-  },
-  subCategoria: {
-    type: DataTypes.INTEGER,
-  },
-  precio: {
-    type: DataTypes.DECIMAL(10, 2),
-  },
-  duracion: {
-    type: DataTypes.INTEGER,
-  },
-  flag: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-  },
-  estado: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-  },
-});
-
 const SeguimientoClientes = db.define("clientes_seguimiento", {
   id: {
     type: DataTypes.INTEGER,

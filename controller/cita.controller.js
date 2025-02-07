@@ -117,11 +117,9 @@ const postCita = async (req = request, res = response) => {
       await enviarMensajesWsp(
         cliente.tel_cli,
         `¡Hola ${cliente.nombre_cli.toUpperCase()}! 👋🏻🙂 
-Te confirmamos que tu cita con la nutricionista en CHANGE🔴 está programada 
-para el día *${dayjsTest}*. 
+Te confirmamos que tu cita con la nutricionista en CHANGE THE SLIM STUDIO está programada para el día *${dayjsTest}*. 
 
 Es muy importante que llegues 10 minutos antes, estés en ayunas o al menos 3 horas después de tu última comida, y que no realices actividad física previa a la cita, para garantizar una evaluación precisa.
-
 
 ¡BIENVENIDA AL CAMBIO!  ¡BIENVENIDA AL CHANGE!💪✨
 `
