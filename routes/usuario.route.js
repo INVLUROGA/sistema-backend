@@ -31,6 +31,8 @@ const { validarJWT } = require("../middlewares/validarJWT");
 const {
   insertarDatosSeguimientoDeClientes,
 } = require("../middlewares/eventosCron");
+const { check } = require("express-validator");
+const { validarCampos } = require("../middlewares/validarCampos");
 const router = Router();
 /**
  * [API Documentation]
@@ -38,6 +40,50 @@ const router = Router();
  */
 router.post(
   "/post-cliente/:id_empresa",
+  [
+    check("name_image", "FALTA EL AVATAR DEL CLIENTE").not().isEmpty(),
+    check("nombre_cli", "EL NOMBRE DEL CLIENTE ES OBLIGATORIO").not().isEmpty(),
+    check("apPaterno_cli", "EL APELLIDO PATERNO DEL CLIENTE ES OBLIGATORIO")
+      .not()
+      .isEmpty(),
+    check("apMaterno_cli", "EL APELLIDO MATERNO DEL CLIENTE ES OBLIGATORIO")
+      .not()
+      .isEmpty(),
+
+    check(
+      "fecha_nacimiento",
+      "LA FECHA DE NACIMIENTO DEL CLIENTE ES OBLIGATORIO"
+    )
+      .not()
+      .isEmpty(),
+    check("estCivil_cli", "ELEGIR UN CORRECTO ESTADO CIVIL").not().isEmpty(),
+    check("sexo_cli", "ELEGIR UN CORRECTO GENERO").not().isEmpty(),
+    check("tipoDoc_cli", "ELEGIR UN CORRECTO TIPO DE DOCUMENTO")
+      .not()
+      .isEmpty(),
+    check("numDoc_cli", "EL NUMERO DE DOCUMENTO DEBE SER EL CORRECTO")
+      .not()
+      .isEmpty(),
+    check("nacionalidad_cli", "ELEGIR UNA CORRECTO NACIONALIDAD")
+      .not()
+      .isEmpty(),
+    check("ubigeo_distrito_cli", "ELEGIR UN CORRECTO DISTRITO").not().isEmpty(),
+    check("direccion_cli", "COMPLETAR EL CAMPO DIRECCION DEL CLIENTE")
+      .not()
+      .isEmpty(),
+    check("tipoCli_cli", "ELEGIR UNA CORRECTO TIPO DE CLIENTE").not().isEmpty(),
+    check(
+      "ubigeo_distrito_trabajo",
+      "ELEGIR UN CORRECTO DISTRITO DE TRABAJO DEL CLIENTE"
+    )
+      .not()
+      .isEmpty(),
+    check("trabajo_cli", "COMPLETAR EL CAMPO DE TRABAJO").not().isEmpty(),
+    check("cargo_cli", "COMPLETAR EL CAMPO DE CARGO").not().isEmpty(),
+    check("email_cli", "EL EMAIL DEBE SER CORRECTO").not().isEmail(),
+    check("tel_cli", "EL TELEFONO DEBE DE SER CORRECTO").not().isEmpty(),
+    validarCampos,
+  ],
   validarJWT,
   extraerUpload,
   extraerComentarios,
