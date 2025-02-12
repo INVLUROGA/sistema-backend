@@ -1341,6 +1341,12 @@ const obtenerContratosClientes = async (req = request, res = response) => {
       include: [
         {
           model: Cliente,
+          include: [
+            {
+              model: ImagePT,
+              attributes: ["name_image"],
+            },
+          ],
           attributes: [
             [
               Sequelize.fn(
