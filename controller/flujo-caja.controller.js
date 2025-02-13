@@ -304,7 +304,7 @@ const getGastoxGrupo = async (req = request, res = response) => {
           2030,
           Sequelize.fn("YEAR", Sequelize.col("fec_comprobante")),
           "=",
-          2024
+          anio
         ),
         id: {
           [Sequelize.Op.not]: 2548,

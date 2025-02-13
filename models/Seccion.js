@@ -44,15 +44,6 @@ const SeccionItem = db.define("tb_seccionItem", {
   icon: {
     type: DataTypes.INTEGER,
   },
-  children_1: {
-    type: DataTypes.INTEGER,
-  },
-  children_2: {
-    type: DataTypes.INTEGER,
-  },
-  children_3: {
-    type: DataTypes.INTEGER,
-  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,

@@ -29,11 +29,43 @@ const uploadBlob = async (req = request, res = response) => {
       msg: "success",
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({
       error: `Error en el servidor, en controller de uploadBlob, hable con el administrador: ${error}`,
     });
   }
 };
+const getImagesxUID = async (req = request, res = response) => {
+  try {
+    const { uidLocation } = req.params;
+    const img = await ImagePT.findAll({ where: { uid_location: uidLocation } });
+    // console.log(img, uidLocation);
+    res.status(200).json(img);
+  } catch (error) {
+    res.status(500).json({
+      error: `Error en el servidor(getUpload), hable con el administrador: ${error}`,
+    });
+  }
+};
+
+const getUploadOnexUidLocation = async (req, res) => {
+  try {
+    const { uidLocation } = req.params;
+    const img = await ImagePT.findOne({
+      where: { uid_location: uidLocation },
+      order: [["id", "desc"]],
+    });
+    // console.log(img, uidLocation);
+    res.status(200).json(img);
+  } catch (error) {
+    res.status(500).json({
+      error: `Error en el servidor(getUpload), hable con el administrador: ${error}`,
+    });
+  }
+};
+
 module.exports = {
+  getImagesxUID,
   uploadBlob,
+  getUploadOnexUidLocation,
 };

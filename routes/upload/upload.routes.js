@@ -37,7 +37,7 @@ router.post(
   multerUploadAvatar.single("avatar"),
   uploadAvatar
 );
-router.post("/upload/")
+router.post("/upload/");
 router.post(
   "/upload/tarjeta/:uidLocation",
   multerUploadTarjeta.single("tarjeta"),

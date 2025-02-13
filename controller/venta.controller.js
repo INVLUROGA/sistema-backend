@@ -1333,14 +1333,17 @@ const obtenerContratosClientes = async (req = request, res = response) => {
       where: {
         id_empresa: id_enterprice,
         flag: true,
-        id_tipoFactura: {
-          [Op.ne]: 701, // Excluye los registros con id_tipoFactura igual a 84
-        },
       },
       order: [["id", "DESC"]],
       include: [
         {
           model: Cliente,
+          include: [
+            {
+              model: ImagePT,
+              attributes: ["name_image"],
+            },
+          ],
           attributes: [
             [
               Sequelize.fn(
@@ -1353,6 +1356,7 @@ const obtenerContratosClientes = async (req = request, res = response) => {
               ),
               "nombres_apellidos_cli",
             ],
+            "uid_avatar",
           ],
         },
         {
@@ -1374,11 +1378,15 @@ const obtenerContratosClientes = async (req = request, res = response) => {
         {
           model: detalleVenta_membresias,
           where: {
-            tarifa_monto: {
-              [Op.ne]: 0.0, // Excluye los registros con id_tipoFactura igual a 84
-            },
+            flag: 1,
           },
-          attributes: ["id_venta", "id_pgm", "horario", "id_st"],
+          attributes: [
+            "id_venta",
+            "id_pgm",
+            "horario",
+            "id_st",
+            "tarifa_monto",
+          ],
           include: [
             {
               model: ImagePT,
@@ -1568,6 +1576,12 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
                 },
                 {
                   model: Empleado,
+                  attributes: [
+                    "nombre_empl",
+                    "apPaterno_empl",
+                    "apMaterno_empl",
+                    "estado_empl",
+                  ],
                 },
               ],
             },

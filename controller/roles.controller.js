@@ -742,6 +742,13 @@ const seccionGET = async (req = request, res = response) => {
           url: "/facturacion-publicidad",
         },
         {
+          key: "resultado-change",
+          label: "RESULTADOS CHANGE",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/resultados-change",
+        },
+        {
           key: "cliente-admClientes",
           label: "Membresias de socios",
           isTitle: false,
