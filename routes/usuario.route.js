@@ -80,7 +80,7 @@ router.post(
       .isEmpty(),
     check("trabajo_cli", "COMPLETAR EL CAMPO DE TRABAJO").not().isEmpty(),
     check("cargo_cli", "COMPLETAR EL CAMPO DE CARGO").not().isEmpty(),
-    check("email_cli", "EL EMAIL DEBE SER CORRECTO").not().isEmail(),
+    check("email_cli", "EL EMAIL DEBE SER CORRECTO").isEmail(),
     check("tel_cli", "EL TELEFONO DEBE DE SER CORRECTO").not().isEmpty(),
     validarCampos,
   ],
