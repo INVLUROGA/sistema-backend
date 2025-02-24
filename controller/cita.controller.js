@@ -102,6 +102,10 @@ const postCita = async (req = request, res = response) => {
     //   dayjs.utc(fecha_init).format("hh:mm:ss"),
     //   "post en citasss....."
     // );
+    const objSexoTst = {
+      masculino: 8,
+      fem: 9
+    }
     const dateCita = new Date(fecha_init).toLocaleDateString([], {
       hour: "2-digit",
       minute: "2-digit",
@@ -121,7 +125,7 @@ Te confirmamos que tu cita con la nutricionista en CHANGE THE SLIM STUDIO está 
 
 Es muy importante que llegues 10 minutos antes, estés en ayunas o al menos 3 horas después de tu última comida, y que no realices actividad física previa a la cita, para garantizar una evaluación precisa.
 
-¡BIENVENIDA AL CAMBIO!  ¡BIENVENIDA AL CHANGE!💪✨
+¡BIENVENIDA AL CAMBIO!  ¡${cliente.sexo_cli===objSexoTst.fem?'BIENVENIDA':(cliente.sexo_cli===0?'BIENVENID(a)':'BIENVENIDO')} AL CHANGE!💪✨
 `
       );
     }

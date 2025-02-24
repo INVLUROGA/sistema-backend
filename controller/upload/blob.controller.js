@@ -63,9 +63,19 @@ const getUploadOnexUidLocation = async (req, res) => {
     });
   }
 };
+const postUploadsImgs = async (req, res) => {
+  try {
+    console.log("holaaaaaaaaaaaaaa");
+  } catch (error) {
+    res.status(500).json({
+      error: `Error en el servidor(getUpload), hable con el administrador: ${error}`,
+    });
+  }
+};
 
 module.exports = {
   getImagesxUID,
   uploadBlob,
   getUploadOnexUidLocation,
+  postUploadsImgs,
 };

@@ -1,6 +1,7 @@
 const { DataTypes } = require("sequelize");
 const { db } = require("../database/sequelizeConnection");
 const uuid = require("uuid");
+const { ImagePT } = require("./Image");
 const Parametros = db.define("tb_parametro", {
   id_param: {
     type: DataTypes.INTEGER,
@@ -97,17 +98,24 @@ const carcel = async () => {
   try {
     // Encuentra todas las filas de la tabla (o puedes hacerlo con un filtro específico)
     console.log("asdf");
+
+    // Encuentra todas las filas de la tabla
     const filas = await Parametros.findAll();
 
-    // Itera sobre cada fila para asignar un UUID distinto
-    for (const fila of filas) {
-      // Genera un nuevo UUID
-      const UUID = uuid.v4();
-      // Actualiza la fila con el nuevo UUID
-      await fila.update({
-        uid_image: UUID,
-      });
-    }
+    // Crear un array de promesas para realizar las actualizaciones de manera paralela
+    const promesas = filas.map((fila) => {
+      if (fila.uid_image === null) {
+        // Comparación con null
+        // Genera un nuevo UUID
+        const UUID = uuid.v4();
+
+        // Devuelve la promesa de actualización para cada fila
+        return fila.update({ uid_image: UUID });
+      }
+    });
+
+    // Ejecuta todas las actualizaciones en paralelo
+    await Promise.all(promesas);
 
     console.log("Parametros  asignados correctamente.");
   } catch (error) {

@@ -25,6 +25,14 @@ const obtenerInventario = async (req = request, res = response) => {
         {
           model: Parametros,
           as: "parametro_lugar_encuentro",
+          attributes: ["label_param", "grupo_param", "orden_param"],
+          include: [
+            {
+              model: ImagePT,
+              // where: { flag: true },
+              attributes: ["name_image"],
+            },
+          ],
         },
       ],
     });
@@ -122,10 +130,33 @@ const obtenerArticuloxID = async (req = request, res = response) => {
     });
   }
 };
+const obtenerParametrosLugares = async (req = request, res = response) => {
+  try {
+    const parametros = await Parametros.findAll({
+      order: [["id_param", "DESC"]],
+      where: {
+        entidad_param: "articulo",
+        grupo_param: "lugar_encuentro",
+        flag: true,
+      },
+      include: [
+        {
+          model: ImagePT,
+        },
+      ],
+    });
+    res.status(200).json(parametros);
+  } catch (error) {
+    console.log(error, "err en sys");
+
+    res.status(404).json(error);
+  }
+};
 module.exports = {
   obtenerInventario,
   registrarArticulo,
   actualizarArticulo,
   eliminarArticulo,
   obtenerArticuloxID,
+  obtenerParametrosLugares,
 };

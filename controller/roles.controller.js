@@ -239,6 +239,20 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           //key: "reporte-utilidad-pgm",
+          label: "ENTRADA DE ITEMS",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/entrada-inventario",
+        },
+        {
+          //key: "reporte-utilidad-pgm",
+          label: "SALIDA DE ITEMS",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/salida-inventario",
+        },
+        {
+          //key: "reporte-utilidad-pgm",
           label: "INVENTARIO TOTALIZADO",
           isTitle: false,
           icon: "uil-calender",

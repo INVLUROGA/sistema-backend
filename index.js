@@ -16,9 +16,13 @@ const {
   obtenerCumpleaniosCliente,
 } = require("./middlewares/eventosCron.js");
 // Programa una tarea para las 9 AM todos los días
-cron.schedule("0 10 * * *", () => {
+cron.schedule("0 15 * * *", () => {
   // insertaDatosTEST();
   obtenerCumpleaniosCliente();
+});
+cron.schedule("0 * * * *", () => {
+  // insertaDatosTEST();
+  // obtenerCumpleaniosCliente();
 });
 const testtt = async () => {};
 // insertarDatosSeguimientoDeClientes("true");
@@ -190,6 +194,7 @@ app.use("/api/file/logo", fileServer(urlArchivoLogos));
 
 app.use("/api/fils", require("./routes/file.router.js"));
 //Rutas
+app.use("/api/kardex", require("./routes/kardex.router.js"));
 // //TODO proveedores // sexo, tipoDoc, estadoCivil, etc
 app.use("/api/proveedor", validarJWT, require("./routes/proveedor.router.js"));
 app.use("/api/producto", validarJWT, require("./routes/producto.route.js"));

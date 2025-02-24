@@ -222,6 +222,7 @@ const obtenerCumpleaniosCliente = async () => {
             "fecha_nacimiento",
             "email_cli",
             "tel_cli",
+            "sexo_cli",
           ],
         },
       ],
@@ -235,6 +236,7 @@ const obtenerCumpleaniosCliente = async () => {
         fecha_nacimiento: `${cliente["tb_cliente.fecha_nacimiento"]}`,
         email_cli: `${cliente["tb_cliente.email_cli"]}`,
         tel_cli: `${cliente["tb_cliente.tel_cli"]}`,
+        sexo_cli: `${cliente["tb_cliente.sexo_cli"]}`,
       };
     });
     enviarMensajesWsp(
@@ -265,8 +267,17 @@ CHANGE - The Slim Studio
     return [];
   }
 };
+const obtenerCitasDosHorasAntes = () => {
+  try {
+  } catch (error) {
+    console.log(error);
+  }
+};
+const obtenerCitasDosDiasAntes = () => {};
 module.exports = {
   obtenerCumpleaniosCliente,
   insertaDatosTEST,
   insertarDatosSeguimientoDeClientes,
+  obtenerCitasDosHorasAntes,
+  obtenerCitasDosDiasAntes,
 };

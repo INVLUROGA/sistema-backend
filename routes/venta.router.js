@@ -37,11 +37,12 @@ const {
   postCambioPrograma,
   obtenerTransferenciasResumenxMes,
   obtenerMembresias,
-  obtenerMarcacionesClientexMembresias
+  obtenerMarcacionesClientexMembresias,
+  obtenerMembresiasxUIDcliente,
 } = require("../controller/venta.controller");
 
-const { 
-  obtenerMembresiasxFecha
+const {
+  obtenerMembresiasxFecha,
 } = require("../controller/venta-membresias.controller");
 const {
   obtenerReporteSociosxDistritos,
@@ -120,9 +121,19 @@ router.get(
 router.get("/ventas-transferencias", obtenerTransferenciasxFecha);
 router.get("/clientes-membresias", obtenerClientesConMembresia);
 
+router.get(
+  "/obtener-membresias-x-cli/:id_cli",
+  obtenerMembresiasxUIDcliente
+);
 
-router.get("/membresias/cliente/marcaciones/:id_enterprice", obtenerMarcacionesClientexMembresias)
-router.get("/reporte/obtenerMembresiasxFecha/:id_enterprice", obtenerMembresiasxFecha)
+router.get(
+  "/membresias/cliente/marcaciones/:id_enterprice",
+  obtenerMarcacionesClientexMembresias
+);
+router.get(
+  "/reporte/obtenerMembresiasxFecha/:id_enterprice",
+  obtenerMembresiasxFecha
+);
 // router.post('/')
 // router.get(
 //   "/reporte/obtener-ventas-x-comprobantes-resumen",

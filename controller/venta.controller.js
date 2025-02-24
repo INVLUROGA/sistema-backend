@@ -47,6 +47,7 @@ const {
 const utc = require("dayjs/plugin/utc");
 const { Marcacion } = require("../models/Marcacion");
 const { Cita } = require("../models/Cita");
+const { ExtensionMembresia } = require("../models/ExtensionMembresia");
 
 // Cargar el plugin
 dayjs.extend(utc);
@@ -1510,6 +1511,7 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
         },
         {
           model: detalleVenta_membresias,
+          order: [["tarifa_monto", "desc"]],
           attributes: [
             "id_venta",
             "horario",
@@ -2886,6 +2888,65 @@ const obtenerMarcacionesClientexMembresias = async (
   }
 };
 
+const obtenerMembresiasxUIDcliente = async (req, res) => {
+  try {
+    const { id_cli } = req.params;
+    const membresias = await Venta.findAll({
+      order: [["fecha_venta", "DESC"]],
+      where: {
+        id_cli: id_cli,
+      },
+      include: [
+        {
+          model: detalleVenta_membresias,
+          required: true,
+          attributes: [
+            "fec_inicio_mem",
+            "fec_fin_mem",
+            "horario",
+            "id_pgm",
+            "tarifa_monto",
+          ],
+          include: [
+            {
+              model: ProgramaTraining,
+              attributes: ["name_pgm"],
+              include: [{ model: ImagePT }],
+            },
+            {
+              model: SemanasTraining,
+              attributes: [
+                "semanas_st",
+                "sesiones",
+                "nutricion_st",
+                "congelamiento_st",
+              ],
+            },
+            {
+              model: ExtensionMembresia,
+              attributes: [
+                "id",
+                "tipo_extension",
+                "extension_inicio",
+                "extension_fin",
+                "observacion",
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    res.status(201).json({
+      membresias: membresias,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(501).json({
+      error: "error",
+    });
+  }
+};
+
 function bytesToBase64(bytes) {
   // Convertir bytes a cadena binaria
   let binaryString = "";
@@ -2897,6 +2958,7 @@ function bytesToBase64(bytes) {
   return btoa(binaryString);
 }
 module.exports = {
+  obtenerMembresiasxUIDcliente,
   obtenerComparativoResumenClientes,
   obtenerTransferenciasResumenxMes,
   postCambioPrograma,

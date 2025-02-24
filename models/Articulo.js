@@ -11,6 +11,9 @@ const Articulos = db.define("tb_articulos", {
     autoIncrement: true,
     primaryKey: true,
   },
+  fecha_entrada: {
+    type: DataTypes.STRING(12),
+  },
   uid_image: {
     type: DataTypes.STRING,
   },
@@ -53,6 +56,32 @@ const Articulos = db.define("tb_articulos", {
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
+  },
+});
+
+const Kardex_Inventario = db.define("tb_kardex_inventario", {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  cantidad: {
+    type: DataTypes.INTEGER,
+  },
+  id_item: {
+    type: DataTypes.INTEGER,
+  },
+  id_motivo: {
+    type: DataTypes.INTEGER,
+  },
+  observacion: {
+    type: DataTypes.STRING(990),
+  },
+  fecha_cambio: {
+    type: DataTypes.STRING(12),
+  },
+  action: {
+    type: DataTypes.STRING(20),
   },
 });
 
@@ -111,4 +140,5 @@ const carcel = async () => {
 // carcel();
 module.exports = {
   Articulos,
+  Kardex_Inventario,
 };
