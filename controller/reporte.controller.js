@@ -95,6 +95,7 @@ const getReporteSeguimiento = async (req, res) => {
               model: Cliente,
               attributes: [
                 "id_cli",
+                "uid",
                 [
                   Sequelize.fn(
                     "CONCAT",
@@ -157,6 +158,7 @@ const getReporteSeguimiento = async (req, res) => {
               model: Cliente,
               attributes: [
                 "id_cli",
+                "uid",
                 [
                   Sequelize.fn(
                     "CONCAT",
@@ -305,6 +307,7 @@ const getReporteSeguimientoClientes = async (req, res) => {
               model: Cliente,
               attributes: [
                 "id_cli",
+                "uid",
                 [
                   Sequelize.fn(
                     "CONCAT",
@@ -367,6 +370,7 @@ const getReporteSeguimientoClientes = async (req, res) => {
               model: Cliente,
               attributes: [
                 "id_cli",
+                "uid",
                 [
                   Sequelize.fn(
                     "CONCAT",
@@ -389,7 +393,7 @@ const getReporteSeguimientoClientes = async (req, res) => {
               include: [
                 {
                   model: Distritos,
-                }
+                },
               ],
             },
           ],

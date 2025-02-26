@@ -1,11 +1,8 @@
 const { request, response } = require("express");
 
-const obtenerKardexEntrada = (req=request, res=response) => {
+const obtenerKardexEntrada = (req = request, res = response) => {
   try {
     const { id_empresa } = req.params;
-
-    
-
   } catch (error) {
     console.log(error);
   }

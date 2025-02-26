@@ -756,6 +756,27 @@ const seccionGET = async (req = request, res = response) => {
           url: "/facturacion-publicidad",
         },
         {
+          key: "mkt-adquisicion",
+          label: "ADQUISICION",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/mkt-adquisicion",
+        },
+        {
+          key: "mkt-renovacion",
+          label: "RENOVACION",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/mkt-renovacion",
+        },
+        {
+          key: "mkt-reinscripcion",
+          label: "REINSCRIPCION",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/mkt-reinscripcion",
+        },
+        {
           key: "resultado-change",
           label: "RESULTADOS CHANGE",
           isTitle: false,
