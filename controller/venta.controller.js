@@ -2947,6 +2947,22 @@ const obtenerMembresiasxUIDcliente = async (req, res) => {
   }
 };
 
+const putVentaxId = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { id_origen } = req.body;
+    const venta = await Venta.findOne({ where: { id: id } });
+    await venta.update({ id_origen: id_origen });
+    res.status(201).json({
+      error: "SUCCESS",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(501).json({
+      error: "error",
+    });
+  }
+};
 function bytesToBase64(bytes) {
   // Convertir bytes a cadena binaria
   let binaryString = "";
@@ -2958,6 +2974,7 @@ function bytesToBase64(bytes) {
   return btoa(binaryString);
 }
 module.exports = {
+  putVentaxId,
   obtenerMembresiasxUIDcliente,
   obtenerComparativoResumenClientes,
   obtenerTransferenciasResumenxMes,

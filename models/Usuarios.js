@@ -329,19 +329,27 @@ Usuario.sync()
 const carcel = async () => {
   try {
     // Encuentra todas las filas de la tabla (o puedes hacerlo con un filtro específico)
+    console.log("asdf");
+
+    // Encuentra todas las filas de la tabla
     const filas = await Cliente.findAll();
 
-    // Itera sobre cada fila para asignar un UUID distinto
-    for (const fila of filas) {
-      // Genera un nuevo UUID
-      const UUID = uuid.v4();
-      // Actualiza la fila con el nuevo UUID
-      await fila.update({
-        uid_file_adj: UUID,
-      });
-    }
+    // Crear un array de promesas para realizar las actualizaciones de manera paralela
+    const promesas = filas.map((fila) => {
+      if (fila.uid_file_adj === null) {
+        // Comparación con null
+        // Genera un nuevo UUID
+        const UUID = uuid.v4();
 
-    console.log("UUID asignados correctamente.");
+        // Devuelve la promesa de actualización para cada fila
+        return fila.update({ uid_file_adj: UUID });
+      }
+    });
+
+    // Ejecuta todas las actualizaciones en paralelo
+    await Promise.all(promesas);
+
+    console.log("Parametros  asignados correctamente.");
   } catch (error) {
     console.error("Error al asignar UUID:", error);
   }

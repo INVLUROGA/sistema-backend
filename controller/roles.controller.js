@@ -519,6 +519,13 @@ const seccionGET = async (req = request, res = response) => {
           url: "/gestion-cambio-programa",
         },
         {
+          key: "gest-cambio-procedencia",
+          label: "Gestion de cambio de procedencia",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-cambio-procedencia",
+        },
+        {
           key: "ventas-seguimiento",
           label: "reporte de seguimiento",
           isTitle: false,

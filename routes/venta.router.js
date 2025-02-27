@@ -39,6 +39,7 @@ const {
   obtenerMembresias,
   obtenerMarcacionesClientexMembresias,
   obtenerMembresiasxUIDcliente,
+  putVentaxId,
 } = require("../controller/venta.controller");
 
 const {
@@ -64,6 +65,7 @@ router.post(
   postNewVenta,
   postVenta
 );
+router.put("/put-venta/:id", putVentaxId);
 router.post("/cambio-programa", postCambioPrograma);
 router.get("/cliente-ventas", obtenerClientesVentas);
 router.get(
@@ -121,10 +123,7 @@ router.get(
 router.get("/ventas-transferencias", obtenerTransferenciasxFecha);
 router.get("/clientes-membresias", obtenerClientesConMembresia);
 
-router.get(
-  "/obtener-membresias-x-cli/:id_cli",
-  obtenerMembresiasxUIDcliente
-);
+router.get("/obtener-membresias-x-cli/:id_cli", obtenerMembresiasxUIDcliente);
 
 router.get(
   "/membresias/cliente/marcaciones/:id_enterprice",
