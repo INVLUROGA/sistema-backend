@@ -667,6 +667,7 @@ const get_VENTAS = async (req = request, res = response) => {
         "id_tipoFactura",
         "numero_transac",
         "fecha_venta",
+        "status_remove"
       ],
       order: [["fecha_venta", "DESC"]],
       include: [
@@ -1495,10 +1496,8 @@ const agregarFirmaEnContrato = (req, res) => {
 };
 const obtenerComparativoResumen = async (req = request, res = response) => {
   const { arrayDate } = req.query;
-
   const fechaInicio = arrayDate[0];
   const fechaFin = arrayDate[1];
-
   try {
     const ventasProgramas = await ProgramaTraining.findAll({
       attributes: ["name_pgm", "id_pgm"],
@@ -1562,18 +1561,6 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
                     {
                       model: Distritos,
                     },
-                    // {
-                    //   model: Marcacion,
-                    //   required: false,
-                    //   where: {
-                    //     tiempo_marcacion_new: {
-                    //       [Op.between]: [
-                    //         new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
-                    //         new Date(fechaFin).setUTCHours(23, 59, 59, 999),
-                    //       ],
-                    //     },
-                    //   },
-                    // },
                   ],
                 },
                 {
@@ -2095,6 +2082,7 @@ const obtenerComparativoResumenxMES = async (req = request, res = response) => {
 
   const fechaInicio = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0)); // Primer día del mes
   const fechaFin = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999)); // Último día del mes
+
   try {
     const ventasProgramas = await ProgramaTraining.findAll({
       attributes: ["name_pgm", "id_pgm"],
@@ -2130,10 +2118,7 @@ const obtenerComparativoResumenxMES = async (req = request, res = response) => {
               where: {
                 flag: true,
                 fecha_venta: {
-                  [Op.between]: [
-                    new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
-                    new Date(fechaFin).setUTCHours(23, 59, 59, 999),
-                  ],
+                  [Op.between]: [fechaInicio, fechaFin], // <-- Aquí usamos objetos Date directamente
                 },
               },
               include: [

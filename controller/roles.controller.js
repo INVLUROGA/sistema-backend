@@ -259,6 +259,13 @@ const seccionGET = async (req = request, res = response) => {
           url: "/totalizado-inventario",
         },
         {
+          //key: "reporte-utilidad-pgm",
+          label: "GENERADOR DE FECHAS INVENTARIO",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/generador-fechas-inventario",
+        },
+        {
           key: "reporte-admin",
           label: "Reportes",
           isTitle: true,
@@ -647,6 +654,13 @@ const seccionGET = async (req = request, res = response) => {
           key: "cita",
           label: "Citas",
           isTitle: true,
+        },
+        {
+          key: "citas-NUT",
+          label: "Citas por nutricionista",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/citas-x-nutricionista",
         },
         {
           key: "citas-NUT",

@@ -57,7 +57,7 @@ const getTBProgramaTraining = async (req, res) => {
         },
         {
           model: HorarioProgramaPT,
-          attributes: ["id_horarioPgm"],
+          attributes: ["id_horarioPgm", "time_HorarioPgm"],
         },
         {
           model: SemanasTraining,

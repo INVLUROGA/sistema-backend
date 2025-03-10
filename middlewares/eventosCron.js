@@ -7,7 +7,12 @@ const {
   SemanasTraining,
 } = require("../models/ProgramaTraining");
 const { Cliente } = require("../models/Usuarios");
-const { Venta, detalleVenta_membresias } = require("../models/Venta");
+const {
+  Venta,
+  detalleVenta_membresias,
+  detalleVenta_Transferencia,
+  detalle_cambioPrograma,
+} = require("../models/Venta");
 const { request, response } = require("express");
 const qs = require("qs");
 const axios = require("axios");
@@ -15,6 +20,8 @@ const { enviarMensajesWsp } = require("../config/whatssap-web");
 const dayjs = require("dayjs");
 
 const utc = require("dayjs/plugin/utc");
+const { Distritos } = require("../models/Distritos");
+const { Seguimiento } = require("../models/Seguimientos");
 // Cargar el plugin
 dayjs.extend(utc);
 
@@ -177,12 +184,12 @@ const procesarClientes = (clientes) => {
 };
 const obtenerCumpleaniosCliente = async () => {
   try {
-    enviarMensajesWsp(
-      933102718,
-      `
-            OBTENIENDO LOS CUMPLEANIOS....
-            `
-    );
+    // enviarMensajesWsp(
+    //   933102718,
+    //   `
+    //         OBTENIENDO LOS CUMPLEANIOS....
+    //         `
+    // );
     // Obtener la fecha actual (mes y día)
     const hoy = new Date();
 
@@ -239,12 +246,12 @@ const obtenerCumpleaniosCliente = async () => {
         sexo_cli: `${cliente["tb_cliente.sexo_cli"]}`,
       };
     });
-    enviarMensajesWsp(
-      933102718,
-      `
-      TODO LOS CUMPLEANIOS OBTENIDOS DE HOY DIA: ${cumpleaneros.length}
-      `
-    );
+    // enviarMensajesWsp(
+    //   933102718,
+    //   `
+    //   TODO LOS CUMPLEANIOS OBTENIDOS DE HOY DIA: ${cumpleaneros.length}
+    //   `
+    // );
     cumpleaneros.map((c) => {
       enviarMensajesWsp(
         c.tel_cli,
@@ -273,6 +280,290 @@ const obtenerCitasDosHorasAntes = () => {
     console.log(error);
   }
 };
+const obtenerDataSeguimiento = async () => {
+  try {
+    // const seguimiento = await Seguimiento.findAll();
+    // console.log(seguimiento);
+
+    const ventas = await Venta.findAll({
+      where: { flag: true, id_empresa: 598 },
+      raw: true, // Mantiene los datos en formato plano
+      // // venta con regalo inactiva: 15549
+      nest: true, // Permite anidar las relaciones correctamente
+      include: [
+        {
+          model: Cliente,
+          attributes: [
+            "id_cli",
+            "uid",
+            [
+              Sequelize.fn(
+                "CONCAT",
+                Sequelize.col("nombre_cli"),
+                " ",
+                Sequelize.col("apPaterno_cli"),
+                " ",
+                Sequelize.col("apMaterno_cli")
+              ),
+              "nombres_apellidos_cli",
+            ],
+            "numDoc_cli",
+            "nombre_cli",
+            "apPaterno_cli",
+            "apMaterno_cli",
+            "email_cli",
+            "tel_cli",
+            "ubigeo_distrito_cli",
+          ],
+          include: [
+            {
+              model: Distritos,
+            },
+          ],
+        },
+      ],
+    });
+    const detalle_membresia = await detalleVenta_membresias.findAll({
+      where: { flag: true },
+      raw: true, // Mantiene los datos en formato plano
+      // // venta con regalo inactiva: 15549
+      nest: true, // Permite anidar las relaciones correctamente
+    });
+
+    const cambioPrograma = await detalle_cambioPrograma.findAll({
+      where: { flag: true },
+      raw: true, // Mantiene los datos en formato plano
+      // // venta con regalo inactiva: 15549
+      nest: true, // Permite anidar las relaciones correctamente
+    });
+
+    const detalle_transferencia = await detalleVenta_Transferencia.findAll({
+      where: { flag: true },
+      raw: true, // Mantiene los datos en formato plano
+      // // venta con regalo inactiva: 15549
+      nest: true, // Permite anidar las relaciones correctamente
+    });
+    const membresia_extensiones = await ExtensionMembresia.findAll({
+      where: { flag: true },
+      raw: true, // Mantiene los datos en formato plano
+      // // venta con regalo inactiva: 15549
+      nest: true, // Permite anidar las relaciones correctamente
+    });
+    const ventasOrganizadas = organizarDatos(
+      ventas,
+      detalle_membresia,
+      cambioPrograma,
+      detalle_transferencia,
+      membresia_extensiones
+    );
+
+    const dataSeguimiento = ventasOrganizadas.map((venta) => {
+      const detalleMem = venta.detalle_membresia[0];
+      const extensionMem = detalleMem?.extensionmembresia;
+      const transferencia = venta?.detalle_transferencia;
+      const cambios = detalleMem?.cambioPrograma;
+      let id_venta = venta.id;
+      let uid_cli = venta.tb_cliente.uid;
+      let fec_inicio_mem = detalleMem.id ? detalleMem.fec_inicio_mem : null;
+      let fec_fin_mem = detalleMem.id ? detalleMem.fec_fin_mem : "nooo";
+      let id_pgm = detalleMem.id ? detalleMem.id_pgm : null;
+      let id_horario = detalleMem.id ? detalleMem.id_horario : null;
+      let id_membresia_extension = 0;
+      let id_cambio = 0;
+      if (extensionMem.length > 0) {
+        const suma_dias_extension = extensionMem.reduce(
+          (a, b) => a + Number(b.dias_habiles || 0),
+          0
+        );
+        // id_membresia_extension = extensionMem.id;
+        fec_fin_mem = sumarDiasHabiles(fec_fin_mem, suma_dias_extension);
+      }
+      if (transferencia.length > 0) {
+        // fec_inicio_mem = transferencia.fec_fin_mem; // Nueva fecha de inicio
+        fec_fin_mem = transferencia.fec_inicio_mem;
+      }
+
+      if (cambios.length > 0) {
+        let ultimoCambio = cambios[cambios.length - 1]; // Está ordenado DESC, el primero es el último cambio
+        // id_cambio =
+        id_pgm = ultimoCambio.id_pgm || id_pgm;
+        id_horario = ultimoCambio.id_horario || id_horario;
+      }
+      id_membresia_extension = obtenerExtensionStatus(
+        new Date(),
+        fec_inicio_mem,
+        fec_fin_mem,
+        extensionMem
+      ).extension
+        ? obtenerExtensionStatus(
+            new Date(),
+            fec_inicio_mem,
+            fec_fin_mem,
+            extensionMem
+          ).extension.id
+        : 0;
+
+      return {
+        uid_cli,
+        id_venta,
+        id_cambio,
+        id_membresia_extension: id_membresia_extension,
+        status_periodo: obtenerExtensionStatus(
+          new Date(),
+          fec_inicio_mem,
+          fec_fin_mem,
+          extensionMem
+        ).status,
+        // ventaTrns: venta.venta_transferencia,
+        // ventacam: venta.cambio_programa,
+        sesiones_pendientes: diasHabilesRestantes(new Date(), fec_fin_mem),
+        fecha_vencimiento: fec_fin_mem,
+        id_pgm,
+        id_horario,
+      };
+    });
+
+    await Seguimiento.bulkCreate(dataSeguimiento);
+
+    return [];
+  } catch (error) {
+    console.error("Error al obtener dataSeguimiento:", error);
+    throw error;
+  }
+};
+function organizarDatos(
+  ventas = [],
+  detalle_membresia = [],
+  cambioPrograma = [],
+  detalle_transferencia = [],
+  membresia_extensiones = []
+) {
+  try {
+    // Crear un mapa de membresías asociadas a ventas
+    const membresiasPorVenta = detalle_membresia.reduce((acc, memb) => {
+      acc[memb.id_venta] = memb;
+      return acc;
+    }, {});
+
+    // Filtrar ventas que tienen membresía asociada
+    const ventasConMembresia = ventas.filter(
+      (venta) => membresiasPorVenta[venta.id]
+    );
+
+    // Obtener solo la última venta por cliente
+    const ultimasVentas = ventasConMembresia.reduce((acc, venta) => {
+      acc[venta.id_cli] = venta; // Se sobrescribe, dejando la última venta del cliente
+      return acc;
+    }, {});
+
+    return Object.values(ultimasVentas).map((venta) => {
+      return {
+        ...venta,
+        detalle_transferencia: detalle_transferencia.filter(
+          (dt) => dt.id_membresia === venta.id
+        ),
+        detalle_membresia: detalle_membresia
+          .map((membresia) => {
+            return {
+              ...membresia,
+              extensionmembresia: membresia_extensiones.filter(
+                (ext) => ext.id_venta === membresia.id_venta
+              ),
+              cambioPrograma: cambioPrograma.filter(
+                (cp) => cp.id_venta === membresia.id_venta
+              ),
+            };
+          })
+          .filter((membresia) => membresia.id_venta === venta.id),
+      };
+    });
+  } catch (error) {
+    console.log(error);
+  }
+}
+const esDiaHabil = (fecha) => {
+  const dia = fecha.getDay();
+  return dia !== 0 && dia !== 6; // No cuenta sábados (6) ni domingos (0)
+};
+function diasHabilesRestantes(fecInicio, fecFin) {
+  // const inicio = new Date(fecInicio);
+  // const fin = new Date(fecFin);
+  // let diasHabiles = 0;
+
+  // while (inicio <= fin) {
+  //   const dia = inicio.getDay();
+  //   if (dia !== 0 && dia !== 6) diasHabiles++; // Excluir sábados (6) y domingos (0)
+  //   inicio.setDate(inicio.getDate() + 1);
+  // }
+  // Determinar si ambas fechas son hábiles
+
+  // return diasHabiles;
+  let inicio = new Date(fecInicio);
+  let fin = new Date(fecFin);
+  let dias = 0;
+  // Contabilizar si inicio o fin son días hábiles
+  if (esDiaHabil(inicio)) dias++;
+  if (esDiaHabil(fin)) dias++;
+  // Determinar si debemos contar todos los días o solo hábiles
+  const contarTodos = inicio > fin;
+
+  // Si inicio es mayor que fin, intercambiamos las fechas para recorrer correctamente
+  if (contarTodos) {
+    let temp = inicio;
+    inicio = fin;
+    fin = temp;
+  }
+
+  while (inicio <= fin) {
+    const dia = inicio.getDay();
+    if (contarTodos || (dia !== 0 && dia !== 6)) dias++; // Si contarTodos, cuenta todos los días
+    inicio.setDate(inicio.getDate() + 1);
+  }
+
+  return contarTodos ? -dias : dias; // Si se invirtió, devolver negativo
+}
+function sumarDiasHabiles(fecha, numeroDias) {
+  const fechaInicial = new Date(fecha);
+  let diasAgregados = 0;
+
+  if (esDiaHabil(fechaInicial)) diasAgregados++;
+
+  while (diasAgregados < numeroDias) {
+    fechaInicial.setDate(fechaInicial.getDate() + 1);
+    const dia = fechaInicial.getDay();
+    if (dia !== 0 && dia !== 6) diasAgregados++; // Excluir sábados (6) y domingos (0)
+  }
+
+  return fechaInicial.toISOString().split("T")[0]; // Retorna en formato YYYY-MM-DD
+}
+const obtenerExtensionStatus = (
+  fecha_actual,
+  fecha_inicio_mem,
+  fecha_fin_mem,
+  extensiones
+) => {
+  const fechaActual = new Date(fecha_actual);
+  const inicioMem = new Date(fecha_inicio_mem);
+  const finMem = new Date(fecha_fin_mem);
+
+  // Buscar una extensión donde la fecha actual esté entre extension_inicio y extension_fin
+  const extension = extensiones.find((ext) => {
+    const inicioExt = new Date(ext.extension_inicio);
+    const finExt = new Date(ext.extension_fin);
+    return fechaActual >= inicioExt && fechaActual <= finExt;
+  });
+
+  if (extension) {
+    return { extension, status: extension.tipo_extension };
+  }
+
+  // Evaluar el estado si no hay extensión activa en la fecha actual
+  if (fechaActual < inicioMem) return { extension: null, status: "espera" };
+  if (fechaActual > finMem) return { extension: null, status: "inactivo" };
+
+  return { extension: null, status: "activo" };
+};
+
 const obtenerCitasDosDiasAntes = () => {};
 module.exports = {
   obtenerCumpleaniosCliente,
@@ -280,4 +571,5 @@ module.exports = {
   insertarDatosSeguimientoDeClientes,
   obtenerCitasDosHorasAntes,
   obtenerCitasDosDiasAntes,
+  obtenerDataSeguimiento,
 };

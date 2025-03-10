@@ -14,8 +14,10 @@ const {
   insertaDatosTEST,
   insertarDatosSeguimientoDeClientes,
   obtenerCumpleaniosCliente,
+  obtenerDataSeguimiento,
 } = require("./middlewares/eventosCron.js");
 // Programa una tarea para las 9 AM todos los días
+
 cron.schedule("0 15 * * *", () => {
   // insertaDatosTEST();
   obtenerCumpleaniosCliente();
@@ -188,6 +190,7 @@ app.use("/api/storage/blob", require("./routes/upload/blob.router.js"));
 
 app.use("/api/zk", require("./routes/ZkTeco/zk.router.js"));
 app.use("/api/tipocambio", require("./routes/tipocambio.route.js"));
+
 //RUTA FILES
 app.use("/api/file", fileServer(urlArchivos));
 app.use("/api/file/logo", fileServer(urlArchivoLogos));
@@ -211,8 +214,14 @@ app.use("/api/parametros", require("./routes/parametros.route.js"));
 app.use("/api/jornada", require("./routes/jornada.route.js"));
 //TODO: USUARIOS(CLIENTES, COLABORADORES, USUARIOS LOGEADOS)
 app.use("/api/usuario", require("./routes/usuario.route.js"));
+app.use("/api/cambio-programa", require("./routes/cambioPrograma.route.js"));
 
 app.use("/api/servicios", validarJWT, require("./routes/servicios.router.js"));
+app.use(
+  "/api/generador-fechas",
+  validarJWT,
+  require("./routes/generadorFechas.router.js")
+);
 app.use(
   "/api/extension-membresia",
   require("./routes/extension_mem.router.js")
@@ -268,7 +277,7 @@ app.use("/api/parametroGasto", require("./routes/parametroGasto.router.js"));
 //CIRCUS----
 app.use("/api/circus", require("./routes/routersCircus/servicios.router.js"));
 // app.use("/circus/")
-
+// obtenerDataSeguimiento();
 //Escuchar peticiones
 app.listen(env.PORT || 4001, () => {
   console.log(`Servidor corriendo en el puerto ${env.PORT || 4001}`);

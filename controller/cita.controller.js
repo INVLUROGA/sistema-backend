@@ -9,8 +9,8 @@ const dayjs = require("dayjs");
 const es = require("dayjs/locale/es");
 dayjs.locale("es"); // Establece el idioma en español
 
-const getCitas = async (req = request, res = response) => {
-  const { servicion } = req.body;
+const getCitasxServ = async (req = request, res = response) => {
+  const { id_empresa } = req.params;
   try {
     const citas = await Cita.findAll({
       where: { flag: true },
@@ -47,15 +47,7 @@ const getCitas = async (req = request, res = response) => {
               "nombres_apellidos_empl",
             ],
           ],
-        },
-        {
-          model: detalleVenta_citas,
-          include: [
-            {
-              model: Servicios,
-              attributes: ["id"],
-            },
-          ],
+          where: { id_empresa: id_empresa },
         },
       ],
     });
@@ -104,8 +96,8 @@ const postCita = async (req = request, res = response) => {
     // );
     const objSexoTst = {
       masculino: 8,
-      fem: 9
-    }
+      fem: 9,
+    };
     const dateCita = new Date(fecha_init).toLocaleDateString([], {
       hour: "2-digit",
       minute: "2-digit",
@@ -125,7 +117,13 @@ Te confirmamos que tu cita con la nutricionista en CHANGE THE SLIM STUDIO está 
 
 Es muy importante que llegues 10 minutos antes, estés en ayunas o al menos 3 horas después de tu última comida, y que no realices actividad física previa a la cita, para garantizar una evaluación precisa.
 
-¡BIENVENIDA AL CAMBIO!  ¡${cliente.sexo_cli===objSexoTst.fem?'BIENVENIDA':(cliente.sexo_cli===0?'BIENVENID(a)':'BIENVENIDO')} AL CHANGE!💪✨
+¡BIENVENIDA AL CAMBIO!  ¡${
+          cliente.sexo_cli === objSexoTst.fem
+            ? "BIENVENIDA"
+            : cliente.sexo_cli === 0
+            ? "BIENVENID(a)"
+            : "BIENVENIDO"
+        } AL CHANGE!💪✨
 `
       );
     }
@@ -319,11 +317,11 @@ const getCitasxServiciosFilter = async (req = request, res = response) => {
 };
 
 module.exports = {
-  getCitas,
   postCita,
   getCitaporID,
   deleteCita,
   putCita,
   getCitasxServicios,
   getCitasxServiciosFilter,
+  getCitasxServ,
 };

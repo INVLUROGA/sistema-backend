@@ -74,6 +74,9 @@ const Kardex_Inventario = db.define("tb_kardex_inventario", {
   id_motivo: {
     type: DataTypes.INTEGER,
   },
+  id_enterprice: {
+    type: DataTypes.INTEGER,
+  },
   observacion: {
     type: DataTypes.STRING(990),
   },
@@ -83,8 +86,22 @@ const Kardex_Inventario = db.define("tb_kardex_inventario", {
   action: {
     type: DataTypes.STRING(20),
   },
+  flag: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
 });
 
+Kardex_Inventario.hasOne(Articulos, {
+  foreignKey: "id",
+  sourceKey: "id_item",
+  as: "articulos_kardex",
+});
+Kardex_Inventario.hasOne(Parametros, {
+  foreignKey: "id_param",
+  sourceKey: "id_motivo",
+  as: "parametro_motivo",
+});
 Articulos.hasMany(ImagePT, {
   foreignKey: "uid_location",
   sourceKey: "uid_image",
@@ -102,6 +119,16 @@ Articulos.hasOne(Parametros, {
 Articulos.sync()
   .then(() => {
     console.log("La tabla Articulos ha sido sync o ya existe.");
+  })
+  .catch((error) => {
+    console.error(
+      "Error al sincronizar el modelo con la base de datos:",
+      error
+    );
+  });
+Kardex_Inventario.sync()
+  .then(() => {
+    console.log("La tabla Kardex_Inventario ha sido sync o ya existe.");
   })
   .catch((error) => {
     console.error(

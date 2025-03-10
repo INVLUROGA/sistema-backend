@@ -9,6 +9,7 @@ const {
 } = require("./ProgramaTraining");
 const { Parametros } = require("./Parametros");
 const { ImagePT } = require("./Image");
+const { HorarioProgramaPT } = require("./HorarioProgramaPT");
 
 const Venta = db.define("tb_venta", {
   id: {
@@ -35,6 +36,9 @@ const Venta = db.define("tb_venta", {
     type: DataTypes.INTEGER,
   },
   id_empresa: {
+    type: DataTypes.INTEGER,
+  },
+  status_remove: {
     type: DataTypes.INTEGER,
   },
   fecha_venta: {
@@ -78,6 +82,9 @@ const detalleVenta_membresias = db.define("detalle_ventaMembresia", {
   horario: {
     type: DataTypes.TIME,
   },
+  id_horario: {
+    type: DataTypes.INTEGER,
+  },
   tarifa_monto: {
     type: DataTypes.DECIMAL(10, 2),
   },
@@ -110,6 +117,9 @@ const detalleVenta_Transferencia = db.define("detalle_ventaTransferencia", {
   horario: {
     type: DataTypes.TIME,
   },
+  // id_horario: {
+  //   type: DataTypes.INTEGER,
+  // },
   fec_inicio_mem: {
     type: DataTypes.STRING(12),
   },
@@ -217,10 +227,13 @@ const detalle_cambioPrograma = db.define("detalle_cambioPrograma", {
   id_venta: {
     type: DataTypes.INTEGER,
   },
-  id_cli: {
-    type: DataTypes.INTEGER,
+  uid_cli: {
+    type: DataTypes.STRING,
   },
   id_pgm: {
+    type: DataTypes.INTEGER,
+  },
+  id_horario: {
     type: DataTypes.INTEGER,
   },
   id_motivo: {
@@ -235,6 +248,11 @@ const detalle_cambioPrograma = db.define("detalle_cambioPrograma", {
   },
 });
 
+detalleVenta_membresias.hasOne(HorarioProgramaPT, {
+  foreignKey: "id_HorarioPgm",
+  sourceKey: "id_horario",
+  as: "horario_pgm",
+});
 detalleVenta_membresias.hasOne(TarifaTraining, {
   foreignKey: "id_tt",
   sourceKey: "id_tarifa",
@@ -280,9 +298,9 @@ SemanasTraining.belongsTo(detalleVenta_membresias, {
   targetKey: "id_st",
 });
 
-Venta.hasMany(detalle_cambioPrograma, {
+detalleVenta_membresias.hasMany(detalle_cambioPrograma, {
   foreignKey: "id_venta",
-  sourceKey: "id",
+  sourceKey: "id_venta",
   as: "cambio_programa",
 });
 
@@ -291,10 +309,10 @@ detalle_cambioPrograma.hasOne(ProgramaTraining, {
   sourceKey: "id_pgm",
 });
 
-detalle_cambioPrograma.hasOne(Cliente, {
-  foreignKey: "id_cli",
-  sourceKey: "id_cli",
-});
+// detalle_cambioPrograma.hasOne(Cliente, {
+//   foreignKey: "id_cli",
+//   sourceKey: "id_cli",
+// });
 
 detalleVenta_membresias.hasOne(ImagePT, {
   foreignKey: "uid_location",

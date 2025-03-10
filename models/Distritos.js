@@ -29,13 +29,19 @@ const Distritos = db.define("tb_distritos", {
 Cliente.hasOne(Distritos, {
   foreignKey: "ubigeo",
   sourceKey: "ubigeo_distrito_cli",
-  // as: "parametro_comprobante",
+  // as: "ubigeo_nac",
+});
+
+Cliente.hasOne(Distritos, {
+  foreignKey: "ubigeo",
+  sourceKey: "ubigeo_distrito_trabajo",
+  // as: "ubigeo_trabajo",
 });
 
 Empleado.hasOne(Distritos, {
   foreignKey: "ubigeo",
   sourceKey: "ubigeo_distrito_empl",
-  // as: "parametro_comprobante",
+  // as: "ubigeo_nac",
 });
 Distritos.sync()
   .then(() => {

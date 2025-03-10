@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const {
   postCita,
-  getCitas,
+  getCitasxServ,
   getCitaporID,
   deleteCita,
   putCita,
@@ -17,12 +17,9 @@ const router = Router();
 /*
 /api/cita
 */
-
+router.get("/get-citas-empresa/:id_empresa", getCitasxServ);
 router.get("/get-citas/:tipo_serv", getCitasxServicios);
-router.post(
-  "/get-citas-filter/:tipo_serv",
-  getCitasxServiciosFilter
-);
+router.post("/get-citas-filter/:tipo_serv", getCitasxServiciosFilter);
 router.post(
   "/post-cita",
   // verifyWhatsAppNumber,
