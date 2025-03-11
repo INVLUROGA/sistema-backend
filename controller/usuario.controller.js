@@ -392,12 +392,6 @@ const obtenerDatosUltimaMembresia = async (req = request, res = response) => {
       order: [["id", "DESC"]],
       include: [
         {
-          model: detalle_cambioPrograma,
-          // required: false,
-          as: "cambio_programa",
-          attributes: ["id", "fecha_cambio", "id_pgm"],
-        },
-        {
           required: true,
           model: detalleVenta_membresias,
           attributes: [
@@ -412,6 +406,12 @@ const obtenerDatosUltimaMembresia = async (req = request, res = response) => {
             {
               model: ProgramaTraining,
               attributes: ["name_pgm"],
+            },
+            {
+              model: detalle_cambioPrograma,
+              // required: false,
+              as: "cambio_programa",
+              attributes: ["id", "fecha_cambio", "id_pgm"],
             },
             {
               model: SemanasTraining,

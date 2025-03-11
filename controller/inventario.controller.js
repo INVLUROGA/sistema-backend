@@ -282,9 +282,15 @@ const getInventarioxKardexxFechasxEmpresa = async (
   try {
     const { id_empresa } = req.params;
     const inventario = await Articulos.findAll({
-      where: { flag: true, id_empresa: id_empresa },
+      where: { flag: true, id_empresa: id_empresa, id: 254 },
       raw: true,
       nest: true,
+      include: [
+        {
+          model: Parametros,
+          as: "parametro_lugar_encuentro",
+        },
+      ],
     });
     const fechas = await GeneradorFechas.findAll({
       where: { entidad: "inventario" },
@@ -303,7 +309,12 @@ const getInventarioxKardexxFechasxEmpresa = async (
     });
 
     console.log(
+      { inventario, kardexEntrada, kardexSalida, fechas },
       generarInventario(inventario, kardexEntrada, kardexSalida, fechas)
+    );
+    console.dir(
+      generarInventario(inventario, kardexEntrada, kardexSalida, fechas),
+      { depth: null, colors: true }
     );
     res.status(201).json({
       inventario_x_fechas: generarInventario(
@@ -328,19 +339,17 @@ function generarInventario(
     let inventario = new Map();
 
     // Paso 1: Iniciar todos los artículos en el inventario
-    tb_articulo.forEach(
-      ({ id, fecha_entrada, producto, cantidad, costo_unitario }) => {
-        if (fecha_entrada <= fecha_hasta) {
-          inventario.set(id, {
-            id,
-            producto,
-            stock_final: cantidad,
-            stock_inicial: cantidad, // Guardamos stock inicial
-            costo_unitario,
-          });
-        }
+    tb_articulo.forEach(({ id, fecha_entrada, producto, cantidad, ...e }) => {
+      if (fecha_entrada <= fecha_hasta) {
+        inventario.set(id, {
+          id,
+          producto,
+          stock_final: cantidad,
+          stock_inicial: cantidad, // Guardamos stock inicial
+          ...e,
+        });
       }
-    );
+    });
 
     // Paso 2: Restar salidas primero, hasta agotar stock inicial
     articulos_salida.forEach(({ id_articulo, cantidad, fecha_cambio }) => {

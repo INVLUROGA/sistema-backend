@@ -227,9 +227,6 @@ const detalle_cambioPrograma = db.define("detalle_cambioPrograma", {
   id_venta: {
     type: DataTypes.INTEGER,
   },
-  uid_cli: {
-    type: DataTypes.STRING,
-  },
   id_pgm: {
     type: DataTypes.INTEGER,
   },

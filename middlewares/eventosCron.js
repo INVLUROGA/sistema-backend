@@ -22,6 +22,9 @@ const dayjs = require("dayjs");
 const utc = require("dayjs/plugin/utc");
 const { Distritos } = require("../models/Distritos");
 const { Seguimiento } = require("../models/Seguimientos");
+
+// dayjs.extend(isBetween);
+
 // Cargar el plugin
 dayjs.extend(utc);
 
@@ -284,6 +287,7 @@ const obtenerDataSeguimiento = async () => {
   try {
     // const seguimiento = await Seguimiento.findAll();
     // console.log(seguimiento);
+    // console.log("cargando---");
 
     const ventas = await Venta.findAll({
       where: { flag: true, id_empresa: 598 },
@@ -315,40 +319,38 @@ const obtenerDataSeguimiento = async () => {
             "tel_cli",
             "ubigeo_distrito_cli",
           ],
-          include: [
-            {
-              model: Distritos,
-            },
-          ],
         },
       ],
     });
+    // console.log("cargando---1");
     const detalle_membresia = await detalleVenta_membresias.findAll({
       where: { flag: true },
       raw: true, // Mantiene los datos en formato plano
       // // venta con regalo inactiva: 15549
       nest: true, // Permite anidar las relaciones correctamente
     });
-
+    // console.log("cargando---2");
     const cambioPrograma = await detalle_cambioPrograma.findAll({
       where: { flag: true },
       raw: true, // Mantiene los datos en formato plano
       // // venta con regalo inactiva: 15549
       nest: true, // Permite anidar las relaciones correctamente
     });
-
+    // console.log("cargando---3");
     const detalle_transferencia = await detalleVenta_Transferencia.findAll({
       where: { flag: true },
       raw: true, // Mantiene los datos en formato plano
       // // venta con regalo inactiva: 15549
       nest: true, // Permite anidar las relaciones correctamente
     });
+    // console.log("cargando---4");
     const membresia_extensiones = await ExtensionMembresia.findAll({
       where: { flag: true },
       raw: true, // Mantiene los datos en formato plano
       // // venta con regalo inactiva: 15549
       nest: true, // Permite anidar las relaciones correctamente
     });
+    // console.log("cargando---5");
     const ventasOrganizadas = organizarDatos(
       ventas,
       detalle_membresia,
@@ -356,74 +358,82 @@ const obtenerDataSeguimiento = async () => {
       detalle_transferencia,
       membresia_extensiones
     );
+    console.dir(ventasOrganizadas, { depth: null });
 
-    const dataSeguimiento = ventasOrganizadas.map((venta) => {
-      const detalleMem = venta.detalle_membresia[0];
-      const extensionMem = detalleMem?.extensionmembresia;
-      const transferencia = venta?.detalle_transferencia;
-      const cambios = detalleMem?.cambioPrograma;
-      let id_venta = venta.id;
-      let uid_cli = venta.tb_cliente.uid;
-      let fec_inicio_mem = detalleMem.id ? detalleMem.fec_inicio_mem : null;
-      let fec_fin_mem = detalleMem.id ? detalleMem.fec_fin_mem : "nooo";
-      let id_pgm = detalleMem.id ? detalleMem.id_pgm : null;
-      let id_horario = detalleMem.id ? detalleMem.id_horario : null;
-      let id_membresia_extension = 0;
-      let id_cambio = 0;
-      if (extensionMem.length > 0) {
-        const suma_dias_extension = extensionMem.reduce(
-          (a, b) => a + Number(b.dias_habiles || 0),
-          0
-        );
-        // id_membresia_extension = extensionMem.id;
-        fec_fin_mem = sumarDiasHabiles(fec_fin_mem, suma_dias_extension);
-      }
-      if (transferencia.length > 0) {
-        // fec_inicio_mem = transferencia.fec_fin_mem; // Nueva fecha de inicio
-        fec_fin_mem = transferencia.fec_inicio_mem;
-      }
+    // const dataSeguimiento = ventasOrganizadas.map((venta) => {
+    //   const detalleMem = venta.detalle_membresia[0];
+    //   const extensionMem = detalleMem?.extensionmembresia;
+    //   const transferencia = venta?.detalle_transferencia;
+    //   const cambios = detalleMem?.cambioPrograma;
+    //   let id_venta = venta.id;
+    //   let uid_cli = venta.tb_cliente.uid;
+    //   let fec_inicio_mem = detalleMem.id ? detalleMem.fec_inicio_mem : null;
+    //   let fec_fin_mem = detalleMem.id ? detalleMem.fec_fin_mem : "nooo";
+    //   let id_pgm = detalleMem.id ? detalleMem.id_pgm : null;
+    //   let id_horario = detalleMem.id ? detalleMem.id_horario : null;
+    //   let id_membresia_extension = 0;
+    //   let id_cambio = 0;
+    //   if (extensionMem.length > 0) {
+    //     const suma_dias_extension = extensionMem.reduce(
+    //       (a, b) => a + Number(b.dias_habiles || 0),
+    //       0
+    //     );
+    //     // id_membresia_extension = extensionMem.id;
+    //     fec_fin_mem = sumarDiasHabiles(fec_fin_mem, suma_dias_extension);
+    //   }
+    //   if (transferencia.length > 0) {
+    //     // fec_inicio_mem = transferencia.fec_fin_mem; // Nueva fecha de inicio
+    //     fec_fin_mem = transferencia.fec_inicio_mem;
+    //   }
 
-      if (cambios.length > 0) {
-        let ultimoCambio = cambios[cambios.length - 1]; // Está ordenado DESC, el primero es el último cambio
-        // id_cambio =
-        id_pgm = ultimoCambio.id_pgm || id_pgm;
-        id_horario = ultimoCambio.id_horario || id_horario;
-      }
-      id_membresia_extension = obtenerExtensionStatus(
-        new Date(),
-        fec_inicio_mem,
-        fec_fin_mem,
-        extensionMem
-      ).extension
-        ? obtenerExtensionStatus(
-            new Date(),
-            fec_inicio_mem,
-            fec_fin_mem,
-            extensionMem
-          ).extension.id
-        : 0;
+    //   if (cambios.length > 0) {
+    //     let ultimoCambio = cambios[cambios.length - 1]; // Está ordenado DESC, el primero es el último cambio
+    //     // id_cambio =
+    //     id_pgm = ultimoCambio.id_pgm || id_pgm;
+    //     id_horario = ultimoCambio.id_horario || id_horario;
+    //   }
+    //   id_membresia_extension = obtenerExtensionStatus(
+    //     new Date(),
+    //     fec_inicio_mem,
+    //     fec_fin_mem,
+    //     extensionMem
+    //   ).extension
+    //     ? obtenerExtensionStatus(
+    //         new Date(),
+    //         fec_inicio_mem,
+    //         fec_fin_mem,
+    //         extensionMem
+    //       ).extension.id
+    //     : 0;
+    //   console.log("ya casi");
 
-      return {
-        uid_cli,
-        id_venta,
-        id_cambio,
-        id_membresia_extension: id_membresia_extension,
-        status_periodo: obtenerExtensionStatus(
-          new Date(),
-          fec_inicio_mem,
-          fec_fin_mem,
-          extensionMem
-        ).status,
-        // ventaTrns: venta.venta_transferencia,
-        // ventacam: venta.cambio_programa,
-        sesiones_pendientes: diasHabilesRestantes(new Date(), fec_fin_mem),
-        fecha_vencimiento: fec_fin_mem,
-        id_pgm,
-        id_horario,
-      };
-    });
+    //   return {
+    //     uid_cli,
+    //     id_venta,
+    //     id_cambio,
+    //     id_membresia_extension: id_membresia_extension,
+    //     status_periodo: obtenerExtensionStatus(
+    //       new Date(),
+    //       fec_inicio_mem,
+    //       fec_fin_mem,
+    //       extensionMem
+    //     ).status,
+    //     // ventaTrns: venta.venta_transferencia,
+    //     // ventacam: venta.cambio_programa,
+    //     sesiones_pendientes: diasHabilesRestantes(new Date(), fec_fin_mem),
+    //     fecha_vencimiento: fec_fin_mem,
+    //     id_pgm,
+    //     id_horario,
+    //   };
+    // });
+    console.log("cargando---7");
 
-    await Seguimiento.bulkCreate(dataSeguimiento);
+    console.log("obteniendo data seg");
+    const dataSeg = calcularFechaVencimiento(ventasOrganizadas);
+    console.log(dataSeg);
+
+    // await Seguimiento.bulkCreate([]);
+    console.log("data seguimiento success");
 
     return [];
   } catch (error) {
@@ -498,29 +508,28 @@ function diasHabilesRestantes(fecInicio, fecFin) {
   // Determinar si ambas fechas son hábiles
 
   // return diasHabiles;
-  let inicio = new Date(fecInicio);
-  let fin = new Date(fecFin);
-  let dias = 0;
-  // Contabilizar si inicio o fin son días hábiles
-  if (esDiaHabil(inicio)) dias++;
-  if (esDiaHabil(fin)) dias++;
-  // Determinar si debemos contar todos los días o solo hábiles
-  const contarTodos = inicio > fin;
+  let inicio = dayjs(fecInicio);
+  let fin = dayjs(fecFin);
 
-  // Si inicio es mayor que fin, intercambiamos las fechas para recorrer correctamente
-  if (contarTodos) {
-    let temp = inicio;
-    inicio = fin;
-    fin = temp;
+  // Determinar la dirección del conteo
+  let step = inicio.isBefore(fin) ? 1 : -1;
+
+  // Asegurar que inicio siempre sea menor para calcular correctamente
+  if (step === -1) {
+    [inicio, fin] = [fin, inicio]; // Intercambia valores
   }
 
-  while (inicio <= fin) {
-    const dia = inicio.getDay();
-    if (contarTodos || (dia !== 0 && dia !== 6)) dias++; // Si contarTodos, cuenta todos los días
-    inicio.setDate(inicio.getDate() + 1);
+  let totalDias = fin.diff(inicio, "day") + 1; // Contamos ambos extremos
+  let semanasCompletas = Math.floor(totalDias / 7);
+  let diasHabiles = semanasCompletas * 5; // Cada semana completa tiene 5 días hábiles
+
+  let extra = 0;
+  for (let i = 0; i < totalDias % 7; i++) {
+    let dia = inicio.add(i, "day").day();
+    if (dia !== 0 && dia !== 6) extra++; // Excluir sábados (6) y domingos (0)
   }
 
-  return contarTodos ? -dias : dias; // Si se invirtió, devolver negativo
+  return step * (diasHabiles + extra);
 }
 function sumarDiasHabiles(fecha, numeroDias) {
   const fechaInicial = new Date(fecha);
@@ -562,6 +571,52 @@ const obtenerExtensionStatus = (
   if (fechaActual > finMem) return { extension: null, status: "inactivo" };
 
   return { extension: null, status: "activo" };
+};
+
+const addBusinessDays = (startDate, businessDays) => {
+  let date = dayjs(startDate);
+  let addedDays = 0;
+
+  while (addedDays < businessDays) {
+    date = date.add(1, "day");
+    if (date.day() >= 1 && date.day() <= 5) {
+      // Solo lunes a viernes
+      addedDays++;
+    }
+  }
+
+  return date;
+};
+
+const calcularFechaVencimiento = (ventas) => {
+  return ventas.map((venta) => {
+    if (!venta.detalle_membresia || venta.detalle_membresia.length === 0) {
+      return { id_venta: venta.id, error: "No hay membresía asociada" };
+    }
+
+    let membresia = venta.detalle_membresia[0];
+    let fecFinMem = dayjs(membresia.fec_fin_mem); // Convertir fecha de fin de membresía
+
+    // Calcular el total de días hábiles sumando todas las extensiones
+    let totalDiasHabiles =
+      membresia.extensionmembresia?.reduce(
+        (sum, ext) => sum + (parseInt(ext.dias_habiles, 10) || 0),
+        0
+      ) || 0;
+
+    // Calcular la nueva fecha de vencimiento con días hábiles
+    let fechaVencimiento = addBusinessDays(fecFinMem, totalDiasHabiles);
+
+    // Calcular diferencia entre fecha actual y fecha de vencimiento
+    let fechaActual = dayjs(); // Fecha actual
+    let faltaDias = fechaVencimiento.diff(fechaActual, "day"); // Ahora es precisa
+
+    return {
+      id_venta: venta.id,
+      fecha_vencimiento: fechaVencimiento.format("YYYY-MM-DD"),
+      falta_dias: faltaDias, // Puede ser negativo si ya venció
+    };
+  });
 };
 
 const obtenerCitasDosDiasAntes = () => {};

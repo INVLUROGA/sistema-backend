@@ -16,11 +16,22 @@ const obtenerTodoCambioPrograma = async (req = request, res = response) => {
     });
   }
 };
-const postCambioPrograma = async(req=request, res=response)=>{
+const postCambioPrograma = async (req = request, res = response) => {
   try {
-    const { id_cli, id_venta, id_cambio } = req.body;
-    const cambioPrograma = new CambioPrograma({
+    const { id_cli, id_venta, id_pgm, id_horario, id_motivo, observacion } =
+      req.body;
+    const cambioPrograma = new detalle_cambioPrograma({
+      id_cli,
+      id_venta,
+      id_pgm,
+      id_horario,
+      id_motivo,
+      observacion,
       // Aquí se deben llenar los campos del cambio de programa
+    });
+    await cambioPrograma.save()
+    res.status(201).json({
+      data: 'cliente cambiado de programa con exito'
     });
   } catch (error) {
     console.log(error);
@@ -28,7 +39,8 @@ const postCambioPrograma = async(req=request, res=response)=>{
       msg: "ERROR EN OBTENER CAMBIO DE PROGRAMA",
     });
   }
-}
+};
 module.exports = {
   obtenerCambioPrograma: obtenerTodoCambioPrograma,
+  postCambioPrograma,
 };
