@@ -64,6 +64,9 @@ const detalleVenta_membresias = db.define("detalle_ventaMembresia", {
   fec_fin_mem: {
     type: DataTypes.STRING(12),
   },
+  fec_fin_mem_oftime: {
+    type: DataTypes.DATE,
+  },
   id_pgm: {
     type: DataTypes.INTEGER,
   },

@@ -17,17 +17,21 @@ const { request, response } = require("express");
 const qs = require("qs");
 const axios = require("axios");
 const { enviarMensajesWsp } = require("../config/whatssap-web");
-const dayjs = require("dayjs");
 
-const utc = require("dayjs/plugin/utc");
 const { Distritos } = require("../models/Distritos");
 const { Seguimiento } = require("../models/Seguimientos");
 
-// dayjs.extend(isBetween);
+const dayjs = require("dayjs");
+const utc = require("dayjs/plugin/utc");
+const timezone = require("dayjs/plugin/timezone");
+const isSameOrBefore = require("dayjs/plugin/isSameOrBefore");
 
-// Cargar el plugin
 dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(isSameOrBefore);
 
+// Opcional: obtener la zona horaria local
+const defaultTz = dayjs.tz.guess();
 const cumpleaniosSocios = async () => {};
 
 const insertaDatosTEST = async () => {
@@ -358,7 +362,7 @@ const obtenerDataSeguimiento = async () => {
       detalle_transferencia,
       membresia_extensiones
     );
-    console.dir(ventasOrganizadas, { depth: null });
+    // console.dir(ventasOrganizadas, { depth: null });
 
     // const dataSeguimiento = ventasOrganizadas.map((venta) => {
     //   const detalleMem = venta.detalle_membresia[0];
@@ -426,14 +430,14 @@ const obtenerDataSeguimiento = async () => {
     //     id_horario,
     //   };
     // });
-    console.log("cargando---7");
+    // console.log("cargando---7");
 
-    console.log("obteniendo data seg");
-    const dataSeg = calcularFechaVencimiento(ventasOrganizadas);
-    console.log(dataSeg);
+    // console.log("obteniendo data seg");
+    const dataSeg = calcularFechasVentas(ventasOrganizadas);
+    // console.dir(dataSeg, { depth: null });
 
     // await Seguimiento.bulkCreate([]);
-    console.log("data seguimiento success");
+    // console.log("data seguimiento success");
 
     return [];
   } catch (error) {
@@ -572,53 +576,155 @@ const obtenerExtensionStatus = (
 
   return { extension: null, status: "activo" };
 };
+// Función para determinar si una fecha es día hábil (lunes a viernes)
+// Función que determina si un día es laborable (lunes a viernes)
+// function isBusinessDay(date) {
+//   const dayOfWeek = date.day(); // 0: domingo, 6: sábado
+//   return dayOfWeek !== 0 && dayOfWeek !== 6;
+// }
 
+function isBusinessDay(date) {
+  const dayOfWeek = date.getDay(); // 0: domingo, 6: sábado
+  return dayOfWeek !== 0 && dayOfWeek !== 6;
+}
+
+function isBusinessDayJS(date) {
+  // Verifica si el día no es sábado ni domingo
+  return date.day() !== 0 && date.day() !== 6;
+}
+
+// Función auxiliar para sumar días hábiles a una fecha y almacenar cada día considerado
 const addBusinessDays = (startDate, businessDays) => {
-  let date = dayjs(startDate);
-  let addedDays = 0;
+  let date = new Date(startDate);
+  const diasCon = [];
 
+  // Si no se deben agregar días, se incluye la fecha de inicio si es día hábil
+  if (businessDays === 0) {
+    if (isBusinessDay(date)) {
+      diasCon.push(new Date(date));
+    }
+    return { fecha: date, diasCon };
+  }
+
+  let addedDays = 0;
   while (addedDays < businessDays) {
-    date = date.add(1, "day");
-    if (date.day() >= 1 && date.day() <= 5) {
-      // Solo lunes a viernes
+    date.setDate(date.getDate() + 1);
+    if (isBusinessDay(date)) {
+      diasCon.push(new Date(date));
       addedDays++;
     }
   }
-
-  return date;
+  return { fecha: date, diasCon };
 };
 
-const calcularFechaVencimiento = (ventas) => {
+// Función que cuenta los días hábiles entre dos fechas de forma inclusiva,
+// contando la fecha de inicio y la fecha de fin si son días hábiles.
+const getBusinessDaysDiffInclusive = (start, end) => {
+  // Convertir las fechas a objetos dayjs en la zona horaria local y normalizarlas a medianoche
+  let startDate = dayjs(start);
+  let endDate = dayjs(end);
+
+  let diasDesc = [];
+
+  // Si startDate es un día hábil, se incrementa en 1 día
+  if (isBusinessDayJS(startDate)) {
+    startDate = startDate.add(1, "day");
+  }
+  // Si endDate es un día hábil, se incrementa en 1 día
+  if (isBusinessDayJS(endDate)) {
+    endDate = endDate.add(1, "day");
+  }
+
+  // Si la fecha de inicio es mayor que la fecha final, se intercambian
+  if (startDate.isAfter(endDate)) {
+    [startDate, endDate] = [endDate, startDate];
+  }
+
+  let current = startDate;
+
+  // Recorre todos los días entre startDate y endDate, incluyendo ambos
+  while (current.isBefore(endDate) || current.isSame(endDate)) {
+    if (isBusinessDayJS(current)) {
+      // Se agrega el día si es hábil
+      diasDesc.push(current.toDate());
+    }
+    current = current.add(1, "day");
+  }
+  return {
+    diasDesc,
+    endDate: endDate.toDate(),
+    startDate: startDate.toDate(),
+    dateInit: { start, end },
+  };
+};
+
+// Función principal que procesa un array de ventas
+function calcularFechasVentas(ventas) {
   return ventas.map((venta) => {
+    // Verificar que exista al menos un detalle de membresía
     if (!venta.detalle_membresia || venta.detalle_membresia.length === 0) {
-      return { id_venta: venta.id, error: "No hay membresía asociada" };
+      return { id: venta.id, error: "No hay membresía asociada" };
     }
 
-    let membresia = venta.detalle_membresia[0];
-    let fecFinMem = dayjs(membresia.fec_fin_mem); // Convertir fecha de fin de membresía
+    const membresia = venta.detalle_membresia[0];
+    // Convertir la fecha de fin de membresía a objeto Date
+    const fechaFinMem = new Date(membresia.fec_fin_mem_oftime);
+    const fechaFinMem_ = new Date(membresia.fec_fin_mem);
 
-    // Calcular el total de días hábiles sumando todas las extensiones
-    let totalDiasHabiles =
-      membresia.extensionmembresia?.reduce(
-        (sum, ext) => sum + (parseInt(ext.dias_habiles, 10) || 0),
-        0
-      ) || 0;
+    // Sumar todos los días hábiles de las extensiones (si existen)
+    const totalDiasHabiles =
+      membresia.extensionmembresia &&
+      Array.isArray(membresia.extensionmembresia)
+        ? membresia.extensionmembresia.reduce(
+            (sum, ext) => sum + (parseInt(ext.dias_habiles, 10) || 0),
+            0
+          )
+        : 0;
 
-    // Calcular la nueva fecha de vencimiento con días hábiles
-    let fechaVencimiento = addBusinessDays(fecFinMem, totalDiasHabiles);
+    // Calcular la fecha de vencimiento sumando el total de días hábiles a la fecha de fin de membresía
+    const { fecha: fechaVencimiento, diasCon } = addBusinessDays(
+      fechaFinMem,
+      totalDiasHabiles
+    );
 
-    // Calcular diferencia entre fecha actual y fecha de vencimiento
-    let fechaActual = dayjs(); // Fecha actual
-    let faltaDias = fechaVencimiento.diff(fechaActual, "day"); // Ahora es precisa
+    // Calcular la diferencia en días hábiles de forma inclusiva (se cuentan endpoints si son hábiles)
+    const fechaActual = new Date();
+    const { faltan_dias, diasDesc, endDate, dateInit, startDate } =
+      getBusinessDaysDiffInclusive(fechaActual, fechaVencimiento);
+
+    // status_periodo: si existe extensión y la fecha actual se encuentra entre extension_inicio y extension_fin de algún objeto, se retorna ese objeto; de lo contrario, se retorna un objeto vacío.
+    let status_periodo = {};
+    if (
+      membresia.extensionmembresia &&
+      Array.isArray(membresia.extensionmembresia)
+    ) {
+      for (const ext of membresia.extensionmembresia) {
+        const extInicio = new Date(ext.extension_inicio);
+        const extFin = new Date(ext.extension_fin);
+        if (fechaActual >= extInicio && fechaActual <= extFin) {
+          status_periodo = ext;
+          break;
+        }
+      }
+    }
 
     return {
-      id_venta: venta.id,
-      fecha_vencimiento: fechaVencimiento.format("YYYY-MM-DD"),
-      falta_dias: faltaDias, // Puede ser negativo si ya venció
+      id: venta.id,
+      fecha_vencimiento: fechaVencimiento.toISOString().split("T")[0], // Formato YYYY-MM-DD
+      faltan_dias,
+      status_periodo,
+      extensiones: membresia.extensionmembresia,
+      diasContabilizados: diasDesc,
+      endDate,
+      dateInit,
+      startDate,
+      // diasCon: diasCon.map((d) => d.toISOString().split("T")[0]),
+      // diasDesc: diasDesc.map((d) => d.toISOString().split("T")[0]),
+      // totalDiasHabiles,
+      // fec_fin_mem: fechaFinMem.toISOString().split("T")[0],
     };
   });
-};
-
+}
 const obtenerCitasDosDiasAntes = () => {};
 module.exports = {
   obtenerCumpleaniosCliente,

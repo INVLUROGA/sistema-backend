@@ -778,7 +778,7 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           key: "mkt-adquisicion",
-          label: "ADQUISICION",
+          label: "VENTAS COMPARATIVAS POR AÑO",
           isTitle: false,
           icon: "uil-calender",
           url: "/mkt-adquisicion",

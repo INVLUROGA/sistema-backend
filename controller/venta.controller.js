@@ -667,7 +667,7 @@ const get_VENTAS = async (req = request, res = response) => {
         "id_tipoFactura",
         "numero_transac",
         "fecha_venta",
-        "status_remove"
+        "status_remove",
       ],
       order: [["fecha_venta", "DESC"]],
       include: [
@@ -1560,6 +1560,11 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
                   include: [
                     {
                       model: Distritos,
+                      as: "ubigeo_nac",
+                    },
+                    {
+                      model: Distritos,
+                      as: "ubigeo_trabajo",
                     },
                   ],
                 },
@@ -1620,6 +1625,11 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
                   include: [
                     {
                       model: Distritos,
+                      as: "ubigeo_nac",
+                    },
+                    {
+                      model: Distritos,
+                      as: "ubigeo_trabajo",
                     },
                   ],
                 },
@@ -1671,6 +1681,11 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
               include: [
                 {
                   model: Distritos,
+                  as: "ubigeo_nac",
+                },
+                {
+                  model: Distritos,
+                  as: "ubigeo_trabajo",
                 },
                 {
                   model: Marcacion,
