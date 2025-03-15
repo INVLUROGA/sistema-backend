@@ -117,6 +117,7 @@ const getReporteSeguimiento = async (req, res) => {
               ],
               include: [
                 {
+                  as: "ubigeo_nac",
                   model: Distritos,
                 },
                 // {
@@ -180,6 +181,7 @@ const getReporteSeguimiento = async (req, res) => {
               ],
               include: [
                 {
+                  as: "ubigeo_nac",
                   model: Distritos,
                 },
                 {
