@@ -15,6 +15,7 @@ const {
   insertarDatosSeguimientoDeClientes,
   obtenerCumpleaniosCliente,
   obtenerDataSeguimiento,
+  enviarMensajesxCitasxHorasFinales,
 } = require("./middlewares/eventosCron.js");
 // Programa una tarea para las 9 AM todos los días
 
@@ -22,9 +23,10 @@ cron.schedule("0 15 * * *", () => {
   // insertaDatosTEST();
   obtenerCumpleaniosCliente();
 });
-cron.schedule("0 * * * *", () => {
+cron.schedule("* * * * *", () => {
   // insertaDatosTEST();
   // obtenerCumpleaniosCliente();
+  enviarMensajesxCitasxHorasFinales();
 });
 const testtt = async () => {};
 // insertarDatosSeguimientoDeClientes("true");

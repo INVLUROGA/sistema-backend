@@ -25,6 +25,8 @@ const dayjs = require("dayjs");
 const utc = require("dayjs/plugin/utc");
 const timezone = require("dayjs/plugin/timezone");
 const isSameOrBefore = require("dayjs/plugin/isSameOrBefore");
+const { Cita } = require("../models/Cita");
+const obtenerCitasxHorasFinales = require("./EventosCron/obtenerCitasxHorasFinales");
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -281,12 +283,6 @@ CHANGE - The Slim Studio
     return [];
   }
 };
-const obtenerCitasDosHorasAntes = () => {
-  try {
-  } catch (error) {
-    console.log(error);
-  }
-};
 const obtenerDataSeguimiento = async () => {
   try {
     // const seguimiento = await Seguimiento.findAll();
@@ -445,6 +441,24 @@ const obtenerDataSeguimiento = async () => {
     throw error;
   }
 };
+
+const enviarMensajesxCitasxHorasFinales = async () => {
+  try {
+    const citasConfirmadas = await Cita.findAll({
+      where: {
+        status_cita: "500",
+      },
+      raw: true,
+      nest: true,
+    });
+    const data = await obtenerCitasxHorasFinales(1, new Date(),citasConfirmadas)
+    console.log(data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+//TODO: FUNCIONES PARA ORGANIZAR DATOS
 function organizarDatos(
   ventas = [],
   detalle_membresia = [],
@@ -726,11 +740,12 @@ function calcularFechasVentas(ventas) {
   });
 }
 const obtenerCitasDosDiasAntes = () => {};
+
 module.exports = {
   obtenerCumpleaniosCliente,
   insertaDatosTEST,
   insertarDatosSeguimientoDeClientes,
-  obtenerCitasDosHorasAntes,
   obtenerCitasDosDiasAntes,
   obtenerDataSeguimiento,
+  enviarMensajesxCitasxHorasFinales,
 };

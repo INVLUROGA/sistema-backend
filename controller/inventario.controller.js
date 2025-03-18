@@ -202,8 +202,14 @@ const obtenerInventarioxFechas = async (req = request, res = response) => {
 const postKardexEntraSale = async (req = request, res = response) => {
   try {
     const { action } = req.params;
-    const { id_item, cantidad, fecha_cambio, id_motivo, observacion } =
-      req.body;
+    const {
+      id_item,
+      id_lugar_destino,
+      cantidad,
+      fecha_cambio,
+      id_motivo,
+      observacion,
+    } = req.body;
     const entraSale = new Kardex_Inventario({
       id_item,
       cantidad,
@@ -211,6 +217,7 @@ const postKardexEntraSale = async (req = request, res = response) => {
       id_motivo,
       observacion,
       action,
+      id_lugar_destino,
     });
     await entraSale.save();
     res.status(201).json({
@@ -255,6 +262,10 @@ const obtenerKardex = async (req = request, res = response) => {
           model: Parametros,
           as: "parametro_motivo",
         },
+        {
+          model: Parametros,
+          as: "parametro_lugar_destino",
+        },
       ],
     });
     res.status(201).json({
@@ -264,6 +275,9 @@ const obtenerKardex = async (req = request, res = response) => {
     console.log(error);
   }
 };
+
+
+
 const postFechaReportKardex = async (req = request, res = response) => {
   try {
     const { fecha_hasta } = req.body;
@@ -298,6 +312,7 @@ const getInventarioxKardexxFechasxEmpresa = async (
     const fechas = await GeneradorFechas.findAll({
       where: { entidad: "inventario" },
       attributes: [["fecha_fin", "fecha_hasta"]],
+      order: [["fecha_hasta", "DESC"]],
       raw: true,
       nest: true,
     });
@@ -481,9 +496,9 @@ function generarInventario(
       // Aquí se retorna el array de items con los detalles de cada producto/ubicación
       articulos_directos: itemsArray,
       // Totales acumulados para cada tipo de movimiento (para fines de depuración)
-      kardexEntrada: kardexEntrada.length,
-      kardexSalida: kardexSalida.length,
-      transferencias: transferencias?.length,
+      kardexEntrada: kardexEntrada,
+      kardexSalida: kardexSalida,
+      transferencias: transferencias,
     });
   });
 

@@ -32,6 +32,9 @@ const Articulos = db.define("tb_articulos", {
   costo_unitario: {
     type: DataTypes.DECIMAL(10, 2),
   },
+  costo_unitario_dolares: {
+    type: DataTypes.DECIMAL(10, 2),
+  },
   costo_total_soles: {
     type: DataTypes.DECIMAL(10, 2),
   },
@@ -71,6 +74,9 @@ const Kardex_Inventario = db.define("tb_kardex_inventario", {
   id_item: {
     type: DataTypes.INTEGER,
   },
+  id_lugar_destino: {
+    type: DataTypes.INTEGER,
+  },
   id_motivo: {
     type: DataTypes.INTEGER,
   },
@@ -92,6 +98,46 @@ const Kardex_Inventario = db.define("tb_kardex_inventario", {
   },
 });
 
+// const Kardex_Inventario_Transferencia = db.define("tb_kardex_inventario_transferencia", {
+//   id: {
+//     type: DataTypes.INTEGER,
+//     autoIncrement: true,
+//     primaryKey: true,
+//   },
+//   cantidad: {
+//     type: DataTypes.INTEGER,
+//   },
+//   id_item: {
+//     type: DataTypes.INTEGER,
+//   },
+//   id_lugar_destino: {
+//     type: DataTypes.INTEGER,
+//   },
+//   id_motivo: {
+//     type: DataTypes.INTEGER,
+//   },
+//   id_enterprice: {
+//     type: DataTypes.INTEGER,
+//   },
+//   observacion: {
+//     type: DataTypes.STRING(990),
+//   },
+//   fecha_cambio: {
+//     type: DataTypes.STRING(12),
+//   },
+//   action: {
+//     type: DataTypes.STRING(20),
+//   },
+//   flag: {
+//     type: DataTypes.BOOLEAN,
+//     defaultValue: true,
+//   },
+// });
+Kardex_Inventario.hasOne(Parametros, {
+  foreignKey: "id_param",
+  sourceKey: "id_lugar_destino",
+  as: "parametro_lugar_destino",
+});
 Kardex_Inventario.hasOne(Articulos, {
   foreignKey: "id",
   sourceKey: "id_item",

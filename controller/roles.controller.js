@@ -872,18 +872,25 @@ const seccionGET = async (req = request, res = response) => {
     if (modulo === "mod-inventario") {
       MENU_ITEMS = [
         {
-          key: "gest-invent",
-          label: "Gestion de inventario",
-          isTitle: false,
-          icon: "pi pi-address-book",
-          url: "/gest-inventario",
-        },
-        {
-          key: "gest-prov",
-          label: "Gestion de proveedores",
+          //key: "reporte-utilidad-pgm",
+          label: "ENTRADA DE ITEMS",
           isTitle: false,
           icon: "uil-calender",
-          url: "/gestion-proveedores",
+          url: "/entrada-inventario",
+        },
+        {
+          //key: "reporte-utilidad-pgm",
+          label: "SALIDA DE ITEMS",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/salida-inventario",
+        },
+        {
+          //key: "reporte-utilidad-pgm",
+          label: "TRANSFERENCIAS DE ITEMS",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/transferencia-inventario",
         },
       ];
     }

@@ -1629,6 +1629,7 @@ const getReporteVentas = async (req = request, res = response) => {
             {
               model: Distritos,
               attributes: ["distrito"],
+              as: 'ubigeo_distrito_cli'
             },
             {
               model: Parametros,
