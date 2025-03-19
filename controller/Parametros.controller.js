@@ -3,6 +3,7 @@ const {
   Parametros,
   Parametros_3,
   Parametro_periodo,
+  Parametros_zonas,
 } = require("../models/Parametros");
 const { Proveedor } = require("../models/Proveedor");
 const { Cliente, Empleado } = require("../models/Usuarios");
@@ -1068,6 +1069,22 @@ const getParametrosporENTIDADyGRUPO__PERIODO = async (
   }
 };
 
+const getParametrosZonas = async (req = request, res = response) => {
+  const { id_enterprice } = req.params;
+  try {
+    console.log(id_enterprice, "holi");
+
+    const zonas = await Parametros_zonas.findAll({
+      order: [["id", "DESC"]],
+      where: { flag: true, id_empresa: id_enterprice },
+    });
+
+    res.status(200).json(zonas);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 module.exports = {
   obtenerDistritosxDepartamentoxProvincia,
   postParametros3,
@@ -1102,5 +1119,6 @@ module.exports = {
   postRegistrarParametros,
   postEliminar,
   actualizarParametro,
+  getParametrosZonas,
   getParametrosporENTIDADyGRUPO__PERIODO,
 };

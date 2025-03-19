@@ -2,7 +2,7 @@ const { request, response } = require("express");
 const { Articulos, Kardex_Inventario } = require("../models/Articulo");
 const uid = require("uuid");
 const { ImagePT } = require("../models/Image");
-const { Parametros } = require("../models/Parametros");
+const { Parametros, Parametros_zonas } = require("../models/Parametros");
 const { Sequelize } = require("sequelize");
 const { GeneradorFechas } = require("../models/GeneradorFechas");
 const obtenerInventario = async (req = request, res = response) => {
@@ -25,9 +25,12 @@ const obtenerInventario = async (req = request, res = response) => {
         //   as: "parametro_nivel",
         // },
         {
-          model: Parametros,
+          model: Parametros_zonas,
           as: "parametro_lugar_encuentro",
-          attributes: ["label_param", "grupo_param", "orden_param"],
+          attributes: [
+            ["nombre_zona", "label_param"],
+            ["orden_zona", "orden_param"],
+          ],
           include: [
             {
               model: ImagePT,
@@ -175,9 +178,12 @@ const obtenerInventarioxFechas = async (req = request, res = response) => {
         //   as: "parametro_nivel",
         // },
         {
-          model: Parametros,
+          model: Parametros_zonas,
           as: "parametro_lugar_encuentro",
-          attributes: ["label_param", "grupo_param", "orden_param"],
+          attributes: [
+            ["nombre_zona", "label_param"],
+            ["orden_zona", "orden_param"],
+          ],
           include: [
             {
               model: ImagePT,
@@ -263,8 +269,12 @@ const obtenerKardex = async (req = request, res = response) => {
           as: "parametro_motivo",
         },
         {
-          model: Parametros,
+          model: Parametros_zonas,
           as: "parametro_lugar_destino",
+          attributes: [
+            ["nombre_zona", "label_param"],
+            ["orden_zona", "orden_param"],
+          ],
         },
       ],
     });
@@ -275,8 +285,6 @@ const obtenerKardex = async (req = request, res = response) => {
     console.log(error);
   }
 };
-
-
 
 const postFechaReportKardex = async (req = request, res = response) => {
   try {
@@ -301,8 +309,12 @@ const getInventarioxKardexxFechasxEmpresa = async (
       nest: true,
       include: [
         {
-          model: Parametros,
+          model: Parametros_zonas,
           as: "parametro_lugar_encuentro",
+          attributes: [
+            ["nombre_zona", "label_param"],
+            ["orden_zona", "orden_param"],
+          ],
         },
         {
           model: ImagePT,

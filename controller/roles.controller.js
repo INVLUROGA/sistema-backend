@@ -892,6 +892,13 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           url: "/transferencia-inventario",
         },
+        {
+          //key: "reporte-utilidad-pgm",
+          label: "AGREGAR ARTICULOS A CHORRILLOS",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/agregar-articulos-chorrillos",
+        },
       ];
     }
     res.status(200).json({

@@ -33,6 +33,7 @@ const {
   postEliminar,
   actualizarParametro,
   getParametrosporENTIDADyGRUPO__PERIODO,
+  getParametrosZonas,
 } = require("../controller/Parametros.controller");
 const { obtener_estado_membresia } = require("../middlewares/logicaSistema");
 const router = Router();
@@ -41,6 +42,8 @@ const router = Router();
  * /api/parametros/
  */
 // router.get("/get_params/forma_pago")
+
+router.get("/get_params/articulo/zonas/:id_enterprice", getParametrosZonas);
 router.get(
   "/get_params/distritos/:department_id/:id_provincia",
   obtenerDistritosxDepartamentoxProvincia
@@ -49,6 +52,7 @@ router.get(
   "/get_params/pack-venta-servicio/:tipo_serv",
   getParametrosVentaFitology
 );
+
 router.get("/get_params/citas-nutricionales/:id_cli", getCitasServicioxCliente);
 router.get("/get_params/tipo_aportes", getParametrosTipoAportes);
 router.get(

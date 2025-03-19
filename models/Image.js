@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 const { db } = require("../database/sequelizeConnection");
 const { ContratoProv, Proveedor } = require("./Proveedor");
-const { Parametros } = require("./Parametros");
+const { Parametros, Parametros_zonas } = require("./Parametros");
 
 const ImagePT = db.define(
   "tb_image",
@@ -87,6 +87,10 @@ ImagePT.belongsTo(ContratoProv, {
 });
 
 
+Parametros_zonas.hasMany(ImagePT, {
+  foreignKey: "uid_location",
+  sourceKey: "uid_image",
+});
 Parametros.hasMany(ImagePT, {
   foreignKey: "uid_location",
   sourceKey: "uid_image",

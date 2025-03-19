@@ -62,7 +62,29 @@ const Parametros_3 = db.define("tb_parametros_3", {
     defaultValue: true,
   },
 });
-
+const Parametros_zonas = db.define("tb_parametros_zonas", {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  nombre_zona: {
+    type: DataTypes.STRING(220),
+  },
+  id_empresa: {
+    type: DataTypes.INTEGER,
+  },
+  uid_image: {
+    type: DataTypes.STRING,
+  },
+  orden_zona: {
+    type: DataTypes.INTEGER,
+  },
+  flag: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+});
 const Parametro_periodo = db.define("tb_parametro_periodos", {
   id_param: {
     type: DataTypes.INTEGER,
@@ -141,6 +163,16 @@ const carcel = async () => {
 
 /*
  */
+Parametros_zonas.sync()
+  .then(() => {
+    console.log("La tabla Parametros_zonas ha sido creada o ya existe.");
+  })
+  .catch((error) => {
+    console.error(
+      "Error al sincronizar el modelo con la base de datos:",
+      error
+    );
+  });
 Parametro_periodo.sync()
   .then(() => {
     console.log("La tabla Parametro_periodo ha sido creada o ya existe.");
@@ -177,4 +209,5 @@ module.exports = {
   Parametros,
   Parametros_3,
   Parametro_periodo,
+  Parametros_zonas,
 };

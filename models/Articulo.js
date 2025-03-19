@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 const { db } = require("../database/sequelizeConnection");
 const { ImagePT } = require("./Image");
-const { Parametros } = require("./Parametros");
+const { Parametros, Parametros_zonas } = require("./Parametros");
 const uuid = require("uuid");
 const { ProspectoLead } = require("./ProspectoLead");
 
@@ -133,8 +133,8 @@ const Kardex_Inventario = db.define("tb_kardex_inventario", {
 //     defaultValue: true,
 //   },
 // });
-Kardex_Inventario.hasOne(Parametros, {
-  foreignKey: "id_param",
+Kardex_Inventario.hasOne(Parametros_zonas, {
+  foreignKey: "id",
   sourceKey: "id_lugar_destino",
   as: "parametro_lugar_destino",
 });
@@ -157,8 +157,8 @@ Articulos.hasOne(Parametros, {
   sourceKey: "id_marca",
   as: "parametro_marca",
 });
-Articulos.hasOne(Parametros, {
-  foreignKey: "id_param",
+Articulos.hasOne(Parametros_zonas, {
+  foreignKey: "id",
   sourceKey: "id_lugar",
   as: "parametro_lugar_encuentro",
 });
