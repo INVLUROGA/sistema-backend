@@ -210,6 +210,7 @@ const postKardexEntraSale = async (req = request, res = response) => {
     const { action } = req.params;
     const {
       id_item,
+      id_enterprice,
       id_lugar_destino,
       cantidad,
       fecha_cambio,
@@ -220,6 +221,7 @@ const postKardexEntraSale = async (req = request, res = response) => {
       id_item,
       cantidad,
       fecha_cambio,
+      id_enterprice,
       id_motivo,
       observacion,
       action,
