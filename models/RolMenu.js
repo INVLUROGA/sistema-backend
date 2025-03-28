@@ -1,32 +1,50 @@
 const { db } = require("../database/sequelizeConnection");
 
-
 /**
  SECCIONES
  MODULOS
  */
-const RolUser = db.define("rol_secciones", {
+const MenuItem  = db.define("rol_MenuItem", {
   id: {
     type: DataTypes.INTEGER,
-    autoIncrement: true,
     primaryKey: true,
+    autoIncrement: true,
+  },
+  key: {
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   label: {
     type: DataTypes.STRING,
-  },
-  url: {
-    type: DataTypes.STRING,
+    allowNull: false,
   },
   isTitle: {
     type: DataTypes.BOOLEAN,
-    defaultValue: false
+    allowNull: false,
+    defaultValue: false,
   },
   icon: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  url: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  parentId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: "MenuItems",
+      key: "id",
+    },
   },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
 });
+
+// Para relaciones recursivas (menús con submenús)
+MenuItem.hasMany(MenuItem, { as: "children", foreignKey: "parentId" });
+MenuItem.belongsTo(MenuItem, { as: "parent", foreignKey: "parentId" });

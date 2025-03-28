@@ -1,6 +1,7 @@
 const { request, response } = require("express");
 const { Cliente, Usuario, Empleado } = require("../models/Usuarios");
 const generarJWT = require("../helpers/jwt");
+const jwt = require("jsonwebtoken");
 const uuid = require("uuid");
 const { Sequelize } = require("sequelize");
 const {
@@ -132,7 +133,7 @@ const postUsuarioCliente = async (req = request, res = response) => {
       ubigeo_distrito_trabajo,
       uid_comentario: comentarioUnico_UID,
       uid_contactsEmergencia: contactoEmerg_UID,
-      id_empresa
+      id_empresa,
     });
     await cliente.save();
     let formAUDIT = {
@@ -778,7 +779,7 @@ const loginUsuario = async (req = request, res = response) => {
       ip_user,
       usuario.id_user
     );
-
+    const exp = jwt.decode(token).exp;
     let MODULOS_ITEMS = [];
     if (usuario.rol_user === 1) {
       MODULOS_ITEMS = [
@@ -856,6 +857,7 @@ const loginUsuario = async (req = request, res = response) => {
       name: usuario.nombres_user,
       MODULOS_ITEMS,
       token,
+      exp,
     });
   } catch (error) {
     console.log(error, "Aca esta el Error");

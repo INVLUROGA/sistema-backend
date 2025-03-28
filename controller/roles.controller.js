@@ -3,6 +3,8 @@ const {
   SeccionItem,
   ModulosVSseccion,
   rolesvsModulos,
+  Role,
+  ModuloItem,
 } = require("../models/Seccion");
 const { Usuario } = require("../models/Usuarios");
 
@@ -45,6 +47,39 @@ const rolPOST = async (req = response, res = response) => {
     });
   }
 };
+
+const obtenermoduloxRole = async (req, res) => {
+  try {
+    const { uid } = req.params;
+
+    const usuario = await Usuario.findOne({ where: { uid: uid } });
+    console.log(
+      usuario.rol_user,
+      "usuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_user"
+    );
+    // Se consulta el rol e incluye la asociación de módulos (alias: modules)
+    const role = await Role.findByPk(usuario.rol_user, {
+      include: [
+        {
+          model: ModuloItem,
+          as: "modules",
+          through: { attributes: [] }, // Excluye los atributos de la tabla intermedia
+        },
+      ],
+    });
+
+    if (!role) {
+      return res.status(404).json({ message: "Rol no encontrado" });
+    }
+    console.log({ role });
+
+    // Retornamos los módulos asociados al rol
+    res.json({ modules: role.modules });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 const seccionGET = async (req = request, res = response) => {
   const { modulo } = req.params;
   try {
@@ -212,7 +247,6 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: true,
         },
         {
-          //key: "reporte-utilidad-pgm",
           label: "Reportes Por Planilla",
           isTitle: false,
           icon: "uil-calender",
@@ -250,6 +284,13 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: false,
           icon: "uil-calender",
           url: "/salida-inventario",
+        },
+        {
+          //key: "reporte-utilidad-pgm",
+          label: "TRANSFERENCIA DE ITEMS",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/transferencia-inventario",
         },
         {
           //key: "reporte-utilidad-pgm",
@@ -461,26 +502,6 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           url: "/tipo-cambio",
         },
-        // {
-        //   key: "menu-levels",
-        //   label: "Multi Levels",
-        //   isTitle: false,
-        //   icon: "uil-folder-plus",
-        //   children: [
-        //     {
-        //       key: "menu-levels-1-1",
-        //       label: "Level 1.1",
-        //       url: "/",
-        //       parentKey: "menu-levels",
-        //     },
-        //     {
-        //       key: "menu-levels-1-2",
-        //       label: "Level 1.2",
-        //       url: "/",
-        //       parentKey: "menu-levels",
-        //     },
-        //   ],
-        // },
       ];
     }
     if (modulo === "mod-general-ventas") {
@@ -811,62 +832,6 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           url: "/reporte/reporte-clientes-membresia",
         },
-        // {
-        //   key: "mkt-ar",
-        //   label: "Actas de reunion",
-        //   isTitle: false,
-        //   icon: "pi pi-address-book",
-        //   url: "/mkt-actas-reunion",
-        // },
-        // {
-        //   key: "mkt-fb",
-        //   label: "Facebook",
-        //   isTitle: false,
-        //   icon: "pi pi-facebook",
-        //   url: "/trabajo-marketing",
-        // },
-        // {
-        //   key: "mkt-ig",
-        //   label: "Instagram",
-        //   isTitle: false,
-        //   icon: "pi pi-instagram",
-        //   url: "/trabajo-marketing",
-        // },
-        // {
-        //   key: "mkt-videos",
-        //   label: "Tik tok",
-        //   isTitle: false,
-        //   icon: "pi pi-tiktok",
-        //   url: "/trabajo-marketing",
-        // },
-        // {
-        //   key: "mkt-doc",
-        //   label: "Videos",
-        //   isTitle: false,
-        //   icon: "pi pi-video",
-        //   url: "/trabajo-marketing",
-        // },
-        // {
-        //   key: "mkt-disenio",
-        //   label: "Fotos",
-        //   isTitle: false,
-        //   icon: "uil-scenery",
-        //   url: "/trabajo-marketing",
-        // },
-        // {
-        //   key: "mkt-contratos",
-        //   label: "Diseños",
-        //   isTitle: false,
-        //   icon: "uil-calender",
-        //   url: "/trabajo-marketing",
-        // },
-        // {
-        //   key: "mkt-fotos",
-        //   label: "Documentos",
-        //   isTitle: false,
-        //   icon: "pi pi-file",
-        //   url: "/trabajo-marketing",
-        // },
       ];
     }
     if (modulo === "mod-inventario") {
@@ -993,4 +958,5 @@ module.exports = {
   rolPOST,
   seccionGET,
   moduleGET,
+  obtenermoduloxRole,
 };

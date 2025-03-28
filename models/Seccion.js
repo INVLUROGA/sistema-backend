@@ -8,41 +8,49 @@ const ModuloItem = db.define("tb_moduloItem", {
     primaryKey: true,
   },
   name: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
   },
   path: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
   },
   key: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
   },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
 });
-
 const SeccionItem = db.define("tb_seccionItem", {
   id: {
     type: DataTypes.INTEGER,
-    autoIncrement: true,
     primaryKey: true,
-  },
-  url: {
-    type: DataTypes.INTEGER,
+    autoIncrement: true,
   },
   key: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  label: {
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   isTitle: {
     type: DataTypes.BOOLEAN,
-    defaultValue: true,
-  },
-  parentKey: {
-    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: false,
   },
   icon: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  url: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  subtitle_definido: {
+    type: DataTypes.STRING(60),
+    allowNull: true,
   },
   flag: {
     type: DataTypes.BOOLEAN,
@@ -66,7 +74,7 @@ const ModulosVSseccion = db.define("tb_modulo_vs_seccion", {
     defaultValue: true,
   },
 });
-const rolesvsModulos = db.define("tb_modulo_vs_seccion", {
+const rolesvsModulos = db.define("tb_modulo_vs_role", {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -83,6 +91,64 @@ const rolesvsModulos = db.define("tb_modulo_vs_seccion", {
     defaultValue: true,
   },
 });
+
+// Modelo: Rol (Role)
+const Role = db.define("tb_role", {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  key: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  flag: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+});
+
+// Relaciones entre Módulos y Secciones (muchos a muchos)
+ModuloItem.belongsToMany(SeccionItem, {
+  through: ModulosVSseccion,
+  foreignKey: "id_modulo",
+  otherKey: "id_seccion",
+});
+SeccionItem.belongsToMany(ModuloItem, {
+  through: ModulosVSseccion,
+  foreignKey: "id_seccion",
+  otherKey: "id_modulo",
+});
+
+// Relaciones entre Roles y Módulos (muchos a muchos)
+Role.belongsToMany(ModuloItem, {
+  through: rolesvsModulos,
+  foreignKey: "id_rol",
+  otherKey: "id_modulo",
+  as: "modules",
+});
+ModuloItem.belongsToMany(Role, {
+  through: rolesvsModulos,
+  foreignKey: "id_modulo",
+  otherKey: "id_rol",
+  as: "roles",
+});
+
+Role.sync()
+  .then(() => {
+    console.log("La tabla Role ha sido creada o ya existe.");
+  })
+  .catch((error) => {
+    console.error(
+      "Error al sincronizar el modelo con la base de datos: Role",
+      error
+    );
+  });
 
 ModuloItem.sync()
   .then(() => {
@@ -118,7 +184,7 @@ ModulosVSseccion.sync()
     );
   });
 
-SeccionItem.drop()
+SeccionItem.sync()
   .then(() => {
     console.log("La tabla SeccionItem ha sido creada o ya existe.");
   })
@@ -133,4 +199,6 @@ module.exports = {
   SeccionItem,
   ModulosVSseccion,
   rolesvsModulos,
+  ModuloItem,
+  Role,
 };

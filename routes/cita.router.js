@@ -30,5 +30,6 @@ router.post(
 router.get("/get-cita/:id", getCitaporID);
 router.put("/put-cita/:id", putCita);
 router.put("/delete-cita/:id", deleteCita);
+
 // router.get("/get-citas", getCitas);
 module.exports = router;

@@ -179,6 +179,8 @@ const deleteCita = async (req = request, res = response) => {
 const putCita = async (req = request, res = response) => {
   const { id } = req.params;
   try {
+    console.log(id, req.body);
+
     const cita = await Cita.findOne({ where: { flag: true, id } });
     await cita.update(req.body);
     res.status(200).json({

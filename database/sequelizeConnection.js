@@ -6,6 +6,12 @@ const db = new Sequelize("db_luroga", env.USER_DB, env.PASSWORD_DB, {
   host: env.HOST,
   dialect: "mssql",
   logging: false,
+  timezone: "+00:00", // <- UTC, así no varía según servidor
+  dialectOptions: {
+    options: {
+      useUTC: true, // Importante para MSSQL
+    },
+  },
   pool: {
     max: 5,
     min: 0,

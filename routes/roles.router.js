@@ -4,6 +4,7 @@ const {
   seccionPOST,
   seccionGET,
   moduleGET,
+  obtenermoduloxRole,
 } = require("../controller/roles.controller.js");
 const { validarJWT } = require("../middlewares/validarJWT.js");
 /**
