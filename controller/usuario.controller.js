@@ -821,6 +821,11 @@ const loginUsuario = async (req = request, res = response) => {
           path: "/marketing",
           key: "mod-marketing",
         },
+        {
+          name: "INVENTARIO",
+          path: "/inventario",
+          key: "mod-inventario-proyection",
+        },
       ];
     }
     if (usuario.rol_user === 6) {
@@ -841,6 +846,7 @@ const loginUsuario = async (req = request, res = response) => {
         },
       ];
     }
+    //mod-inventario-proyection
     let formAUDIT = {
       id_user: usuario.id_user,
       ip_user: ip_user,
@@ -918,6 +924,11 @@ const revalidarToken = async (req, res) => {
         name: "MARKETING",
         path: "/marketing",
         key: "mod-marketing",
+      },
+      {
+        name: "INVENTARIO",
+        path: "/inventario",
+        key: "mod-inventario-proyection",
       },
     ];
   }

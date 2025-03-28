@@ -443,6 +443,8 @@ const obtenerDataSeguimiento = async () => {
 };
 
 const enviarMensajesxCitasxHorasFinales = async () => {
+  console.log("procedio");
+
   try {
     const citasConfirmadas = await Cita.findAll({
       where: {
@@ -451,7 +453,11 @@ const enviarMensajesxCitasxHorasFinales = async () => {
       raw: true,
       nest: true,
     });
-    const data = await obtenerCitasxHorasFinales(1, new Date(),citasConfirmadas)
+    const data = await obtenerCitasxHorasFinales(
+      "2min",
+      new Date("1995-12-17T17:57:00"),
+      citasConfirmadas
+    );
     console.log(data);
   } catch (error) {
     console.log(error);

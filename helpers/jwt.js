@@ -44,6 +44,11 @@ const generarJWT = (uid, name, rol_user, ip_user, id_user) => {
         path: "/marketing",
         key: "mod-marketing",
       },
+      {
+        name: "INVENTARIO",
+        path: "/inventario",
+        key: "mod-inventario-proyection",
+      },
     ];
   }
   if (rol_user === 6) {
@@ -52,6 +57,11 @@ const generarJWT = (uid, name, rol_user, ip_user, id_user) => {
         name: "MARKETING",
         path: "/marketing",
         key: "mod-marketing",
+      },
+      {
+        name: "INVENTARIO",
+        path: "/inventario",
+        key: "mod-inventario-proyection",
       },
     ];
   }

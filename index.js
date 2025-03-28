@@ -23,7 +23,7 @@ cron.schedule("0 15 * * *", () => {
   // insertaDatosTEST();
   obtenerCumpleaniosCliente();
 });
-cron.schedule("* * * * *", () => {
+cron.schedule("*/1 * * * *", () => {
   // insertaDatosTEST();
   // obtenerCumpleaniosCliente();
   enviarMensajesxCitasxHorasFinales();

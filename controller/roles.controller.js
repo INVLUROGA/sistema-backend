@@ -832,6 +832,13 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           url: "/reporte/reporte-clientes-membresia",
         },
+        {
+          //key: "reporte-utilidad-pgm",
+          label: "PROYECTO CIRCUS",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gest-inventario-circus",
+        },
       ];
     }
     if (modulo === "mod-inventario") {
@@ -863,6 +870,17 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: false,
           icon: "uil-calender",
           url: "/agregar-articulos-chorrillos",
+        },
+      ];
+    }
+    if (modulo === "mod-inventario-proyection") {
+      MENU_ITEMS = [
+        {
+          //key: "reporte-utilidad-pgm",
+          label: "PROYECTO CIRCUS",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gest-inventario-circus",
         },
       ];
     }
@@ -920,6 +938,12 @@ const moduleGET = async (req = request, res = response) => {
           name: "MARKETING",
           path: "/marketing",
           key: "mod-marketing",
+        },
+
+        {
+          name: "INVENTARIO",
+          path: "/inventario",
+          key: "mod-inventario-proyection",
         },
       ];
     }
