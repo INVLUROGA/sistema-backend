@@ -29,7 +29,7 @@ const Articulos = db.define("tb_articulos", {
   cantidad: {
     type: DataTypes.INTEGER,
   },
-  costo_unitario: {
+  costo_unitario_soles: {
     type: DataTypes.DECIMAL(10, 2),
   },
   costo_unitario_dolares: {
@@ -42,6 +42,9 @@ const Articulos = db.define("tb_articulos", {
     type: DataTypes.DECIMAL(10, 2),
   },
   mano_obra_soles: {
+    type: DataTypes.DECIMAL(10, 2),
+  },
+  mano_obra_dolares: {
     type: DataTypes.DECIMAL(10, 2),
   },
   lugar_compra_cotizacion: {
