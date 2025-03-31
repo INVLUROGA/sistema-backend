@@ -6,10 +6,10 @@ const { Parametros, Parametros_zonas } = require("../models/Parametros");
 const { Sequelize } = require("sequelize");
 const { GeneradorFechas } = require("../models/GeneradorFechas");
 const obtenerInventario = async (req = request, res = response) => {
-  const { id_enterprice } = req.params;
+  const { id_enterprice, flag } = req.params;
   try {
     const articulos = await Articulos.findAll({
-      where: { flag: true, id_empresa: id_enterprice },
+      where: { flag: flag, id_empresa: id_enterprice },
       order: [["id", "desc"]],
       include: [
         {

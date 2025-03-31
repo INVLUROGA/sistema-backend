@@ -26,7 +26,7 @@ router.get(
   "/obtener-inventario-y-kardex-x-fechas/:id_empresa",
   getInventarioxKardexxFechasxEmpresa
 );
-router.get("/obtener-inventario/:id_enterprice", obtenerInventario);
+router.get("/obtener-inventario/:id_enterprice/:flag", obtenerInventario);
 router.post(`/post-articulo/:id_enterprice`, registrarArticulo);
 router.put("/remove-articulo/:id", eliminarArticulo);
 router.put("/update-articulo/:id", actualizarArticulo);
