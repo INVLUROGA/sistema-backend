@@ -28,10 +28,6 @@ cron.schedule("*/1 * * * *", () => {
   // obtenerCumpleaniosCliente();
   enviarMensajesxCitasxHorasFinales();
 });
-const testtt = async () => {};
-// insertarDatosSeguimientoDeClientes("true");
-// EnviarMensajeDeRecordatorioMembresia();
-// const { test } = require("./config/zkteco.js");
 const fileServer = express.static;
 require("dotenv").config();
 const env = process.env;

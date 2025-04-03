@@ -3,6 +3,44 @@ const { db } = require("../database/sequelizeConnection");
 const { Parametros } = require("./Parametros");
 const { Empleado } = require("./Usuarios");
 
+const diasJornada = db.define("tb_diasJornada", {
+  id_dia: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  uid_dia: {
+    type: DataTypes.STRING(300),
+    defaultValue: 0,
+  },
+  nombre_dia: {
+    type: DataTypes.STRING(100),
+  },
+  semana: {
+    type: DataTypes.STRING(4),
+  },
+  fecha: {
+    type: DataTypes.DATEONLY,
+  },
+  habilitado: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+  dias_feriado: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  dias_vacaciones: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  dias_licencia: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+})
+
+
 const Jornada = db.define("tb_jornada_semanas", {
   id: {
     type: DataTypes.INTEGER,

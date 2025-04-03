@@ -15,15 +15,14 @@ const obtenerInventario = async (req = request, res = response) => {
         {
           model: ImagePT,
           attributes: ["name_image"],
+          separate: true,
+          limit: 1,
+          order: [["id", "DESC"]],
         },
         {
           model: Parametros,
           as: "parametro_marca",
         },
-        // {
-        //   model: Parametros,
-        //   as: "parametro_nivel",
-        // },
         {
           model: Parametros_zonas,
           as: "parametro_lugar_encuentro",
@@ -105,7 +104,7 @@ const eliminarArticulo = async (req = request, res = response) => {
         msg: "El articulo no existe",
       });
     }
-    articulo.update({ flag: false });
+    articulo.update({ flag: !articulo.flag });
     await articulo.save();
     res.status(200).json({
       msg: "Articulo eliminado correctamente",
@@ -392,6 +391,8 @@ function generarInventario(
     let totalKardexSalida = 0;
     let totalTransferencias = 0;
 
+    let kardexSalidaArray = [];
+
     // Usamos un objeto auxiliar para agrupar registros por clave (producto-id_lugar)
     const itemsMap = {};
 
@@ -411,7 +412,6 @@ function generarInventario(
             costo_unitario: inv.costo_unitario,
             costo_total_soles: inv.costo_total_soles,
             costo_total_dolares: inv.costo_total_dolares,
-            mano_obra_soles: inv.mano_obra_soles,
           };
         } else {
           // Si existen varios registros para el mismo producto y lugar se suman
@@ -420,7 +420,6 @@ function generarInventario(
           itemsMap[key].stock_final += inv.cantidad;
           itemsMap[key].costo_total_soles += inv.costo_total_soles;
           itemsMap[key].costo_total_dolares += inv.costo_total_dolares;
-          itemsMap[key].mano_obra_soles += inv.mano_obra_soles;
         }
       }
     });
@@ -437,11 +436,11 @@ function generarInventario(
             itemsMap[key].stock_final += entrada.cantidad;
             // Se actualizan los costos de forma proporcional
             const additionalCost =
-              entrada.cantidad * itemsMap[key].costo_unitario;
+              entrada.cantidad * itemsMap[key].costo_unitario_soles;
             const additionalCostDolares =
               entrada.cantidad * itemsMap[key]?.costo_unitario_dolares;
             itemsMap[key].costo_total_soles += additionalCost;
-            itemsMap[key].costo_total_dolares += additionalCost / 3.5;
+            itemsMap[key].costo_total_dolares += additionalCostDolares;
           }
         });
       }
@@ -452,14 +451,17 @@ function generarInventario(
       const fechaCambio = new Date(salida.fecha_cambio);
       if (fechaCambio >= fechaDesde && fechaCambio <= fechaHasta) {
         totalKardexSalida += salida.cantidad;
+        kardexSalidaArray.push(salida);
         const idItem = String(salida.id_item);
         Object.keys(itemsMap).forEach((key) => {
           if (key.startsWith(idItem + "-")) {
             itemsMap[key].stock_final -= salida.cantidad;
             const reductionCost =
-              salida.cantidad * itemsMap[key].costo_unitario;
+              salida.cantidad * itemsMap[key].costo_unitario_soles;
+            const reductionCostDolares =
+              salida.cantidad * itemsMap[key].costo_unitario_dolares;
             itemsMap[key].costo_total_soles -= reductionCost;
-            itemsMap[key].costo_total_dolares -= reductionCost / 3.5;
+            itemsMap[key].costo_total_dolares -= reductionCostDolares;
           }
         });
       }
@@ -474,16 +476,19 @@ function generarInventario(
           if (key.startsWith(idItem + "-")) {
             // Se descuenta del registro de origen
             itemsMap[key].stock_final -= trans.cantidad;
-            const transferCost = trans.cantidad * itemsMap[key].costo_unitario;
+            const transferCost =
+              trans.cantidad * itemsMap[key].costo_unitario_soles;
+            const transferCostDolar =
+              trans.cantidad * itemsMap[key].costo_unitario_dolares;
             itemsMap[key].costo_total_soles -= transferCost;
-            itemsMap[key].costo_total_dolares -= transferCost / 3.5;
+            itemsMap[key].costo_total_dolares -= transferCostDolar;
 
             // Se agrega o actualiza el registro en la ubicación destino
             const destKey = `${idItem}-${trans.id_lugar}`;
             if (itemsMap[destKey]) {
               itemsMap[destKey].stock_final += trans.cantidad;
               itemsMap[destKey].costo_total_soles += transferCost;
-              itemsMap[destKey].costo_total_dolares += transferCost / 3.5;
+              itemsMap[destKey].costo_total_dolares += transferCostDolar;
             } else {
               itemsMap[destKey] = {
                 id: trans.id_item,
@@ -510,8 +515,8 @@ function generarInventario(
       // Aquí se retorna el array de items con los detalles de cada producto/ubicación
       articulos_directos: itemsArray,
       // Totales acumulados para cada tipo de movimiento (para fines de depuración)
-      kardexEntrada: kardexEntrada,
-      kardexSalida: kardexSalida,
+      totalKardexEntrada: totalKardexEntrada,
+      kardexSalidaArray: kardexSalidaArray,
       transferencias: transferencias,
     });
   });

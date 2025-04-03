@@ -198,6 +198,20 @@ const obtenerPlanillaxID = async (req = request, res = response) => {
     });
   }
 };
+const getobtenerPlanillaEmpleadoActivos = async(
+  req = request,
+  res = response
+) => {
+  try {
+    
+    const empleados = 0
+    res.status(200).json(empleados);
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+    });
+  }
+};
 module.exports = {
   GastoPorCargo,
   ClienteAuth,
@@ -205,4 +219,5 @@ module.exports = {
   obtenerPlanillasxEmpl,
   obtenerAsistenciasxEmpl,
   obtenerPlanillaxID,
+  getobtenerPlanillaEmpleadoActivos,
 };

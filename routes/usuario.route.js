@@ -33,6 +33,7 @@ const {
 } = require("../middlewares/eventosCron");
 const { check } = require("express-validator");
 const { validarCampos } = require("../middlewares/validarCampos");
+const { getobtenerPlanillaEmpleadoActivos } = require("../controller/recursosHumano");
 const router = Router();
 /**
  * [API Documentation]
@@ -113,6 +114,7 @@ router.post(
   postUsuarioEmpleado
 );
 router.get("/get-empleados", validarJWT, getUsuarioEmpleados);
+router.post("/post-reporte-planilla-activos", getobtenerPlanillaEmpleadoActivos)
 router.get("/get-empleado/:uid_empleado", validarJWT, getUsuarioEmpleado);
 router.put("/put-empleado/:uid_empleado", validarJWT, putUsuarioEmpleado);
 router.get("/delete-empleado/:id_user", validarJWT, deleteUsuarioEmpleado);
