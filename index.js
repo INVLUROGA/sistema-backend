@@ -232,11 +232,7 @@ app.use("/api", require("./routes/upload/upload.routes.js"));
 
 app.use("/api/reporte", require("./routes/reporte.router.js"));
 app.use("/api/comision", validarJWT, require("./routes/comision.router.js"));
-app.use(
-  "/api/inventario",
-  validarJWT,
-  require("./routes/inventario.router.js")
-);
+app.use("/api/inventario", require("./routes/inventario.router.js"));
 
 app.use(
   "/api/marcacion" /*, validarJWT,*/,

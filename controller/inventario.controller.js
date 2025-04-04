@@ -6,18 +6,15 @@ const { Parametros, Parametros_zonas } = require("../models/Parametros");
 const { Sequelize } = require("sequelize");
 const { GeneradorFechas } = require("../models/GeneradorFechas");
 const obtenerInventario = async (req = request, res = response) => {
-  const { id_enterprice, flag } = req.params;
+  const { id_enterprice } = req.params;
   try {
     const articulos = await Articulos.findAll({
-      where: { flag: flag, id_empresa: id_enterprice },
+      where: { flag: true, id_empresa: id_enterprice },
       order: [["id", "desc"]],
       include: [
         {
           model: ImagePT,
-          attributes: ["name_image"],
-          separate: true,
-          limit: 1,
-          order: [["id", "DESC"]],
+          attributes: ["id", "name_image"],
         },
         {
           model: Parametros,
@@ -104,7 +101,7 @@ const eliminarArticulo = async (req = request, res = response) => {
         msg: "El articulo no existe",
       });
     }
-    articulo.update({ flag: !articulo.flag });
+    articulo.update({ flag: false });
     await articulo.save();
     res.status(200).json({
       msg: "Articulo eliminado correctamente",

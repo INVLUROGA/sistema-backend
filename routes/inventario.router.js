@@ -14,7 +14,6 @@ const {
   postFechaReportKardex,
   removeFechaReportKardex,
   obtenerFechaReportKardex,
-
 } = require("../controller/inventario.controller");
 const { validarJWT } = require("../middlewares/validarJWT");
 const router = Router();
@@ -26,7 +25,7 @@ router.get(
   "/obtener-inventario-y-kardex-x-fechas/:id_empresa",
   getInventarioxKardexxFechasxEmpresa
 );
-router.get("/obtener-inventario/:id_enterprice/:flag", obtenerInventario);
+router.get("/obtener-inventario/:id_enterprice", obtenerInventario);
 router.post(`/post-articulo/:id_enterprice`, registrarArticulo);
 router.put("/remove-articulo/:id", eliminarArticulo);
 router.put("/update-articulo/:id", actualizarArticulo);
@@ -46,9 +45,14 @@ router.post("/fechas-reporte-kardex/post", eliminarEntraSale);
 router.post("/fechas-reporte-kardex/remove", eliminarEntraSale);
 router.get("/fechas-reporte-kardex", eliminarEntraSale);
 
-
-router.post("/post-kardex-transferencia/:action/:id_enterprice", postKardexEntraSale);
-router.get("/obtener-kardex-transferencia/:action/:id_enterprice", obtenerKardex);
+router.post(
+  "/post-kardex-transferencia/:action/:id_enterprice",
+  postKardexEntraSale
+);
+router.get(
+  "/obtener-kardex-transferencia/:action/:id_enterprice",
+  obtenerKardex
+);
 router.post("/remove-kardex-transferencia/:id", eliminarEntraSale);
 // router.get("/parametros-articulos/:id_empresa", obtenerArticulos)
 
