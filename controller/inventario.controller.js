@@ -315,6 +315,7 @@ const getInventarioxKardexxFechasxEmpresa = async (
           attributes: [
             ["nombre_zona", "label_param"],
             ["orden_zona", "orden_param"],
+            ["nivel", "label_nivel"],
           ],
         },
         {

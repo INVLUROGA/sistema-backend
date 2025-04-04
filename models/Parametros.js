@@ -80,6 +80,9 @@ const Parametros_zonas = db.define("tb_parametros_zonas", {
   orden_zona: {
     type: DataTypes.INTEGER,
   },
+  nivel: {
+    type: DataTypes.DECIMAL(4, 2),
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
