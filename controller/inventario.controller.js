@@ -7,6 +7,7 @@ const { Sequelize } = require("sequelize");
 const { GeneradorFechas } = require("../models/GeneradorFechas");
 const { capturarAUDIT } = require("../middlewares/auditoria");
 const { typesCRUD } = require("../types/types");
+const { enviarMensajesWsp } = require("../config/whatssap-web");
 async function obtenerArticulosActivos(id_empresa) {
   return await Articulos.findAll({
     where: { flag: true, id_empresa },
@@ -38,6 +39,7 @@ const obtenerInventario = async (req = request, res = response) => {
         {
           model: ImagePT,
           attributes: ["id", "name_image"],
+          where: { flag: true },
         },
         {
           model: Parametros,
@@ -89,6 +91,10 @@ const registrarArticulo = async (req = request, res = response) => {
       observacion: `Se agrego: El articulo de id ${articulo.id}`,
     };
     await capturarAUDIT(formAUDIT);
+    await enviarMensajesWsp(
+      933102718,
+      `El usuario con id ${formAUDIT.id_user} esta registrando algo`
+    );
     res.status(201).json({
       msg: "Articulo registrado correctamente",
       articulo,
@@ -115,10 +121,14 @@ const actualizarArticulo = async (req = request, res = response) => {
     let formAUDIT = {
       id_user: req.id_user,
       ip_user: req.ip_user,
-      accion: typesCRUD.GET,
+      accion: typesCRUD.PUT,
       observacion: `Se edito: El articulo de id ${articulo.id}`,
     };
     await capturarAUDIT(formAUDIT);
+    await enviarMensajesWsp(
+      933102718,
+      `El usuario con id ${formAUDIT.id_user} esta editando algo`
+    );
     res.status(200).json({
       msg: "Articulo actualizado correctament",
       articulo,
@@ -140,7 +150,7 @@ const eliminarArticulo = async (req = request, res = response) => {
       });
     }
     await articulo.update({ flag: false });
-    
+
     let formAUDIT = {
       id_user: req.id_user,
       ip_user: req.ip_user,
@@ -148,6 +158,10 @@ const eliminarArticulo = async (req = request, res = response) => {
       observacion: `Se elimino: El articulo de id ${articulo.id}`,
     };
     await capturarAUDIT(formAUDIT);
+    await enviarMensajesWsp(
+      933102718,
+      `El usuario con id ${formAUDIT.id_user} esta ELIMINANDO algo`
+    );
     res.status(200).json({
       msg: "Articulo eliminado correctamente",
       articulo,
