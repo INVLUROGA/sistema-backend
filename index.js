@@ -34,7 +34,6 @@ const env = process.env;
 
 //Creando el servidor de express
 const app = express();
-
 // app.use(compression());
 // test();
 //Base de datos
@@ -232,7 +231,11 @@ app.use("/api", require("./routes/upload/upload.routes.js"));
 
 app.use("/api/reporte", require("./routes/reporte.router.js"));
 app.use("/api/comision", validarJWT, require("./routes/comision.router.js"));
-app.use("/api/inventario", require("./routes/inventario.router.js"));
+app.use(
+  "/api/inventario",
+  validarJWT,
+  require("./routes/inventario.router.js")
+);
 
 app.use(
   "/api/marcacion" /*, validarJWT,*/,
@@ -241,7 +244,7 @@ app.use(
 //TODO: FORMA PAGO
 app.use("/api/formaPago", validarJWT, require("./routes/formaPago.router.js"));
 app.use("/api/rol", validarJWT, require("./routes/roles.router.js"));
-app.use("/api/venta", require("./routes/venta.router.js"));
+app.use("/api/venta", validarJWT, require("./routes/venta.router.js"));
 // app.use("/api/pros")
 app.use(
   "/api/serviciospt",

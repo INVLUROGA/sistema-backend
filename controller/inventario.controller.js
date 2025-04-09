@@ -5,6 +5,29 @@ const { ImagePT } = require("../models/Image");
 const { Parametros, Parametros_zonas } = require("../models/Parametros");
 const { Sequelize } = require("sequelize");
 const { GeneradorFechas } = require("../models/GeneradorFechas");
+const { capturarAUDIT } = require("../middlewares/auditoria");
+const { typesCRUD } = require("../types/types");
+async function obtenerArticulosActivos(id_empresa) {
+  return await Articulos.findAll({
+    where: { flag: true, id_empresa },
+    order: [["id", "desc"]],
+    include: [
+      { model: ImagePT, attributes: ["id", "name_image"] },
+      { model: Parametros, as: "parametro_marca" },
+      {
+        model: Parametros_zonas,
+        as: "parametro_lugar_encuentro",
+        attributes: [
+          ["nombre_zona", "label_param"],
+          ["orden_zona", "orden_param"],
+          ["nivel", "nivel"],
+        ],
+        include: [{ model: ImagePT, attributes: ["name_image"] }],
+      },
+    ],
+  });
+}
+
 const obtenerInventario = async (req = request, res = response) => {
   const { id_enterprice } = req.params;
   try {
@@ -26,6 +49,7 @@ const obtenerInventario = async (req = request, res = response) => {
           attributes: [
             ["nombre_zona", "label_param"],
             ["orden_zona", "orden_param"],
+            ["nivel", "nivel"],
           ],
           include: [
             {
@@ -58,6 +82,13 @@ const registrarArticulo = async (req = request, res = response) => {
       id_empresa: id_enterprice,
     });
     await articulo.save();
+    let formAUDIT = {
+      id_user: req.id_user,
+      ip_user: req.ip_user,
+      accion: typesCRUD.POST,
+      observacion: `Se agrego: El articulo de id ${articulo.id}`,
+    };
+    await capturarAUDIT(formAUDIT);
     res.status(201).json({
       msg: "Articulo registrado correctamente",
       articulo,
@@ -81,6 +112,13 @@ const actualizarArticulo = async (req = request, res = response) => {
       });
     }
     articulo.update(req.body);
+    let formAUDIT = {
+      id_user: req.id_user,
+      ip_user: req.ip_user,
+      accion: typesCRUD.GET,
+      observacion: `Se edito: El articulo de id ${articulo.id}`,
+    };
+    await capturarAUDIT(formAUDIT);
     res.status(200).json({
       msg: "Articulo actualizado correctament",
       articulo,
@@ -101,8 +139,15 @@ const eliminarArticulo = async (req = request, res = response) => {
         msg: "El articulo no existe",
       });
     }
-    articulo.update({ flag: false });
-    await articulo.save();
+    await articulo.update({ flag: false });
+    
+    let formAUDIT = {
+      id_user: req.id_user,
+      ip_user: req.ip_user,
+      accion: typesCRUD.DELETE,
+      observacion: `Se elimino: El articulo de id ${articulo.id}`,
+    };
+    await capturarAUDIT(formAUDIT);
     res.status(200).json({
       msg: "Articulo eliminado correctamente",
       articulo,
@@ -288,6 +333,21 @@ const postFechaReportKardex = async (req = request, res = response) => {
   try {
     const { fecha_hasta } = req.body;
     // const fechaInventariado =
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const obtenerMovimientosxArticulo = async (req = request, res = response) => {
+  try {
+    const { id_articulo, movimiento } = req.params;
+    const movimientos = await Kardex_Inventario.findAll({
+      where: { id_item: id_articulo, action: movimiento },
+    });
+    res.status(201).json({
+      movimientos,
+      ok: true,
+    });
   } catch (error) {
     console.log(error);
   }
@@ -536,4 +596,5 @@ module.exports = {
   removeFechaReportKardex,
   obtenerFechaReportKardex,
   getInventarioxKardexxFechasxEmpresa,
+  obtenerMovimientosxArticulo,
 };

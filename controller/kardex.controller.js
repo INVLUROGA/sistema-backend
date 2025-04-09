@@ -15,9 +15,17 @@ const obtenerKardexSalidas = () => {
 };
 const obtenerItemKardex = ({ req, res }) => {};
 const postKardexxAccion = (req, res) => {};
+const obtenerMovimientosxArticulo = (req, res)=>{
+  try {
+    
+  } catch (error) {
+    
+  }
+}
 module.exports = {
   obtenerKardexSalidas,
   obtenerKardexEntrada,
   obtenerItemKardex,
   postKardexxAccion,
+  obtenerMovimientosxArticulo
 };

@@ -39,6 +39,7 @@ router.get(
 );
 router.post("/post-kardex/:action/:id_enterprice", postKardexEntraSale);
 router.get("/obtener-kardex/:action/:id_enterprice", obtenerKardex);
+router.get("/movimiento-x-articulo/:id_articulo/:movimiento")
 router.post("/remove-kardex/:id", eliminarEntraSale);
 
 router.post("/fechas-reporte-kardex/post", eliminarEntraSale);

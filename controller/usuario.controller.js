@@ -756,7 +756,7 @@ const loginUsuario = async (req = request, res = response) => {
 
   try {
     let usuario = await Usuario.findOne({
-      where: { usuario_user: usuario_user },
+      where: { usuario_user: usuario_user, flag: true },
     });
     if (!usuario) {
       return res.status(400).json({
