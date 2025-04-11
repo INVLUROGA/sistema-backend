@@ -118,6 +118,35 @@ const Parametro_periodo = db.define("tb_parametro_periodos", {
     defaultValue: true,
   },
 });
+//ETIQUETAS REGISTRADAS
+const EtiquetasxIds = db.define("tb_EtiquetasxIds", {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  entidad_param: {
+    type: DataTypes.STRING(100),
+  },
+  grupo_param: {
+    //etiqueta-busqueda
+    type: DataTypes.STRING(150),
+  },
+  id_fila: {
+    type: DataTypes.INTEGER,
+  },
+  id_parametroEtiqueta: {
+    type: DataTypes.INTEGER,
+  },
+  estado: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+  flag: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+});
 
 const carcel = async () => {
   try {
@@ -125,7 +154,7 @@ const carcel = async () => {
     console.log("asdf");
 
     // Encuentra todas las filas de la tabla
-    const filas = await Parametros.findAll();
+    const filas = await ParametroEtiqueta.findAll();
 
     // Crear un array de promesas para realizar las actualizaciones de manera paralela
     const promesas = filas.map((fila) => {
@@ -147,7 +176,11 @@ const carcel = async () => {
     console.error("Error al asignar UUID:", error);
   }
 };
-
+EtiquetasxIds.hasOne(Parametros, {
+  foreignKey: "id_param",
+  sourceKey: "id_parametroEtiqueta",
+  as: "parametro_etiqueta",
+});
 // carcel();
 
 // const ParNutr_vs_consulta = db.define("tb_ParNutr_vs_consulta", {
@@ -208,9 +241,20 @@ Parametros.sync()
     );
   });
 
+EtiquetasxIds.sync()
+  .then(() => {
+    console.log("La tabla EtiquetasxIds ha sido creada o ya existe.");
+  })
+  .catch((error) => {
+    console.error(
+      "Error al sincronizar el modelo con la base de datos:",
+      error
+    );
+  });
 module.exports = {
   Parametros,
   Parametros_3,
   Parametro_periodo,
   Parametros_zonas,
+  EtiquetasxIds,
 };

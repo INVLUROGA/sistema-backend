@@ -36,12 +36,29 @@ const {
   getParametrosZonas,
 } = require("../controller/Parametros.controller");
 const { obtener_estado_membresia } = require("../middlewares/logicaSistema");
+const {
+  postEtiqueta,
+  getEtiquetasxIdEntidadGrupo,
+  putEtiquetasxIdEntidadGrupo,
+  getEtiquetasxEntidadGrupo,
+} = require("../controller/etiqueta.controller");
 const router = Router();
 /**
  * [API Documentation]
  * /api/parametros/
  */
 // router.get("/get_params/forma_pago")
+router.get("/get_params/etiquetas/:entidad/:grupo", getEtiquetasxEntidadGrupo);
+
+router.put(
+  "/get_params/etiquetas/:entidad/:grupo/:id_fila",
+  putEtiquetasxIdEntidadGrupo
+);
+router.get(
+  "/get_params/etiquetas/:entidad/:grupo/:id_fila",
+  getEtiquetasxIdEntidadGrupo
+);
+router.post("/get_params/etiquetas/:entidad/:grupo/:id_fila", postEtiqueta);
 
 router.get("/get_params/articulo/zonas/:id_enterprice", getParametrosZonas);
 router.get(

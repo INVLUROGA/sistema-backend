@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 const { db } = require("../database/sequelizeConnection");
 const { ImagePT } = require("./Image");
-const { Parametros, Parametros_zonas } = require("./Parametros");
+const { Parametros, Parametros_zonas, EtiquetasxIds } = require("./Parametros");
 const uuid = require("uuid");
 const { ProspectoLead } = require("./ProspectoLead");
 
@@ -25,6 +25,9 @@ const Articulos = db.define("tb_articulos", {
   },
   descripcion: {
     type: DataTypes.STRING(890),
+  },
+  etiquetas_busqueda: {
+    type: DataTypes.STRING(1000),
   },
   cantidad: {
     type: DataTypes.INTEGER,

@@ -2,7 +2,11 @@ const { request, response } = require("express");
 const { Articulos, Kardex_Inventario } = require("../models/Articulo");
 const uid = require("uuid");
 const { ImagePT } = require("../models/Image");
-const { Parametros, Parametros_zonas } = require("../models/Parametros");
+const {
+  Parametros,
+  Parametros_zonas,
+  EtiquetasxIds,
+} = require("../models/Parametros");
 const { Sequelize } = require("sequelize");
 const { GeneradorFechas } = require("../models/GeneradorFechas");
 const { capturarAUDIT } = require("../middlewares/auditoria");
@@ -93,11 +97,12 @@ const registrarArticulo = async (req = request, res = response) => {
     await capturarAUDIT(formAUDIT);
     await enviarMensajesWsp(
       933102718,
-      `El usuario con id ${formAUDIT.id_user} esta registrando algo`
+      `El usuario con id ${formAUDIT.id_user} esta registrando ${req.body}`
     );
     res.status(201).json({
       msg: "Articulo registrado correctamente",
       articulo,
+      id_articulo: articulo.id,
       uid_image: articulo.uid_image,
     });
   } catch (error) {
@@ -111,13 +116,14 @@ const registrarArticulo = async (req = request, res = response) => {
 const actualizarArticulo = async (req = request, res = response) => {
   try {
     const { id } = req.params;
+    const { formState, etiquetas } = req.body;
     const articulo = await Articulos.findByPk(id);
     if (!articulo) {
       return res.status(404).json({
         msg: "El articulo no existe",
       });
     }
-    articulo.update(req.body);
+    articulo.update(formState);
     let formAUDIT = {
       id_user: req.id_user,
       ip_user: req.ip_user,
