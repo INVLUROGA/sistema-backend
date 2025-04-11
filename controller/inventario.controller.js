@@ -116,14 +116,13 @@ const registrarArticulo = async (req = request, res = response) => {
 const actualizarArticulo = async (req = request, res = response) => {
   try {
     const { id } = req.params;
-    const { formState, etiquetas } = req.body;
     const articulo = await Articulos.findByPk(id);
     if (!articulo) {
       return res.status(404).json({
         msg: "El articulo no existe",
       });
     }
-    articulo.update(formState);
+    articulo.update(req.body);
     let formAUDIT = {
       id_user: req.id_user,
       ip_user: req.ip_user,
