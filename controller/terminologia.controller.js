@@ -73,6 +73,70 @@ const terminologiasPorEntidad = async (req = request, res = response) => {
     });
   }
 };
+
+const terminologiasGastosxEmpresa = async (req = request, res = response) => {
+  const { id_empresa } = req.params;
+  try {
+    const termGastos = await ParametroGastos.findAll({
+      where: {
+        flag: true,
+        id_empresa: id_empresa,
+      },
+    });
+    res.status(201).json({
+      termGastos,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const postterminologiasGastosxEmpresa = async (
+  req = request,
+  res = response
+) => {
+  try {
+    const termGastos = new ParametroGastos(req.body);
+    termGastos.save();
+    res.status(201).json({
+      termGastos,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const putterminologiasGastosxEmpresa = async (
+  req = request,
+  res = response
+) => {
+  const { id_empresa } = req.params;
+  try {
+    const termGastos = await ParametroGastos.findAll({
+      where: {
+        flag: true,
+        id_empresa: id_empresa,
+      },
+    });
+    res.status(201).json({
+      termGastos,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const deleteterminologiasGastosxEmpresa = async (
+  req = request,
+  res = response
+) => {
+  const { id } = req.params;
+  try {
+    const termGastos = await ParametroGastos.findOne({ where: { id: id } });
+    termGastos.res.status(201).json({
+      termGastos,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 const comboMesActivoVentas = async (req = request, res = response) => {
   try {
     const comboMesesActivos = await Venta.findAll({
@@ -96,4 +160,8 @@ const comboMesActivoVentas = async (req = request, res = response) => {
 module.exports = {
   terminologiasPorEntidad,
   comboMesActivoVentas,
+  terminologiasGastosxEmpresa,
+  postterminologiasGastosxEmpresa,
+  putterminologiasGastosxEmpresa,
+  deleteterminologiasGastosxEmpresa,
 };

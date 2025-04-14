@@ -183,9 +183,42 @@ app.use(express.static("public"));
 //Lectura y parseo del body
 app.use(express.json());
 
+app.use(require("./routes/zk.router.js"));
+
+//***********************************************/
+//***********DISPOSITIVOS ZKTECO*****************/
+//***********************************************/
+
+// Importa y usa las rutas
+const cdataRoutes = require("./routes/ZkTeco/iclock/cdataRoutes");
+const devicecmdRoutes = require("./routes/ZkTeco/iclock/devicecmdRoutes");
+const getrequestRoutes = require("./routes/ZkTeco/iclock/getrequestRoutes");
+const pingRoutes = require("./routes/ZkTeco/iclock/pingRoutes");
+const registryRoutes = require("./routes/ZkTeco/iclock/registryRoutes");
+
+const cmdqueueRoutes = require("./routes/ZkTeco/bd/cmdqueueRoutes");
+const transactionRoutes = require("./routes/ZkTeco/bd/transactionRoutes");
+const deviceRoutes = require("./routes/ZkTeco/bd/deviceRoutes");
+const userRoutes = require("./routes/ZkTeco/bd/userRoutes");
+const syncRoutes = require("./routes/ZkTeco/bd/syncRoutes");
+const userdata64Routes = require("./routes/ZkTeco/bd/userdata64Routes");
+
+app.use(cdataRoutes);
+app.use(devicecmdRoutes);
+app.use(getrequestRoutes);
+app.use(pingRoutes);
+app.use(registryRoutes);
+
+app.use(cmdqueueRoutes);
+app.use(transactionRoutes);
+app.use(deviceRoutes);
+app.use(userRoutes);
+app.use(syncRoutes);
+app.use(userdata64Routes);
+
+//BLOBS
 app.use("/api/storage/blob", require("./routes/upload/blob.router.js"));
 
-app.use("/api/zk", require("./routes/ZkTeco/zk.router.js"));
 app.use("/api/tipocambio", require("./routes/tipocambio.route.js"));
 
 //RUTA FILES
@@ -193,7 +226,9 @@ app.use("/api/file", fileServer(urlArchivos));
 app.use("/api/file/logo", fileServer(urlArchivoLogos));
 
 app.use("/api/fils", require("./routes/file.router.js"));
-//Rutas
+//************************ */
+//**************Rutas***** */
+//************************ */
 app.use("/api/kardex", require("./routes/kardex.router.js"));
 // //TODO proveedores // sexo, tipoDoc, estadoCivil, etc
 app.use("/api/proveedor", validarJWT, require("./routes/proveedor.router.js"));

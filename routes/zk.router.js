@@ -1,5 +1,5 @@
 const { Router } = require("express");
-const { obtenerRelojZk } = require("../../controller/ZkTeco/zkTeco.controller");
+const { obtenerRelojZk } = require("../controller/zkTeco.controller");
 const router = Router();
 // const edge = require("edge-js");
 // const path = require("path");
