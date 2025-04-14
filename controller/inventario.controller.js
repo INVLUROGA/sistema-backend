@@ -122,7 +122,7 @@ const actualizarArticulo = async (req = request, res = response) => {
         msg: "El articulo no existe",
       });
     }
-    articulo.update(req.body);
+    await articulo.update(req.body);
     let formAUDIT = {
       id_user: req.id_user,
       ip_user: req.ip_user,
