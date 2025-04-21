@@ -9,7 +9,7 @@ const {
 } = require("../models/Parametros");
 const { Sequelize } = require("sequelize");
 const { GeneradorFechas } = require("../models/GeneradorFechas");
-const { capturarAUDIT } = require("../middlewares/auditoria");
+const { capturarAUDIT, capturarAccion } = require("../middlewares/auditoria");
 const { typesCRUD } = require("../types/types");
 const { enviarMensajesWsp } = require("../config/whatssap-web");
 async function obtenerArticulosActivos(id_empresa) {
@@ -44,6 +44,7 @@ const obtenerInventario = async (req = request, res = response) => {
           model: ImagePT,
           attributes: ["id", "name_image"],
           where: { flag: true },
+          required: false,
         },
         {
           model: Parametros,
@@ -92,9 +93,20 @@ const registrarArticulo = async (req = request, res = response) => {
       id_user: req.id_user,
       ip_user: req.ip_user,
       accion: typesCRUD.POST,
+      arrayNuevo: {
+        ...req.body,
+        uid_image: uid_image,
+        id_empresa: id_enterprice,
+      },
+      arrayViejo: {
+        ...req.body,
+        uid_image: uid_image,
+        id_empresa: id_enterprice,
+      },
       observacion: `Se agrego: El articulo de id ${articulo.id}`,
     };
     await capturarAUDIT(formAUDIT);
+    await capturarAccion(formAUDIT);
     await enviarMensajesWsp(
       933102718,
       `El usuario con id ${formAUDIT.id_user} esta registrando ${req.body}`
@@ -122,18 +134,21 @@ const actualizarArticulo = async (req = request, res = response) => {
         msg: "El articulo no existe",
       });
     }
-    await articulo.update(req.body);
     let formAUDIT = {
       id_user: req.id_user,
       ip_user: req.ip_user,
       accion: typesCRUD.PUT,
+      arrayNuevo: {
+        ...req.body,
+      },
+      arrayViejo: {
+        ...articulo,
+      },
       observacion: `Se edito: El articulo de id ${articulo.id}`,
     };
     await capturarAUDIT(formAUDIT);
-    await enviarMensajesWsp(
-      933102718,
-      `El usuario con id ${formAUDIT.id_user} esta editando algo`
-    );
+    await capturarAccion(formAUDIT);
+    await articulo.update(req.body);
     res.status(200).json({
       msg: "Articulo actualizado correctament",
       articulo,
@@ -154,15 +169,22 @@ const eliminarArticulo = async (req = request, res = response) => {
         msg: "El articulo no existe",
       });
     }
-    await articulo.update({ flag: false });
 
     let formAUDIT = {
       id_user: req.id_user,
       ip_user: req.ip_user,
       accion: typesCRUD.DELETE,
+      arrayNuevo: {
+        id: id,
+      },
+      arrayViejo: {
+        id: id,
+      },
       observacion: `Se elimino: El articulo de id ${articulo.id}`,
     };
     await capturarAUDIT(formAUDIT);
+    await capturarAccion(formAUDIT)
+    await articulo.update({ flag: false });
     await enviarMensajesWsp(
       933102718,
       `El usuario con id ${formAUDIT.id_user} esta ELIMINANDO algo`

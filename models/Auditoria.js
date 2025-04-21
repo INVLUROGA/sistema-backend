@@ -29,7 +29,7 @@ const Auditoria = db.define("tb_auditoria", {
   },
 });
 
-const AditoriaNew = db.define("tb_auditoria", {
+const AuditoriaNew = db.define("tb_auditoria_form", {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -75,6 +75,18 @@ Auditoria.sync()
     );
   });
 
+AuditoriaNew.sync()
+  .then(() => {
+    console.log("La tabla AuditoriaNew ha sido sync o ya existe.");
+  })
+  .catch((error) => {
+    console.error(
+      "Error al sincronizar el modelo con la base de datos:",
+      error
+    );
+  });
+
 module.exports = {
   Auditoria,
+  AuditoriaNew,
 };
