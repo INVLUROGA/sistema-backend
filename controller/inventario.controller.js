@@ -180,7 +180,7 @@ const eliminarArticulo = async (req = request, res = response) => {
 const obtenerArticuloxID = async (req = request, res = response) => {
   try {
     const { id } = req.params;
-    const articulo = await Articulos.findByPk(id, { where: { flag: true } });
+    const articulo = await Articulos.findByPk(id);
     if (!articulo) {
       return res.status(404).json({
         msg: "El articulo no existe",

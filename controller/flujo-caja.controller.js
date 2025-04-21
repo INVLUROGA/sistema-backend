@@ -292,16 +292,13 @@ const getGastosMensualesxANIO = async (req = request, res = response) => {
 };
 
 const getGastoxGrupo = async (req = request, res = response) => {
-  const { anio } = req.query;
-  const { id_enterp } = req.params;
+  // const { anio } = req.query;
+  const { id_enterp, anio } = req.params;
   try {
     const gastos = await Gastos.findAll({
       where: {
         flag: true,
         [Sequelize.Op.and]: Sequelize.where(
-          Sequelize.fn("YEAR", Sequelize.col("fec_comprobante")),
-          "<",
-          2030,
           Sequelize.fn("YEAR", Sequelize.col("fec_comprobante")),
           "=",
           anio

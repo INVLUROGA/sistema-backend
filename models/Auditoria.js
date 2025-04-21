@@ -29,6 +29,39 @@ const Auditoria = db.define("tb_auditoria", {
   },
 });
 
+const AditoriaNew = db.define("tb_auditoria", {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  id_user: {
+    type: DataTypes.INTEGER,
+  },
+  ip_user: {
+    type: DataTypes.STRING(40),
+  },
+  accion: {
+    type: DataTypes.INTEGER,
+  },
+  arrayViejo: {
+    type: DataTypes.TEXT("long"),
+  },
+  arrayNuevo: {
+    type: DataTypes.TEXT("long"),
+  },
+  observacion: {
+    type: DataTypes.STRING(2000),
+  },
+  fecha_audit: {
+    type: DataTypes.DATE,
+  },
+  flag: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+});
+
 Usuario.hasMany(Auditoria, { foreignKey: "id_user" });
 Auditoria.belongsTo(Usuario, { foreignKey: "id_user" });
 Auditoria.sync()

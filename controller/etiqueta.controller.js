@@ -83,7 +83,6 @@ const putEtiquetasxIdEntidadGrupo = async (req, res) => {
         },
       }
     );
-    console.log(etiquetas, "antes del bulk");
 
     const etiquetasBusqueda = etiquetas.map((g) => {
       return {

@@ -48,12 +48,16 @@ const getImagesxUID = async (req = request, res = response) => {
   }
 };
 
-const getUploadOnexUidLocation = async (req, res) => {
+const getUploadOnexUidLocation = async (req = request, res = response) => {
   try {
+    console.log(req.params);
+
     const { uidLocation } = req.params;
+    console.log(uidLocation, "locaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+
     const img = await ImagePT.findOne({
       where: { uid_location: uidLocation },
-      order: [["id", "desc"]],
+      order: [["updatedAt", "desc"]],
     });
     // console.log(img, uidLocation);
     res.status(200).json(img);

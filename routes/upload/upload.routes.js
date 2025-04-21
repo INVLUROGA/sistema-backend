@@ -44,6 +44,6 @@ router.post(
   uploadTarjeta
 );
 
-router.get("/upload/get-upload/:uidLocation", getUpload);
+// router.get("/upload/get-upload/:uidLocation", getUpload);
 
 module.exports = router;

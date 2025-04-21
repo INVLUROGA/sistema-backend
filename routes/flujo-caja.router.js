@@ -11,6 +11,6 @@ const router = Router();
 
 router.get("/ingresos", getIngresosxMESandAnio);
 
-router.get("/get-gasto-x-grupo/:id_enterp", getGastoxGrupo);
+router.get("/get-gasto-x-grupo/:id_enterp/:anio", getGastoxGrupo);
 router.get("/credito-fiscal/:id_enterp", getCreditoFiscal)
 module.exports = router;
