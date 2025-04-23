@@ -38,7 +38,9 @@ const uploadBlob = async (req = request, res = response) => {
 const getImagesxUID = async (req = request, res = response) => {
   try {
     const { uidLocation } = req.params;
-    const img = await ImagePT.findAll({ where: { uid_location: uidLocation } });
+    const img = await ImagePT.findAll({
+      where: { uid_location: uidLocation, flag: true },
+    });
     // console.log(img, uidLocation);
     res.status(200).json(img);
   } catch (error) {
@@ -53,10 +55,8 @@ const getUploadOnexUidLocation = async (req = request, res = response) => {
     console.log(req.params);
 
     const { uidLocation } = req.params;
-    console.log(uidLocation, "locaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-
     const img = await ImagePT.findOne({
-      where: { uid_location: uidLocation },
+      where: { uid_location: uidLocation, flag: true },
       order: [["updatedAt", "desc"]],
     });
     // console.log(img, uidLocation);

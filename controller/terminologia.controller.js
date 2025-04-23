@@ -80,7 +80,7 @@ const terminologiasGastosxEmpresa = async (req = request, res = response) => {
     const termGastos = await ParametroGastos.findAll({
       where: {
         flag: true,
-        id_empresa: id_empresa,
+        // id_empresa: id_empresa,
       },
     });
     res.status(201).json({

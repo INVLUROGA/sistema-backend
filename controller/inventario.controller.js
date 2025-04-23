@@ -107,10 +107,6 @@ const registrarArticulo = async (req = request, res = response) => {
     };
     await capturarAUDIT(formAUDIT);
     await capturarAccion(formAUDIT);
-    await enviarMensajesWsp(
-      933102718,
-      `El usuario con id ${formAUDIT.id_user} esta registrando ${req.body}`
-    );
     res.status(201).json({
       msg: "Articulo registrado correctamente",
       articulo,
@@ -185,10 +181,6 @@ const eliminarArticulo = async (req = request, res = response) => {
     await capturarAUDIT(formAUDIT);
     await capturarAccion(formAUDIT)
     await articulo.update({ flag: false });
-    await enviarMensajesWsp(
-      933102718,
-      `El usuario con id ${formAUDIT.id_user} esta ELIMINANDO algo`
-    );
     res.status(200).json({
       msg: "Articulo eliminado correctamente",
       articulo,
