@@ -184,9 +184,6 @@ const getReporteSeguimiento = async (req, res) => {
                   as: "ubigeo_nac",
                   model: Distritos,
                 },
-                {
-                  model: Marcacion,
-                },
               ],
             },
           ],
@@ -197,6 +194,8 @@ const getReporteSeguimiento = async (req, res) => {
         },
       ],
     });
+
+    console.log({ membresias, transferenciasMembresias });
 
     // 1. Procesamiento de membresías
     let processedMembresias = membresias.map((item) => {

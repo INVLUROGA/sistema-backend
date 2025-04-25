@@ -26,7 +26,7 @@ cron.schedule("0 15 * * *", () => {
 cron.schedule("*/1 * * * *", () => {
   // insertaDatosTEST();
   // obtenerCumpleaniosCliente();
-  enviarMensajesxCitasxHorasFinales();
+  // enviarMensajesxCitasxHorasFinales();
 });
 const fileServer = express.static;
 require("dotenv").config();

@@ -178,11 +178,32 @@ const deleteCita = async (req = request, res = response) => {
 
 const putCita = async (req = request, res = response) => {
   const { id } = req.params;
+  const { fecha_init, isUpdateTime } = req.body;
   try {
-    console.log(id, req.body);
-
     const cita = await Cita.findOne({ where: { flag: true, id } });
     await cita.update(req.body);
+    const cliente = await Cliente.findOne({ where: { id_cli: cita.id_cli } });
+    if (isUpdateTime) {
+      const dayjsTest = dayjs
+        .utc(fecha_init)
+        .subtract(5, "hours")
+        .local(es)
+        .format("dddd DD [de] MMMM [a las ] hh:mm A");
+
+      enviarMensajesWsp(
+        cliente.tel_cli,
+        `
+        Hola ${cliente.nombre_cli.toUpperCase()}!
+        A tu solicitud, reprogramamos tu cita con Nutrición para el ${dayjsTest} en CHANGE ✅
+
+      Gracias por avisarnos con anticipación.
+      Esta cita es clave para analizar cómo está tu cuerpo por dentro, entender tus hábitos y armar el plan que realmente funcione contigo.
+
+      Recuerda llegar 15 min antes y en ayunas (o mínimo 3h sin comer).
+      ¡Nos vemos pronto!
+              `
+      );
+    }
     res.status(200).json({
       ok: true,
       cita,
