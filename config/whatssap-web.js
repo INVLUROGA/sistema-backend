@@ -1,14 +1,14 @@
 const axios = require("axios");
 const qs = require("qs");
 
-const enviarMensajesWsp = (numberWsp, bodyMsg) => {
-  var data = qs.stringify({
+const enviarMensajesWsp = async (numberWsp, bodyMsg) => {
+  const data = qs.stringify({
     token: "xy1mryu3skys910j",
     to: numberWsp,
     body: bodyMsg,
   });
 
-  var config = {
+  const config = {
     method: "post",
     url: "https://api.ultramsg.com/instance102151/messages/chat",
     headers: {
@@ -17,9 +17,14 @@ const enviarMensajesWsp = (numberWsp, bodyMsg) => {
     data: data,
   };
 
-  axios(config).then(function (response) {
-    console.log(JSON.stringify(response.data));
-  });
+  try {
+    const response = await axios(config);
+    console.log(JSON.stringify(response.data), numberWsp);
+    return { ok: true };
+  } catch (error) {
+    console.error(error.message || error, numberWsp);
+    return { ok: false, msg: error.message || "Error desconocido" };
+  }
 };
 
 const enviarStickerWsp = (numberWsp, sticker) => {
@@ -39,13 +44,68 @@ const enviarStickerWsp = (numberWsp, sticker) => {
   };
 
   axios(config).then(function (response) {
-    console.log(JSON.stringify(response.data));
+    console.log(JSON.stringify(response.data), numberWsp);
   });
+};
+
+const enviarImagenWsp = async (numberWsp, image) => {
+  const data = qs.stringify({
+    token: "xy1mryu3skys910j",
+    to: numberWsp,
+    image: image,
+  });
+
+  const config = {
+    method: "post",
+    url: "https://api.ultramsg.com/instance102151/messages/chat",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    data: data,
+  };
+
+  try {
+    const response = await axios(config);
+    console.log(JSON.stringify(response.data), numberWsp);
+    return { ok: true };
+  } catch (error) {
+    console.error(error.message || error, numberWsp);
+    return { ok: false, msg: error.message || "Error desconocido" };
+  }
+};
+
+const enviarTextConImagenWsp = async (numberWsp, image, bodyMsg) => {
+  const data = qs.stringify({
+    token: "xy1mryu3skys910j",
+    to: numberWsp,
+    image: image,
+    caption: bodyMsg,
+  });
+
+  const config = {
+    method: "post",
+    url: "https://api.ultramsg.com/instance102151/messages/image", // <-- CORRECTO
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    data: data,
+  };
+
+  try {
+    const response = await axios(config);
+    console.log(JSON.stringify(response.data), numberWsp);
+    return { ok: true };
+  } catch (error) {
+    console.error(error.message || error, numberWsp);
+    return { ok: false, msg: error.message || "Error desconocido" };
+  }
 };
 
 module.exports = {
   enviarMensajesWsp,
   enviarStickerWsp,
+  enviarImagenWsp,
+  enviarTextConImagenWsp,
 };
 
 // const qrcode = require("qrcode-terminal");

@@ -11,6 +11,7 @@ const {
   extraerVentaTransferenciaMembresia,
   generarContrato,
   suplementarFechas,
+  extraerServicios,
 } = require("../middlewares/extraerVentas");
 const {
   postVenta,
@@ -40,6 +41,7 @@ const {
   obtenerMarcacionesClientexMembresias,
   obtenerMembresiasxUIDcliente,
   putVentaxId,
+  obtenerComparativoTotal,
 } = require("../controller/venta.controller");
 
 const {
@@ -50,11 +52,13 @@ const {
   obtenerTransferencias,
 } = require("../controller/reporte.controller");
 const router = Router();
+
 /*
 /api/venta
 */
 router.post(
   "/post-ventas/:id_enterprice",
+  extraerServicios,
   extraerCredencialesCliente,
   extraerVentaMembresia,
   extraerTraspasos,
@@ -106,7 +110,7 @@ router.get(
 );
 router.get("/reporte/obtener-transferencias/:id_pgm", obtenerTransferencias);
 router.get("/reporte/obtener-comparativo-resumen", obtenerComparativoResumen);
-// router.get("/reporte/obtener-comparativo-resumen", obtenerComparativoResumen);
+router.get("/reporte/obtener-comparativo", obtenerComparativoTotal);
 
 router.get(
   "/reporte/obtener-ventas-x-tipo-factura/:idtipofactura",
@@ -133,9 +137,4 @@ router.get(
   "/reporte/obtenerMembresiasxFecha/:id_enterprice",
   obtenerMembresiasxFecha
 );
-// router.post('/')
-// router.get(
-//   "/reporte/obtener-ventas-x-comprobantes-resumen",
-//   obtenerEstadoResumen
-// );
 module.exports = router;

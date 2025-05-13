@@ -34,6 +34,7 @@ const {
   actualizarParametro,
   getParametrosporENTIDADyGRUPO__PERIODO,
   getParametrosZonas,
+  postParametros__PERIODO,
 } = require("../controller/Parametros.controller");
 const { obtener_estado_membresia } = require("../middlewares/logicaSistema");
 const {
@@ -49,7 +50,10 @@ const router = Router();
  */
 // router.get("/get_params/forma_pago")
 router.get("/get_params/etiquetas/:entidad/:grupo", getEtiquetasxEntidadGrupo);
-
+router.post(
+  "/post-parametros-periodo/:entidad/:grupo",
+  postParametros__PERIODO
+);
 router.put(
   "/get_params/etiquetas/:entidad/:grupo/:id_fila",
   putEtiquetasxIdEntidadGrupo

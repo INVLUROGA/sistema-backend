@@ -9,9 +9,11 @@ exports.fxget = async (req, res) => {
   try {
     console.log("-GET DATA-");
     const serial = req.query.SN;
-    console.log(serial);
+    console.log({ serial });
 
     if (serial !== "") {
+      console.log(await deviceService.checkDeviceStatus(serial), "problema?");
+
       if (await deviceService.checkDeviceStatus(serial)) {
         const respuesta = `GET OPTION FROM: ${serial}
 ATTLOGStamp=0
@@ -31,9 +33,12 @@ Encrypt=None`;
         console.log(respuesta);
         res.send(respuesta); // Enviar la respuesta al cliente
       } else {
+        console.log("NO HAY SERIAL 1 -------------------");
         res.status(400).send("Serial not actived"); // Devolver un estado 400 si no hay serial
       }
     } else {
+      console.log("NO HAY SERIAL 2 -------------------");
+
       res.status(400).send("Serial not provided"); // Devolver un estado 400 si no hay serial
     }
   } catch (err) {

@@ -1068,7 +1068,20 @@ const getParametrosporENTIDADyGRUPO__PERIODO = async (
     res.status(404).json(error);
   }
 };
-
+const postParametros__PERIODO = async (req = request, res = response) => {
+  try {
+    const { grupo, entidad } = req.params;
+    const parametros = new Parametro_periodo({
+      ...req.body,
+      grupo_param: grupo,
+      entidad_param: entidad,
+    });
+    await parametros.save();
+    res.status(200).json(parametros);
+  } catch (error) {
+    res.status(404).json(error);
+  }
+};
 const getParametrosZonas = async (req = request, res = response) => {
   const { id_enterprice } = req.params;
   try {
@@ -1121,4 +1134,5 @@ module.exports = {
   actualizarParametro,
   getParametrosZonas,
   getParametrosporENTIDADyGRUPO__PERIODO,
+  postParametros__PERIODO,
 };

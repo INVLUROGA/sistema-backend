@@ -134,6 +134,13 @@ const seccionGET = async (req = request, res = response) => {
           url: "/nueva-venta",
         },
         {
+          key: "canjes-nuevoCanje",
+          label: "Nuevo Canje",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/nueva-venta",
+        },
+        {
           key: "ventas-seguimiento",
           label: "Seguimiento",
           isTitle: false,
@@ -637,6 +644,25 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: false,
           icon: "uil-calender",
           url: "/reporte/gestion-comercial",
+        },
+        {
+          key: "canje",
+          label: "CANJES",
+          isTitle: true,
+        },
+        {
+          key: "canje-gestion",
+          label: "Gestion de canjes",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-canjes",
+        },
+        {
+          key: "canje-reporte",
+          label: "REPORTE DE CANJE",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/reporte-canje",
         },
         {
           key: "cliente",

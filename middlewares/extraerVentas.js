@@ -125,6 +125,13 @@ const extraerProductos = (req, res, next) => {
   ];
   next();
 };
+const extraerServicios = (req, res, next) => {
+  if (!req.body.dataVenta.detalle_venta_servicio) {
+    return next();
+  }
+  req.servicios = [...req.body.dataVenta.detalle_venta_servicio];
+  next();
+};
 const extraerCitas = (req, res, next) => {
   if (
     !req.body.dataVenta.detalle_venta_nutricion ||
@@ -263,7 +270,7 @@ const extraerPagos = async (req = request, res = response, next) => {
 };
 const extraerTraspasos = async (req = request, res = response, next) => {
   if (
-    req.body.dataVenta.detalle_traspaso.length <= 0 ||
+    req.body.dataVenta.detalle_traspaso?.length <= 0 ||
     !req.body.dataVenta.detalle_traspaso
   )
     return next();
@@ -276,7 +283,7 @@ const extraerTraspasos = async (req = request, res = response, next) => {
   req.traspasosExtraidos = traspasosExtraidos;
   next();
 };
-const suplementarFechas = async() => {};
+const suplementarFechas = async () => {};
 module.exports = {
   extraerTraspasos,
   extraerVentaTransferenciaMembresia,
@@ -291,4 +298,5 @@ module.exports = {
   postVentaFormaPago,
   generarContrato,
   suplementarFechas,
+  extraerServicios,
 };

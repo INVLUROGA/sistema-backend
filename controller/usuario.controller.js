@@ -31,6 +31,12 @@ const {
 } = require("../config/whatssap-web");
 const { Marcacion } = require("../models/Marcacion");
 const { ExtensionMembresia } = require("../models/ExtensionMembresia");
+const {
+  ModulosVSseccion,
+  rolesvsModulos,
+  SeccionItem,
+  ModuloItem,
+} = require("../models/Seccion");
 // Función para contar días laborables entre dos fechas
 function contarDiasLaborables(fechaInicio, fechaFin) {
   let inicio = dayjs(fechaInicio);
@@ -697,6 +703,15 @@ const getUsuario = async (req = request, res = response) => {
       flag: true,
       where: { uid: uid_user },
     });
+    const modulos = await rolesvsModulos.findAll({
+      flag: true,
+      where: { id_rol: usuario.rol_user },
+      include: [
+        {
+          model: ModuloItem,
+        },
+      ],
+    });
     if (!usuario) {
       return res.status(404).json({
         msg: `No existe un programa con el id "${uid_user}"`,
@@ -705,6 +720,7 @@ const getUsuario = async (req = request, res = response) => {
     res.status(200).json({
       msg: "usuario present",
       usuario,
+      modulos,
     });
   } catch (error) {
     res.status(500).json({
@@ -998,3 +1014,7 @@ module.exports = {
   loginUsuario,
   revalidarToken,
 };
+
+
+
+

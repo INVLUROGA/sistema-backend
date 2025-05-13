@@ -1,6 +1,7 @@
 const { Router } = require("express");
 const {
   obtenerServiciosActivos,
+  obtenerVentasTemporales,
 } = require("../../controller/controllersCircus/servicios.controller.js");
 const router = Router();
 /**
@@ -18,6 +19,7 @@ const router = Router();
 
 // router.post("/serviciocita/post/:tipo_serv", postServicioCita);
 router.get("/obtener-servicios", obtenerServiciosActivos);
+router.get("/obtener-ventas-temp", obtenerVentasTemporales);
 // router.get("/serviciocita/get/:id", getServicioCitaxID);
 // router.put("/serviciocita/put/:id", putServicioCitaxID);
 // router.delete("/serviciocita/delete/:id", deleteServicioCitaxID);

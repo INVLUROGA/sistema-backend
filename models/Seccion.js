@@ -107,6 +107,9 @@ const Role = db.define("tb_role", {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  id_empresa: {
+    type: DataTypes.INTEGER,
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
@@ -114,31 +117,20 @@ const Role = db.define("tb_role", {
 });
 
 // Relaciones entre Módulos y Secciones (muchos a muchos)
-ModuloItem.belongsToMany(SeccionItem, {
-  through: ModulosVSseccion,
-  foreignKey: "id_modulo",
-  otherKey: "id_seccion",
-});
-SeccionItem.belongsToMany(ModuloItem, {
-  through: ModulosVSseccion,
-  foreignKey: "id_seccion",
-  otherKey: "id_modulo",
-});
+// ModuloItem.belongsToMany(SeccionItem, {
+//   through: ModulosVSseccion,
+//   foreignKey: "id_modulo",
+//   otherKey: "id_seccion",
+// });
+// SeccionItem.belongsToMany(ModuloItem, {
+//   through: ModulosVSseccion,
+//   foreignKey: "id_seccion",
+//   otherKey: "id_modulo",
+// });
 
 // Relaciones entre Roles y Módulos (muchos a muchos)
-Role.belongsToMany(ModuloItem, {
-  through: rolesvsModulos,
-  foreignKey: "id_rol",
-  otherKey: "id_modulo",
-  as: "modules",
-});
-ModuloItem.belongsToMany(Role, {
-  through: rolesvsModulos,
-  foreignKey: "id_modulo",
-  otherKey: "id_rol",
-  as: "roles",
-});
-
+rolesvsModulos.belongsTo(Role, { foreignKey: "id_rol" });
+rolesvsModulos.belongsTo(ModuloItem, { foreignKey: "id_modulo" });
 Role.sync()
   .then(() => {
     console.log("La tabla Role ha sido creada o ya existe.");

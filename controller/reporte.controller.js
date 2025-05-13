@@ -28,20 +28,10 @@ const { Marcacion } = require("../models/Marcacion");
 
 // Función para sumar días hábiles (lunes y viernes) a una fecha
 function addBusinessDays(startDate, numberOfDays) {
-  let currentDate = new Date(startDate);
-  let daysAdded = 0;
-
-  while (daysAdded < numberOfDays) {
-    currentDate.setDate(currentDate.getDate() + 1);
-
-    const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-      // Check if it's Monday to Friday
-      daysAdded++;
-    }
-  }
-
+  const currentDate = new Date(startDate);
+  currentDate.setDate(currentDate.getDate() + numberOfDays);
   return currentDate;
+
 }
 const diasLaborables = (fechaInicio, fechaFin) => {
   let diasLaborables = 0;

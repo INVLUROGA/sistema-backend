@@ -248,6 +248,36 @@ const detalle_cambioPrograma = db.define("detalle_cambioPrograma", {
   },
 });
 
+const detalleventa_servicios = db.define("detalle_ventaservicios", {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  id_venta: {
+    type: DataTypes.INTEGER,
+  },
+  id_empl: {
+    type: DataTypes.INTEGER,
+  },
+  id_servicio: {
+    type: DataTypes.INTEGER,
+  },
+  cantidad: {
+    type: DataTypes.INTEGER,
+  },
+  tarifa_monto: {
+    type: DataTypes.DECIMAL(10, 2),
+  },
+  observacion: {
+    type: DataTypes.STRING(360),
+  },
+  flag: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+});
+
 detalleVenta_membresias.hasOne(HorarioProgramaPT, {
   foreignKey: "id_HorarioPgm",
   sourceKey: "id_horario",
@@ -407,7 +437,19 @@ detalleVenta_pagoVenta.belongsTo(Venta, {
 
 // detalle_cambioPrograma.sync().
 /*
- */
+
+*/
+detalleventa_servicios
+  .sync()
+  .then(() => {
+    console.log("La tabla detalleventa_servicios ha sido creada o ya existe.");
+  })
+  .catch((error) => {
+    console.error(
+      "Error al sincronizar el modelo con la base de datos:",
+      error
+    );
+  });
 detalle_cambioPrograma
   .sync()
   .then(() => {
@@ -517,4 +559,5 @@ module.exports = {
   detalleVenta_citas,
   detalleVenta_producto,
   detalle_cambioPrograma,
+  detalleventa_servicios,
 };

@@ -76,6 +76,33 @@ const ContactoEmergencia = db.define("tb_contactoEmergencia", {
   },
 });
 
+const MensajeEnviados = db.define("tb_mensajes_enviados", {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  from: {
+    type: DataTypes.STRING,
+  },
+  to: {
+    type: DataTypes.STRING,
+  },
+  body: {
+    type: DataTypes.STRING,
+  },
+  priority: {
+    type: DataTypes.STRING(360),
+  },
+  fec_registro: {
+    type: DataTypes.DATE,
+  },
+  flag: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+});
+
 Comentario.sync()
   .then(() => {
     console.log("La tabla Comentario ha sido drop o ya existe.");

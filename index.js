@@ -202,6 +202,7 @@ const deviceRoutes = require("./routes/ZkTeco/bd/deviceRoutes");
 const userRoutes = require("./routes/ZkTeco/bd/userRoutes");
 const syncRoutes = require("./routes/ZkTeco/bd/syncRoutes");
 const userdata64Routes = require("./routes/ZkTeco/bd/userdata64Routes");
+// enviarMensajes()
 
 app.use(cdataRoutes);
 app.use(devicecmdRoutes);
@@ -247,6 +248,7 @@ app.use("/api/jornada", require("./routes/jornada.route.js"));
 //TODO: USUARIOS(CLIENTES, COLABORADORES, USUARIOS LOGEADOS)
 app.use("/api/usuario", require("./routes/usuario.route.js"));
 app.use("/api/cambio-programa", require("./routes/cambioPrograma.route.js"));
+app.use("/api/msg-masivos", require("./routes/msgMasivos.route.js"))
 
 app.use("/api/servicios", validarJWT, require("./routes/servicios.router.js"));
 app.use(
@@ -308,9 +310,10 @@ app.use("/api/terminologia", require("./routes/terminologia.router.js"));
 app.use("/api/parametroGasto", require("./routes/parametroGasto.router.js"));
 //CIRCUS----
 app.use("/api/circus", require("./routes/routersCircus/servicios.router.js"));
+app.use("/api/canjes", require("./routes/canjes.router.js"));
 // app.use("/circus/")
 obtenerDataSeguimiento();
 //Escuchar peticiones
-app.listen(env.PORT || 4001, () => {
-  console.log(`Servidor corriendo en el puerto ${env.PORT || 4001}`);
+app.listen(env.PORT || 3001, env.IP, () => {
+  console.log(`Servidor corriendo en el puerto ${env.IP}${env.PORT || 3001}`);
 });

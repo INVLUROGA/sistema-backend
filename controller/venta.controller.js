@@ -8,6 +8,7 @@ const {
   detalleVenta_pagoVenta,
   detalleVenta_Transferencia,
   detalle_cambioPrograma,
+  detalleventa_servicios,
 } = require("../models/Venta");
 const { Cliente, Empleado } = require("../models/Usuarios");
 const { Sequelize, Op } = require("sequelize");
@@ -461,6 +462,16 @@ const postVenta = async (req = request, res = response) => {
   const uid_contrato = v4();
   // let base64_contratoPDF = "";
   try {
+    if (req.servicios && req.servicios.length > 0) {
+      const ventasServiciosConIdVenta = await req.servicios.map((producto) => ({
+        id_producto: producto.id_servicio,
+        cantidad: producto.cantidad,
+        tarifa_monto: producto.tarifa_monto,
+        id_venta: req.ventaID,
+      }));
+      // Crear múltiples registros en detalleVenta_producto
+      await detalleventa_servicios.bulkCreate(ventasServiciosConIdVenta);
+    }
     if (req.productos && req.productos.length > 0) {
       const ventasProductosConIdVenta = await req.productos.map((producto) => ({
         id_producto: producto.id_producto,
@@ -473,28 +484,6 @@ const postVenta = async (req = request, res = response) => {
       await detalleVenta_producto.bulkCreate(ventasProductosConIdVenta);
     }
     if (req.ventaProgramas && req.ventaProgramas.length > 0) {
-      // Crear múltiples registros en detalleVenta_producto
-      // const { dataVenta, detalle_cli_modelo, datos_pagos } = req.body;
-
-      // const pdfContrato = await getPDF_CONTRATO(
-      //   dataVenta.detalle_venta_programa[0],
-      //   detalle_cli_modelo,
-      //   datos_pagos,
-      //   req.ventaID
-      // );
-      // if (dataVenta.detalle_venta_programa[0].firmaCli) {
-      //   await mailContratoMembresia(
-      //     pdfContrato,
-      //     dataVenta.detalle_venta_programa[0],
-      //     detalle_cli_modelo,
-      //     datos_pagos,
-      //     req.ventaID
-      //   );
-      // }
-      // base64_contratoPDF = `data:application/pdf;base64,${Buffer.from(
-      //   pdfContrato
-      // ).toString("base64")}`;
-
       const ventasMembresiasConIdVenta = await req.ventaProgramas.map(
         (mem) => ({
           id_venta: req.ventaID,
@@ -664,6 +653,7 @@ const get_VENTAS = async (req = request, res = response) => {
         "id",
         "id_cli",
         "id_empl",
+        "id_origen",
         "id_tipoFactura",
         "numero_transac",
         "fecha_venta",
@@ -728,6 +718,11 @@ const get_VENTAS = async (req = request, res = response) => {
             "id_st",
             "tarifa_monto",
           ],
+          include: [
+            {
+              model: ProgramaTraining,
+            },
+          ],
         },
         {
           model: detalleVenta_citas,
@@ -736,6 +731,12 @@ const get_VENTAS = async (req = request, res = response) => {
         {
           model: detalleVenta_pagoVenta,
           attributes: ["id_venta", "parcial_monto"],
+          include: [
+            {
+              model: Parametros,
+              as: "parametro_forma_pago",
+            },
+          ],
         },
       ],
     });
@@ -1793,6 +1794,91 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
     console.log(error);
   }
 };
+const obtenerComparativoTotal = async (req = request, res = response) => {
+  try {
+    const ventasProgramas = await ProgramaTraining.findAll({
+      attributes: ["name_pgm", "id_pgm"],
+      where: { flag: true, estado_pgm: true },
+      distinct: true,
+      include: [
+        {
+          model: ImagePT,
+          attributes: ["name_image", "height", "width"],
+        },
+        {
+          model: detalleVenta_membresias,
+          order: [["tarifa_monto", "desc"]],
+          attributes: [
+            "id_venta",
+            "horario",
+            "tarifa_monto",
+            "id_tarifa",
+            "fec_inicio_mem",
+            "fec_fin_mem",
+          ],
+          include: [
+            {
+              model: TarifaTraining,
+              attributes: [
+                "nombreTarifa_tt",
+                "descripcionTarifa_tt",
+                "tarifaCash_tt",
+                "fecha_inicio",
+                "fecha_fin",
+                "id_tipo_promocion",
+              ],
+              as: "tarifa_venta",
+            },
+            {
+              model: SemanasTraining,
+              attributes: ["sesiones", "semanas_st"],
+            },
+            {
+              model: Venta,
+              attributes: [
+                "id_tipoFactura",
+                "fecha_venta",
+                "id_cli",
+                "id",
+                "id_origen",
+                "observacion",
+              ],
+              // include: [
+              // {
+              //   model: Cliente,
+              //   include: [
+              //     {
+              //       model: Distritos,
+              //       as: "ubigeo_nac",
+              //     },
+              //     {
+              //       model: Distritos,
+              //       as: "ubigeo_trabajo",
+              //     },
+              //   ],
+              // },
+              // {
+              //   model: Empleado,
+              //   attributes: [
+              //     "nombre_empl",
+              //     "apPaterno_empl",
+              //     "apMaterno_empl",
+              //     "estado_empl",
+              //   ],
+              // },
+              // ],
+            },
+          ],
+        },
+      ],
+    });
+    res.status(200).json({
+      ventasProgramas,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 const obtenerComparativoResumenClientes = async (
   req = request,
@@ -2095,8 +2181,8 @@ const obtenerComparativoResumenxMES = async (req = request, res = response) => {
   const year = anio;
   const month = mes; // Octubre (número del mes en formato 1-12)
 
-  const fechaInicio = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0)); // Primer día del mes
-  const fechaFin = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999)); // Último día del mes
+  const fechaInicio = new Date((year, month - 1, 1, 0, 0, 0, 0)); // Primer día del mes
+  const fechaFin = new Date((year, month, 0, 23, 59, 59, 999)); // Último día del mes
 
   try {
     const ventasProgramas = await ProgramaTraining.findAll({
@@ -3006,4 +3092,5 @@ module.exports = {
   obtenerComparativoResumenxMES,
   obtenerMembresias,
   obtenerMarcacionesClientexMembresias,
+  obtenerComparativoTotal,
 };
