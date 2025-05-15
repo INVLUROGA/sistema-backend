@@ -152,10 +152,18 @@ const putAportexID = async (req = request, res = response) => {
     });
   }
 };
+const getAportesRangeDate = async (req = request, res = response) => {
+  try {
+    
+  } catch (error) {
+    
+  }
+};
 module.exports = {
   postAporte,
   getTBAportes,
   getAportePorID,
   putAportexID,
   deleteAportexID,
+  getAportesRangeDate,
 };
