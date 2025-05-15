@@ -7,6 +7,7 @@ const { request, response } = require("express");
 const { enviarMensajesWsp } = require("../config/whatssap-web");
 const dayjs = require("dayjs");
 const es = require("dayjs/locale/es");
+const { capturarAccion } = require("../middlewares/auditoria");
 dayjs.locale("es"); // Establece el idioma en español
 
 const getCitasxServ = async (req = request, res = response) => {
@@ -82,6 +83,19 @@ const postCita = async (req = request, res = response) => {
       status_cita,
       id_empl,
     });
+    let formAUDIT2 = {
+      id_user: req.id_user,
+      ip_user: req.ip_user,
+      accion: typesCRUD.POST,
+      arrayNuevo: {
+        ...req.body,
+      },
+      arrayViejo: {
+        ...req.body,
+      },
+      observacion: `Se agrego: El Cita de id ${cita.id}`,
+    };
+    await capturarAccion(formAUDIT2);
     await cita.save();
     const cliente = await Cliente.findOne({ where: { id_cli: id_cli } });
     // console.log(
@@ -162,6 +176,10 @@ const deleteCita = async (req = request, res = response) => {
   const { id } = req.params;
   try {
     const cita = await Cita.findOne({ where: { flag: true, id } });
+
+    
+
+
     await cita.update({ flag: false });
     res.status(200).json({
       ok: true,

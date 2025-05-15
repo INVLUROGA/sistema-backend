@@ -913,6 +913,14 @@ const revalidarToken = async (req, res) => {
     user.id_user
   );
   let MODULOS_ITEMS = [];
+  console.log(user);
+
+  if (!user.flag) {
+    res.status(400).json({
+      ok: false,
+      msg: "renewed",
+    });
+  }
 
   if (user.rol_user === 1) {
     MODULOS_ITEMS = [

@@ -1,7 +1,8 @@
 const { response } = require("express");
 const jwt = require("jsonwebtoken");
+const { Usuario } = require("../models/Usuarios");
 
-const validarJWT = (req, res = response, next) => {
+const validarJWT = async (req, res = response, next) => {
   //x-token en los header
   const token = req.header("X-token");
   if (!token) {
@@ -16,6 +17,14 @@ const validarJWT = (req, res = response, next) => {
       process.env.SECRET_KEY
     );
 
+    const usuario = await Usuario.findOne({ where: { id_user: id_user } });
+    if (!usuario) {
+      return res.status(401).json({ ok: false, msg: "Usuario no existe" });
+    }
+    if (!usuario.flag) {
+      // << tu “flag” de inactivo / baneado
+      return res.status(403).json({ ok: false, msg: "Cuenta inactiva" });
+    }
     // console.log(uid, name, rol_user, ip_user, id_user);
     req.ip_user = ip_user;
     req.uid = uid;
