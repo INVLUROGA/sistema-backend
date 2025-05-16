@@ -248,7 +248,7 @@ app.use("/api/jornada", require("./routes/jornada.route.js"));
 //TODO: USUARIOS(CLIENTES, COLABORADORES, USUARIOS LOGEADOS)
 app.use("/api/usuario", require("./routes/usuario.route.js"));
 app.use("/api/cambio-programa", require("./routes/cambioPrograma.route.js"));
-app.use("/api/msg-masivos", require("./routes/msgMasivos.route.js"))
+app.use("/api/msg-masivos", require("./routes/msgMasivos.route.js"));
 
 app.use("/api/servicios", validarJWT, require("./routes/servicios.router.js"));
 app.use(

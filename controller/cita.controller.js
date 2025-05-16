@@ -8,6 +8,7 @@ const { enviarMensajesWsp } = require("../config/whatssap-web");
 const dayjs = require("dayjs");
 const es = require("dayjs/locale/es");
 const { capturarAccion } = require("../middlewares/auditoria");
+const { typesCRUD } = require("../types/types");
 dayjs.locale("es"); // Establece el idioma en español
 
 const getCitasxServ = async (req = request, res = response) => {
@@ -98,16 +99,6 @@ const postCita = async (req = request, res = response) => {
     await capturarAccion(formAUDIT2);
     await cita.save();
     const cliente = await Cliente.findOne({ where: { id_cli: id_cli } });
-    // console.log(
-    //   fecha_init,
-    //   new Date(fecha_init).toLocaleDateString([], {
-    //     hour: "2-digit",
-    //     minute: "2-digit",
-    //   }),
-    //   dayjs.utc(fecha_init).format("DD/MM/YYYY"),
-    //   dayjs.utc(fecha_init).format("hh:mm:ss"),
-    //   "post en citasss....."
-    // );
     const objSexoTst = {
       masculino: 8,
       fem: 9,
@@ -176,9 +167,6 @@ const deleteCita = async (req = request, res = response) => {
   const { id } = req.params;
   try {
     const cita = await Cita.findOne({ where: { flag: true, id } });
-
-    
-
 
     await cita.update({ flag: false });
     res.status(200).json({
