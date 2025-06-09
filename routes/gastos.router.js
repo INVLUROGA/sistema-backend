@@ -1,4 +1,4 @@
-const { Router } = require("express");
+  const { Router } = require("express");
 
 const {
   postGasto,
@@ -9,6 +9,7 @@ const {
   getGastoxGrupo,
   obtenerOrdenCompra,
   getProveedoresGastos_SinRep,
+  obtenerGastosxRangeDate
 } = require("../controller/gastos.controller");
 const router = Router();
 /**
@@ -17,15 +18,14 @@ const router = Router();
  */
 router.get("/orden-compra/:id_enterp", obtenerOrdenCompra);
 
+router.get("/range-date/:id_empresa", obtenerGastosxRangeDate)
 router.post("/post-egreso", postGasto);
 router.get("/get-egresos/:id_enterp", getGastos);
-router.get("/get-egreso/:id", getGasto);
+router.get("/get-egreso/:id", getGasto);  
 router.put("/put-egreso/:id", putGasto);
 router.put("/delete-egreso/:id", deleteGasto);
 router.get("/get-gasto-x-grupo/:id_enterp", getGastoxGrupo);
 router.get("/get-proveedores-unicos", getProveedoresGastos_SinRep);
-
 // router.get('/')
-
 
 module.exports = router;

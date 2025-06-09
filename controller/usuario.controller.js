@@ -514,6 +514,8 @@ const getUsuarioEmpleados = async (req = request, res = response) => {
       attributes: [
         "uid",
         "id_empl",
+        "fecNac_empl",
+        "fecha_nacimiento",
         [
           Sequelize.fn(
             "CONCAT",

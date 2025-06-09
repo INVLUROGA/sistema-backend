@@ -11,7 +11,11 @@ const { Producto } = require("../models/Producto");
 const { Servicios } = require("../models/Servicios");
 const { Op, Sequelize } = require("sequelize");
 const { Proveedor } = require("../models/Proveedor");
-const { ParametroGastos, Gastos } = require("../models/GastosFyV");
+const {
+  ParametroGastos,
+  Gastos,
+  ParametroGrupo,
+} = require("../models/GastosFyV");
 const { Parametros } = require("../models/Parametros");
 
 const getIngresosxMESandAnio = async (req = request, res = response) => {
@@ -335,6 +339,12 @@ const getGastoxGrupo = async (req = request, res = response) => {
           where: {
             id_empresa: id_enterp,
           },
+          include: [
+            {
+              model: ParametroGrupo,
+              as: "parametro_grupo",
+            },
+          ],
         },
         {
           model: Parametros,

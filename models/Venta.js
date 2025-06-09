@@ -10,12 +10,33 @@ const {
 const { Parametros } = require("./Parametros");
 const { ImagePT } = require("./Image");
 const { HorarioProgramaPT } = require("./HorarioProgramaPT");
-
+const cajasMovimientos = db.define("tb_cajas_movimiento", {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  fecha_apertura: {
+    type: DataTypes.DATE,
+    defaultValue: new Date(),
+  },
+  fecha_cierre: {
+    type: DataTypes.DATE,
+    defaultValue: new Date(),
+  },
+  flag: {
+    type: DataTypes.INTEGER,
+    defaultValue: true,
+  },
+});
 const Venta = db.define("tb_venta", {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
+  },
+  id_caja: {
+    type: DataTypes.INTEGER,
   },
   id_cli: {
     type: DataTypes.INTEGER,
@@ -473,6 +494,17 @@ detalleVenta_Transferencia
       error
     );
   });
+cajasMovimientos
+  .sync()
+  .then(() => {
+    console.log("La tabla cajasMovimientos ha sido creada o ya existe.");
+  })
+  .catch((error) => {
+    console.error(
+      "Error al sincronizar el modelo con la base de datos:",
+      error
+    );
+  });
 Venta.sync()
   .then(() => {
     console.log("La tabla Venta ha sido creada o ya existe.");
@@ -560,4 +592,5 @@ module.exports = {
   detalleVenta_producto,
   detalle_cambioPrograma,
   detalleventa_servicios,
+  cajasMovimientos,
 };

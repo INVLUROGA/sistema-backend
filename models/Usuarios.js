@@ -75,6 +75,9 @@ const Empleado = db.define("tb_empleado", {
   fecNac_empl: {
     type: DataTypes.DATEONLY,
   },
+  fecha_nacimiento: {
+    type: DataTypes.DATE,
+  },
   sexo_empl: {
     type: DataTypes.INTEGER,
   },

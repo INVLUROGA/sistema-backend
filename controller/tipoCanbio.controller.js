@@ -1,144 +1,130 @@
 const axios = require("axios");
 const { response, request } = require("express");
-const { TipoCambio } = require("../models/TipoCambio");
+const { TipoCambio, TipoDeCambio } = require("../models/TipoCambio");
 const {
   extraerTipoCambioDeSUNAT_FECHA_ACTUAL,
 } = require("../middlewares/scrap_TIPO_CAMBIO_DOLAR");
 const { Op } = require("sequelize");
 const dayjs = require("dayjs");
 
-
-const buscar = async (req = request , res =  response)=>{
-
+const buscar = async (req = request, res = response) => {
   const { id } = req.params;
-  let tipoCambio ;
-  let response = "" ; 
+  let tipoCambio;
+  let response = "";
   try {
     tipoCambio = await buscarMethod(id);
     response = "exito";
 
-    if(!tipoCambio){
+    if (!tipoCambio) {
       throw new Error("No existe el tipo de cambio con ese id");
     }
   } catch (error) {
-    response =  error.message;
+    response = error.message;
   }
- 
-  if(!response  || response.includes("Error")){
+
+  if (!response || response.includes("Error")) {
     res.status(500).json({
       ok: false,
       tipoCambio: tipoCambio,
-      response: response
+      response: response,
     });
-  }else{
+  } else {
     res.status(200).json({
       ok: true,
       tipoCambio: tipoCambio,
-      response: response
+      response: response,
     });
-  }; 
-
-
+  }
 };
 
 async function buscarMethod(id) {
-
   const tipoCambio = await TipoCambio.findOne({
     where: {
-      id: id
-    }
+      id: id,
+    },
   });
   return tipoCambio;
 }
 
-const eliminar = async (req = request , res = response)=>{
+const eliminar = async (req = request, res = response) => {
   const { id } = req.body;
-  let response ;
+  let response;
   try {
     const tipoCambio = await buscarMethod(id);
     tipoCambio.flag = false;
 
     await tipoCambio.save();
     response = "exito";
-
   } catch (error) {
     response = error.message;
   }
 
-  if(response == "exito"){
-
+  if (response == "exito") {
     res.status(200).json({
       ok: true,
       response: response,
     });
-
-  }else{
+  } else {
     res.status(500).json({
       ok: false,
       //tipoCambio: tipoCambio,
-      response: response
+      response: response,
     });
   }
-
 };
 
-const crear = async(req = request , res = response)=>{
-
-  const {fecha ,precio_compra , precio_venta , moneda} = req.body;
+const crear = async (req = request, res = response) => {
+  const { fecha, precio_compra, precio_venta, moneda } = req.body;
   let tipoCambio;
   let response;
 
   try {
-     tipoCambio = await TipoCambio.create({
+    tipoCambio = await TipoCambio.create({
       fecha: fecha,
       precio_compra: precio_compra,
       precio_venta: precio_venta,
       moneda: moneda,
-      flag: true
+      flag: true,
     });
     response = "exito";
-
   } catch (error) {
     response = error.message;
   }
 
-  if(tipoCambio || response === "exito"){
-
+  if (tipoCambio || response === "exito") {
     res.status(200).json({
       ok: true,
       response: response,
-      tipoCambio: tipoCambio
+      tipoCambio: tipoCambio,
     });
-
-  }else{
+  } else {
     res.status(500).json({
       ok: false,
       //tipoCambio: tipoCambio,
-      response: response
+      response: response,
     });
   }
-
 };
 
-const actualizar = async(req = request , res = response)=>{
-
-  const {id, fecha ,precio_compra , precio_venta , moneda} = req.body;
-  let response ;
+const actualizar = async (req = request, res = response) => {
+  const { id, fecha, precio_compra, precio_venta, moneda } = req.body;
+  let response;
   let tipoCambio;
 
   try {
-
-    tipoCambio = await TipoCambio.update({
-      fecha: fecha,
-      precio_compra:precio_compra,
-      precio_venta:precio_venta,
-      moneda:moneda,
-    
-    },{
-      where:{
-        id:id
+    tipoCambio = await TipoCambio.update(
+      {
+        fecha: fecha,
+        precio_compra: precio_compra,
+        precio_venta: precio_venta,
+        moneda: moneda,
+      },
+      {
+        where: {
+          id: id,
+        },
       }
-    });
+    );
 
     tipoCambio = await buscarMethod(id);
 
@@ -146,25 +132,21 @@ const actualizar = async(req = request , res = response)=>{
   } catch (error) {
     response = error.message;
   }
-  
-  if(tipoCambio || response === "exito"){
 
+  if (tipoCambio || response === "exito") {
     res.status(200).json({
       ok: true,
       response: response,
-      tipoCambio: tipoCambio
+      tipoCambio: tipoCambio,
     });
-
-  }else{
+  } else {
     res.status(500).json({
       ok: false,
       //tipoCambio: tipoCambio,
-      response: response
+      response: response,
     });
   }
-
 };
-
 
 const obtenerTipoCambioxFecha = async (req = request, res = response) => {
   // const { fecha } = req.query;
@@ -233,21 +215,21 @@ const obtenerTipoCambiosxFechas = async (req = request, res = response) => {
     });
   }
 };
-const updateTipoCambio = async(req=request, res=response)=>{
+const updateTipoCambio = async (req = request, res = response) => {
   const { id_tc } = req.params;
   try {
     const tipoCambio = await TipoCambio.findAll({
-      where:{
-        id: id_tc
-      }
-    })
+      where: {
+        id: id_tc,
+      },
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({
       error: `Error en el servidor, en controller de postTipoCambio, hable con el administrador: ${error}`,
     });
   }
-}
+};
 const postTipoCambio = async (req = request, res = response) => {
   try {
     const tipoCambio = new TipoCambio(req.body);
@@ -283,6 +265,54 @@ const obtenerTipoCambio = async (req = request, res = response) => {
     });
   }
 };
+const obtenerMonedaOrigenYDestino = async (req = request, res = response) => {
+  try {
+    // const { monedaOrigen, monedaDestino } = req.params;
+    // const { rangeDate } = req.query;
+    const tipoCambios = await TipoDeCambio.findAll({ where: { flag: true } });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      error: `Error en el servidor, en controller de obtenerTipoCambioxFecha, hable con el administrador: ${error}`,
+    });
+  }
+};
+const obtenerTCs = async (req = request, res = response) => {
+  try {
+    const tipoCambios = await TipoDeCambio.findAll({ where: { flag: true } });
+    res.status(201).json({
+      tipoCambios,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      error: `Error en el servidor, en controller de obtenerTipoCambioxFecha, hable con el administrador: ${error}`,
+    });
+  }
+};
+const postMonedaOrigenYDestino = async (req = request, res = response) => {
+  try {
+    const { monedaOrigen, monedaDestino } = req.params;
+    const { precio_compra, precio_venta, fecha } = req.body;
+    const tipoCambio = new TipoDeCambio({
+      monedaDestino,
+      monedaOrigen,
+      precio_compra,
+      precio_venta,
+      fecha,
+    });
+    await tipoCambio.save();
+    res.status(200).json({
+      msg: "success",
+      tipoCambio,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      error: `Error en el servidor, en controller de obtenerTipoCambioxFecha, hable con el administrador: ${error}`,
+    });
+  }
+};
 module.exports = {
   obtenerTipoCambioxFecha,
   obtenerTipoCambiosxFechas,
@@ -291,5 +321,8 @@ module.exports = {
   buscar,
   eliminar,
   crear,
-  actualizar
+  actualizar,
+  obtenerMonedaOrigenYDestino,
+  postMonedaOrigenYDestino,
+  obtenerTCs,
 };

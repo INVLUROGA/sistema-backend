@@ -9,6 +9,7 @@ const {
   detalleVenta_Transferencia,
   detalle_cambioPrograma,
   detalleventa_servicios,
+  cajasMovimientos,
 } = require("../models/Venta");
 const { Cliente, Empleado } = require("../models/Usuarios");
 const { Sequelize, Op } = require("sequelize");
@@ -52,7 +53,46 @@ const { ExtensionMembresia } = require("../models/ExtensionMembresia");
 
 // Cargar el plugin
 dayjs.extend(utc);
-
+const postCajaApertura = async (req = request, res = response) => {
+  try {
+    const caja = new cajasMovimientos({
+      fecha_apertura: new Date(),
+      fecha_cierre: new Date(3000, 0, 1),
+    });
+    await caja.save();
+    res.status(200).json({
+      ok: true,
+      msg: caja,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: "Error en el servidor" + error,
+    });
+  }
+};
+const buscarCajasxFecha = async (req = request, res = response) => {
+  try {
+    const { fecha } = req.query;
+    const cajas = await cajasMovimientos.findAll({
+      order: [["id", "desc"]],
+      where: {
+        fecha_apertura: { [Op.lte]: fecha }, // apertura ≤ ahora
+        fecha_cierre: { [Op.gte]: fecha }, // cierre ≥ ahora
+      },
+    });
+    res.status(201).json({
+      cajas,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: "Error en el servidor" + error,
+    });
+  }
+};
 const estadosClienteMembresiaVar = async (req = request, res = response) => {
   //const {tipoPrograma , fechaDesde, fechaHasta} = req.body;
   const { tipoPrograma, fechaDesde, fechaHasta } = req.body;
@@ -658,6 +698,7 @@ const get_VENTAS = async (req = request, res = response) => {
         "numero_transac",
         "fecha_venta",
         "status_remove",
+        "observacion",
       ],
       order: [["fecha_venta", "DESC"]],
       include: [
@@ -3061,6 +3102,7 @@ function bytesToBase64(bytes) {
 }
 module.exports = {
   putVentaxId,
+  postCajaApertura,
   obtenerMembresiasxUIDcliente,
   obtenerComparativoResumenClientes,
   obtenerTransferenciasResumenxMes,
@@ -3093,4 +3135,5 @@ module.exports = {
   obtenerMembresias,
   obtenerMarcacionesClientexMembresias,
   obtenerComparativoTotal,
+  buscarCajasxFecha,
 };

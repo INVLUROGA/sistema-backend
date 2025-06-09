@@ -29,6 +29,7 @@ const { ParametroGastos } = require("../models/GastosFyV");
 const { Inversionista } = require("../models/Aportes");
 const { ExtensionMembresia } = require("../models/ExtensionMembresia");
 const { Distritos } = require("../models/Distritos");
+const { ServiciosCircus } = require("../models/modelsCircus/Servicios");
 
 const obtenerDistritosxDepartamentoxProvincia = async (
   req = request,
@@ -293,6 +294,31 @@ const getParametrosporCliente = async (req, res) => {
     res.status(404).json(error);
   }
 };
+const getParametrosporClientexEmpresa = async (req, res) => {
+  const { id_empresa } = req.params;
+  try {
+    const parametros = await Cliente.findAll({
+      where: { flag: true, id_empresa: id_empresa },
+      attributes: [
+        "uid",
+        ["id_cli", "value"],
+        [
+          Sequelize.literal(
+            "CONCAT(numDoc_cli, ' | ', nombre_cli, ' ', apPaterno_cli, ' ', apMaterno_cli)"
+          ),
+          "label",
+        ],
+        "email_cli",
+        "tipoCli_cli",
+        "tel_cli",
+        "uid",
+      ],
+    });
+    res.status(200).json(parametros);
+  } catch (error) {
+    res.status(404).json(error);
+  }
+};
 const getParametrosporProductosCategoria = async (
   req = request,
   res = response
@@ -352,6 +378,33 @@ const getParametrosEmpleadosxDep = async (req = request, res = response) => {
           ),
           "label",
         ],
+      ],
+    });
+    res.status(200).json(empleados);
+  } catch (error) {
+    res.status(404).json(error);
+  }
+};
+const getParametrosEmpleadosxDepxEmpresa = async (
+  req = request,
+  res = response
+) => {
+  try {
+    const { departamento, id_empresa } = req.params;
+    const empleados = await Empleado.findAll({
+      where: {
+        departamento_empl: departamento,
+        id_empresa: id_empresa,
+        estado_empl: true,
+        flag: true,
+      },
+      attributes: [
+        ["id_empl", "value"],
+        [
+          Sequelize.literal("CONCAT(nombre_empl, ' ', apPaterno_empl)"),
+          "label",
+        ],
+        ["cargo_empl", "cargo_empl"],
       ],
     });
     res.status(200).json(empleados);
@@ -1097,8 +1150,23 @@ const getParametrosZonas = async (req = request, res = response) => {
     console.log(error);
   }
 };
+const getServiciosxEmpresa = async (req = request, res = response) => {
+  const { id_empresa } = req.params;
+  try {
+    const servicios = await ServiciosCircus.findAll({
+      order: [["id", "DESC"]],
+      where: { flag: true, id_empresa: id_empresa },
+    });
+
+    res.status(200).json(servicios);
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 module.exports = {
+  getParametrosporClientexEmpresa,
+  getParametrosEmpleadosxDepxEmpresa,
   obtenerDistritosxDepartamentoxProvincia,
   postParametros3,
   getParametrosVentaFitology,
@@ -1135,4 +1203,5 @@ module.exports = {
   getParametrosZonas,
   getParametrosporENTIDADyGRUPO__PERIODO,
   postParametros__PERIODO,
+  getServiciosxEmpresa,
 };

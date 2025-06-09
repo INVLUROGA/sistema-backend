@@ -35,6 +35,9 @@ const {
   getParametrosporENTIDADyGRUPO__PERIODO,
   getParametrosZonas,
   postParametros__PERIODO,
+  getParametrosEmpleadosxDepxEmpresa,
+  getParametrosporClientexEmpresa,
+  getServiciosxEmpresa,
 } = require("../controller/Parametros.controller");
 const { obtener_estado_membresia } = require("../middlewares/logicaSistema");
 const {
@@ -49,6 +52,7 @@ const router = Router();
  * /api/parametros/
  */
 // router.get("/get_params/forma_pago")
+router.get("/get_params/servicios/:id_empresa", getServiciosxEmpresa);
 router.get("/get_params/etiquetas/:entidad/:grupo", getEtiquetasxEntidadGrupo);
 router.post(
   "/post-parametros-periodo/:entidad/:grupo",
@@ -98,7 +102,12 @@ router.get("/get_params/programas-activos", getProgramasActivos);
 router.get("/get_param/param_gasto/:id", getParametroGasto);
 router.get("/get_params/producto/proveedor", getParametrosporProveedor);
 router.get("/get_params/clientes", getParametrosporCliente);
+router.get("/get_params/clientes/:id_empresa", getParametrosporClientexEmpresa);
 router.get("/get_params/empleados/:departamento", getParametrosEmpleadosxDep);
+router.get(
+  "/get_params/empleados/:departamento/:id_empresa",
+  getParametrosEmpleadosxDepxEmpresa
+);
 router.get(
   "/get_params/productos/:categoria",
   getParametrosporProductosCategoria

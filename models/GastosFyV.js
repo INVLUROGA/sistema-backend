@@ -3,6 +3,26 @@ const { db } = require("../database/sequelizeConnection");
 const { Proveedor } = require("./Proveedor");
 const { Parametros } = require("./Parametros");
 
+const ParametroGrupo = db.define("tb_parametros_grupos", {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  id_empresa: {
+    type: DataTypes.INTEGER,
+  },
+  param_label: {
+    type: DataTypes.STRING(150),
+  },
+  orden: {
+    type: DataTypes.INTEGER,
+  },
+  flag: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+});
 const ParametroGastos = db.define("tb_parametros_gastos", {
   id: {
     type: DataTypes.INTEGER,
@@ -12,10 +32,16 @@ const ParametroGastos = db.define("tb_parametros_gastos", {
   id_empresa: {
     type: DataTypes.INTEGER,
   },
+  id_grupo: {
+    type: DataTypes.INTEGER,
+  },
   grupo: {
     type: DataTypes.STRING(35),
   },
   id_tipoGasto: {
+    type: DataTypes.INTEGER,
+  },
+  orden: {
     type: DataTypes.INTEGER,
   },
   nombre_gasto: {
@@ -111,7 +137,11 @@ Gastos.hasOne(Parametros, {
   sourceKey: "id_banco_pago",
   as: "parametro_banco",
 });
-
+ParametroGastos.hasOne(ParametroGrupo, {
+  foreignKey: "id",
+  sourceKey: "id_grupo",
+  as: "parametro_grupo",
+});
 Gastos.hasOne(ParametroGastos, {
   foreignKey: "id",
   sourceKey: "id_gasto",
@@ -150,6 +180,16 @@ const actualizarLongitudDelCampo = async () => {
   }
 };
 
+ParametroGrupo.sync()
+  .then(() => {
+    console.log("La tabla ParametroGrupo ha sido creada o ya existe.");
+  })
+  .catch((error) => {
+    console.error(
+      "Error al sincronizar el modelo con la base de datos:",
+      error
+    );
+  });
 ParametroGastos.sync()
   .then(() => {
     console.log("La tabla ParametroGastos ha sido creada o ya existe.");
@@ -177,4 +217,5 @@ Gastos.sync()
 module.exports = {
   ParametroGastos,
   Gastos,
+  ParametroGrupo,
 };

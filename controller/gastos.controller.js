@@ -1,5 +1,9 @@
 const { request, response } = require("express");
-const { Gastos, ParametroGastos } = require("../models/GastosFyV");
+const {
+  Gastos,
+  ParametroGastos,
+  ParametroGrupo,
+} = require("../models/GastosFyV");
 const { Proveedor } = require("../models/Proveedor");
 const { Sequelize, Op } = require("sequelize");
 const { Parametros } = require("../models/Parametros");
@@ -356,11 +360,86 @@ const getGastoxGrupo = async (req = request, res = response) => {
     });
   }
 };
+const obtenerGastosxRangeDate = async (req = request, res = response) => {
+  const { arrayDate } = req.query;
+  const { id_empresa } = req.params;
+
+  const fechaInicio = arrayDate[0];
+  const fechaFin = arrayDate[1];
+  try {
+    const gastos = await Gastos.findAll({
+      where: {
+        flag: true,
+        // 3. Filtro por fecha_comprobante entre inicio y fin (incluyendo todo el día)
+        fec_comprobante: {
+          [Op.between]: [`${fechaInicio} 00:00:00`, `${fechaFin} 23:59:59`],
+        },
+      },
+      order: [["fec_registro", "desc"]],
+      attributes: [
+        "id",
+        "moneda",
+        "monto",
+        "fec_pago",
+        "id_tipo_comprobante",
+        "n_comprabante",
+        "impuesto_igv",
+        "impuesto_renta",
+        "n_operacion",
+        "fec_registro",
+        "fec_comprobante",
+        "descripcion",
+        "id_prov",
+        "cod_trabajo",
+      ],
+      include: [
+        {
+          model: Proveedor,
+          attributes: ["razon_social_prov"],
+        },
+        {
+          model: ParametroGastos,
+          attributes: ["id_empresa", "nombre_gasto", "grupo", "id_tipoGasto"],
+          where: {
+            id_empresa: id_empresa,
+          },
+          include: [
+            {
+              model: ParametroGrupo,
+              as: "parametro_grupo",
+            },
+          ],
+        },
+        {
+          model: Parametros,
+          attributes: ["id_param", "label_param"],
+          as: "parametro_banco",
+        },
+        {
+          model: Parametros,
+          attributes: ["id_param", "label_param"],
+          as: "parametro_forma_pago",
+        },
+        {
+          model: Parametros,
+          attributes: ["id_param", "label_param"],
+          as: "parametro_comprobante",
+        },
+      ],
+    });
+    res.status(200).json({
+      msg: "success",
+      gastos,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
   postGasto,
   getGastos,
   getGastoxGrupo,
-
+  obtenerGastosxRangeDate,
   getGasto,
   obtenerOrdenCompra,
   putGasto,

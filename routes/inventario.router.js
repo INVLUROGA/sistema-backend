@@ -14,6 +14,7 @@ const {
   postFechaReportKardex,
   removeFechaReportKardex,
   obtenerFechaReportKardex,
+  obtenerMovimientosxArticulo,
 } = require("../controller/inventario.controller");
 const { validarJWT } = require("../middlewares/validarJWT");
 const router = Router();
@@ -39,7 +40,10 @@ router.get(
 );
 router.post("/post-kardex/:action/:id_enterprice", postKardexEntraSale);
 router.get("/obtener-kardex/:action/:id_enterprice", obtenerKardex);
-router.get("/movimiento-x-articulo/:id_articulo/:movimiento")
+router.get(
+  "/movimiento-x-articulo/:id_articulo/:movimiento",
+  obtenerMovimientosxArticulo
+);
 router.post("/remove-kardex/:id", eliminarEntraSale);
 
 router.post("/fechas-reporte-kardex/post", eliminarEntraSale);

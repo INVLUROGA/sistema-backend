@@ -1,5 +1,5 @@
-const { Sequelize } = require("sequelize");
-const { Cita } = require("../models/Cita");
+const { Sequelize, Op } = require("sequelize");
+const { Cita, eventoServicio } = require("../models/Cita");
 const { Cliente, Empleado } = require("../models/Usuarios");
 const { detalleVenta_citas } = require("../models/Venta");
 const { Servicios } = require("../models/Servicios");
@@ -9,7 +9,72 @@ const dayjs = require("dayjs");
 const es = require("dayjs/locale/es");
 const { capturarAccion } = require("../middlewares/auditoria");
 const { typesCRUD } = require("../types/types");
+const { EtiquetasxIds, Parametros } = require("../models/Parametros");
+const { ServiciosCircus } = require("../models/modelsCircus/Servicios");
 dayjs.locale("es"); // Establece el idioma en español
+
+const getServiciosCita = async (req, res) => {
+  const { id_empresa } = req.params;
+  const { fecha_inicio } = req.query;
+  console.log({ fecha_inicio });
+
+  try {
+    // Parseamos la fecha y armamos el rango [startDay, nextDay)
+    const startDay = new Date(fecha_inicio);
+    startDay.setHours(0, 0, 0, 0);
+
+    const nextDay = new Date(startDay);
+    nextDay.setDate(nextDay.getDate() + 1);
+    const citas = await eventoServicio.findAll({
+      where: {
+        flag: true,
+        // id_empresa, // si también quieres filtrar por empresa
+        fecha_inicio: {
+          [Op.gte]: startDay, // >= 2025-05-29 00:00:00.000
+          [Op.lt]: nextDay, // <  2025-05-30 00:00:00.000
+        },
+      },
+      include: [
+        {
+          model: Empleado,
+        },
+        {
+          model: Cliente,
+        },
+        {
+          model: EtiquetasxIds,
+          include: [
+            {
+              model: ServiciosCircus,
+              as: "parametro_servicio",
+            },
+          ],
+        },
+      ],
+    });
+
+    res.status(200).json(citas);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: "Hable con el administrador",
+    });
+  }
+};
+const postServiciosCita = async (req = request, res = response) => {
+  try {
+    const cita = new eventoServicio(req.body);
+    await cita.save();
+    res.status(200).json(cita);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: "Hable con el administrador",
+    });
+  }
+};
 
 const getCitasxServ = async (req = request, res = response) => {
   const { id_empresa } = req.params;
@@ -210,6 +275,25 @@ const putCita = async (req = request, res = response) => {
               `
       );
     }
+    if (req.body.status_cita === "502") {
+      const dayjsTest = dayjs
+        .utc(fecha_init)
+        .subtract(5, "hours")
+        .local(es)
+        .format("dddd DD [de] MMMM [a las ] hh:mm A");
+      enviarMensajesWsp(
+        cliente.tel_cli,
+        `
+        Hola ${cliente.nombre_cli.toUpperCase()}!,
+
+Lamentamos que no hayas podido asistir a tu cita de evaluación nutricional en CHANGE. Sabemos que a veces surgen imprevistos, pero queremos recordarte que el 70% del resultado te lo dará la DIETA y que este seguimiento con nosotros es clave para lograr tus objetivos de salud y bienestar.
+
+Te invitamos a reagendar tu cita lo antes posible. Estamos aquí para apoyarte en cada paso del camino al CAMBIO!
+              `
+      );
+    }
+    console.log(cita, req.body);
+
     res.status(200).json({
       ok: true,
       cita,
@@ -224,7 +308,7 @@ const putCita = async (req = request, res = response) => {
 };
 
 const getCitasxServicios = async (req = request, res = response) => {
-  // const { tipo_serv } = req.params;
+  const { tipo_serv } = req.params;
   try {
     const citas = await Cita.findAll({
       where: { flag: true },
@@ -344,7 +428,6 @@ const getCitasxServiciosFilter = async (req = request, res = response) => {
     });
   }
 };
-
 module.exports = {
   postCita,
   getCitaporID,
@@ -353,4 +436,6 @@ module.exports = {
   getCitasxServicios,
   getCitasxServiciosFilter,
   getCitasxServ,
+  postServiciosCita,
+  getServiciosCita,
 };

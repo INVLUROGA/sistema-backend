@@ -179,7 +179,7 @@ const eliminarArticulo = async (req = request, res = response) => {
       observacion: `Se elimino: El articulo de id ${articulo.id}`,
     };
     await capturarAUDIT(formAUDIT);
-    await capturarAccion(formAUDIT)
+    await capturarAccion(formAUDIT);
     await articulo.update({ flag: false });
     res.status(200).json({
       msg: "Articulo eliminado correctamente",
@@ -376,6 +376,16 @@ const obtenerMovimientosxArticulo = async (req = request, res = response) => {
     const { id_articulo, movimiento } = req.params;
     const movimientos = await Kardex_Inventario.findAll({
       where: { id_item: id_articulo, action: movimiento },
+      include: [
+        {
+          model: Parametros_zonas,
+          as: "parametro_lugar_destino",
+        },
+        {
+          model: Parametros,
+          as: "parametro_motivo",
+        }
+      ]
     });
     res.status(201).json({
       movimientos,

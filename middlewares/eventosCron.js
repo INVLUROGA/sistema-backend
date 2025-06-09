@@ -193,12 +193,6 @@ const procesarClientes = (clientes) => {
 };
 const obtenerCumpleaniosCliente = async () => {
   try {
-    // enviarMensajesWsp(
-    //   933102718,
-    //   `
-    //         OBTENIENDO LOS CUMPLEANIOS....
-    //         `
-    // );
     // Obtener la fecha actual (mes y día)
     const hoy = new Date();
 
@@ -244,24 +238,27 @@ const obtenerCumpleaniosCliente = async () => {
       ],
     });
     // console.log(ventas);
+    // Creamos un Set para ir guardando los teléfonos únicos
+    const seen = new Set();
+    const cumpleanerosUnicos = [];
 
-    // Crear un array con los nombres completos
-    const cumpleaneros = ventas.map((cliente) => {
-      return {
-        nombres_cli: `${cliente["tb_cliente.nombres_apellidos_cli"]}`,
-        fecha_nacimiento: `${cliente["tb_cliente.fecha_nacimiento"]}`,
-        email_cli: `${cliente["tb_cliente.email_cli"]}`,
-        tel_cli: `${cliente["tb_cliente.tel_cli"]}`,
-        sexo_cli: `${cliente["tb_cliente.sexo_cli"]}`,
-      };
+    // Recorremos cada venta y sólo añadimos si no lo hemos visto aún
+    ventas.forEach((v) => {
+      const tel = v["tb_cliente.tel_cli"];
+      if (!seen.has(tel)) {
+        seen.add(tel);
+        cumpleanerosUnicos.push({
+          nombres_cli: v["tb_cliente.nombres_apellidos_cli"],
+          fecha_nacimiento: v["tb_cliente.fecha_nacimiento"],
+          email_cli: v["tb_cliente.email_cli"],
+          tel_cli: tel,
+          sexo_cli: v["tb_cliente.sexo_cli"],
+        });
+      }
     });
-    // enviarMensajesWsp(
-    //   933102718,
-    //   `
-    //   TODO LOS CUMPLEANIOS OBTENIDOS DE HOY DIA: ${cumpleaneros.length}
-    //   `
-    // );
-    cumpleaneros.map((c) => {
+
+    // Ahora enviamos uno a uno sin repetir
+    cumpleanerosUnicos.forEach((c) => {
       enviarMensajesWsp(
         c.tel_cli,
         `
@@ -277,6 +274,12 @@ CHANGE - The Slim Studio
         `
       );
     });
+    enviarMensajesWsp(
+      933102718,
+      `
+            OBTENIENDO LOS CUMPLEANIOS.... ${cumpleanerosUnicos.length}
+            `
+    );
     return cumpleaneros;
   } catch (error) {
     console.error("Error al obtener los cumpleanieros:", error);

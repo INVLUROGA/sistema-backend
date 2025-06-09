@@ -1,6 +1,6 @@
 const { DataTypes } = require("sequelize");
 const { db } = require("../../database/sequelizeConnection");
-const { Parametros } = require("../Parametros");
+const { Parametros, EtiquetasxIds } = require("../Parametros");
 const uuid = require("uuid");
 
 const ServiciosCircus = db.define("circus_servicios", {
@@ -30,6 +30,9 @@ const ServiciosCircus = db.define("circus_servicios", {
   duracion: {
     type: DataTypes.INTEGER,
   },
+  id_empresa: {
+    type: DataTypes.INTEGER,
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
@@ -40,6 +43,11 @@ const ServiciosCircus = db.define("circus_servicios", {
   },
 });
 
+EtiquetasxIds.hasOne(ServiciosCircus, {
+  foreignKey: "id",
+  sourceKey: "id_parametroEtiqueta",
+  as: "parametro_servicio",
+});
 ServiciosCircus.hasOne(Parametros, {
   foreignKey: "id_param",
   sourceKey: "id_subCategoria",

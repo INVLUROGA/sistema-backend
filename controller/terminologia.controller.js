@@ -1,7 +1,7 @@
 const { request, response } = require("express");
 const { Parametros, Parametros_3 } = require("../models/Parametros");
 const { Sequelize, where } = require("sequelize");
-const { ParametroGastos } = require("../models/GastosFyV");
+const { ParametroGastos, ParametroGrupo } = require("../models/GastosFyV");
 const { Venta, detalleVenta_membresias } = require("../models/Venta");
 
 const terminologiasPorEntidad = async (req = request, res = response) => {
@@ -82,6 +82,12 @@ const terminologiasGastosxEmpresa = async (req = request, res = response) => {
         flag: true,
         id_empresa: id_empresa,
       },
+      include: [
+        {
+          model: ParametroGrupo,
+          as: "parametro_grupo",
+        },
+      ],
     });
     res.status(201).json({
       termGastos,

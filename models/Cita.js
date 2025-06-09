@@ -2,6 +2,7 @@ const { DataTypes } = require("sequelize");
 const { db } = require("../database/sequelizeConnection");
 const { Cliente, Empleado } = require("./Usuarios");
 const { detalleVenta_citas, detalleVenta_membresias } = require("./Venta");
+const { EtiquetasxIds } = require("./Parametros");
 
 const Cita = db.define(
   "tb_cita",
@@ -54,6 +55,43 @@ const CitasAdquiridas = db.define("tb_citasadquiridas", {
     type: DataTypes.INTEGER,
   },
 });
+
+const eventoServicio = db.define("tb_eventoServicio", {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  id_cli: {
+    type: DataTypes.INTEGER,
+  },
+  id_origen: {
+    type: DataTypes.INTEGER,
+  },
+  id_empl: {
+    type: DataTypes.INTEGER,
+  },
+  id_servicios: {
+    type: DataTypes.INTEGER,
+  },
+  id_asistencia: {
+    type: DataTypes.INTEGER,
+  },
+  fecha_inicio: {
+    type: DataTypes.DATE,
+  },
+  comentario: {
+    type: DataTypes.STRING(450),
+  },
+  fecha_fin: {
+    type: DataTypes.DATE,
+  },
+  flag: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+});
+
 Cliente.hasOne(CitasAdquiridas, { foreignKey: "id_cli" });
 CitasAdquiridas.belongsTo(Cliente, { foreignKey: "id_cli" });
 // CitasAdquiridas -> detalleVenta_citas (id_detalle_cita)
@@ -79,6 +117,16 @@ detalleVenta_citas.hasOne(CitasAdquiridas, {
 
 Cita.hasOne(Empleado, { foreignKey: "id_empl", sourceKey: "id_empl" });
 
+eventoServicio.hasOne(Empleado, {
+  foreignKey: "id_empl",
+  sourceKey: "id_empl",
+});
+eventoServicio.hasOne(Cliente, { foreignKey: "id_cli", sourceKey: "id_cli" });
+// Una cita (tb_cita) tiene muchos servicios (tb_servicios), usando id_fila como FK
+eventoServicio.hasMany(EtiquetasxIds, {
+  foreignKey: "id_fila",
+  sourceKey: "id",
+});
 CitasAdquiridas.belongsTo(Cita, {
   foreignKey: "id", // La clave foránea en CitasAdquiridas
   targetKey: "id_cita_adquirida", // Clave primaria en detalleVenta_citas
@@ -113,7 +161,19 @@ CitasAdquiridas.sync()
       error
     );
   });
+eventoServicio
+  .sync()
+  .then(() => {
+    console.log("La tabla eventoServicio ha sido creada o ya existe.");
+  })
+  .catch((error) => {
+    console.error(
+      "Error al sincronizar el modelo con la base de datos:",
+      error
+    );
+  });
 module.exports = {
   Cita,
   CitasAdquiridas,
+  eventoServicio,
 };

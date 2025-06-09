@@ -42,6 +42,8 @@ const {
   obtenerMembresiasxUIDcliente,
   putVentaxId,
   obtenerComparativoTotal,
+  postCajaApertura,
+  buscarCajasxFecha
 } = require("../controller/venta.controller");
 
 const {
@@ -56,6 +58,8 @@ const router = Router();
 /*
 /api/venta
 */
+router.post("/caja-apertura/:id_enterprice", postCajaApertura);
+router.get("/buscar-cajas", buscarCajasxFecha)
 router.post(
   "/post-ventas/:id_enterprice",
   extraerServicios,
