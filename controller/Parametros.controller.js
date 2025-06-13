@@ -25,7 +25,7 @@ const {
   detalleVenta_membresias,
 } = require("../models/Venta");
 const { Servicios } = require("../models/Servicios");
-const { ParametroGastos } = require("../models/GastosFyV");
+const { ParametroGastos, ParametroGrupo } = require("../models/GastosFyV");
 const { Inversionista } = require("../models/Aportes");
 const { ExtensionMembresia } = require("../models/ExtensionMembresia");
 const { Distritos } = require("../models/Distritos");
@@ -1163,8 +1163,19 @@ const getServiciosxEmpresa = async (req = request, res = response) => {
     console.log(error);
   }
 };
-
+const obtenerParametrosGruposGastos = async (req = request, res = response) => {
+  const { id_empresa } = req.params;
+  try {
+    const gruposgastos = await ParametroGrupo.findAll({
+      where: { id_empresa, flag: true },
+    });
+    res.status(200).json(gruposgastos);
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
+  obtenerParametrosGruposGastos,
   getParametrosporClientexEmpresa,
   getParametrosEmpleadosxDepxEmpresa,
   obtenerDistritosxDepartamentoxProvincia,
