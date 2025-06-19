@@ -63,6 +63,7 @@ const getGastos = async (req = request, res = response) => {
         "descripcion",
         "id_prov",
         "cod_trabajo",
+        "id_estado_gasto",
       ],
       include: [
         {
@@ -90,6 +91,11 @@ const getGastos = async (req = request, res = response) => {
           model: Parametros,
           attributes: ["id_param", "label_param"],
           as: "parametro_comprobante",
+        },
+        {
+          model: Parametros,
+          attributes: ["id_param", "label_param"],
+          as: "estado_gasto",
         },
       ],
     });
@@ -159,6 +165,7 @@ const getGasto = async (req = request, res = response) => {
         "id_prov",
         "cod_trabajo",
         "esCompra",
+        "id_estado_gasto",
       ],
     });
     res.status(200).json({
@@ -320,6 +327,7 @@ const getGastoxGrupo = async (req = request, res = response) => {
         "descripcion",
         "id_prov",
         "cod_trabajo",
+        "id_estado_gasto",
       ],
       include: [
         {
@@ -391,6 +399,7 @@ const obtenerGastosxRangeDate = async (req = request, res = response) => {
         "descripcion",
         "id_prov",
         "cod_trabajo",
+        "id_estado_gasto",
       ],
       include: [
         {

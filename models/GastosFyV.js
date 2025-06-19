@@ -113,6 +113,9 @@ const Gastos = db.define("tb_egresos", {
   id_prov: {
     type: DataTypes.INTEGER,
   },
+  id_estado_gasto: {
+    type: DataTypes.INTEGER,
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
@@ -121,6 +124,11 @@ const Gastos = db.define("tb_egresos", {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
+});
+Gastos.hasOne(Parametros, {
+  foreignKey: "id_param",
+  sourceKey: "id_estado_gasto",
+  as: "estado_gasto",
 });
 Gastos.hasOne(Parametros, {
   foreignKey: "id_param",

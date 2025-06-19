@@ -327,6 +327,7 @@ const getGastoxGrupo = async (req = request, res = response) => {
         "descripcion",
         "id_prov",
         "cod_trabajo",
+        "id_estado_gasto",
       ],
       include: [
         {
