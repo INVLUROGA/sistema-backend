@@ -60,7 +60,8 @@ jobs:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_70750D61AE504BEAA089606CDD8DFA5A }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_41D493578397467E8F76F16915BB03B5 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C71BFA8D74BA4769A27D503E73264F95 }}
-
+      - name: Esperar para evitar conflicto con reinicio SCM
+        run: sleep 20
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
