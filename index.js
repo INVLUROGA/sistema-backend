@@ -157,6 +157,7 @@ const sendReminderEmail = (email) => {
 const allowedOrigins = [
   "https://change-the-slim-studio-sigma.vercel.app",
   "https://circus-henna.vercel.app",
+  "https://circus-pi.vercel.app",
   "http://localhost:5173",
   "http://localhost:5174",
 ];
