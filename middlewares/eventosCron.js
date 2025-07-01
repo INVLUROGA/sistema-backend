@@ -466,7 +466,7 @@ const obtenerCumpleaniosDeEmpleados = async () => {
       enviarMensajesWsp(
         "120363418215042651@g.us",
         `
-        🎉 ¡FELIZ CUMPLEAÑOS, ${c.nombres_cli}! 👋🎂
+        🎉 ¡FELIZ CUMPLEAÑOS, ${c.nombres_cli.split(" ")[0]}! 👋🎂
 
         En CHANGE - The Slim Studio, estamos felices de celebrar contigo este día tan especial.
 

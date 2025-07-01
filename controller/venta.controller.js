@@ -1555,6 +1555,8 @@ const agregarFirmaEnContrato = (req, res) => {
 };
 const obtenerComparativoResumen = async (req = request, res = response) => {
   const { arrayDate } = req.query;
+  console.log({ arrayDate });
+
   const fechaInicio = arrayDate[0];
   const fechaFin = arrayDate[1];
   try {

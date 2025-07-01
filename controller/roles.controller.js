@@ -756,48 +756,6 @@ const seccionGET = async (req = request, res = response) => {
         },
       ];
     }
-    if (modulo === "mod-recepcion") {
-      MENU_ITEMS = [
-        {
-          key: "ventas",
-          label: "Ventas",
-          isTitle: true,
-        },
-        {
-          key: "ventas-nuevaVenta",
-          label: "Nueva venta",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/nueva-venta",
-        },
-        {
-          key: "gestion-ventas",
-          label: "Ventas",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/gestion-ventas",
-        },
-        {
-          key: "cliente",
-          label: "Socio",
-          isTitle: true,
-        },
-        {
-          key: "cliente-admClientes",
-          label: "Gestion de socios",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/gestion-clientes",
-        },
-        {
-          key: "citas-NUT",
-          label: "RESERVAS",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/crear-citas-nutricion",
-        },
-      ];
-    }
     if (modulo === "mod-marketing") {
       MENU_ITEMS = [
         {
@@ -941,6 +899,53 @@ const seccionGET = async (req = request, res = response) => {
         },
       ];
     }
+    if (modulo === "mod-recepcion") {
+      MENU_ITEMS = [
+        {
+          key: "ventas",
+          label: "Ventas",
+          isTitle: true,
+        },
+        {
+          key: "gestion-ventas",
+          label: "Ventas",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-ventas",
+        },
+        {
+          key: "ventas-nuevaVenta",
+          label: "Nueva venta",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/nueva-venta",
+        },
+        {
+          key: "cliente",
+          label: "Socio",
+          isTitle: true,
+        },
+        {
+          key: "cliente-admClientes",
+          label: "Gestion de socios",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-clientes",
+        },
+        {
+          key: "cita",
+          label: "Citas",
+          isTitle: true,
+        },
+        {
+          key: "citas-NUT",
+          label: "RESERVAS",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/crear-citas-nutricion",
+        },
+      ];
+    }
     if (modulo === "mod-inventario-proyection") {
       MENU_ITEMS = [
         {
@@ -1007,11 +1012,14 @@ const moduleGET = async (req = request, res = response) => {
           path: "/marketing",
           key: "mod-marketing",
         },
-
+      ];
+    }
+    if (usuario.rol_user === 8) {
+      MODULOS_ITEMS = [
         {
-          name: "INVENTARIO",
-          path: "/inventario",
-          key: "mod-inventario-proyection",
+          name: "RECEPCION",
+          path: "/venta",
+          key: "mod-recepcion",
         },
       ];
     }
@@ -1021,16 +1029,6 @@ const moduleGET = async (req = request, res = response) => {
           name: "NUTRICION",
           path: "/nutricion",
           key: "mod-nutricion",
-        },
-      ];
-    }
-
-    if (user.rol_user === 8) {
-      MODULOS_ITEMS = [
-        {
-          name: "mod-recepcion",
-          path: "/recepcion",
-          key: "mod-recepcion",
         },
       ];
     }

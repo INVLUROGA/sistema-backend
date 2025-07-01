@@ -879,6 +879,15 @@ const loginUsuario = async (req = request, res = response) => {
         },
       ];
     }
+    if (usuario.rol_user === 8) {
+      MODULOS_ITEMS = [
+        {
+          name: "RECEPCION",
+          path: "/venta",
+          key: "mod-recepcion",
+        },
+      ];
+    }
     //mod-inventario-proyection
     let formAUDIT = {
       id_user: usuario.id_user,
