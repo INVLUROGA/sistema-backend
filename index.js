@@ -16,17 +16,22 @@ const {
   obtenerCumpleaniosCliente,
   obtenerDataSeguimiento,
   enviarMensajesxCitasxHorasFinales,
+  alertasUsuario,
+  recordatorioReservaCita24hAntes,
+  recordatorioReservaCita2hAntes,
+  obtenerCumpleaniosDeEmpleados,
 } = require("./middlewares/eventosCron.js");
 // Programa una tarea para las 9 AM todos los días
 
 cron.schedule("0 15 * * *", () => {
   // insertaDatosTEST();
   obtenerCumpleaniosCliente();
+  obtenerCumpleaniosDeEmpleados();
 });
-cron.schedule("*/1 * * * *", () => {
-  // insertaDatosTEST();
-  // obtenerCumpleaniosCliente();
-  // enviarMensajesxCitasxHorasFinales();
+cron.schedule("0 * * * *", () => {
+  alertasUsuario();
+  recordatorioReservaCita24hAntes();
+  recordatorioReservaCita2hAntes();
 });
 const fileServer = express.static;
 require("dotenv").config();
@@ -151,7 +156,7 @@ const sendReminderEmail = (email) => {
 
 const allowedOrigins = [
   "https://change-the-slim-studio-sigma.vercel.app",
-  "https://sistema-circus.vercel.app",
+  "https://circus-henna.vercel.app",
   "http://localhost:5173",
   "http://localhost:5174",
 ];

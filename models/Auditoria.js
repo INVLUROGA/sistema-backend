@@ -62,8 +62,33 @@ const AuditoriaNew = db.define("tb_auditoria_form", {
   },
 });
 
+const AlertasUsuario = db.define("tb_alertaUsuario", {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  id_user: {
+    type: DataTypes.INTEGER,
+  },
+  tipo_alerta: {
+    type: DataTypes.INTEGER,
+  },
+  mensaje: {
+    type: DataTypes.STRING(450),
+  },
+  fecha: {
+    type: DataTypes.DATE,
+  },
+  flag: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+});
+
 Usuario.hasMany(Auditoria, { foreignKey: "id_user" });
 Auditoria.belongsTo(Usuario, { foreignKey: "id_user" });
+AlertasUsuario.belongsTo(Usuario, { foreignKey: "id_user" });
 Auditoria.sync()
   .then(() => {
     console.log("La tabla Auditoria ha sido sync o ya existe.");
@@ -86,7 +111,19 @@ AuditoriaNew.sync()
     );
   });
 
+AlertasUsuario.sync()
+  .then(() => {
+    console.log("La tabla AlertasUsuario ha sido sync o ya existe.");
+  })
+  .catch((error) => {
+    console.error(
+      "Error al sincronizar el modelo con la base de datos:",
+      error
+    );
+  });
+
 module.exports = {
   Auditoria,
   AuditoriaNew,
+  AlertasUsuario,
 };

@@ -176,6 +176,9 @@ const detalleVenta_producto = db.define("detalle_ventaProducto", {
   tarifa_monto: {
     type: DataTypes.DECIMAL(10, 2),
   },
+  id_empl: {
+    type: DataTypes.INTEGER,
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
@@ -406,6 +409,15 @@ detalleVenta_producto.belongsTo(Venta, {
   targetKey: "id",
 });
 
+// Definición de la relación entre Venta y detalleVenta_membresias
+Venta.hasMany(detalleventa_servicios, {
+  foreignKey: "id_venta", // Este debe ser el nombre de la columna en detalleVenta_membresias
+  sourceKey: "id",
+});
+detalleventa_servicios.belongsTo(Venta, {
+  foreignKey: "id_venta", // Este debe coincidir con el anterior
+  targetKey: "id",
+});
 // Definición de la relación entre Venta y detalleVenta_membresias
 Venta.hasMany(detalleVenta_membresias, {
   foreignKey: "id_venta", // Este debe ser el nombre de la columna en detalleVenta_membresias

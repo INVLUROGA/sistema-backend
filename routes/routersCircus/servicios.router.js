@@ -2,6 +2,7 @@ const { Router } = require("express");
 const {
   obtenerServiciosActivos,
   obtenerVentasTemporales,
+  obtenerProductosActivos,
 } = require("../../controller/controllersCircus/servicios.controller.js");
 const router = Router();
 /**
@@ -19,6 +20,7 @@ const router = Router();
 
 // router.post("/serviciocita/post/:tipo_serv", postServicioCita);
 router.get("/obtener-servicios", obtenerServiciosActivos);
+router.get("/obtener-productos/:id_empresa", obtenerProductosActivos);
 router.get("/obtener-ventas-temp", obtenerVentasTemporales);
 // router.get("/serviciocita/get/:id", getServicioCitaxID);
 // router.put("/serviciocita/put/:id", putServicioCitaxID);

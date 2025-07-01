@@ -31,6 +31,35 @@ const { ExtensionMembresia } = require("../models/ExtensionMembresia");
 const { Distritos } = require("../models/Distritos");
 const { ServiciosCircus } = require("../models/modelsCircus/Servicios");
 
+const obtenerEmpleadosxCargoxDepartamentoxEmpresa = async (
+  req = request,
+  res = response
+) => {
+  try {
+    const { id_cargo, id_empresa, id_departamento } = req.params;
+    const empleados = await Empleado.findAll({
+      where: {
+        departamento_empl: id_departamento,
+        id_empresa,
+        cargo_empl: id_cargo,
+        flag: true,
+      },
+      attributes: [
+        ["id_empl", "value"],
+        [
+          Sequelize.literal(
+            "CONCAT(nombre_empl, ' ', apPaterno_empl, ' ', apMaterno_empl)"
+          ),
+          "label",
+        ],
+      ],
+    });
+    res.status(200).json(empleados);
+  } catch (error) {
+    res.status(501).json(error);
+  }
+};
+
 const obtenerDistritosxDepartamentoxProvincia = async (
   req = request,
   res = response
@@ -405,6 +434,11 @@ const getParametrosEmpleadosxDepxEmpresa = async (
           "label",
         ],
         ["cargo_empl", "cargo_empl"],
+      ],
+      include: [
+        {
+          model: ImagePT,
+        },
       ],
     });
     res.status(200).json(empleados);
@@ -1175,6 +1209,7 @@ const obtenerParametrosGruposGastos = async (req = request, res = response) => {
   }
 };
 module.exports = {
+  obtenerEmpleadosxCargoxDepartamentoxEmpresa,
   obtenerParametrosGruposGastos,
   getParametrosporClientexEmpresa,
   getParametrosEmpleadosxDepxEmpresa,

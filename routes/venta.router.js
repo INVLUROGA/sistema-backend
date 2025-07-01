@@ -12,6 +12,8 @@ const {
   generarContrato,
   suplementarFechas,
   extraerServicios,
+  extraerProductosCIRCUS,
+  extraerProductos2,
 } = require("../middlewares/extraerVentas");
 const {
   postVenta,
@@ -43,7 +45,7 @@ const {
   putVentaxId,
   obtenerComparativoTotal,
   postCajaApertura,
-  buscarCajasxFecha
+  buscarCajasxFecha,
 } = require("../controller/venta.controller");
 
 const {
@@ -59,9 +61,10 @@ const router = Router();
 /api/venta
 */
 router.post("/caja-apertura/:id_enterprice", postCajaApertura);
-router.get("/buscar-cajas", buscarCajasxFecha)
+router.get("/buscar-cajas", buscarCajasxFecha);
 router.post(
   "/post-ventas/:id_enterprice",
+  extraerProductos2,
   extraerServicios,
   extraerCredencialesCliente,
   extraerVentaMembresia,

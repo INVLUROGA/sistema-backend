@@ -4,14 +4,19 @@ const { Cliente, Empleado } = require("../models/Usuarios");
 const { detalleVenta_citas } = require("../models/Venta");
 const { Servicios } = require("../models/Servicios");
 const { request, response } = require("express");
-const { enviarMensajesWsp } = require("../config/whatssap-web");
+const {
+  enviarMensajesWsp,
+  enviarMensajesWsp__CIRCUS,
+  enviarMapaWsp__CIRCUS,
+} = require("../config/whatssap-web");
 const dayjs = require("dayjs");
 const es = require("dayjs/locale/es");
 const { capturarAccion } = require("../middlewares/auditoria");
-const { typesCRUD } = require("../types/types");
+const { typesCRUD, messageWSP } = require("../types/types");
 const { EtiquetasxIds, Parametros } = require("../models/Parametros");
 const { ServiciosCircus } = require("../models/modelsCircus/Servicios");
 dayjs.locale("es"); // Establece el idioma en español
+const env = process.env;
 
 const getServiciosCita = async (req, res) => {
   const { id_empresa } = req.params;
@@ -64,14 +69,98 @@ const getServiciosCita = async (req, res) => {
 };
 const postServiciosCita = async (req = request, res = response) => {
   try {
-    const cita = new eventoServicio(req.body);
+    const cita = new eventoServicio(req.body.formState);
     await cita.save();
+    const citaGenerada = await eventoServicio.findAll({
+      where: { id: cita.id },
+      include: [
+        {
+          model: EtiquetasxIds,
+          include: [
+            {
+              model: Parametros,
+              as: "parametro_etiqueta",
+            },
+          ],
+        },
+        {
+          model: Empleado,
+        },
+        {
+          model: Cliente,
+        },
+      ],
+    });
+    const citaGeneradaJSON = citaGenerada.map((a) => a.toJSON());
+    const citasDeCitasGeneradasJSON = req.body.etiquetas_busquedas.map((et) => {
+      return {
+        label: et.label.split("|")[0],
+      };
+    });
+
+    const { tb_cliente, tb_empleado } = citaGeneradaJSON[0];
+
+    await enviarMensajesWsp__CIRCUS(
+      tb_cliente.tel_cli,
+      messageWSP.mensajeCitaRegistrada(
+        tb_empleado,
+        tb_cliente,
+        dayjs(cita.fecha_inicio).format("dddd DD [de] MMMM [a las] hh:mm A"),
+        citasDeCitasGeneradasJSON
+      )
+    );
+    // await enviarMapaWsp__CIRCUS(
+    //   tb_cliente.tel_cli,
+    //   "Circus Salón",
+    //   -12.133057302165295,
+    //   -77.0227635902099
+    // );
+
+    // enviarMensajesWsp__CIRCUS(
+    //   tb_empleado.telefono_empl,
+    //   messageWSP.mensajeCitaRegistradaParaEmpl(
+    //     tb_empleado,
+    //     tb_cliente,
+    //     dayjs(cita.fecha_inicio).format("dddd DD [de] MMMM [a las] hh:mm A"),
+    //     citasDeCitasGeneradasJSON
+    //   )
+    // );
+    console.log({
+      cita: cita.id,
+      citaGenerada,
+      citaGeneradaJSON,
+      reqqq: citasDeCitasGeneradasJSON,
+    });
     res.status(200).json(cita);
   } catch (error) {
     console.log(error);
     res.status(500).json({
       ok: false,
       msg: "Hable con el administrador",
+    });
+  }
+};
+
+const putServiciosCita = async (req = request, res = response) => {
+  const { id_cita } = req.params;
+  const { formState } = req.body;
+  try {
+    const cita = await eventoServicio.findOne({
+      where: { flag: true, id: id_cita },
+    });
+    console.log({ id_cita, formState });
+
+    await cita.update(formState);
+    // const cliente = await Cliente.findOne({ where: { id_cli: cita.id_cli } });
+    res.status(200).json({
+      ok: true,
+      cita,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: "Hable con el administrador: putCita",
     });
   }
 };
@@ -292,8 +381,6 @@ Te invitamos a reagendar tu cita lo antes posible. Estamos aquí para apoyarte e
               `
       );
     }
-    console.log(cita, req.body);
-
     res.status(200).json({
       ok: true,
       cita,
@@ -438,4 +525,5 @@ module.exports = {
   getCitasxServ,
   postServiciosCita,
   getServiciosCita,
+  putServiciosCita,
 };

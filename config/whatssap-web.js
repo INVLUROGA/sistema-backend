@@ -1,6 +1,94 @@
 const axios = require("axios");
 const qs = require("qs");
 
+const env = process.env;
+
+const enviarMsgWsp = async (token, instance, numberWsp, bodyMsg) => {
+  const data = qs.stringify({
+    token: token,
+    to: numberWsp,
+    body: bodyMsg,
+  });
+
+  const config = {
+    method: "post",
+    url: `https://api.ultramsg.com/${instance}/messages/chat`,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    data: data,
+  };
+
+  try {
+    const response = await axios(config);
+    console.log(JSON.stringify(response.data), numberWsp);
+    return { ok: true };
+  } catch (error) {
+    console.error(error.message || error, numberWsp);
+    return { ok: false, msg: error.message || "Error desconocido" };
+  }
+};
+
+const enviarMapaWsp = async (
+  token,
+  instance,
+  numberWsp,
+  address,
+  lat,
+  lng
+) => {
+  const data = qs.stringify({
+    token: token,
+    to: numberWsp,
+    address: address,
+    lat: lat,
+    lng: lng,
+  });
+
+  const config = {
+    method: "post",
+    url: `https://api.ultramsg.com/${instance}/messages/location`,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    data: data,
+  };
+
+  try {
+    const response = await axios(config);
+    console.log(JSON.stringify(response.data), numberWsp);
+    return { ok: true };
+  } catch (error) {
+    console.error(error.message || error, numberWsp);
+    return { ok: false, msg: error.message || "Error desconocido" };
+  }
+};
+
+const enviarMapaWsp__CIRCUS = (to, address, lat, lng) =>
+  enviarMapaWsp(
+    process.env.TOKEN_CIRCUS,
+    process.env.INSTANCE_ID__CIRCUS,
+    to,
+    address,
+    lat,
+    lng
+  );
+const enviarMensajesWsp__CIRCUS = (to, body) =>
+  enviarMsgWsp(
+    process.env.TOKEN_CIRCUS,
+    process.env.INSTANCE_ID__CIRCUS,
+    to,
+    body
+  );
+
+const enviarMensajesWsp__CHANGE = (to, body) =>
+  enviarMsgWsp(
+    process.env.TOKEN_CHANGE,
+    process.env.INSTANCE_ID__CHANGE,
+    to,
+    body
+  );
+
 const enviarMensajesWsp = async (numberWsp, bodyMsg) => {
   const data = qs.stringify({
     token: "xy1mryu3skys910j",
@@ -101,11 +189,18 @@ const enviarTextConImagenWsp = async (numberWsp, image, bodyMsg) => {
   }
 };
 
+
+
+
 module.exports = {
+  enviarMapaWsp__CIRCUS,
   enviarMensajesWsp,
   enviarStickerWsp,
   enviarImagenWsp,
   enviarTextConImagenWsp,
+  enviarMensajesWsp__CIRCUS,
+  enviarMensajesWsp__CHANGE,
+  
 };
 
 // const qrcode = require("qrcode-terminal");

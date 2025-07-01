@@ -756,6 +756,48 @@ const seccionGET = async (req = request, res = response) => {
         },
       ];
     }
+    if (modulo === "mod-recepcion") {
+      MENU_ITEMS = [
+        {
+          key: "ventas",
+          label: "Ventas",
+          isTitle: true,
+        },
+        {
+          key: "ventas-nuevaVenta",
+          label: "Nueva venta",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/nueva-venta",
+        },
+        {
+          key: "gestion-ventas",
+          label: "Ventas",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-ventas",
+        },
+        {
+          key: "cliente",
+          label: "Socio",
+          isTitle: true,
+        },
+        {
+          key: "cliente-admClientes",
+          label: "Gestion de socios",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-clientes",
+        },
+        {
+          key: "citas-NUT",
+          label: "RESERVAS",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/crear-citas-nutricion",
+        },
+      ];
+    }
     if (modulo === "mod-marketing") {
       MENU_ITEMS = [
         {
@@ -979,6 +1021,16 @@ const moduleGET = async (req = request, res = response) => {
           name: "NUTRICION",
           path: "/nutricion",
           key: "mod-nutricion",
+        },
+      ];
+    }
+
+    if (user.rol_user === 8) {
+      MODULOS_ITEMS = [
+        {
+          name: "mod-recepcion",
+          path: "/recepcion",
+          key: "mod-recepcion",
         },
       ];
     }

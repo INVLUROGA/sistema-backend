@@ -110,11 +110,21 @@ const extraerVentaSuplementos = (req, res, next) => {
   req.suplementos = arraySuplementos;
   next();
 };
+const extraerProductos2 = (req, res, next) => {
+  if (!req.body.dataVenta.detalle_venta_productos) {
+    return next();
+  }
+  req.productos = [...req.body.dataVenta.detalle_venta_productos];
+  next();
+};
 const extraerProductos = (req, res, next) => {
   if (
     !(
-      req.body.dataVenta.detalle_venta_suplementos ||
-      req.body.dataVenta.detalle_venta_accesorio
+      (
+        req.body.dataVenta.detalle_venta_suplementos ||
+        req.body.dataVenta.detalle_venta_accesorio
+      )
+      // req.body.dataVenta.detalle_venta_productos
     )
   ) {
     return next();
@@ -122,6 +132,7 @@ const extraerProductos = (req, res, next) => {
   req.productos = [
     ...req.body.dataVenta.detalle_venta_suplementos,
     ...req.body.dataVenta.detalle_venta_accesorio,
+    // ...req.body.dataVenta.detalle_venta_productos,
   ];
   next();
 };
@@ -130,6 +141,13 @@ const extraerServicios = (req, res, next) => {
     return next();
   }
   req.servicios = [...req.body.dataVenta.detalle_venta_servicio];
+  next();
+};
+const extraerProductosCIRCUS = (req, res, next) => {
+  if (!req.body.dataVenta.detalle_venta_productos) {
+    return next();
+  }
+  req.productosCircus = [...req.body.dataVenta.detalle_venta_productos];
   next();
 };
 const extraerCitas = (req, res, next) => {
@@ -285,7 +303,9 @@ const extraerTraspasos = async (req = request, res = response, next) => {
 };
 const suplementarFechas = async () => {};
 module.exports = {
+  extraerProductos2,
   extraerTraspasos,
+  extraerProductosCIRCUS,
   extraerVentaTransferenciaMembresia,
   extraerVentaMembresia,
   extraerPagos,

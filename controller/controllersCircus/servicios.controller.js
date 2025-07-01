@@ -4,7 +4,31 @@ const { ServiciosCircus } = require("../../models/modelsCircus/Servicios");
 const { Parametros } = require("../../models/Parametros");
 const { Servicios } = require("../../models/Servicios");
 const { Op } = require("sequelize");
+const { Producto } = require("../../models/Producto");
 
+const obtenerProductosActivos = async (req, res) => {
+  const { id_empresa } = req.params;
+  try {
+    const productos = await Producto.findAll({
+      attributes: ["id", "uid", "nombre_producto", "prec_venta"],
+      where: {
+        id_empresa: id_empresa,
+        estado_product: true,
+        flag: true,
+      },
+    });
+
+    res.status(200).json({
+      msg: "success",
+      productos,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      error: `Error en el servidor, en controller de obtenerProductosActivos, hable con el administrador: ${error}`,
+    });
+  }
+};
 const obtenerServiciosActivos = async (req, res) => {
   try {
     const servicios = await ServiciosCircus.findAll({
@@ -51,4 +75,5 @@ const obtenerVentasTemporales = async (req = request, res = response) => {
 module.exports = {
   obtenerServiciosActivos,
   obtenerVentasTemporales,
+  obtenerProductosActivos,
 };

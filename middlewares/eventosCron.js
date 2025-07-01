@@ -1,4 +1,4 @@
-const { Sequelize } = require("sequelize");
+const { Sequelize, Op, where, fn, col } = require("sequelize");
 const { Inversionista } = require("../models/Aportes");
 const { ExtensionMembresia } = require("../models/ExtensionMembresia");
 const { ImagePT } = require("../models/Image");
@@ -6,7 +6,7 @@ const {
   ProgramaTraining,
   SemanasTraining,
 } = require("../models/ProgramaTraining");
-const { Cliente } = require("../models/Usuarios");
+const { Cliente, Usuario, Empleado } = require("../models/Usuarios");
 const {
   Venta,
   detalleVenta_membresias,
@@ -16,7 +16,10 @@ const {
 const { request, response } = require("express");
 const qs = require("qs");
 const axios = require("axios");
-const { enviarMensajesWsp } = require("../config/whatssap-web");
+const {
+  enviarMensajesWsp,
+  enviarMapaWsp__CIRCUS,
+} = require("../config/whatssap-web");
 
 const { Distritos } = require("../models/Distritos");
 const { Seguimiento } = require("../models/Seguimientos");
@@ -25,13 +28,16 @@ const dayjs = require("dayjs");
 const utc = require("dayjs/plugin/utc");
 const timezone = require("dayjs/plugin/timezone");
 const isSameOrBefore = require("dayjs/plugin/isSameOrBefore");
-const { Cita } = require("../models/Cita");
+const { Cita, eventoServicio } = require("../models/Cita");
 const obtenerCitasxHorasFinales = require("./EventosCron/obtenerCitasxHorasFinales");
+const { AlertasUsuario } = require("../models/Auditoria");
+const { FunctionsHelpers } = require("../helpers/FunctionsHelpers");
+const { messageWSP } = require("../types/types");
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.extend(isSameOrBefore);
-
+const { calcularMinutos } = FunctionsHelpers();
 // Opcional: obtener la zona horaria local
 const defaultTz = dayjs.tz.guess();
 const cumpleaniosSocios = async () => {};
@@ -127,6 +133,126 @@ const obtenerUltimaVentaConExtension = (clientes) => {
       },
     };
   });
+};
+
+const alertasUsuario = async () => {
+  try {
+    const dataAlertas = await AlertasUsuario.findAll({
+      where: { flag: true },
+      include: [
+        {
+          model: Usuario,
+        },
+      ],
+    });
+    // Convertir a objetos planos
+    const alertasJSON = dataAlertas.map((a) => a.toJSON());
+    const alertasConMinutos = calcularMinutos(alertasJSON, new Date());
+    const filtrarDataIguala48Horas = alertasConMinutos.filter(
+      (dataAlerta) => dataAlerta.tiempoEnMins === 2880
+    );
+    // Ahora enviamos uno a uno sin repetir
+    for (const c of filtrarDataIguala48Horas) {
+      enviarMensajesWsp(c.auth_user.telefono_user, `${c.mensaje}`);
+
+      const alertaYaFinalizada = await AlertasUsuario.findOne({
+        where: { id: c.id },
+      });
+      await alertaYaFinalizada.update({ flag: false });
+      if (c.tipo_alerta === 1425) {
+        const fechaOriginal = new Date(alertaYaFinalizada.fecha);
+        const nuevaFecha = new Date(fechaOriginal);
+        nuevaFecha.setMonth(nuevaFecha.getMonth() + 1); // avanzar al mes siguiente
+        const alertaNueva = await new AlertasUsuario({
+          id_user: alertaYaFinalizada.id_user,
+          tipo_alerta: alertaYaFinalizada.tipo_alerta,
+          mensaje: alertaYaFinalizada.mensaje,
+          fecha: nuevaFecha,
+          flag: true,
+        });
+        await alertaNueva.save();
+        // puedes hacer algo con eliminarAlerta si quieres
+      }
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+const recordatorioReservaCita24hAntes = async () => {
+  try {
+    const ahora = dayjs();
+    const en24h = ahora.add(24, "hour");
+    const en25h = ahora.add(25, "hour");
+
+    const citas = await eventoServicio.findAll({
+      where: {
+        id_cli: 6917,
+        flag: true,
+        fecha_inicio: {
+          [Op.between]: [en24h.toDate(), en25h.toDate()],
+        },
+      },
+      include: [{ model: Cliente }, { model: Empleado }],
+    });
+    console.log({ citas });
+
+    for (const cita of citas) {
+      const fecha_inicio = dayjs(cita.fecha_inicio).format(
+        "dddd DD [de] MMMM [a las] hh:mm A"
+      );
+      await enviarMensajesWsp(
+        cita.tb_cliente.tel_cli,
+        messageWSP.mensaje24hAntesDeLaReserva(
+          cita.tb_empleado,
+          cita.tb_cliente,
+          fecha_inicio
+        )
+      );
+      await enviarMapaWsp__CIRCUS(
+        cita.tb_cliente.tel_cli,
+        "CIRCUS SALON",
+        -12.133150008241682,
+        -77.02314616701953
+      );
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const recordatorioReservaCita2hAntes = async () => {
+  try {
+    const ahora = dayjs();
+    const en24h = ahora.add(2, "hour");
+    const en25h = ahora.add(3, "hour");
+
+    const citas = await eventoServicio.findAll({
+      where: {
+        id_cli: 6917,
+        flag: true,
+        fecha_inicio: {
+          [Op.between]: [en24h.toDate(), en25h.toDate()],
+        },
+      },
+      include: [{ model: Cliente }, { model: Empleado }],
+    });
+    console.log("cita?", JSON.stringify(citas), { ahora, en24h, en25h });
+    for (const cita of citas) {
+      const fecha_inicio = dayjs(cita.fecha_inicio).format(
+        "dddd DD [de] MMMM [a las] hh:mm A"
+      );
+      await enviarMensajesWsp(
+        cita.tb_cliente.tel_cli,
+        messageWSP.mensaje2hAntesDeLaReserva(
+          cita.tb_empleado,
+          cita.tb_cliente,
+          fecha_inicio
+        )
+      );
+    }
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 const obtenerUltimaVenta = (clientes) => {
@@ -281,6 +407,81 @@ CHANGE - The Slim Studio
             `
     );
     return cumpleaneros;
+  } catch (error) {
+    console.error("Error al obtener los cumpleanieros:", error);
+    return [];
+  }
+};
+const obtenerCumpleaniosDeEmpleados = async () => {
+  try {
+    const hoy = new Date();
+    const mesActual = hoy.getMonth() + 1;
+    const diaActual = hoy.getDate();
+
+    const empleados = await Empleado.findAll({
+      where: {
+        [Op.and]: [
+          where(fn("MONTH", col("fecha_nacimiento")), mesActual),
+          where(fn("DAY", col("fecha_nacimiento")), diaActual),
+          { flag: true }, // Solo empleados activos
+        ],
+      },
+      attributes: [
+        [
+          fn(
+            "CONCAT",
+            col("nombre_empl"),
+            " ",
+            col("apPaterno_empl"),
+            " ",
+            col("apMaterno_empl")
+          ),
+          "nombres_completos",
+        ],
+        "fecha_nacimiento",
+        "email_empl",
+        "telefono_empl",
+        "sexo_empl",
+      ],
+    });
+
+    const seen = new Set();
+    const cumpleanerosUnicos = [];
+
+    empleados.forEach((e) => {
+      const tel = e.telefono_empl;
+      if (!seen.has(tel) && tel) {
+        seen.add(tel);
+        cumpleanerosUnicos.push({
+          nombres_cli: e.get("nombres_completos"),
+          fecha_nacimiento: e.fecha_nacimiento,
+          email_cli: e.email_empl,
+          tel_cli: tel,
+          sexo_cli: e.sexo_empl,
+        });
+      }
+    });
+
+    cumpleanerosUnicos.forEach((c) => {
+      enviarMensajesWsp(
+        "120363418215042651@g.us",
+        `
+        🎉 ¡FELIZ CUMPLEAÑOS, ${c.nombres_cli}! 👋🎂
+
+        En CHANGE - The Slim Studio, estamos felices de celebrar contigo este día tan especial.
+
+        ¡Que tengas un día lleno de salud y energía! ✨
+        CHANGE - The Slim Studio
+    `
+      );
+    });
+
+    enviarMensajesWsp(
+      933102718,
+      `OBTENIENDO LOS CUMPLEAÑOS DE EMPLEADOS.... ${cumpleanerosUnicos.length}`
+    );
+
+    return cumpleanerosUnicos;
   } catch (error) {
     console.error("Error al obtener los cumpleanieros:", error);
     return [];
@@ -751,10 +952,14 @@ function calcularFechasVentas(ventas) {
 const obtenerCitasDosDiasAntes = () => {};
 
 module.exports = {
+  recordatorioReservaCita2hAntes,
   obtenerCumpleaniosCliente,
   insertaDatosTEST,
   insertarDatosSeguimientoDeClientes,
   obtenerCitasDosDiasAntes,
   obtenerDataSeguimiento,
   enviarMensajesxCitasxHorasFinales,
+  alertasUsuario,
+  recordatorioReservaCita24hAntes,
+  obtenerCumpleaniosDeEmpleados,
 };

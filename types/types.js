@@ -3,6 +3,87 @@ exports.urls = {
   apiImg: "/api/file/",
 };
 
+exports.messageWSP = {
+  mensajeCitaRegistrada: (
+    tb_empleado,
+    tb_cliente,
+    fecha_inicio = "MARTES 27 de mayo a las 12:30 PM",
+    servicios = []
+  ) => {
+    const { nombre_empl, sexo_empl } = tb_empleado;
+    const { nombre_cli } = tb_cliente;
+    const serviciosTexto = servicios
+      .map((servicio, index) => `${index + 1}. ${servicio.label.trim()}`)
+      .join("\n");
+    return `
+¡Hola ${nombre_cli}! 👋🏻😃
+Te confirmamos que la cita con nuestro ${sexo_empl == 8 ? "nuestro" : ""} ${
+      sexo_empl == 9 ? "nuestra" : ""
+    } ESTILISTA ${
+      nombre_empl.split(" ")[0]
+    } para realizarte los siguientes servicios:
+${serviciosTexto}
+en CIRCUS SALON, ya está agendada para el día ${fecha_inicio.toUpperCase()}. VIVE LA MAGIA EN CIRCUS SALON! 
+Dirección: Av. Reducto 1455 - Miraflores
+¡TE ESPERAMOS! 🎪✨
+    `;
+  },
+  mensajeCitaRegistradaParaEmpl: (
+    tb_empleado,
+    tb_cliente,
+    fecha_inicio = "MARTES 27 de mayo a las 12:30 PM",
+    servicios = []
+  ) => {
+    const { nombre_empl, sexo_empl } = tb_empleado;
+    const { nombre_cli, sexo_cli } = tb_cliente;
+    const serviciosTexto = servicios
+      .map((servicio, index) => `${index + 1}. ${servicio.label.trim()}`)
+      .join("\n");
+    return `
+¡Hola ${nombre_empl}! 🎪✨
+Te recordamos que el dia ${fecha_inicio.toLocaleUpperCase()} tienes la cita con ${
+      sexo_cli == 8 ? "nuestro" : ""
+    } ${
+      sexo_cli == 9 ? "nuestra" : ""
+    } cliente ${nombre_cli} para los siguientes servicios: 
+${serviciosTexto}
+Toma en cuenta que cada servicio que realizas no está solo EL NOMBRE DE CIRCUS EN JUEGO SINO TAMBIEN TU NOMBRE, TU PRESTIGIO Y TU FAMA
+¡ESPERAMOS DE TI, LO MEJOR!
+¡Gracias! 😃💪💪
+    `;
+  },
+  mensaje24hAntesDeLaReserva: (
+    tb_empleado,
+    tb_cliente,
+    fecha_inicio = "MARTES 27 de mayo a las 12:30 PM",
+    servicios = []
+  ) => {
+    const { nombre_empl, sexo_empl } = tb_empleado;
+    const { nombre_cli } = tb_cliente;
+    return `
+Hola ${nombre_cli}! Faltan 24 HORAS para tu cita con nuestro ESTILISTA ${nombre_empl} en CIRCUS SALON, RECUERDA que tu experiencia mágica está agendada para el día ${fecha_inicio.toUpperCase()}. Si tienes algún inconveniente por favor comunícate al número de Recepción al 912530886, MUCHAS GRACIAS!😃🎪✨
+    `;
+  },
+  mensaje2hAntesDeLaReserva: (
+    tb_empleado,
+    tb_cliente,
+    fecha_inicio = "MARTES 27 de mayo a las 12:30 PM",
+    servicios = []
+  ) => {
+    const { nombre_empl, sexo_empl } = tb_empleado;
+    const { nombre_cli } = tb_cliente;
+    const serviciosTexto = servicios
+      .map((servicio, index) => `${index + 1}. ${servicio.label.trim()}`)
+      .join("\n");
+    return `
+¡Hola ${nombre_cli}!
+Faltan 2 HORAS para tu cita con nuestro ESTILISTA ${
+      nombre_empl.split(" ")[0]
+    } en CIRCUS SALON, RECUERDA que tu experiencia mágica está programada para el día ${fecha_inicio.toUpperCase()}. Si tienes algún inconveniente por favor comunícate al número de Recepción al 912530886, MUCHAS GRACIAS!😃🎪✨
+    `;
+  },
+};
+
 exports.typesCRUD = {
   POST: 1,
   PUT: 2,
@@ -10,4 +91,3 @@ exports.typesCRUD = {
   DELETE: 4,
   PATCH: 5,
 };
-

@@ -59,6 +59,9 @@ const Producto = db.define(
       type: DataTypes.BOOLEAN,
       defaultValue: true,
     },
+    id_empresa: {
+      type: DataTypes.INTEGER,
+    },
     flag: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,

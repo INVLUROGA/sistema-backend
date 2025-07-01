@@ -8,34 +8,15 @@ const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 const enviarMasivoAlwsp = async () => {
   const numerosDup = [];
   const numeros = [...new Set(numerosDup)];
-  try {
-    for (const numero of numeros) {
-      try {
-        await delay(1000); // Delay entre mensaje e imagen http://localhost:4000/api/msg-masivos/masivo/wsp
 
+  try {
+    for (const persona of numeros) {
+      const { nombre, numero } = persona;
+      try {
         const imagenResp = await enviarTextConImagenWsp(
           numero,
-          `https://archivosluroga.blob.core.windows.net/avatar-articulos/WhatsApp Image 2025-05-12 at 8.05.37 AM-1747055229565-1747055803245.png`,
+          `https://archivosluroga.blob.core.windows.net/avatar-articulos/WhatsApp-Image-2025-06-23-at-2.58.12-PM-1750710383932.jpg`,
           `
-🔥 *¡ATENCIÓN! MES DE MAMÁ = MES DE GUERRERAS* 🔥
-
-Este MAYO no hay excusas.
-
-💪 *ENTRENA TODO EL MES GRATIS*💪
-Sí, leíste bien: *¡TODO MAYO GRATIS!*
-
-Al adquirir cualquier *plan de 12 semanas o más*, tu entrenamiento de *TODO MAYO VA POR LA CASA.*
-
-No es un regalo.
-Es una INVERSIÓN en ti.
-Es tiempo de ponerte PRIMERO.
-Es tiempo de verte, sentirte y romperla mejor que nunca.
-
-🎯 Cupos LIMITADOS
-📆 Promo válida solo en MAYO
-🚀 ¡Empieza AHORA o sigue viendo cómo otros cambian mientras tu esperas!
-
-*¡ES AHORA O NUNCA!*
           `
         );
 
@@ -50,7 +31,6 @@ Es tiempo de verte, sentirte y romperla mejor que nunca.
           error.response?.data || error.message
         );
       }
-      await delay(1000); // Delay entre cada número
     }
 
     console.log("Envío masivo completado.");

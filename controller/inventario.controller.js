@@ -281,10 +281,9 @@ const obtenerInventarioxFechas = async (req = request, res = response) => {
 };
 const postKardexEntraSale = async (req = request, res = response) => {
   try {
-    const { action } = req.params;
+    const { action, id_enterprice } = req.params;
     const {
       id_item,
-      id_enterprice,
       id_lugar_destino,
       cantidad,
       fecha_cambio,
@@ -384,8 +383,8 @@ const obtenerMovimientosxArticulo = async (req = request, res = response) => {
         {
           model: Parametros,
           as: "parametro_motivo",
-        }
-      ]
+        },
+      ],
     });
     res.status(201).json({
       movimientos,

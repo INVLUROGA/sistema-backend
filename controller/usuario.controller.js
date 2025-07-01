@@ -150,7 +150,7 @@ const postUsuarioCliente = async (req = request, res = response) => {
     };
     await capturarAUDIT(formAUDIT);
 
-    if (cliente.tel_cli) {
+    if (cliente.tel_cli && id_empresa == 598) {
       await enviarMensajesWsp(
         cliente.tel_cli,
         `
@@ -487,12 +487,14 @@ const obtenerMarcacionsCliente = async (req = request, res = response) => {
 const postUsuarioEmpleado = (req = request, res = response) => {
   try {
     const { comentarioUnico_UID, contactoEmerg_UID, avatar_UID } = req;
+
     const empleado = new Empleado({
       uid: uuid.v4(),
       uid_avatar: avatar_UID,
       ...req.body,
       uid_comentario: comentarioUnico_UID,
       uid_contactsEmergencia: contactoEmerg_UID,
+      fecha_nacimiento: req.body.fecNac_empl,
     });
     empleado.save();
     res.status(200).json({
@@ -516,6 +518,7 @@ const getUsuarioEmpleados = async (req = request, res = response) => {
         "id_empl",
         "fecNac_empl",
         "fecha_nacimiento",
+        "cargo_empl",
         [
           Sequelize.fn(
             "CONCAT",
@@ -953,6 +956,15 @@ const revalidarToken = async (req, res) => {
         name: "Ventas",
         path: "/venta",
         key: "mod-general-ventas",
+      },
+    ];
+  }
+  if (user.rol_user === 8) {
+    MODULOS_ITEMS = [
+      {
+        name: "recepcion",
+        path: "/recepcion",
+        key: "mod-recepcion",
       },
     ];
   }

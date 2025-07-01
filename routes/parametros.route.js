@@ -38,7 +38,8 @@ const {
   getParametrosEmpleadosxDepxEmpresa,
   getParametrosporClientexEmpresa,
   getServiciosxEmpresa,
-  obtenerParametrosGruposGastos
+  obtenerParametrosGruposGastos,
+  obtenerEmpleadosxCargoxDepartamentoxEmpresa
 } = require("../controller/Parametros.controller");
 const { obtener_estado_membresia } = require("../middlewares/logicaSistema");
 const {
@@ -53,6 +54,8 @@ const router = Router();
  * /api/parametros/
  */
 // router.get("/get_params/forma_pago")
+
+router.get("/empleados/:id_cargo/:id_departamento/:id_empresa", obtenerEmpleadosxCargoxDepartamentoxEmpresa);
 router.get("/get_params/grupos-gastos/:id_empresa", obtenerParametrosGruposGastos);
 router.get("/get_params/servicios/:id_empresa", getServiciosxEmpresa);
 router.get("/get_params/etiquetas/:entidad/:grupo", getEtiquetasxEntidadGrupo);

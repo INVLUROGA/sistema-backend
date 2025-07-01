@@ -77,6 +77,9 @@ const eventoServicio = db.define("tb_eventoServicio", {
   id_asistencia: {
     type: DataTypes.INTEGER,
   },
+  id_estado: {
+    type: DataTypes.INTEGER,
+  },
   fecha_inicio: {
     type: DataTypes.DATE,
   },

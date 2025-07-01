@@ -504,21 +504,26 @@ const postVenta = async (req = request, res = response) => {
   try {
     if (req.servicios && req.servicios.length > 0) {
       const ventasServiciosConIdVenta = await req.servicios.map((producto) => ({
-        id_producto: producto.id_servicio,
+        id_servicio: producto.id_servicio,
         cantidad: producto.cantidad,
-        tarifa_monto: producto.tarifa_monto,
+        tarifa_monto: producto.tarifa,
+        observacion: producto.observacion,
         id_venta: req.ventaID,
+        id_empl: producto.id_empl,
       }));
       // Crear múltiples registros en detalleVenta_producto
       await detalleventa_servicios.bulkCreate(ventasServiciosConIdVenta);
     }
     if (req.productos && req.productos.length > 0) {
+      console.log({ r: req.productos });
+
       const ventasProductosConIdVenta = await req.productos.map((producto) => ({
         id_producto: producto.id_producto,
         cantidad: producto.cantidad,
         precio_unitario: producto.precio_unitario,
         tarifa_monto: producto.tarifa,
         id_venta: req.ventaID,
+        id_empl: producto.id_empl || 0, //ID SI ES CIRCUS SI NO ES 0
       }));
       // Crear múltiples registros en detalleVenta_producto
       await detalleVenta_producto.bulkCreate(ventasProductosConIdVenta);
@@ -741,6 +746,8 @@ const get_VENTAS = async (req = request, res = response) => {
         },
         {
           model: detalleVenta_producto,
+          where: { flag: true }, // <-- Filtro aplicado aquí
+          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
           attributes: [
             "id_venta",
             "id_producto",
@@ -751,6 +758,8 @@ const get_VENTAS = async (req = request, res = response) => {
         },
         {
           model: detalleVenta_membresias,
+          where: { flag: true }, // <-- Filtro aplicado aquí
+          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
           attributes: [
             "id_venta",
             "id_pgm",
@@ -767,6 +776,8 @@ const get_VENTAS = async (req = request, res = response) => {
         },
         {
           model: detalleVenta_citas,
+          where: { flag: true }, // <-- Filtro aplicado aquí
+          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
           attributes: ["id_venta", "id_servicio", "tarifa_monto"],
         },
         {
@@ -778,6 +789,12 @@ const get_VENTAS = async (req = request, res = response) => {
               as: "parametro_forma_pago",
             },
           ],
+        },
+        {
+          model: detalleventa_servicios,
+          where: { flag: true }, // <-- Filtro aplicado aquí
+          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
+          attributes: ["id", "tarifa_monto"],
         },
       ],
     });

@@ -125,6 +125,8 @@ const Gastos = db.define("tb_egresos", {
     defaultValue: true,
   },
 });
+
+
 Gastos.hasOne(Parametros, {
   foreignKey: "id_param",
   sourceKey: "id_estado_gasto",

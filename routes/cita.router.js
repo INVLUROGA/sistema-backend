@@ -8,7 +8,8 @@ const {
   getCitasxServicios,
   getCitasxServiciosFilter,
   postServiciosCita,
-  getServiciosCita
+  getServiciosCita,
+  putServiciosCita,
 } = require("../controller/cita.controller.js");
 const { mailNutricion } = require("../middlewares/mails.js");
 // const {
@@ -20,6 +21,7 @@ const router = Router();
 /api/cita
 */
 router.post("/servicio-cita/:id_empresa", postServiciosCita);
+router.put("/servicio-cita/:id_cita", putServiciosCita);
 router.get("/servicio-cita/:id_empresa", getServiciosCita);
 router.get("/get-citas-empresa/:id_empresa", getCitasxServ);
 router.get("/get-citas/:tipo_serv", getCitasxServicios);
