@@ -10,6 +10,7 @@ const {
   postServiciosCita,
   getServiciosCita,
   putServiciosCita,
+  obtenerServiciosxCliente,
 } = require("../controller/cita.controller.js");
 const { mailNutricion } = require("../middlewares/mails.js");
 // const {
@@ -20,6 +21,7 @@ const router = Router();
 /*
 /api/cita
 */
+router.get("/servicio-cita-id-cli/:id_cli", obtenerServiciosxCliente);
 router.post("/servicio-cita/:id_empresa", postServiciosCita);
 router.put("/servicio-cita/:id_cita", putServiciosCita);
 router.get("/servicio-cita/:id_empresa", getServiciosCita);

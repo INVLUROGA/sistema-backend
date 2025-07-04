@@ -99,16 +99,17 @@ const postServiciosCita = async (req = request, res = response) => {
     });
 
     const { tb_cliente, tb_empleado } = citaGeneradaJSON[0];
-
-    await enviarMensajesWsp__CIRCUS(
-      tb_cliente.tel_cli,
-      messageWSP.mensajeCitaRegistrada(
-        tb_empleado,
-        tb_cliente,
-        dayjs(cita.fecha_inicio).format("dddd DD [de] MMMM [a las] hh:mm A"),
-        citasDeCitasGeneradasJSON
-      )
-    );
+    if (citaGenerada.id_estado === 500) {
+      await enviarMensajesWsp__CIRCUS(
+        tb_cliente.tel_cli,
+        messageWSP.mensajeCitaRegistrada(
+          tb_empleado,
+          tb_cliente,
+          dayjs(cita.fecha_inicio).format("dddd DD [de] MMMM [a las] hh:mm A"),
+          citasDeCitasGeneradasJSON
+        )
+      );
+    }
     // await enviarMapaWsp__CIRCUS(
     //   tb_cliente.tel_cli,
     //   "Circus Salón",
@@ -515,6 +516,42 @@ const getCitasxServiciosFilter = async (req = request, res = response) => {
     });
   }
 };
+const obtenerServiciosxCliente = async (req = request, res = response) => {
+  const { id_cli } = req.params;
+  try {
+    const citas = await eventoServicio.findAll({
+      where: {
+        flag: true,
+        id_cli: id_cli,
+      },
+      include: [
+        {
+          model: Empleado,
+        },
+        {
+          model: Cliente,
+        },
+        {
+          model: EtiquetasxIds,
+          include: [
+            {
+              model: ServiciosCircus,
+              as: "parametro_servicio",
+            },
+          ],
+        },
+      ],
+    });
+
+    res.status(200).json(citas);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: "Hable con el administrador",
+    });
+  }
+};
 module.exports = {
   postCita,
   getCitaporID,
@@ -526,4 +563,5 @@ module.exports = {
   postServiciosCita,
   getServiciosCita,
   putServiciosCita,
+  obtenerServiciosxCliente,
 };

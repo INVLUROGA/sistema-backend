@@ -28,6 +28,40 @@ Dirección: Av. Reducto 1455 - Miraflores
 ¡TE ESPERAMOS! 🎪✨
     `;
   },
+  mensajeCitaRegistrada__clienteasistio: (tb_cliente) => {
+    const { nombre_cli } = tb_cliente;
+    return `
+¡Hola ${nombre_cli}! 👋🏻😃,
+Gracias por asistir a su cita el día de hoy 😃.
+Esperamos que su experiencia haya sido MÁGICA 🪄🎩. Si tiene alguna recomendación que nos ayude a seguir mejorando, se lo agradeceríamos mucho. Asimismo, si desea agendar una próxima cita, no dude en comunicarse con nosotros.
+
+¡Que tenga un excelente día!
+Saludos,
+CIRCUS SALON 🎪✨
+    `;
+  },
+  mensajeCitaRegistrada__clientereprograma: (
+    tb_empleado,
+    tb_cliente,
+    fecha_inicio = "MARTES 27 de mayo a las 12:30 PM",
+    servicios = []
+  ) => {
+    const { nombre_empl, sexo_empl } = tb_empleado;
+    const { nombre_cli } = tb_cliente;
+    const serviciosTexto = servicios
+      .map((servicio, index) => `${index + 1}. ${servicio.label.trim()}`)
+      .join("\n");
+    return `
+¡Hola ${nombre_cli}! 👋🏻😃,
+Gracias por asistir a su cita el día de hoy 😃.
+Esperamos que su experiencia haya sido MÁGICA 🪄🎩. Si tiene alguna recomendación que nos ayude a seguir mejorando, se lo agradeceríamos mucho. Asimismo, si desea agendar una próxima cita, no dude en comunicarse con nosotros.
+
+¡Que tenga un excelente día!
+Saludos,
+CIRCUS SALON 🎪✨
+    `;
+  },
+
   mensajeCitaRegistradaParaEmpl: (
     tb_empleado,
     tb_cliente,

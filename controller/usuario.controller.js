@@ -75,6 +75,14 @@ const getUsuariosClientexID = async (req = request, res = response) => {
           ),
           "nombres_apellidos_cli",
         ],
+        "fecNac_cli",
+        "fecha_nacimiento",
+        "sexo_cli",
+        "tipoDoc_cli",
+        "numDoc_cli",
+        "direccion_cli",
+        "email_cli",
+        "tel_cli",
       ],
     });
     if (!cliente) {

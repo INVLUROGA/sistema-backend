@@ -993,6 +993,9 @@ const get_VENTA_ID = async (req = request, res = response) => {
 };
 const getVentasxFecha = async (req = request, res = response) => {
   const { arrayDate } = req.query;
+  const { id_empresa } = req.params;
+  const fechaInicio = arrayDate[0];
+  const fechaFin = arrayDate[1];
   try {
     const ventas = await Venta.findAll({
       attributes: [
@@ -1000,15 +1003,20 @@ const getVentasxFecha = async (req = request, res = response) => {
         "id_cli",
         "id_empl",
         "id_tipoFactura",
+        "id_origen",
         "numero_transac",
         "flag",
         "fecha_venta",
       ],
       where: {
         fecha_venta: {
-          [Op.between]: [arrayDate[0], arrayDate[1]],
+          [Op.between]: [
+            new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
+            new Date(fechaFin).setUTCHours(23, 59, 59, 999),
+          ],
         },
         flag: true,
+        id_empresa: id_empresa,
       },
       order: [["id", "DESC"]],
       include: [
@@ -1117,6 +1125,10 @@ const getVentasxFecha = async (req = request, res = response) => {
             },
           ],
         },
+        {
+          model: detalleventa_servicios,
+          attributes: ["id_empl", "id_servicio", "cantidad", "tarifa_monto"],
+        },
       ],
     });
     res.status(200).json({
@@ -1125,7 +1137,7 @@ const getVentasxFecha = async (req = request, res = response) => {
     });
   } catch (error) {
     res.status(500).json({
-      error: `Error en el servidor, en controller de get_VENTAS, hable con el administrador: ${error}`,
+      error: `Error en el servidor, en controller de get_VENTASxFECHA, hable con el administrador: ${error}`,
     });
   }
 };
@@ -1258,9 +1270,125 @@ const mailMembresia = async (req = request, res = response) => {
     });
   }
 };
-const get_VENTAS_detalle_PROGRAMA = async (req = request, res = response) => {};
-const get_VENTAS_detalle_PRODUCTO = async (req = request, res = response) => {};
-const get_VENTAS_detalle_CITAS = async (req = request, res = response) => {};
+const obtenerVentasxFecha = async (req = request, res = response) => {
+  const { id_empresa, RANGE_DATE } = req.params;
+  try {
+    const ventas = await Venta.findAll({
+      where: { flag: true, id_empresa: id_empresa },
+      attributes: [
+        "id",
+        "id_cli",
+        "id_empl",
+        "id_origen",
+        "id_tipoFactura",
+        "numero_transac",
+        "fecha_venta",
+        "status_remove",
+        "observacion",
+      ],
+      order: [["fecha_venta", "DESC"]],
+      include: [
+        {
+          model: Cliente,
+          attributes: [
+            [
+              Sequelize.fn(
+                "CONCAT",
+                Sequelize.col("nombre_cli"),
+                " ",
+                Sequelize.col("apPaterno_cli"),
+                " ",
+                Sequelize.col("apMaterno_cli")
+              ),
+              "nombres_apellidos_cli",
+            ],
+          ],
+          include: [
+            {
+              model: ImagePT,
+            },
+          ],
+        },
+        {
+          model: Empleado,
+          attributes: [
+            [
+              Sequelize.fn(
+                "CONCAT",
+                Sequelize.col("nombre_empl"),
+                " ",
+                Sequelize.col("apPaterno_empl"),
+                " ",
+                Sequelize.col("apMaterno_empl")
+              ),
+              "nombres_apellidos_empl",
+            ],
+          ],
+        },
+        {
+          model: detalleVenta_producto,
+          where: { flag: true }, // <-- Filtro aplicado aquí
+          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
+          attributes: [
+            "id_venta",
+            "id_producto",
+            "cantidad",
+            "precio_unitario",
+            "tarifa_monto",
+          ],
+        },
+        {
+          model: detalleVenta_membresias,
+          where: { flag: true }, // <-- Filtro aplicado aquí
+          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
+          attributes: [
+            "id_venta",
+            "id_pgm",
+            "id_tarifa",
+            "horario",
+            "id_st",
+            "tarifa_monto",
+          ],
+          include: [
+            {
+              model: ProgramaTraining,
+            },
+          ],
+        },
+        {
+          model: detalleVenta_citas,
+          where: { flag: true }, // <-- Filtro aplicado aquí
+          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
+          attributes: ["id_venta", "id_servicio", "tarifa_monto"],
+        },
+        {
+          model: detalleVenta_pagoVenta,
+          attributes: ["id_venta", "parcial_monto"],
+          include: [
+            {
+              model: Parametros,
+              as: "parametro_forma_pago",
+            },
+          ],
+        },
+        {
+          model: detalleventa_servicios,
+          where: { flag: true }, // <-- Filtro aplicado aquí
+          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
+          attributes: ["id", "tarifa_monto"],
+        },
+      ],
+    });
+    res.status(200).json({
+      ok: true,
+      ventas,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: `Error en el servidor, en controller de get_VENTAS, hable con el administrador: ${error}`,
+    });
+  }
+};
 
 const postTraspasoMembresia = async (req = request, res = response) => {
   const {
@@ -3130,9 +3258,6 @@ module.exports = {
   postVenta,
   get_VENTAS,
   get_VENTA_ID,
-  get_VENTAS_detalle_PROGRAMA,
-  get_VENTAS_detalle_PRODUCTO,
-  get_VENTAS_detalle_CITAS,
   getPDF_CONTRATO,
   obtener_contrato_pdf,
   getVentasxFecha,
