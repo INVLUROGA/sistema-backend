@@ -15,8 +15,23 @@ const enviarMasivoAlwsp = async () => {
       try {
         const imagenResp = await enviarTextConImagenWsp(
           numero,
-          `https://archivosluroga.blob.core.windows.net/avatar-articulos/WhatsApp-Image-2025-06-23-at-2.58.12-PM-1750710383932.jpg`,
+          `https://archivosluroga.blob.core.windows.net/avatar-articulos/2d688e4d-2a15-455e-826a-ad2b0bbec7a9-1752163539752.jpg`,
           `
+🔥 ¡LLEGÓ EL CYBER CHANGE! 🔥
+
+La oportunidad que esperabas para transformar tu cuerpo con beneficios exclusivos.
+Inscríbete en un plan de 12 semanas a más y te llevas 28 días de regalo. 💥
+
+🏋️‍♀️ Programas de entrenamiento grupales y dirigidos
+📉 Plan de alimentación personalizado por nutricionistas profesionales
+✅ Seguimiento de resultados
+📝 Evaluación de composición corporal 
+
+⏳ Cupos limitados. 
+
+Tu cambio empieza HOY.
+📲 Escríbenos ya y asegura tu lugar.
+#CyberChange #TransformaTuCuerpo
           `
         );
 

@@ -253,6 +253,7 @@ app.use("/api/parametros", require("./routes/parametros.route.js"));
 app.use("/api/jornada", require("./routes/jornada.route.js"));
 //TODO: USUARIOS(CLIENTES, COLABORADORES, USUARIOS LOGEADOS)
 app.use("/api/usuario", require("./routes/usuario.route.js"));
+app.use("/api/apireniec", require("./routes/api.reniec.route.js"));
 app.use("/api/cambio-programa", require("./routes/cambioPrograma.route.js"));
 app.use("/api/msg-masivos", require("./routes/msgMasivos.route.js"));
 

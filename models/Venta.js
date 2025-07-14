@@ -10,6 +10,7 @@ const {
 const { Parametros } = require("./Parametros");
 const { ImagePT } = require("./Image");
 const { HorarioProgramaPT } = require("./HorarioProgramaPT");
+const { ServiciosCircus } = require("./modelsCircus/Servicios");
 const cajasMovimientos = db.define("tb_cajas_movimiento", {
   id: {
     type: DataTypes.INTEGER,
@@ -417,6 +418,15 @@ Venta.hasMany(detalleventa_servicios, {
 detalleventa_servicios.belongsTo(Venta, {
   foreignKey: "id_venta", // Este debe coincidir con el anterior
   targetKey: "id",
+});
+// Definición de la relación entre Venta y detalleVenta_membresias
+detalleventa_servicios.hasOne(ServiciosCircus, {
+  foreignKey: "id", // Este debe ser el nombre de la columna en detalleVenta_membresias
+  sourceKey: "id_servicio",
+});
+ServiciosCircus.belongsTo(detalleventa_servicios, {
+  foreignKey: "id", // Este debe coincidir con el anterior
+  targetKey: "id_servicio",
 });
 // Definición de la relación entre Venta y detalleVenta_membresias
 Venta.hasMany(detalleVenta_membresias, {

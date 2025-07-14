@@ -20,7 +20,7 @@ const {
   TarifaTraining,
 } = require("../models/ProgramaTraining");
 const { HorarioProgramaPT } = require("../models/HorarioProgramaPT");
-const { Parametros } = require("../models/Parametros");
+const { Parametros, EtiquetasxIds } = require("../models/Parametros");
 const { v4 } = require("uuid");
 const { typesCRUD } = require("../types/types");
 const { capturarAUDIT } = require("../middlewares/auditoria");
@@ -48,8 +48,9 @@ const {
 } = require("../middlewares/mailContratoMembresia");
 const utc = require("dayjs/plugin/utc");
 const { Marcacion } = require("../models/Marcacion");
-const { Cita } = require("../models/Cita");
+const { Cita, eventoServicio } = require("../models/Cita");
 const { ExtensionMembresia } = require("../models/ExtensionMembresia");
+const { ServiciosCircus } = require("../models/modelsCircus/Servicios");
 
 // Cargar el plugin
 dayjs.extend(utc);
@@ -1017,6 +1018,7 @@ const getVentasxFecha = async (req = request, res = response) => {
         },
         flag: true,
         id_empresa: id_empresa,
+        id_tipoFactura: { [Op.in]: [699, 701] },
       },
       order: [["id", "DESC"]],
       include: [
@@ -1064,7 +1066,7 @@ const getVentasxFecha = async (req = request, res = response) => {
           include: [
             {
               model: Producto,
-              attributes: ["id", "id_categoria"],
+              attributes: ["id", "id_categoria", "nombre_producto"],
             },
           ],
         },
@@ -1127,7 +1129,17 @@ const getVentasxFecha = async (req = request, res = response) => {
         },
         {
           model: detalleventa_servicios,
-          attributes: ["id_empl", "id_servicio", "cantidad", "tarifa_monto"],
+          attributes: ["cantidad", "tarifa_monto"],
+          include: [
+            {
+              model: ServiciosCircus,
+              include: [
+                {
+                  model: Parametros,
+                },
+              ],
+            },
+          ],
         },
       ],
     });

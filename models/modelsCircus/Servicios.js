@@ -50,7 +50,7 @@ EtiquetasxIds.hasOne(ServiciosCircus, {
 });
 ServiciosCircus.hasOne(Parametros, {
   foreignKey: "id_param",
-  sourceKey: "id_subCategoria",
+  sourceKey: "id_categoria",
 });
 const carcel = async () => {
   try {
