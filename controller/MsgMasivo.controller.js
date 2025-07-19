@@ -15,23 +15,31 @@ const enviarMasivoAlwsp = async () => {
       try {
         const imagenResp = await enviarTextConImagenWsp(
           numero,
-          `https://archivosluroga.blob.core.windows.net/avatar-articulos/2d688e4d-2a15-455e-826a-ad2b0bbec7a9-1752163539752.jpg`,
+          `https://archivosluroga.blob.core.windows.net/avatar-articulos/WhatsApp Image 2025-07-16 at 11.02.36 AM-1752681809362.jpeg`,
           `
-🔥 ¡LLEGÓ EL CYBER CHANGE! 🔥
+🔴 ¿TE QUEDASTE SIN GIMNASIO? 🏋🏼
 
-La oportunidad que esperabas para transformar tu cuerpo con beneficios exclusivos.
-Inscríbete en un plan de 12 semanas a más y te llevas 28 días de regalo. 💥
+El progreso no se detiene solo porque tu gym sí lo hizo.
 
-🏋️‍♀️ Programas de entrenamiento grupales y dirigidos
-📉 Plan de alimentación personalizado por nutricionistas profesionales
-✅ Seguimiento de resultados
-📝 Evaluación de composición corporal 
+🎯 Este mes patrio, tú eliges:
 
-⏳ Cupos limitados. 
+1️⃣ Ponerle pausa a tus metas.
+2️⃣ Entrenar 28 días totalmente gratis por 28 de Julio y descubrir lo que puedes lograr en un centro boutique como Change.
 
-Tu cambio empieza HOY.
-📲 Escríbenos ya y asegura tu lugar.
-#CyberChange #TransformaTuCuerpo
+✨ ¿Qué hace diferente a Change?
+
+✔️ Grupos reducidos
+✔️ Entrenamiento grupal dirigido
+✔️ Evaluación corporal con tecnología
+✔️ Plan nutricional
+✔️ Resultados visibles desde la primera semana
+
+En Change no vienes a probar suerte.
+💪 Vienes a transformar tu cuerpo, tu mente y tu vida.
+
+📲 Escríbenos y separa tu cupo.
+
+#28Por28 #ChangeEsCambio #MesDelCambio
           `
         );
 

@@ -98,8 +98,10 @@ const postServiciosCita = async (req = request, res = response) => {
       };
     });
 
-    const { tb_cliente, tb_empleado } = citaGeneradaJSON[0];
-    if (citaGenerada.id_estado === 500) {
+    const { tb_cliente, tb_empleado, id_estado } = citaGeneradaJSON[0];
+    console.log({ estado: citaGenerada.id_estado, citaGeneradaJSON });
+
+    if (id_estado === 500) {
       await enviarMensajesWsp__CIRCUS(
         tb_cliente.tel_cli,
         messageWSP.mensajeCitaRegistrada(
@@ -110,22 +112,12 @@ const postServiciosCita = async (req = request, res = response) => {
         )
       );
     }
-    // await enviarMapaWsp__CIRCUS(
-    //   tb_cliente.tel_cli,
-    //   "Circus Salón",
-    //   -12.133057302165295,
-    //   -77.0227635902099
-    // );
-
-    // enviarMensajesWsp__CIRCUS(
-    //   tb_empleado.telefono_empl,
-    //   messageWSP.mensajeCitaRegistradaParaEmpl(
-    //     tb_empleado,
-    //     tb_cliente,
-    //     dayjs(cita.fecha_inicio).format("dddd DD [de] MMMM [a las] hh:mm A"),
-    //     citasDeCitasGeneradasJSON
-    //   )
-    // );
+    if (id_estado === 502) {
+      await enviarMensajesWsp__CIRCUS(
+        tb_cliente.tel_cli,
+        messageWSP.mensajeCitaRegistrada__clienteasistio(tb_cliente)
+      );
+    }
     console.log({
       cita: cita.id,
       citaGenerada,

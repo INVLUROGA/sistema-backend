@@ -28,7 +28,7 @@ cron.schedule("0 15 * * *", () => {
   obtenerCumpleaniosCliente();
   obtenerCumpleaniosDeEmpleados();
 });
-cron.schedule("0 * * * *", () => {
+cron.schedule("55 * * * *", () => {
   alertasUsuario();
   recordatorioReservaCita24hAntes();
   recordatorioReservaCita2hAntes();

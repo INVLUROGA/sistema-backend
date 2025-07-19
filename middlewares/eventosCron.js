@@ -19,6 +19,7 @@ const axios = require("axios");
 const {
   enviarMensajesWsp,
   enviarMapaWsp__CIRCUS,
+  enviarMensajesWsp__CIRCUS,
 } = require("../config/whatssap-web");
 
 const { Distritos } = require("../models/Distritos");
@@ -145,33 +146,47 @@ const alertasUsuario = async () => {
         },
       ],
     });
-    // Convertir a objetos planos
-    const alertasJSON = dataAlertas.map((a) => a.toJSON());
-    const alertasConMinutos = calcularMinutos(alertasJSON, new Date());
-    const filtrarDataIguala48Horas = alertasConMinutos.filter(
-      (dataAlerta) => dataAlerta.tiempoEnMins === 2880
-    );
-    // Ahora enviamos uno a uno sin repetir
-    for (const c of filtrarDataIguala48Horas) {
-      enviarMensajesWsp(c.auth_user.telefono_user, `${c.mensaje}`);
 
-      const alertaYaFinalizada = await AlertasUsuario.findOne({
-        where: { id: c.id },
-      });
-      await alertaYaFinalizada.update({ flag: false });
-      if (c.tipo_alerta === 1425) {
-        const fechaOriginal = new Date(alertaYaFinalizada.fecha);
-        const nuevaFecha = new Date(fechaOriginal);
-        nuevaFecha.setMonth(nuevaFecha.getMonth() + 1); // avanzar al mes siguiente
-        const alertaNueva = await new AlertasUsuario({
-          id_user: alertaYaFinalizada.id_user,
-          tipo_alerta: alertaYaFinalizada.tipo_alerta,
-          mensaje: alertaYaFinalizada.mensaje,
-          fecha: nuevaFecha,
-          flag: true,
+    const alertasJSON = dataAlertas.map((a) => a.toJSON());
+
+    const ahora = new Date();
+
+    for (const alerta of alertasJSON) {
+      const fechaAlerta = new Date(alerta.fecha);
+
+      // Comparamos si año, mes, día, hora y minuto son iguales
+      const coincide =
+        ahora.getFullYear() === fechaAlerta.getFullYear() &&
+        ahora.getMonth() === fechaAlerta.getMonth() &&
+        ahora.getDate() === fechaAlerta.getDate() &&
+        ahora.getHours() === fechaAlerta.getHours() &&
+        ahora.getMinutes() === fechaAlerta.getMinutes();
+
+      if (coincide) {
+        await enviarMensajesWsp(
+          alerta.auth_user.telefono_user,
+          `${alerta.mensaje}`
+        );
+
+        const alertaYaFinalizada = await AlertasUsuario.findOne({
+          where: { id: alerta.id },
         });
-        await alertaNueva.save();
-        // puedes hacer algo con eliminarAlerta si quieres
+
+        await alertaYaFinalizada.update({ flag: false });
+
+        if (alerta.tipo_alerta === 1425) {
+          const fechaOriginal = new Date(alertaYaFinalizada.fecha);
+          const nuevaFecha = new Date(fechaOriginal);
+          nuevaFecha.setMonth(nuevaFecha.getMonth() + 1);
+          const alertaNueva = await new AlertasUsuario({
+            id_user: alertaYaFinalizada.id_user,
+            tipo_alerta: alertaYaFinalizada.tipo_alerta,
+            mensaje: alertaYaFinalizada.mensaje,
+            fecha: nuevaFecha,
+            flag: true,
+          });
+          await alertaNueva.save();
+        }
       }
     }
   } catch (error) {
@@ -180,27 +195,30 @@ const alertasUsuario = async () => {
 };
 const recordatorioReservaCita24hAntes = async () => {
   try {
-    const ahora = dayjs();
-    const en24h = ahora.add(24, "hour");
-    const en25h = ahora.add(25, "hour");
-
+    console.log("Ejecutando recordatorio 24h antes...");
+    const ahora = new Date();
+    const en24h = new Date(ahora.getTime() + 24 * 60 * 60 * 1000);
     const citas = await eventoServicio.findAll({
       where: {
-        id_cli: 6917,
         flag: true,
-        fecha_inicio: {
-          [Op.between]: [en24h.toDate(), en25h.toDate()],
-        },
+        id: 1247,
       },
       include: [{ model: Cliente }, { model: Empleado }],
     });
-    console.log({ citas });
+    // Función para obtener solo la hora (en UTC o local)
+    const obtenerHora = (fecha) => {
+      const d = new Date(fecha);
+      return d.getUTCHours(); // Usa getHours() si quieres hora local
+    };
 
-    for (const cita of citas) {
+    const citasFiltradas = citas.filter(
+      (cita) => obtenerHora(cita.fecha_inicio) === obtenerHora(en24h)
+    );
+    for (const cita of citasFiltradas) {
       const fecha_inicio = dayjs(cita.fecha_inicio).format(
         "dddd DD [de] MMMM [a las] hh:mm A"
       );
-      await enviarMensajesWsp(
+      await enviarMensajesWsp__CIRCUS(
         cita.tb_cliente.tel_cli,
         messageWSP.mensaje24hAntesDeLaReserva(
           cita.tb_empleado,
@@ -222,26 +240,30 @@ const recordatorioReservaCita24hAntes = async () => {
 
 const recordatorioReservaCita2hAntes = async () => {
   try {
-    const ahora = dayjs();
-    const en24h = ahora.add(2, "hour");
-    const en25h = ahora.add(3, "hour");
-
+    console.log("Ejecutando recordatorio 2h antes...");
+    const ahora = new Date();
+    const en24h = new Date(ahora.getTime() + 2 * 60 * 60 * 1000);
     const citas = await eventoServicio.findAll({
       where: {
-        id_cli: 6917,
         flag: true,
-        fecha_inicio: {
-          [Op.between]: [en24h.toDate(), en25h.toDate()],
-        },
+        id: 1247,
       },
       include: [{ model: Cliente }, { model: Empleado }],
     });
-    console.log("cita?", JSON.stringify(citas), { ahora, en24h, en25h });
-    for (const cita of citas) {
+    // Función para obtener solo la hora (en UTC o local)
+    const obtenerHora = (fecha) => {
+      const d = new Date(fecha);
+      return d.getUTCHours(); // Usa getHours() si quieres hora local
+    };
+
+    const citasFiltradas = citas.filter(
+      (cita) => obtenerHora(cita.fecha_inicio) === obtenerHora(en24h)
+    );
+    for (const cita of citasFiltradas) {
       const fecha_inicio = dayjs(cita.fecha_inicio).format(
         "dddd DD [de] MMMM [a las] hh:mm A"
       );
-      await enviarMensajesWsp(
+      await enviarMensajesWsp__CIRCUS(
         cita.tb_cliente.tel_cli,
         messageWSP.mensaje2hAntesDeLaReserva(
           cita.tb_empleado,
