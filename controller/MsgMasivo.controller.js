@@ -6,43 +6,43 @@ const {
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 const enviarMasivoAlwsp = async () => {
-  const numerosDup = [];
+  const numerosDup = [
+  ];
   const numeros = [...new Set(numerosDup)];
 
   try {
     for (const persona of numeros) {
       const { nombre, numero } = persona;
       try {
+        await enviarImagenWsp(
+          numero,
+          `https://archivosluroga.blob.core.windows.net/avatar-articulos/1fp-1753467374791.webp`
+        );
+        await enviarImagenWsp(
+          numero,
+          `https://archivosluroga.blob.core.windows.net/avatar-articulos/2fp-1753467453324.webp`
+        );
         const imagenResp = await enviarTextConImagenWsp(
           numero,
-          `https://archivosluroga.blob.core.windows.net/avatar-articulos/WhatsApp Image 2025-07-16 at 11.02.36 AM-1752681809362.jpeg`,
+          `https://archivosluroga.blob.core.windows.net/avatar-articulos/3.fp-1753467483926.webp`,
           `
-🔴 ¿TE QUEDASTE SIN GIMNASIO? 🏋🏼
+Fiestas Patrias con propósito 
 
-El progreso no se detiene solo porque tu gym sí lo hizo.
+Este 28 de julio, da el paso hacia tu mejor versión.
+Activa tu plan de 3 meses a más y accede a:
 
-🎯 Este mes patrio, tú eliges:
+✅ Entrenamiento grupal 100% dirigido
+✅ Incluye cita con nutricionistas profesionales
+✅ Coaches con más de 20 años de experiencia
+✅ Salas exclusivas y aforo limitado
+✅ Sistema inteligente de ultima tecnología para REDUCCION DE PESO Y MEDIDAS
+✅ Resultados desde las primeras semanas
 
-1️⃣ Ponerle pausa a tus metas.
-2️⃣ Entrenar 28 días totalmente gratis por 28 de Julio y descubrir lo que puedes lograr en un centro boutique como Change.
+📅 Válido del viernes 25 al jueves 31 de julio.
 
-✨ ¿Qué hace diferente a Change?
-
-✔️ Grupos reducidos
-✔️ Entrenamiento grupal dirigido
-✔️ Evaluación corporal con tecnología
-✔️ Plan nutricional
-✔️ Resultados visibles desde la primera semana
-
-En Change no vienes a probar suerte.
-💪 Vienes a transformar tu cuerpo, tu mente y tu vida.
-
-📲 Escríbenos y separa tu cupo.
-
-#28Por28 #ChangeEsCambio #MesDelCambio
+🔥 ¡Tu cambio empieza hoy, no lo postergues más!
           `
         );
-
         if (!imagenResp.ok) {
           console.error(`❌ Falló imagen a ${numero}`);
           continue;

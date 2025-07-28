@@ -46,6 +46,7 @@ const {
   obtenerComparativoTotal,
   postCajaApertura,
   buscarCajasxFecha,
+  obtenerUltimasVentasxComprobantes,
 } = require("../controller/venta.controller");
 
 const {
@@ -60,6 +61,10 @@ const router = Router();
 /*
 /api/venta
 */
+router.get(
+  "/obtener-ventas-x-comprobante/:id_comprobante/:id_empresa",
+  obtenerUltimasVentasxComprobantes
+);
 router.post("/caja-apertura/:id_enterprice", postCajaApertura);
 router.get("/buscar-cajas", buscarCajasxFecha);
 router.post(

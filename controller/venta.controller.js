@@ -997,6 +997,10 @@ const getVentasxFecha = async (req = request, res = response) => {
   const { id_empresa } = req.params;
   const fechaInicio = arrayDate[0];
   const fechaFin = arrayDate[1];
+  console.log({
+    fechas: [new Date(fechaInicio), new Date(fechaFin), fechaInicio, fechaFin],
+  });
+
   try {
     const ventas = await Venta.findAll({
       attributes: [
@@ -1012,8 +1016,8 @@ const getVentasxFecha = async (req = request, res = response) => {
       where: {
         fecha_venta: {
           [Op.between]: [
-            new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
-            new Date(fechaFin).setUTCHours(23, 59, 59, 999),
+            new Date(fechaInicio.replace(" ", "T")),
+            new Date(fechaFin.replace(" ", "T")),
           ],
         },
         flag: true,
@@ -1677,6 +1681,28 @@ const obtenerClientesxDistritos = async (req = request, res = response) => {
     res.status(200).json({
       msg: true,
       data: clientes,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const obtenerUltimasVentasxComprobantes = async (
+  req = request,
+  res = response
+) => {
+  try {
+    const { id_comprobante, id_empresa } = req.params;
+    const ventas = await Venta.findOne({
+      where: {
+        id_tipoFactura: id_comprobante,
+        id_empresa: id_empresa,
+        flag: true,
+      },
+      order: [["id", "desc"]],
+    });
+    res.status(201).json({
+      msg: "ok",
+      ventas,
     });
   } catch (error) {
     console.log(error);
@@ -3260,6 +3286,7 @@ function bytesToBase64(bytes) {
   return btoa(binaryString);
 }
 module.exports = {
+  obtenerUltimasVentasxComprobantes,
   putVentaxId,
   postCajaApertura,
   obtenerMembresiasxUIDcliente,

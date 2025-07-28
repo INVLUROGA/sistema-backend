@@ -29,14 +29,7 @@ const enviarMsgWsp = async (token, instance, numberWsp, bodyMsg) => {
   }
 };
 
-const enviarMapaWsp = async (
-  token,
-  instance,
-  numberWsp,
-  address,
-  lat,
-  lng
-) => {
+const enviarMapaWsp = async (token, instance, numberWsp, address, lat, lng) => {
   const data = qs.stringify({
     token: token,
     to: numberWsp,
@@ -145,7 +138,7 @@ const enviarImagenWsp = async (numberWsp, image) => {
 
   const config = {
     method: "post",
-    url: "https://api.ultramsg.com/instance102151/messages/chat",
+    url: "https://api.ultramsg.com/instance102151/messages/image",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
@@ -189,9 +182,6 @@ const enviarTextConImagenWsp = async (numberWsp, image, bodyMsg) => {
   }
 };
 
-
-
-
 module.exports = {
   enviarMapaWsp__CIRCUS,
   enviarMensajesWsp,
@@ -200,7 +190,6 @@ module.exports = {
   enviarTextConImagenWsp,
   enviarMensajesWsp__CIRCUS,
   enviarMensajesWsp__CHANGE,
-  
 };
 
 // const qrcode = require("qrcode-terminal");
