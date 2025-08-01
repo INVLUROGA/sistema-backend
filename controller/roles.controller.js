@@ -208,46 +208,46 @@ const seccionGET = async (req = request, res = response) => {
     }
     if (modulo === "mod-adm") {
       MENU_ITEMS = [
-        {
-          key: "reporte-admin",
-          label: "Reporte de Utilidad",
-          isTitle: true,
-        },
-        {
-          key: "reporte-utilidad-pgm",
-          label: "Por programas",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/reporte-admin/reporte-utilidad-programa",
-        },
-        {
-          key: "reporte-utilidad-sup",
-          label: "Por suplementos",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/reporte-admin/reporte-utilidad-supl",
-        },
-        {
-          key: "reporte-utilidad-acc",
-          label: "Por accesorios",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/reporte-admin/reporte-utilidad-acc",
-        },
-        {
-          key: "reporte-utilidad-trat-estetico",
-          label: "Por tratamientos esteticos",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/reporte-admin/reporte-utilidad-trat-estetico",
-        },
-        {
-          key: "reporte-utilidad-nutricion",
-          label: "Por nutricionista",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/reporte-admin/reporte-utilidad-nutricionista",
-        },
+        // {
+        //   key: "reporte-admin",
+        //   label: "Reporte de Utilidad",
+        //   isTitle: true,
+        // },
+        // {
+        //   key: "reporte-utilidad-pgm",
+        //   label: "Por programas",
+        //   isTitle: false,
+        //   icon: "uil-calender",
+        //   url: "/reporte-admin/reporte-utilidad-programa",
+        // },
+        // {
+        //   key: "reporte-utilidad-sup",
+        //   label: "Por suplementos",
+        //   isTitle: false,
+        //   icon: "uil-calender",
+        //   url: "/reporte-admin/reporte-utilidad-supl",
+        // },
+        // {
+        //   key: "reporte-utilidad-acc",
+        //   label: "Por accesorios",
+        //   isTitle: false,
+        //   icon: "uil-calender",
+        //   url: "/reporte-admin/reporte-utilidad-acc",
+        // },
+        // {
+        //   key: "reporte-utilidad-trat-estetico",
+        //   label: "Por tratamientos esteticos",
+        //   isTitle: false,
+        //   icon: "uil-calender",
+        //   url: "/reporte-admin/reporte-utilidad-trat-estetico",
+        // },
+        // {
+        //   key: "reporte-utilidad-nutricion",
+        //   label: "Por nutricionista",
+        //   isTitle: false,
+        //   icon: "uil-calender",
+        //   url: "/reporte-admin/reporte-utilidad-nutricionista",
+        // },
         {
           key: "config",
           label: "Recursos Humanos",

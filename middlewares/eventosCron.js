@@ -138,6 +138,8 @@ const obtenerUltimaVentaConExtension = (clientes) => {
 
 const alertasUsuario = async () => {
   try {
+    console.log("en alerta usuario");
+
     const dataAlertas = await AlertasUsuario.findAll({
       where: { flag: true },
       include: [
@@ -159,8 +161,7 @@ const alertasUsuario = async () => {
         ahora.getFullYear() === fechaAlerta.getFullYear() &&
         ahora.getMonth() === fechaAlerta.getMonth() &&
         ahora.getDate() === fechaAlerta.getDate() &&
-        ahora.getHours() === fechaAlerta.getHours() &&
-        ahora.getMinutes() === fechaAlerta.getMinutes();
+        ahora.getHours() === fechaAlerta.getHours();
 
       if (coincide) {
         await enviarMensajesWsp(
@@ -189,6 +190,7 @@ const alertasUsuario = async () => {
         }
       }
     }
+    console.log("fin de alerta...");
   } catch (error) {
     console.log(error);
   }

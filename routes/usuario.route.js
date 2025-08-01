@@ -21,6 +21,7 @@ const {
   revalidarToken,
   obtenerDatosUltimaMembresia,
   obtenerMarcacionsCliente,
+  
 } = require("../controller/usuario.controller");
 const {
   extraerComentarios,
@@ -41,6 +42,8 @@ const router = Router();
  * [API Documentation]
  * /api/usuario
  */
+
+router.post('/pariente', )
 router.post(
   "/post-cliente/:id_empresa",
   validarJWT,

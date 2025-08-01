@@ -1775,10 +1775,7 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
               ],
               where: {
                 fecha_venta: {
-                  [Op.between]: [
-                    new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
-                    new Date(fechaFin).setUTCHours(23, 59, 59, 999),
-                  ],
+                  [Op.between]: [fechaInicio, fechaFin],
                 },
               },
               include: [

@@ -19,15 +19,15 @@ exports.messageWSP = {
 ¡Hola ${
       nombre_cli.charAt(0).toUpperCase() + nombre_cli.slice(1).toLowerCase()
     }! 👋🏻😃
-Te confirmamos que la cita con ${sexo_empl == 8 ? "nuestro" : ""} ${
+Te confirmamos que la cita para realizarte los siguientes servicios, con ${sexo_empl == 8 ? "nuestro" : ""} ${
       sexo_empl == 9 ? "nuestra" : ""
     } ESTILISTA ${
       nombre_empl.split(" ")[0]
-    } para realizarte los siguientes servicios:
+    }, en CIRCUS SALON 🎪, ya está agendada para el día ${fecha_inicio}. VIVE LA MAGIA 🪄🎩 EN CIRCUS SALON! ✨ 
 ${serviciosTexto}
-en CIRCUS SALON, ya está agendada para el día ${fecha_inicio.toUpperCase()}. VIVE LA MAGIA EN CIRCUS SALON! 
+
 Dirección: Av. Reducto 1455 - Miraflores
-¡TE ESPERAMOS! 🎪✨
+¡TE ESPERAMOS! 😊🎪✨
     `;
   },
   mensajeCitaRegistrada__clienteasistio: (tb_cliente) => {
@@ -102,10 +102,8 @@ Toma en cuenta que cada servicio que realizas no está solo EL NOMBRE DE CIRCUS 
     return `
 Hola ${
       nombre_cli.charAt(0).toUpperCase() + nombre_cli.slice(1).toLowerCase()
-    }! Faltan 24 HORAS para tu cita con nuestro ESTILISTA ${
-      nombre_empleado.charAt(0).toUpperCase() +
-      nombre_empleado.slice(1).toLowerCase()
-    } en CIRCUS SALON, RECUERDA que tu experiencia mágica está agendada para el día ${fecha_inicio.toUpperCase()}. Si tienes algún inconveniente por favor comunícate al número de Recepción al 912530886, MUCHAS GRACIAS!😃🎪✨
+    }! RECUERDA que tu experiencia mágica 🪄🎩 está agendada para MAÑANA. Si tienes algún inconveniente por favor comunícate al número de Recepción al 912530886, MUCHAS GRACIAS!😊🎪✨
+    
     `;
   },
   mensaje2hAntesDeLaReserva: (
@@ -122,11 +120,13 @@ Hola ${
       .map((servicio, index) => `${index + 1}. ${servicio.label.trim()}`)
       .join("\n");
     return `
-¡Hola ${nombre_cli.charAt(0).toUpperCase() + nombre_cli.slice(1).toLowerCase()}!
-Faltan 2 HORAS para tu cita con nuestro ESTILISTA ${
+¡Hola ${
+      nombre_cli.charAt(0).toUpperCase() + nombre_cli.slice(1).toLowerCase()
+    }! Recuerda que te estaremos esperando para tu 
+cita con nuestro ESTILISTA ${
       nombre_empleado.charAt(0).toUpperCase() +
       nombre_empleado.slice(1).toLowerCase()
-    } en CIRCUS SALON, RECUERDA que tu experiencia mágica está programada para el día ${fecha_inicio.toUpperCase()}. Si tienes algún inconveniente por favor comunícate al número de Recepción al 912530886, MUCHAS GRACIAS!😃🎪✨
+    } en CIRCUS SALON 🎪, tu experiencia mágica 🪄🎩 está programada para el día ${fecha_inicio}. Si tienes algún inconveniente por favor comunícate al número de Recepción 912530886, MUCHAS GRACIAS!😊✨
     `;
   },
   mensaje2hDespuesDeLaReservaParaEmpl: (

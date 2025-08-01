@@ -213,7 +213,9 @@ const getUsuarioClientes = async (req = request, res = response) => {
             " ",
             Sequelize.col("apPaterno_cli"),
             " ",
-            Sequelize.col("apMaterno_cli")
+            Sequelize.col("apMaterno_cli"),
+            " | ",
+            Sequelize.col("numDoc_cli")
           ),
           "nombres_apellidos_cli",
         ],
@@ -1037,8 +1039,20 @@ const postFiles = async (req = request, res = response) => {
     });
   }
 };
+const postPariente = async (req = request, res = response) => {
+  try {
+    const { id_tipo_pariente, nombre, telefono, email, observacion } = req.body;
+    
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      error: `Error en el servidor, en controller de postPariente, hable con el administrador: ${error}`,
+    });
+  }
+};
 module.exports = {
   postFiles,
+  postPariente,
   //Cliente
   postUsuarioCliente,
   getUsuarioClientes,

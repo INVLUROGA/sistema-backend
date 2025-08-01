@@ -11,6 +11,7 @@ const { Parametros } = require("./Parametros");
 const { ImagePT } = require("./Image");
 const { HorarioProgramaPT } = require("./HorarioProgramaPT");
 const { ServiciosCircus } = require("./modelsCircus/Servicios");
+
 const cajasMovimientos = db.define("tb_cajas_movimiento", {
   id: {
     type: DataTypes.INTEGER,

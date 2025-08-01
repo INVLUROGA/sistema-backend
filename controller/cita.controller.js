@@ -1,7 +1,7 @@
 const { Sequelize, Op } = require("sequelize");
 const { Cita, eventoServicio } = require("../models/Cita");
 const { Cliente, Empleado } = require("../models/Usuarios");
-const { detalleVenta_citas } = require("../models/Venta");
+const { detalleVenta_citas, Venta } = require("../models/Venta");
 const { Servicios } = require("../models/Servicios");
 const { request, response } = require("express");
 const {
@@ -18,6 +18,89 @@ const { ServiciosCircus } = require("../models/modelsCircus/Servicios");
 dayjs.locale("es"); // Establece el idioma en español
 const env = process.env;
 
+const getVentasFilter = async (req = request, res = response) => {
+  const { status_cita, id_cli, id_empl } = req.body;
+  const { tipo_serv } = req.params;
+
+  try {
+    let where = { flag: true };
+
+    // Validar si hay filtros activos
+    const hasFilters =
+      (status_cita && status_cita !== 0) ||
+      (id_cli && id_cli !== 0) ||
+      (id_empl && id_empl !== 0);
+    // ||(arrayDate && Array.isArray(arrayDate) && arrayDate.length === 2);
+
+    if (hasFilters) {
+      if (status_cita && status_cita !== 0) where.status_cita = status_cita;
+      if (id_cli && id_cli !== 0) where.id_cli = id_cli;
+      if (id_empl && id_empl !== 0) where.id_empl = id_empl;
+
+      // Validar y aplicar filtro de fecha
+      // if (arrayDate && Array.isArray(arrayDate) && arrayDate.length === 2) {
+      //   const [startDate, endDate] = arrayDate;
+      //   where.fecha_init = { [Op.between]: [startDate, endDate] };
+      // }
+    }
+
+    // Obtener citas con o sin filtros
+    const ventas = await Venta.findAll({
+      where,
+      order: [["fecha_init", "desc"]],
+      attributes: [
+        "id",
+        "id_cli",
+        "id_empl",
+        "fecha_init",
+        "fecha_final",
+        "status_cita",
+      ],
+      include: [
+        {
+          model: Cliente,
+          attributes: [
+            [
+              Sequelize.fn(
+                "CONCAT",
+                Sequelize.col("nombre_cli"),
+                " ",
+                Sequelize.col("apPaterno_cli"),
+                " ",
+                Sequelize.col("apMaterno_cli")
+              ),
+              "nombres_apellidos_cli",
+            ],
+          ],
+        },
+        {
+          model: Empleado,
+          attributes: [
+            [
+              Sequelize.fn(
+                "CONCAT",
+                Sequelize.col("nombre_empl"),
+                " ",
+                Sequelize.col("apPaterno_empl"),
+                " ",
+                Sequelize.col("apMaterno_empl")
+              ),
+              "nombres_apellidos_empl",
+            ],
+          ],
+        },
+      ],
+    });
+
+    res.status(200).json({ ok: true, ventas });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      ok: false,
+      msg: "Hable con el administrador: getCitasxServicios",
+    });
+  }
+};
 const getServiciosCita = async (req, res) => {
   const { id_empresa } = req.params;
   const { fecha_inicio } = req.query;
@@ -101,7 +184,7 @@ const postServiciosCita = async (req = request, res = response) => {
     const { tb_cliente, tb_empleado, id_estado } = citaGeneradaJSON[0];
     console.log({ estado: citaGenerada.id_estado, citaGeneradaJSON });
 
-    if (id_estado === 500) {
+    if (id_estado === 500 || id_estado == undefined) {
       await enviarMensajesWsp__CIRCUS(
         tb_cliente.tel_cli,
         messageWSP.mensajeCitaRegistrada(
@@ -556,4 +639,5 @@ module.exports = {
   getServiciosCita,
   putServiciosCita,
   obtenerServiciosxCliente,
+  getVentasFilter,
 };
