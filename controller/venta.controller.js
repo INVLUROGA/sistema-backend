@@ -791,11 +791,107 @@ const get_VENTAS = async (req = request, res = response) => {
             },
           ],
         },
+      ],
+    });
+    res.status(200).json({
+      ok: true,
+      ventas,
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      error: `Error en el servidor, en controller de get_VENTAS, hable con el administrador: ${error}`,
+    });
+  }
+};
+const get_VENTAS_CIRCUS = async (req = request, res = response) => {
+  try {
+    const ventas = await Venta.findAll({
+      where: { flag: true, id_empresa: 599 },
+      attributes: [
+        "id",
+        "id_cli",
+        "id_empl",
+        "id_origen",
+        "id_tipoFactura",
+        "numero_transac",
+        "fecha_venta",
+        "status_remove",
+        "observacion",
+      ],
+      order: [["fecha_venta", "DESC"]],
+      include: [
         {
-          model: detalleventa_servicios,
+          model: Cliente,
+          attributes: [
+            [
+              Sequelize.fn(
+                "CONCAT",
+                Sequelize.col("nombre_cli"),
+                " ",
+                Sequelize.col("apPaterno_cli"),
+                " ",
+                Sequelize.col("apMaterno_cli")
+              ),
+              "nombres_apellidos_cli",
+            ],
+          ],
+        },
+        {
+          model: detalleVenta_producto,
           where: { flag: true }, // <-- Filtro aplicado aquí
           required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
-          attributes: ["id", "tarifa_monto"],
+          attributes: [
+            "id_venta",
+            "id_producto",
+            "cantidad",
+            "precio_unitario",
+            "tarifa_monto",
+          ],
+        },
+        {
+          model: detalleVenta_citas,
+          where: { flag: true }, // <-- Filtro aplicado aquí
+          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
+          attributes: ["id_venta", "id_servicio", "tarifa_monto"],
+        },
+        {
+          model: detalleVenta_pagoVenta,
+          attributes: ["id_venta", "parcial_monto"],
+          include: [
+            {
+              model: Parametros,
+              as: "parametro_forma_pago",
+            },
+          ],
+        },
+        {
+          model: detalleventa_servicios,
+          as: "detalle_ventaservicios",
+          include: [
+            {
+              model: ServiciosCircus,
+              attributes: ["nombre_servicio", "precio", "duracion"],
+            },
+            {
+              model: Empleado,
+              as: "empleado_servicio",
+              attributes: [
+                [
+                  Sequelize.fn(
+                    "CONCAT",
+                    Sequelize.col("nombre_empl"),
+                    " ",
+                    Sequelize.col("apPaterno_empl"),
+                    " ",
+                    Sequelize.col("apMaterno_empl")
+                  ),
+                  "nombres_apellidos_empl",
+                ],
+              ],
+            },
+          ],
         },
       ],
     });
@@ -804,6 +900,8 @@ const get_VENTAS = async (req = request, res = response) => {
       ventas,
     });
   } catch (error) {
+    console.log(error);
+
     res.status(500).json({
       error: `Error en el servidor, en controller de get_VENTAS, hable con el administrador: ${error}`,
     });
@@ -3290,6 +3388,7 @@ module.exports = {
   obtenerComparativoResumenClientes,
   obtenerTransferenciasResumenxMes,
   postCambioPrograma,
+  get_VENTAS_CIRCUS,
   obtenerClientesxDistritos,
   postVenta,
   get_VENTAS,

@@ -47,6 +47,7 @@ const {
   postCajaApertura,
   buscarCajasxFecha,
   obtenerUltimasVentasxComprobantes,
+  get_VENTAS_CIRCUS
 } = require("../controller/venta.controller");
 
 const {
@@ -94,6 +95,7 @@ router.get("/reporte/obtener-todo-membresias", obtenerMembresias);
 router.get("/reporte/obtener-todo-membresias-x-fecha", obtenerMembresias);
 router.post("/traspaso-membresia", postTraspasoMembresia);
 router.get("/get-ventas-x-fecha/:id_empresa", getVentasxFecha);
+router.get("/get-ventas/599", get_VENTAS_CIRCUS);
 router.get("/get-ventas/:id_empresa", get_VENTAS);
 router.post("/invoice-mail/:id_venta", mailMembresia);
 router.get("/get-id-ventas/:id", get_VENTA_ID);

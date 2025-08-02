@@ -429,6 +429,18 @@ ServiciosCircus.belongsTo(detalleventa_servicios, {
   foreignKey: "id", // Este debe coincidir con el anterior
   targetKey: "id_servicio",
 });
+// Un detalle de servicio pertenece a un empleado
+detalleventa_servicios.belongsTo(Empleado, {
+  foreignKey: "id_empl",
+  as: "empleado_servicio",
+});
+
+// Un empleado puede tener muchos servicios registrados (opcional, solo si consultas inversamente)
+Empleado.hasMany(detalleventa_servicios, {
+  foreignKey: "id_empl",
+  as: "servicios_realizados",
+});
+
 // Definición de la relación entre Venta y detalleVenta_membresias
 Venta.hasMany(detalleVenta_membresias, {
   foreignKey: "id_venta", // Este debe ser el nombre de la columna en detalleVenta_membresias
