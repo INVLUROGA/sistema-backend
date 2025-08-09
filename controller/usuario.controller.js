@@ -529,6 +529,9 @@ const getUsuarioEmpleados = async (req = request, res = response) => {
         "fecNac_empl",
         "fecha_nacimiento",
         "cargo_empl",
+        "nombre_empl",
+        "apPaterno_empl",
+        "apMaterno_empl",
         [
           Sequelize.fn(
             "CONCAT",
@@ -1042,7 +1045,6 @@ const postFiles = async (req = request, res = response) => {
 const postPariente = async (req = request, res = response) => {
   try {
     const { id_tipo_pariente, nombre, telefono, email, observacion } = req.body;
-    
   } catch (error) {
     console.log(error);
     res.status(500).json({

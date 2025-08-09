@@ -828,11 +828,11 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
             [
               Sequelize.fn(
                 "CONCAT",
-                Sequelize.col("nombre_cli"),
+                Sequelize.col("tb_cliente.nombre_cli"),
                 " ",
-                Sequelize.col("apPaterno_cli"),
+                Sequelize.col("tb_cliente.apPaterno_cli"),
                 " ",
-                Sequelize.col("apMaterno_cli")
+                Sequelize.col("tb_cliente.apMaterno_cli")
               ),
               "nombres_apellidos_cli",
             ],
@@ -840,8 +840,8 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
         },
         {
           model: detalleVenta_producto,
-          where: { flag: true }, // <-- Filtro aplicado aquí
-          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
+          where: { flag: true },
+          required: false,
           attributes: [
             "id_venta",
             "id_producto",
@@ -849,20 +849,65 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
             "precio_unitario",
             "tarifa_monto",
           ],
+          include: [
+            {
+              model: Producto,
+              attributes: ["nombre_producto", "prec_venta", "prec_compra"],
+            },
+            {
+              model: Empleado,
+              as: "empleado_producto",
+              attributes: [
+                [
+                  Sequelize.fn(
+                    "CONCAT",
+                    Sequelize.col(
+                      "detalle_ventaProductos->empleado_producto.nombre_empl"
+                    ),
+                    " ",
+                    Sequelize.col(
+                      "detalle_ventaProductos->empleado_producto.apPaterno_empl"
+                    ),
+                    " ",
+                    Sequelize.col(
+                      "detalle_ventaProductos->empleado_producto.apMaterno_empl"
+                    )
+                  ),
+                  "nombres_apellidos_empl",
+                ],
+              ],
+            },
+          ],
         },
         {
           model: detalleVenta_citas,
-          where: { flag: true }, // <-- Filtro aplicado aquí
-          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
+          where: { flag: true },
+          required: false,
           attributes: ["id_venta", "id_servicio", "tarifa_monto"],
         },
         {
           model: detalleVenta_pagoVenta,
-          attributes: ["id_venta", "parcial_monto"],
+          attributes: ["id_venta", "parcial_monto", "n_operacion"],
           include: [
             {
               model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_banco",
+            },
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
               as: "parametro_forma_pago",
+            },
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_tipo_tarjeta",
+            },
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_tarjeta",
             },
           ],
         },
@@ -881,11 +926,17 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
                 [
                   Sequelize.fn(
                     "CONCAT",
-                    Sequelize.col("nombre_empl"),
+                    Sequelize.col(
+                      "detalle_ventaservicios->empleado_servicio.nombre_empl"
+                    ),
                     " ",
-                    Sequelize.col("apPaterno_empl"),
+                    Sequelize.col(
+                      "detalle_ventaservicios->empleado_servicio.apPaterno_empl"
+                    ),
                     " ",
-                    Sequelize.col("apMaterno_empl")
+                    Sequelize.col(
+                      "detalle_ventaservicios->empleado_servicio.apMaterno_empl"
+                    )
                   ),
                   "nombres_apellidos_empl",
                 ],
@@ -3370,6 +3421,48 @@ const putVentaxId = async (req, res) => {
     });
   }
 };
+const postVentaProductos = async (req, res) => {
+  try {
+    const { id_venta } = req.params;
+    const { id_producto, cantidad, precio_unitario, tarifa_monto, id_empl } =
+      req.body;
+    const tipoVenta = new detalleVenta_producto({
+      cantidad,
+      tarifa_monto,
+      id_empl,
+      id_producto,
+      id_venta
+    });
+    await tipoVenta.save()
+    res.status(201).json({
+      tipoVenta,
+      msg: 'success'
+    })
+  } catch (error) {
+    console.log(error);
+  }
+};
+const postVentaServicios = async (req, res) => {
+  try {
+    const { id_venta } = req.params;
+    const { id_servicio, cantidad, precio_unitario, tarifa_monto, id_empl } =
+      req.body;
+    const tipoVenta = new detalleventa_servicios({
+      cantidad,
+      tarifa_monto,
+      id_empl,
+      id_servicio,
+      id_venta
+    });
+    await tipoVenta.save()
+    res.status(201).json({
+      tipoVenta,
+      msg: 'success'
+    })
+  } catch (error) {
+    console.log(error);
+  }
+};
 function bytesToBase64(bytes) {
   // Convertir bytes a cadena binaria
   let binaryString = "";
@@ -3381,6 +3474,8 @@ function bytesToBase64(bytes) {
   return btoa(binaryString);
 }
 module.exports = {
+  postVentaProductos,
+  postVentaServicios,
   obtenerUltimasVentasxComprobantes,
   putVentaxId,
   postCajaApertura,

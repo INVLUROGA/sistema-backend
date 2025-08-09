@@ -47,7 +47,9 @@ const {
   postCajaApertura,
   buscarCajasxFecha,
   obtenerUltimasVentasxComprobantes,
-  get_VENTAS_CIRCUS
+  get_VENTAS_CIRCUS,
+  postVentaProductos,
+  postVentaServicios
 } = require("../controller/venta.controller");
 
 const {
@@ -62,6 +64,8 @@ const router = Router();
 /*
 /api/venta
 */
+router.post("/servicios/:id_venta", postVentaServicios)
+router.post("/productos/:id_venta", postVentaProductos)
 router.get(
   "/obtener-ventas-x-comprobante/:id_comprobante/:id_empresa",
   obtenerUltimasVentasxComprobantes

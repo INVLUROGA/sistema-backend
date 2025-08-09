@@ -30,9 +30,11 @@ cron.schedule("0 15 * * *", () => {
 });
 cron.schedule("55 * * * *", () => {
   alertasUsuario();
-  // recordatorioReservaCita24hAntes();
-  // recordatorioReservaCita2hAntes();
+  recordatorioReservaCita24hAntes();
 });
+cron.schedule("30 8 * * *", ()=>{
+  recordatorioReservaCita2hAntes();
+})
 const fileServer = express.static;
 require("dotenv").config();
 const env = process.env;

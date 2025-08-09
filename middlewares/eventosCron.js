@@ -203,7 +203,7 @@ const recordatorioReservaCita24hAntes = async () => {
     const citas = await eventoServicio.findAll({
       where: {
         flag: true,
-        id: 1247,
+        id_empl: 3553,
       },
       include: [{ model: Cliente }, { model: Empleado }],
     });
@@ -248,18 +248,22 @@ const recordatorioReservaCita2hAntes = async () => {
     const citas = await eventoServicio.findAll({
       where: {
         flag: true,
-        id: 1247,
+        id_empl: 3553,
       },
       include: [{ model: Cliente }, { model: Empleado }],
     });
     // Función para obtener solo la hora (en UTC o local)
-    const obtenerHora = (fecha) => {
-      const d = new Date(fecha);
-      return d.getUTCHours(); // Usa getHours() si quieres hora local
+    const mismaFechaYHoraSinMinutos = (fecha1, fecha2) => {
+      const f1 = new Date(fecha1);
+      const f2 = new Date(fecha2);
+      return (
+        f1.getUTCFullYear() === f2.getUTCFullYear() &&
+        f1.getUTCMonth() === f2.getUTCMonth() &&
+        f1.getUTCDate() === f2.getUTCDate()
+      );
     };
-
-    const citasFiltradas = citas.filter(
-      (cita) => obtenerHora(cita.fecha_inicio) === obtenerHora(en24h)
+    const citasFiltradas = citas.filter((cita) =>
+      mismaFechaYHoraSinMinutos(cita.fecha_inicio, en24h)
     );
     for (const cita of citasFiltradas) {
       const fecha_inicio = dayjs(cita.fecha_inicio).format(

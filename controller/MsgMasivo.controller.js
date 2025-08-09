@@ -6,41 +6,28 @@ const {
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 const enviarMasivoAlwsp = async () => {
-  const numerosDup = [
-  ];
+  const numerosDup = [];
   const numeros = [...new Set(numerosDup)];
 
   try {
     for (const persona of numeros) {
       const { nombre, numero } = persona;
       try {
-        await enviarImagenWsp(
-          numero,
-          `https://archivosluroga.blob.core.windows.net/avatar-articulos/1fp-1753467374791.webp`
-        );
-        await enviarImagenWsp(
-          numero,
-          `https://archivosluroga.blob.core.windows.net/avatar-articulos/2fp-1753467453324.webp`
-        );
         const imagenResp = await enviarTextConImagenWsp(
           numero,
-          `https://archivosluroga.blob.core.windows.net/avatar-articulos/3.fp-1753467483926.webp`,
+          `https://archivosluroga.blob.core.windows.net/avatar-articulos/promocionn 999_Mesa de trabajo 1-1754687223485.png`,
           `
-Fiestas Patrias con propósito 
+🔥 Baja hasta 8 kilos por mes y recupera tu salud en 12 semanas 🔥
 
-Este 28 de julio, da el paso hacia tu mejor versión.
-Activa tu plan de 3 meses a más y accede a:
+NO ES MAGIA, ES ENTRENAMIENTO Y NUTRICIÒN PERSONALIZADA.
 
-✅ Entrenamiento grupal 100% dirigido
-✅ Incluye cita con nutricionistas profesionales
-✅ Coaches con más de 20 años de experiencia
-✅ Salas exclusivas y aforo limitado
-✅ Sistema inteligente de ultima tecnología para REDUCCION DE PESO Y MEDIDAS
-✅ Resultados desde las primeras semanas
+✅ Pierde grasa sin poner en riesgo tu salud
+✅ Siente más energía desde la primera semana
+✅ Resultados reales y medibles
 
-📅 Válido del viernes 25 al jueves 31 de julio.
+💰 Solo S/999 — Cupos limitados
 
-🔥 ¡Tu cambio empieza hoy, no lo postergues más!
+📲 Responde este mensaje y asegura tu lugar antes que se agoten.
           `
         );
         if (!imagenResp.ok) {

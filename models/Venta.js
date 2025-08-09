@@ -441,6 +441,20 @@ Empleado.hasMany(detalleventa_servicios, {
   as: "servicios_realizados",
 });
 
+// TODO
+
+// Un detalle de servicio pertenece a un empleado
+detalleVenta_producto.belongsTo(Empleado, {
+  foreignKey: "id_empl",
+  as: "empleado_producto",
+});
+
+// Un empleado puede tener muchos servicios registrados (opcional, solo si consultas inversamente)
+Empleado.hasMany(detalleVenta_producto, {
+  foreignKey: "id_empl",
+  as: "productos_realizados",
+});
+
 // Definición de la relación entre Venta y detalleVenta_membresias
 Venta.hasMany(detalleVenta_membresias, {
   foreignKey: "id_venta", // Este debe ser el nombre de la columna en detalleVenta_membresias
