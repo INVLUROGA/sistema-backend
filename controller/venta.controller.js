@@ -1129,6 +1129,20 @@ const get_VENTA_ID = async (req = request, res = response) => {
             },
           ],
         },
+        {
+          model: detalleventa_servicios,
+          attributes: ["cantidad", "tarifa_monto"],
+          include: [
+            {
+              model: ServiciosCircus,
+              include: [
+                {
+                  model: Parametros,
+                },
+              ],
+            },
+          ],
+        },
       ],
     });
     res.status(200).json({
@@ -3408,9 +3422,8 @@ const obtenerMembresiasxUIDcliente = async (req, res) => {
 const putVentaxId = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id_origen } = req.body;
     const venta = await Venta.findOne({ where: { id: id } });
-    await venta.update({ id_origen: id_origen });
+    await venta.update(req.body);
     res.status(201).json({
       error: "SUCCESS",
     });
@@ -3431,13 +3444,13 @@ const postVentaProductos = async (req, res) => {
       tarifa_monto,
       id_empl,
       id_producto,
-      id_venta
+      id_venta,
     });
-    await tipoVenta.save()
+    await tipoVenta.save();
     res.status(201).json({
       tipoVenta,
-      msg: 'success'
-    })
+      msg: "success",
+    });
   } catch (error) {
     console.log(error);
   }
@@ -3445,20 +3458,193 @@ const postVentaProductos = async (req, res) => {
 const postVentaServicios = async (req, res) => {
   try {
     const { id_venta } = req.params;
-    const { id_servicio, cantidad, precio_unitario, tarifa_monto, id_empl } =
-      req.body;
+    const { id_servicio, cantidad, tarifa_monto, id_empl } = req.body;
     const tipoVenta = new detalleventa_servicios({
       cantidad,
       tarifa_monto,
       id_empl,
       id_servicio,
-      id_venta
+      id_venta,
     });
-    await tipoVenta.save()
+    await tipoVenta.save();
     res.status(201).json({
       tipoVenta,
-      msg: 'success'
-    })
+      msg: "success",
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const postComanda = async (req = request, res = response) => {
+  try {
+    const { id_empresa } = req.params;
+    const { id_cli, observacion, status_remove, fecha_venta } = req.body;
+    const tipoVenta = new Venta({
+      id_cli,
+      observacion,
+      status_remove,
+      fecha_venta,
+      id_origen: 0,
+      numero_transac: null,
+      id_empresa,
+      id_tipoFactura: null,
+    });
+    await tipoVenta.save();
+    res.status(201).json({
+      tipoVenta,
+      msg: "success",
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const getComandas = async (req = request, res = response) => {
+  try {
+    const { id_empresa } = req.params;
+
+    const comandas = await Venta.findAll({
+      where: { flag: true, id_empresa: id_empresa },
+      attributes: [
+        "id",
+        "id_cli",
+        "id_empl",
+        "id_origen",
+        "id_tipoFactura",
+        "numero_transac",
+        "fecha_venta",
+        "status_remove",
+        "observacion",
+      ],
+      order: [["fecha_venta", "DESC"]],
+      include: [
+        {
+          model: Cliente,
+          attributes: [
+            [
+              Sequelize.fn(
+                "CONCAT",
+                Sequelize.col("tb_cliente.nombre_cli"),
+                " ",
+                Sequelize.col("tb_cliente.apPaterno_cli"),
+                " ",
+                Sequelize.col("tb_cliente.apMaterno_cli")
+              ),
+              "nombres_apellidos_cli",
+            ],
+          ],
+        },
+        {
+          model: detalleVenta_producto,
+          where: { flag: true },
+          required: false,
+          attributes: [
+            "id_venta",
+            "id_producto",
+            "cantidad",
+            "precio_unitario",
+            "tarifa_monto",
+          ],
+          include: [
+            {
+              model: Producto,
+              attributes: ["nombre_producto", "prec_venta", "prec_compra"],
+            },
+            {
+              model: Empleado,
+              as: "empleado_producto",
+              attributes: [
+                [
+                  Sequelize.fn(
+                    "CONCAT",
+                    Sequelize.col(
+                      "detalle_ventaProductos->empleado_producto.nombre_empl"
+                    ),
+                    " ",
+                    Sequelize.col(
+                      "detalle_ventaProductos->empleado_producto.apPaterno_empl"
+                    ),
+                    " ",
+                    Sequelize.col(
+                      "detalle_ventaProductos->empleado_producto.apMaterno_empl"
+                    )
+                  ),
+                  "nombres_apellidos_empl",
+                ],
+              ],
+            },
+          ],
+        },
+        {
+          model: detalleVenta_citas,
+          where: { flag: true },
+          required: false,
+          attributes: ["id_venta", "id_servicio", "tarifa_monto"],
+        },
+        {
+          model: detalleVenta_pagoVenta,
+          attributes: ["id_venta", "parcial_monto", "n_operacion"],
+          include: [
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_banco",
+            },
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_forma_pago",
+            },
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_tipo_tarjeta",
+            },
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_tarjeta",
+            },
+          ],
+        },
+        {
+          model: detalleventa_servicios,
+          as: "detalle_ventaservicios",
+          include: [
+            {
+              model: ServiciosCircus,
+              attributes: ["nombre_servicio", "precio", "duracion"],
+            },
+            {
+              model: Empleado,
+              as: "empleado_servicio",
+              attributes: [
+                [
+                  Sequelize.fn(
+                    "CONCAT",
+                    Sequelize.col(
+                      "detalle_ventaservicios->empleado_servicio.nombre_empl"
+                    ),
+                    " ",
+                    Sequelize.col(
+                      "detalle_ventaservicios->empleado_servicio.apPaterno_empl"
+                    ),
+                    " ",
+                    Sequelize.col(
+                      "detalle_ventaservicios->empleado_servicio.apMaterno_empl"
+                    )
+                  ),
+                  "nombres_apellidos_empl",
+                ],
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    res.status(201).json({
+      comandas,
+      msg: "success",
+    });
   } catch (error) {
     console.log(error);
   }
@@ -3474,6 +3660,8 @@ function bytesToBase64(bytes) {
   return btoa(binaryString);
 }
 module.exports = {
+  getComandas,
+  postComanda,
   postVentaProductos,
   postVentaServicios,
   obtenerUltimasVentasxComprobantes,

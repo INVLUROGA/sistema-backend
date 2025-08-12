@@ -49,7 +49,9 @@ const {
   obtenerUltimasVentasxComprobantes,
   get_VENTAS_CIRCUS,
   postVentaProductos,
-  postVentaServicios
+  postVentaServicios,
+  postComanda,
+  getComandas
 } = require("../controller/venta.controller");
 
 const {
@@ -59,13 +61,16 @@ const {
   obtenerReporteSociosxDistritos,
   obtenerTransferencias,
 } = require("../controller/reporte.controller");
+const { validarComandaPagada } = require("../middlewares/validarComandaPagada");
 const router = Router();
 
 /*
 /api/venta
 */
-router.post("/servicios/:id_venta", postVentaServicios)
-router.post("/productos/:id_venta", postVentaProductos)
+router.get("/comanda/:id_empresa", getComandas)
+router.post("/comanda/:id_empresa", postComanda)
+router.post("/servicios/:id_venta", validarComandaPagada, postVentaServicios)
+router.post("/productos/:id_venta", validarComandaPagada, postVentaProductos)
 router.get(
   "/obtener-ventas-x-comprobante/:id_comprobante/:id_empresa",
   obtenerUltimasVentasxComprobantes
