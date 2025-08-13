@@ -48,6 +48,7 @@ const extraerCredencialesCliente = (req = request, res = response, next) => {
     id_origen,
     observacion,
     id_empresa,
+    fecha_venta,
   } = req.body.detalle_cli_modelo;
 
   req.detalle_cli = {
@@ -57,7 +58,7 @@ const extraerCredencialesCliente = (req = request, res = response, next) => {
     numero_transac: numero_transac,
     id_origen: id_origen,
     observacion: observacion,
-    fecha_venta: new Date(),
+    fecha_venta: fecha_venta ? fecha_venta : new Date(),
     id_empresa,
   };
   next();
@@ -166,6 +167,7 @@ const extraerCitas = (req, res, next) => {
 const postNewVenta = async (req, res, next) => {
   try {
     const { id_enterprice } = req.params;
+
     if (req.traspasosExtraidos) {
       const {
         id_cli,
