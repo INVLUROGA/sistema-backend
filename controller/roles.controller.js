@@ -922,12 +922,12 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           key: "cliente",
-          label: "Socio",
+          label: "CLIENTE",
           isTitle: true,
         },
         {
           key: "cliente-admClientes",
-          label: "Gestion de socios",
+          label: "Gestion de CLIENTES",
           isTitle: false,
           icon: "uil-calender",
           url: "/gestion-clientes",
@@ -943,6 +943,18 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: false,
           icon: "uil-calender",
           url: "/crear-citas-nutricion",
+        },
+        {
+          key: "gest-gastos",
+          label: "gastos",
+          isTitle: true,
+        },
+        {
+          key: "gestion-gfgv",
+          label: "Egresos",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-gastosF-gastosV",
         },
       ];
     }
