@@ -53,6 +53,7 @@ const getGastos = async (req = request, res = response) => {
         "moneda",
         "monto",
         "fec_pago",
+        "monto_venta_cliente",
         "id_tipo_comprobante",
         "n_comprabante",
         "impuesto_igv",
@@ -166,6 +167,7 @@ const getGasto = async (req = request, res = response) => {
         "cod_trabajo",
         "esCompra",
         "id_estado_gasto",
+        "monto_venta_cliente",
       ],
     });
     res.status(200).json({
@@ -328,6 +330,8 @@ const getGastoxGrupo = async (req = request, res = response) => {
         "id_prov",
         "cod_trabajo",
         "id_estado_gasto",
+        "monto_venta_cliente",
+        "",
       ],
       include: [
         {

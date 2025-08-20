@@ -7,12 +7,15 @@ const {
   obtenerAsistenciasxEmpl,
   obtenerPlanillaxID,
   obtenerPlanillasxEmpl,
+  postContratosEmpl
 } = require("../controller/recursosHumano");
 const {
   obtenerAsistenciaPorEmpl,
 } = require("../controller/marcacion.controller");
 
 const router = Router();
+
+router.post("/contratos/:uid_empl", postContratosEmpl)
 
 router.get("/gasto-por-cargo", GastoPorCargo);
 router.get("/clienteAuth", ClienteAuth);

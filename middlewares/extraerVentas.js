@@ -58,7 +58,7 @@ const extraerCredencialesCliente = (req = request, res = response, next) => {
     numero_transac: numero_transac,
     id_origen: id_origen,
     observacion: observacion,
-    fecha_venta: fecha_venta ? fecha_venta : new Date(),
+    fecha_venta: new Date(),
     id_empresa,
   };
   next();

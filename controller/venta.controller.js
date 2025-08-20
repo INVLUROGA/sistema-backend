@@ -836,6 +836,9 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
               ),
               "nombres_apellidos_cli",
             ],
+            "nombre_cli",
+            "apPaterno_cli",
+            "apMaterno_cli",
           ],
         },
         {
@@ -852,6 +855,7 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
           include: [
             {
               model: Producto,
+              where: { flag: true },
               attributes: ["nombre_producto", "prec_venta", "prec_compra"],
             },
             {
@@ -914,6 +918,7 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
         {
           model: detalleventa_servicios,
           as: "detalle_ventaservicios",
+          where: { flag: true },
           include: [
             {
               model: ServiciosCircus,
@@ -1185,7 +1190,7 @@ const getVentasxFecha = async (req = request, res = response) => {
         },
         flag: true,
         id_empresa: id_empresa,
-        id_tipoFactura: { [Op.in]: [699, 701] },
+        id_tipoFactura: { [Op.in]: [699, 700] },
       },
       order: [["id", "DESC"]],
       include: [
@@ -3570,6 +3575,8 @@ const getComandas = async (req = request, res = response) => {
                   ),
                   "nombres_apellidos_empl",
                 ],
+                "nombre_empl",
+                "apPaterno_empl",
               ],
             },
           ],
@@ -3635,6 +3642,9 @@ const getComandas = async (req = request, res = response) => {
                   ),
                   "nombres_apellidos_empl",
                 ],
+                "nombre_empl",
+                "apPaterno_empl",
+                "apMaterno_empl"
               ],
             },
           ],

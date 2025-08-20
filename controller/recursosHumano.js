@@ -7,7 +7,15 @@ const { Parametros } = require("../models/Parametros");
 const { detalleVenta_membresias } = require("../models/Venta");
 const { jornadaPlanilla } = require("../models/Jornada");
 const { Marcacion } = require("../models/Marcacion");
-
+const postContratosEmpl = async (req = request, res = response) => {
+  const { uid_empl } = req.params;
+  try {
+    const empleado = await Empleado.findOne({ where: { uid_empl: uid_empl } });
+    // const contrato = await ContratoEmpl
+  } catch (error) {
+    console.log(error);
+  }
+};
 const GastoPorCargo = async (req = response, res = response) => {
   const { fechaDesdeStr, fechaHastaStr } = req.query;
 
@@ -198,13 +206,12 @@ const obtenerPlanillaxID = async (req = request, res = response) => {
     });
   }
 };
-const getobtenerPlanillaEmpleadoActivos = async(
+const getobtenerPlanillaEmpleadoActivos = async (
   req = request,
   res = response
 ) => {
   try {
-    
-    const empleados = 0
+    const empleados = 0;
     res.status(200).json(empleados);
   } catch (error) {
     res.status(500).json({
@@ -213,6 +220,7 @@ const getobtenerPlanillaEmpleadoActivos = async(
   }
 };
 module.exports = {
+  postContratosEmpl,
   GastoPorCargo,
   ClienteAuth,
   postPlanillaxEmpl,
