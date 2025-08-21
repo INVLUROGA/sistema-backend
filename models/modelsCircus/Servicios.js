@@ -52,33 +52,33 @@ ServiciosCircus.hasOne(Parametros, {
   foreignKey: "id_param",
   sourceKey: "id_categoria",
 });
-const carcel = async () => {
-  try {
-    console.log("Inicio del proceso de asignación de UUID");
+// const carcel = async () => {
+//   try {
+//     console.log("Inicio del proceso de asignación de UUID");
 
-    // Encuentra todas las filas de la tabla
-    const filas = await ServiciosCircus.findAll();
+//     // Encuentra todas las filas de la tabla
+//     const filas = await ServiciosCircus.findAll();
 
-    // Crear un array de promesas para realizar las actualizaciones de manera paralela
-    const promesas = filas.map((fila) => {
-      if (fila.uid === null) {
-        // Comparación con null
-        // Genera un nuevo UUID
-        const UUID = uuid.v4();
+//     // Crear un array de promesas para realizar las actualizaciones de manera paralela
+//     const promesas = filas.map((fila) => {
+//       if (fila.uid === null) {
+//         // Comparación con null
+//         // Genera un nuevo UUID
+//         const UUID = uuid.v4();
 
-        // Devuelve la promesa de actualización para cada fila
-        return fila.update({ uid: UUID });
-      }
-    });
+//         // Devuelve la promesa de actualización para cada fila
+//         return fila.update({ uid: UUID });
+//       }
+//     });
 
-    // Ejecuta todas las actualizaciones en paralelo
-    await Promise.all(promesas);
+//     // Ejecuta todas las actualizaciones en paralelo
+//     await Promise.all(promesas);
 
-    console.log("Artículos asignados correctamente.");
-  } catch (error) {
-    console.error("Error al asignar UUID:", error);
-  }
-};
+//     console.log("Artículos asignados correctamente.");
+//   } catch (error) {
+//     console.error("Error al asignar UUID:", error);
+//   }
+// };
 // carcel();
 ServiciosCircus.sync()
   .then(() => {
