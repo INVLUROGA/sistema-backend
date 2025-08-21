@@ -3483,8 +3483,22 @@ const postVentaServicios = async (req, res) => {
 const postComanda = async (req = request, res = response) => {
   try {
     const { id_empresa } = req.params;
-    const { id_cli, observacion, status_remove, fecha_venta } = req.body;
-    const tipoVenta = new Venta({
+    const {
+      id_cli,
+      observacion,
+      status_remove,
+      fecha_venta,
+      detalle = [],
+    } = req.body;
+
+    if (!Array.isArray(detalle) || detalle.length === 0) {
+      return res
+        .status(400)
+        .json({ ok: false, msg: "detalle vacío o inválido" });
+    }
+
+    // Crear la venta
+    const venta = await Venta.create({
       id_cli,
       observacion,
       status_remove,
@@ -3493,14 +3507,56 @@ const postComanda = async (req = request, res = response) => {
       numero_transac: null,
       id_empresa,
       id_tipoFactura: null,
+      flag: true,
     });
-    await tipoVenta.save();
-    res.status(201).json({
-      tipoVenta,
+
+    // Preparar arrays para bulkCreate
+    const productos = detalle
+      .filter((it) => it.clase === "producto")
+      .map((it) => ({
+        id_venta: venta.id,
+        id_producto: it.id_producto,
+        id_empl: it.id_empl,
+        id_empresa,
+        cantidad: it.cantidad ?? 1,
+        tarifa_monto: it.tarifa_monto ?? 0,
+        flag: true,
+      }));
+
+    const servicios = detalle
+      .filter((it) => it.clase === "servicio")
+      .map((it) => ({
+        id_venta: venta.id,
+        id_servicio: it.id_servicio,
+        id_empl: it.id_empl,
+        id_empresa,
+        cantidad: it.cantidad ?? 1,
+        tarifa_monto: it.tarifa_monto ?? 0,
+        flag: true,
+      }));
+
+    // Guardar detalles (si existen)
+    if (productos.length) {
+      await detalleVenta_producto.bulkCreate(productos);
+    }
+    if (servicios.length) {
+      await detalleventa_servicios.bulkCreate(servicios);
+    }
+
+    // Respuesta
+    return res.status(201).json({
+      ok: true,
       msg: "success",
+      venta,
+      detalles: { productos: productos.length, servicios: servicios.length },
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    return res.status(500).json({
+      ok: false,
+      msg: "Error al registrar comanda",
+      error: error.message,
+    });
   }
 };
 const getComandas = async (req = request, res = response) => {
@@ -3644,7 +3700,7 @@ const getComandas = async (req = request, res = response) => {
                 ],
                 "nombre_empl",
                 "apPaterno_empl",
-                "apMaterno_empl"
+                "apMaterno_empl",
               ],
             },
           ],

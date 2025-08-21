@@ -32,6 +32,7 @@ const obtenerProductosActivos = async (req, res) => {
 const obtenerServiciosActivos = async (req, res) => {
   try {
     const servicios = await ServiciosCircus.findAll({
+      where: { flag: true },
       include: [
         {
           model: Parametros,
