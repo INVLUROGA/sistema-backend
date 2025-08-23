@@ -10,7 +10,7 @@ const obtenerProductosActivos = async (req, res) => {
   const { id_empresa } = req.params;
   try {
     const productos = await Producto.findAll({
-      attributes: ["id", "uid", "nombre_producto", "prec_venta"],
+      attributes: ["id", "uid", "nombre_producto", "prec_venta", "prec_compra"],
       where: {
         id_empresa: id_empresa,
         estado_product: true,

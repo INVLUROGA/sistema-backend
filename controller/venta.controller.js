@@ -843,7 +843,6 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
         },
         {
           model: detalleVenta_producto,
-          where: { flag: true },
           required: false,
           attributes: [
             "id_venta",
@@ -855,7 +854,6 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
           include: [
             {
               model: Producto,
-              where: { flag: true },
               attributes: ["nombre_producto", "prec_venta", "prec_compra"],
             },
             {
@@ -882,12 +880,6 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
               ],
             },
           ],
-        },
-        {
-          model: detalleVenta_citas,
-          where: { flag: true },
-          required: false,
-          attributes: ["id_venta", "id_servicio", "tarifa_monto"],
         },
         {
           model: detalleVenta_pagoVenta,
@@ -918,7 +910,6 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
         {
           model: detalleventa_servicios,
           as: "detalle_ventaservicios",
-          where: { flag: true },
           include: [
             {
               model: ServiciosCircus,

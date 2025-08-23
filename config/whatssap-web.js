@@ -172,6 +172,15 @@ const enviarTextConImagenWsp = async (numberWsp, image, bodyMsg) => {
     data: data,
   };
 
+  // const config = {
+  //   method: "post",
+  //   url: "https://api.ultramsg.com/instance102151/messages/video",
+  //   headers: {
+  //     "Content-Type": "application/x-www-form-urlencoded",
+  //   },
+  //   data: data,
+  // };
+
   try {
     const response = await axios(config);
     console.log(JSON.stringify(response.data), numberWsp);

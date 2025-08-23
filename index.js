@@ -32,9 +32,9 @@ cron.schedule("55 * * * *", () => {
   alertasUsuario();
   recordatorioReservaCita24hAntes();
 });
-cron.schedule("30 8 * * *", ()=>{
+cron.schedule("30 8 * * *", () => {
   recordatorioReservaCita2hAntes();
-})
+});
 const fileServer = express.static;
 require("dotenv").config();
 const env = process.env;
@@ -176,6 +176,7 @@ app.use(
     },
   })
 );
+
 app.use(morgan("dev")); // Usa "dev" o cualquier otro formato que prefieras
 //Directorio publico
 app.use(express.static("public"));
@@ -210,6 +211,7 @@ const deviceRoutes = require("./routes/ZkTeco/bd/deviceRoutes");
 const userRoutes = require("./routes/ZkTeco/bd/userRoutes");
 const syncRoutes = require("./routes/ZkTeco/bd/syncRoutes");
 const userdata64Routes = require("./routes/ZkTeco/bd/userdata64Routes");
+const path = require("path");
 // enviarMensajes()
 
 app.use(cdataRoutes);
@@ -225,6 +227,19 @@ app.use(userRoutes);
 app.use(syncRoutes);
 app.use(userdata64Routes);
 
+// Servir archivos estáticos desde /public
+// app.use(
+//   express.static(path.join(__dirname, "public"), {
+//     setHeaders: (res, filePath) => {
+//       // Forzar el Content-Type correcto si es mp4
+//       if (path.extname(filePath).toLowerCase() === ".mp4") {
+//         res.setHeader("Content-Type", mime.getType("mp4") || "video/mp4");
+//         // (Opcional) cache largo
+//         res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+//       }
+//     },
+//   })
+// );
 //BLOBS
 app.use("/api/storage/blob", require("./routes/upload/blob.router.js"));
 

@@ -27,6 +27,9 @@ const ServiciosCircus = db.define("circus_servicios", {
   precio: {
     type: DataTypes.DECIMAL(10, 2),
   },
+  precio_compra: {
+    type: DataTypes.DECIMAL(10, 2),
+  },
   duracion: {
     type: DataTypes.INTEGER,
   },
