@@ -865,6 +865,13 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           url: "/gest-inventario-circus",
         },
+        {
+          key: "resumen-ejecutivo",
+          label: "RESUMEN EJECUTIVO",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/resumen-ejecutivo",
+        },
       ];
     }
     if (modulo === "mod-inventario") {
@@ -902,16 +909,37 @@ const seccionGET = async (req = request, res = response) => {
     if (modulo === "mod-recepcion") {
       MENU_ITEMS = [
         {
+          key: "resumen-ejecutivo",
+          label: "RESUMEN EJECUTIVO",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/resumen-ejecutivo",
+        },
+        {
           key: "ventas",
           label: "Ventas",
           isTitle: true,
         },
         {
           key: "gestion-ventas",
-          label: "Ventas",
+          label: "COMPROBANTES DE VENTAS POR DIA Y HORA",
           isTitle: false,
           icon: "uil-calender",
           url: "/gestion-ventas",
+        },
+        {
+          key: "comprobantes-rango-fecha",
+          label: "COMPROBANTES RANGO DE FECHA",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/comprobantes-rango-fecha",
+        },
+        {
+          key: "detalle-comprobantes",
+          label: "DETALLE DE COMPROBANTES",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/detalle-comprobantes",
         },
         {
           key: "ventas-nuevaVenta",
@@ -921,8 +949,20 @@ const seccionGET = async (req = request, res = response) => {
           url: "/nueva-venta",
         },
         {
+          key: "comandas",
+          label: "comandas",
+          isTitle: true,
+        },
+        {
+          key: "gestion-comandas",
+          label: "COMANDAS",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-comandas",
+        },
+        {
           key: "cliente",
-          label: "CLIENTE",
+          label: "CLIENTES",
           isTitle: true,
         },
         {
@@ -955,6 +995,39 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: false,
           icon: "uil-calender",
           url: "/gestion-gastosF-gastosV",
+        },
+      ];
+    }
+    if (modulo === "mod-recepcion-mia") {
+      MENU_ITEMS = [
+        {
+          key: "ventas",
+          label: "Ventas",
+          isTitle: true,
+        },
+        {
+          key: "cliente",
+          label: "CLIENTE",
+          isTitle: true,
+        },
+        {
+          key: "cliente-admClientes",
+          label: "Gestion de CLIENTES",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-clientes",
+        },
+        {
+          key: "cita",
+          label: "Citas",
+          isTitle: true,
+        },
+        {
+          key: "citas-NUT",
+          label: "RESERVAS",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/crear-citas-nutricion",
         },
       ];
     }

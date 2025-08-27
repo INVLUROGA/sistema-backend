@@ -747,7 +747,6 @@ const get_VENTAS = async (req = request, res = response) => {
         },
         {
           model: detalleVenta_producto,
-          where: { flag: true }, // <-- Filtro aplicado aquí
           required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
           attributes: [
             "id_venta",
@@ -759,7 +758,6 @@ const get_VENTAS = async (req = request, res = response) => {
         },
         {
           model: detalleVenta_membresias,
-          where: { flag: true }, // <-- Filtro aplicado aquí
           required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
           attributes: [
             "id_venta",
@@ -777,7 +775,6 @@ const get_VENTAS = async (req = request, res = response) => {
         },
         {
           model: detalleVenta_citas,
-          where: { flag: true }, // <-- Filtro aplicado aquí
           required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
           attributes: ["id_venta", "id_servicio", "tarifa_monto"],
         },
@@ -3555,7 +3552,7 @@ const getComandas = async (req = request, res = response) => {
     const { id_empresa } = req.params;
 
     const comandas = await Venta.findAll({
-      where: { flag: true, id_empresa: id_empresa },
+      where: { flag: true, id_empresa: id_empresa, status_remove: 1467 },
       attributes: [
         "id",
         "id_cli",

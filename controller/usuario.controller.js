@@ -901,6 +901,15 @@ const loginUsuario = async (req = request, res = response) => {
         },
       ];
     }
+    if (user.rol_user === 14) {
+      MODULOS_ITEMS = [
+        {
+          name: "recepcion-mia",
+          path: "/recepcion-mia",
+          key: "mod-recepcion-mia",
+        },
+      ];
+    }
     //mod-inventario-proyection
     let formAUDIT = {
       id_user: usuario.id_user,
@@ -987,6 +996,15 @@ const revalidarToken = async (req, res) => {
         name: "recepcion",
         path: "/recepcion",
         key: "mod-recepcion",
+      },
+    ];
+  }
+  if (user.rol_user === 14) {
+    MODULOS_ITEMS = [
+      {
+        name: "recepcion-mia",
+        path: "/recepcion-mia",
+        key: "mod-recepcion-mia",
       },
     ];
   }
