@@ -901,7 +901,7 @@ const loginUsuario = async (req = request, res = response) => {
         },
       ];
     }
-    if (user.rol_user === 14) {
+    if (usuario.rol_user === 14) {
       MODULOS_ITEMS = [
         {
           name: "recepcion-mia",
