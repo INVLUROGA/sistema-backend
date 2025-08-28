@@ -65,6 +65,15 @@ const generarJWT = (uid, name, rol_user, ip_user, id_user) => {
       },
     ];
   }
+  if (rol_user === 14) {
+    MODULOS_ITEMS = [
+      {
+        name: "recepcion-mia",
+        path: "/recepcion-mia",
+        key: "mod-recepcion-mia",
+      },
+    ];
+  }
   return new Promise((resolve, reject) => {
     const payload = { uid, name, rol_user, ip_user, id_user };
     jwt.sign(

@@ -981,6 +981,16 @@ const revalidarToken = async (req, res) => {
       },
     ];
   }
+  
+  if (user.rol_user === 14) {
+    MODULOS_ITEMS = [
+      {
+        name: "recepcion-mia",
+        path: "/recepcion-mia",
+        key: "mod-recepcion-mia",
+      },
+    ];
+  }
   if (user.rol_user === 3) {
     MODULOS_ITEMS = [
       {
