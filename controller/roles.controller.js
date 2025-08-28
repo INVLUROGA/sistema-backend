@@ -1108,6 +1108,16 @@ const moduleGET = async (req = request, res = response) => {
         },
       ];
     }
+
+    if (usuario.rol_user === 14) {
+      MODULOS_ITEMS = [
+        {
+          name: "recepcion-mia",
+          path: "/recepcion-mia",
+          key: "mod-recepcion-mia",
+        },
+      ];
+    }
     if (usuario.rol_user === 6) {
       MODULOS_ITEMS = [
         {

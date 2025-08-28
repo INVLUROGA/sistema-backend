@@ -6,7 +6,7 @@ const {
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 const enviarMasivoAlwsp = async () => {
-  const numerosDup = [{ numero: "933102718" }, { numero: "949203242" }];
+  const numerosDup = [{ numero: "933102718" }];
 
   // Normaliza y deduplica por número
   const numeros = [
@@ -29,7 +29,7 @@ const enviarMasivoAlwsp = async () => {
       try {
         const imagenResp = await enviarTextConImagenWsp(
           numero,
-          "https://archivosluroga.blob.core.windows.net/avatar-empleado/WhatsApp-Image-2025-08-27-at-9.52.49-AM-1756309545028.jpg",
+          "https://archivosluroga.blob.core.windows.net/avatar-empleado/WhatsApp-Image-2025-08-27-at-9.52.49-AM-_1_-1756310380876.jpg",
           `
 🔥 El verano se acerca y es momento de decidir cómo quieres verte.
 

@@ -501,6 +501,8 @@ const postVenta = async (req = request, res = response) => {
   // const { uid_firma, uid_contrato } = req.query;
   const uid_firma = v4();
   const uid_contrato = v4();
+  console.log({ rb: JSON.stringify(req.body, 2, null) });
+
   // let base64_contratoPDF = "";
   try {
     if (req.servicios && req.servicios.length > 0) {
