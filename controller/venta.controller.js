@@ -853,7 +853,12 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
           include: [
             {
               model: Producto,
-              attributes: ["nombre_producto", "prec_venta", "prec_compra"],
+              attributes: [
+                "nombre_producto",
+                "prec_venta",
+                "prec_compra",
+                "id_categoria",
+              ],
             },
             {
               model: Empleado,
@@ -912,7 +917,12 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
           include: [
             {
               model: ServiciosCircus,
-              attributes: ["nombre_servicio", "precio", "duracion"],
+              attributes: [
+                "nombre_servicio",
+                "precio",
+                "duracion",
+                "id_categoria",
+              ],
             },
             {
               model: Empleado,

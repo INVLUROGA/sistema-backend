@@ -233,6 +233,10 @@ const Cliente = db.define("tb_cliente", {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
+  id_estado: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,

@@ -949,6 +949,13 @@ const seccionGET = async (req = request, res = response) => {
           url: "/nueva-venta",
         },
         {
+          key: "ventas-nuevoCanje",
+          label: "canjes",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/canje",
+        },
+        {
           key: "comandas",
           label: "comandas",
           isTitle: true,
