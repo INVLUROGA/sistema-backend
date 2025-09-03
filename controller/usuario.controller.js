@@ -75,6 +75,7 @@ const getUsuariosClientexID = async (req = request, res = response) => {
           ),
           "nombres_apellidos_cli",
         ],
+        "uid_comentario",
         "fecNac_cli",
         "fecha_nacimiento",
         "sexo_cli",
@@ -223,6 +224,8 @@ const getUsuarioClientes = async (req = request, res = response) => {
         ["ubigeo_distrito_cli", "ubigeo_distrito"],
         "email_cli",
         "tel_cli",
+        "createdAt",
+        "updatedAt",
         ["estado_cli", "estado"],
       ],
       where: { flag: true, id_empresa: id_empresa },
@@ -981,7 +984,7 @@ const revalidarToken = async (req, res) => {
       },
     ];
   }
-  
+
   if (user.rol_user === 14) {
     MODULOS_ITEMS = [
       {

@@ -928,6 +928,13 @@ const seccionGET = async (req = request, res = response) => {
           url: "/gestion-ventas",
         },
         {
+          key: "res-ventas-x-dia-calendar",
+          label: "Resumen venta x dia calendario",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/resumen-ventas-x-dia-calendario",
+        },
+        {
           key: "comprobantes-rango-fecha",
           label: "COMPROBANTES RANGO DE FECHA",
           isTitle: false,

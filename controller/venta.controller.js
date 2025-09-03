@@ -1320,6 +1320,8 @@ const getVentasxFecha = async (req = request, res = response) => {
       ventas,
     });
   } catch (error) {
+    console.log("errorrrr: ", error);
+
     res.status(500).json({
       error: `Error en el servidor, en controller de get_VENTASxFECHA, hable con el administrador: ${error}`,
     });
