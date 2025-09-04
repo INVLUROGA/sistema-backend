@@ -941,13 +941,13 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           url: "/detalle-comprobantes",
         },
-        // {
-        //   key: "gestion-ventas",
-        //   label: "COMPROBANTES DE VENTAS POR DIA Y HORA",
-        //   isTitle: false,
-        //   icon: "uil-calender",
-        //   url: "/gestion-ventas",
-        // },
+        {
+          key: "gestion-ventas",
+          label: "COMPROBANTES DE VENTAS POR DIA Y HORA",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-ventas",
+        },
         // {
         //   key: "res-ventas-x-dia-calendar",
         //   label: "Resumen venta por dia calendario",
