@@ -908,45 +908,17 @@ const seccionGET = async (req = request, res = response) => {
     }
     if (modulo === "mod-recepcion") {
       MENU_ITEMS = [
-        {
-          key: "resumen-ejecutivo",
-          label: "RESUMEN EJECUTIVO",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/resumen-ejecutivo",
-        },
+        // {
+        //   key: "resumen-ejecutivo",
+        //   label: "RESUMEN EJECUTIVO",
+        //   isTitle: false,
+        //   icon: "uil-calender",
+        //   url: "/resumen-ejecutivo",
+        // },
         {
           key: "ventas",
           label: "Ventas",
           isTitle: true,
-        },
-        {
-          key: "gestion-ventas",
-          label: "COMPROBANTES DE VENTAS POR DIA Y HORA",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/gestion-ventas",
-        },
-        {
-          key: "res-ventas-x-dia-calendar",
-          label: "Resumen venta x dia calendario",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/resumen-ventas-x-dia-calendario",
-        },
-        {
-          key: "comprobantes-rango-fecha",
-          label: "COMPROBANTES RANGO DE FECHA",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/comprobantes-rango-fecha",
-        },
-        {
-          key: "detalle-comprobantes",
-          label: "DETALLE DE COMPROBANTES",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/detalle-comprobantes",
         },
         {
           key: "ventas-nuevaVenta",
@@ -961,6 +933,48 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: false,
           icon: "uil-calender",
           url: "/canje",
+        },
+        {
+          key: "detalle-comprobantes",
+          label: "DETALLE DE COMPROBANTES",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/detalle-comprobantes",
+        },
+        // {
+        //   key: "gestion-ventas",
+        //   label: "COMPROBANTES DE VENTAS POR DIA Y HORA",
+        //   isTitle: false,
+        //   icon: "uil-calender",
+        //   url: "/gestion-ventas",
+        // },
+        // {
+        //   key: "res-ventas-x-dia-calendar",
+        //   label: "Resumen venta por dia calendario",
+        //   isTitle: false,
+        //   icon: "uil-calender",
+        //   url: "/resumen-ventas-x-dia-calendario",
+        // },
+        {
+          key: "resumen-venta-x-dia-calendario",
+          label: "resumen ventas por dia calendario",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/resumen-venta-x-dia-calendario",
+        },
+        {
+          key: "acumulado-anual-x-dia-calendario",
+          label: "Acumulado anual por dia calendario",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/acumulado-anual-x-dia-calendario",
+        },
+        {
+          key: "comprobantes-rango-fecha",
+          label: "COMPROBANTES RANGO DE FECHA",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/comprobantes-rango-fecha",
         },
         {
           key: "comandas",
