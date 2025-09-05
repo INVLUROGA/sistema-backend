@@ -1183,10 +1183,7 @@ const getVentasxFecha = async (req = request, res = response) => {
       ],
       where: {
         fecha_venta: {
-          [Op.between]: [
-            new Date(fechaInicio.replace(" ", "T")),
-            new Date(fechaFin.replace(" ", "T")),
-          ],
+          [Op.between]: [new Date(fechaInicio), new Date(fechaFin)],
         },
         flag: true,
         id_empresa: id_empresa,

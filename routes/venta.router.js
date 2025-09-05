@@ -51,7 +51,7 @@ const {
   postVentaProductos,
   postVentaServicios,
   postComanda,
-  getComandas
+  getComandas,
 } = require("../controller/venta.controller");
 
 const {
@@ -67,10 +67,10 @@ const router = Router();
 /*
 /api/venta
 */
-router.get("/comanda/:id_empresa", getComandas)
-router.post("/comanda/:id_empresa", postComanda)
-router.post("/servicios/:id_venta", validarComandaPagada, postVentaServicios)
-router.post("/productos/:id_venta", validarComandaPagada, postVentaProductos)
+router.get("/comanda/:id_empresa", getComandas);
+router.post("/comanda/:id_empresa", postComanda);
+router.post("/servicios/:id_venta", validarComandaPagada, postVentaServicios);
+router.post("/productos/:id_venta", validarComandaPagada, postVentaProductos);
 router.get(
   "/obtener-ventas-x-comprobante/:id_comprobante/:id_empresa",
   obtenerUltimasVentasxComprobantes

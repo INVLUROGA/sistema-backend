@@ -948,13 +948,13 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           url: "/gestion-ventas",
         },
-        // {
-        //   key: "res-ventas-x-dia-calendar",
-        //   label: "Resumen venta por dia calendario",
-        //   isTitle: false,
-        //   icon: "uil-calender",
-        //   url: "/resumen-ventas-x-dia-calendario",
-        // },
+        {
+          key: "resumen-comparativo",
+          label: "Resumen Marketing",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/resumen-comparativo",
+        },
         {
           key: "resumen-venta-x-dia-calendario",
           label: "resumen ventas por dia calendario",
