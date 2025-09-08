@@ -418,7 +418,7 @@ const obtenerCumpleaniosCliente = async () => {
         `
 🎉 ¡FELIZ CUMPLEAÑOS, ${c.nombres_cli}! 👋🎂
 
-En CHANGE - The Slim Studio, estamos felices de celebrar contigo este dia tan especial, por este motivo te regalamos 10 SESIONES CONSECUTIVAS para ti o para quien desees.
+En CHANGE - The Slim Studio, estamos felices de celebrar contigo este dia tan especial, por este motivo te regalamos 05 SESIONES CONSECUTIVAS para ti o para quien desees.
 
 Recuerda que estamos aquí para seguir cambiando tu vida. ¡Que tengas un día lleno de salud y energía! ✨
 

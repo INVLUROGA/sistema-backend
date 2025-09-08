@@ -916,6 +916,18 @@ const seccionGET = async (req = request, res = response) => {
         //   url: "/resumen-ejecutivo",
         // },
         {
+          key: "manicure",
+          label: "Manicure",
+          isTitle: true,
+        },
+        {
+          key: "ventas-nuevaManicure",
+          label: "Nueva venta manicure",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/nueva-venta-manicure",
+        },
+        {
           key: "ventas",
           label: "Ventas",
           isTitle: true,
