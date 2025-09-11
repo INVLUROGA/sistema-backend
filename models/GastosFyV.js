@@ -62,6 +62,9 @@ const Gastos = db.define("tb_egresos", {
   id_gasto: {
     type: DataTypes.INTEGER,
   },
+  id_contrato_prov: {
+    type: DataTypes.INTEGER,
+  },
   grupo: {
     type: DataTypes.STRING(120),
   },

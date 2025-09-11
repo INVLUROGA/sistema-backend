@@ -285,7 +285,11 @@ const updateProveedor = async (req = request, res = response) => {
 const postContratoProv = async (req = request, res = response) => {
   try {
     // const { } = req.body;
-    const contratoProv = new ContratoProv(req.body);
+    const contratoProv = new ContratoProv({
+      uid_presupuesto: uid.v4(),
+      uid_contrato: uid.v4(),
+      ...req.body,
+    });
     await contratoProv.save();
     let formAUDIT = {
       id_user: req.id_user,
@@ -658,6 +662,32 @@ const getTBAgentes = async (req = request, res = response) => {
     });
   }
 };
+const getTrabajos = async (req = request, res = response) => {
+  try {
+    const { fecha_inicio, fecha_fin } = req.body;
+    const dataContratos = await ContratoProv.findAll({
+      where: { estado_contrato: 505, flag: true },
+    });
+    res.status(201).json({
+      dataContratos,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const obtenerContratosxProveedores = async (req = request, res = response) => {
+  try {
+    const { id_prov } = req.params;
+    const contratos = await ContratoProv.findAll({
+      where: { id_prov, flag: true },
+    });
+    res.status(201).json({
+      contratos,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
   getTBProveedores,
   PostProveedores,
@@ -672,4 +702,6 @@ module.exports = {
   getGastosxCodProv,
   getTBAgentes,
   descargarContratoProvPDF,
+  getTrabajos,
+  obtenerContratosxProveedores,
 };

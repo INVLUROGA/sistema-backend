@@ -7,6 +7,8 @@ const uploadBlob = async (req = request, res = response) => {
   try {
     // const { container } = req.body;
     const { container } = req.query;
+    console.log({ filesito: req.file });
+
     const { originalname, buffer } = req.file;
     const { uid_location } = req.params;
     const extension = extname(originalname);

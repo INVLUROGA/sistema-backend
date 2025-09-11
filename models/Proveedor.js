@@ -159,6 +159,9 @@ const ContratoProv = db.define("prov_contratos", {
   uid_presupuesto: {
     type: DataTypes.STRING,
   },
+  uid_contrato: {
+    type: DataTypes.STRING,
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
