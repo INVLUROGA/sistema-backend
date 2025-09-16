@@ -52,6 +52,8 @@ const TipoDeCambio = db.define("tb_tipodecambio", {
   },
 });
 
+
+
 TipoCambio.sync()
   .then(() => {
     console.log("La tabla TipoCambio ha sido creada o ya existe.");

@@ -288,6 +288,7 @@ const postContratoProv = async (req = request, res = response) => {
     const contratoProv = new ContratoProv({
       uid_presupuesto: uid.v4(),
       uid_contrato: uid.v4(),
+      uid_compromisoPago: uid.v4(),
       ...req.body,
     });
     await contratoProv.save();
@@ -665,8 +666,9 @@ const getTBAgentes = async (req = request, res = response) => {
 const getTrabajos = async (req = request, res = response) => {
   try {
     const { fecha_inicio, fecha_fin } = req.body;
+    const { id_empresa } = req.params;
     const dataContratos = await ContratoProv.findAll({
-      where: { estado_contrato: 505, flag: true },
+      where: { estado_contrato: 505, flag: true, id_empresa: id_empresa },
     });
     res.status(201).json({
       dataContratos,

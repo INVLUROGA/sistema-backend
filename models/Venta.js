@@ -304,6 +304,30 @@ const detalleventa_servicios = db.define("detalle_ventaservicios", {
   },
 });
 
+const leadsxDia = db.define("tb_leadsDia", {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  fecha: {
+    type: DataTypes.DATE,
+  },
+  cantidad: {
+    type: DataTypes.CHAR(5),
+  },
+  monto: {
+    type: DataTypes.DECIMAL(10, 2),
+  },
+  id_empresa: {
+    type: DataTypes.INTEGER,
+  },
+  flag: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+});
+
 detalleVenta_membresias.hasOne(HorarioProgramaPT, {
   foreignKey: "id_HorarioPgm",
   sourceKey: "id_horario",
@@ -509,6 +533,17 @@ detalleVenta_pagoVenta.belongsTo(Venta, {
 /*
 
 */
+leadsxDia
+  .sync()
+  .then(() => {
+    console.log("La tabla leadsxdia ha sido creada o ya existe.");
+  })
+  .catch((error) => {
+    console.error(
+      "Error al sincronizar el modelo con la base de datos:",
+      error
+    );
+  });
 detalleventa_servicios
   .sync()
   .then(() => {
@@ -642,4 +677,5 @@ module.exports = {
   detalle_cambioPrograma,
   detalleventa_servicios,
   cajasMovimientos,
+  leadsxDia,
 };

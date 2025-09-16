@@ -306,6 +306,7 @@ app.use(
 app.use("/api/formaPago", validarJWT, require("./routes/formaPago.router.js"));
 app.use("/api/rol", validarJWT, require("./routes/roles.router.js"));
 app.use("/api/venta", validarJWT, require("./routes/venta.router.js"));
+app.use("/api/lead", validarJWT, require("./routes/lead.router.js"));
 // app.use("/api/pros")
 app.use(
   "/api/serviciospt",

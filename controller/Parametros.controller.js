@@ -43,6 +43,7 @@ const obtenerEmpleadosxCargoxDepartamentoxEmpresa = async (
         id_empresa,
         cargo_empl: id_cargo,
         flag: true,
+        estado_empl: true,
       },
       attributes: [
         ["id_empl", "value"],
