@@ -29,6 +29,7 @@ const getLeads = async (req = request, res = response) => {
   try {
     const leads = await leadsxDia.findAll({
       where: { flag: true, id_empresa: id_empresa },
+      order: [["id", "desc"]],
     });
     res.status(201).json({
       msg: "ok",
@@ -38,8 +39,39 @@ const getLeads = async (req = request, res = response) => {
     console.log(error);
   }
 };
-
+const updateLeads = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const lead = await leadsxDia.findOne({ where: { id } });
+    await lead.update(req.body);
+    res.status(201).json({
+      msg: "lead actualizado",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      msg: `error actualizado: ${error}`,
+    });
+  }
+};
+const deleteLeads = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const lead = await leadsxDia.findOne({ where: { id } });
+    await lead.update({ flag: false });
+    res.status(201).json({
+      msg: "lead actualizado",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      msg: `error actualizado: ${error}`,
+    });
+  }
+};
 module.exports = {
   postLead,
   getLeads,
+  updateLeads,
+  deleteLeads,
 };

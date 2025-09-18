@@ -173,6 +173,31 @@ const ContratoProv = db.define("prov_contratos", {
     defaultValue: true,
   },
 });
+const PenalidadesContratoProv = db.define("penalidades_contrato", {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  id_contrato_prov: {
+    type: DataTypes.INTEGER,
+  },
+  id_tipo_penalidad: {
+    type: DataTypes.INTEGER,
+  },
+  fecha: {
+    type: DataTypes.DATE,
+  },
+  monto: {
+    type: DataTypes.DECIMAL(10, 2),
+  },
+  observacion: {
+    type: DataTypes.STRING(260),
+  },
+  flag: {
+    type: DataTypes.BOOLEAN,
+  },
+});
 const PagosContratoProv = db.define("contratos_prov_pagos", {
   id: {
     type: DataTypes.INTEGER,
@@ -220,6 +245,16 @@ Proveedor.sync()
       error
     );
   });
+PenalidadesContratoProv.sync()
+  .then(() => {
+    console.log("La tabla PenalidadesContratoProv ha sido creada o ya existe.");
+  })
+  .catch((error) => {
+    console.error(
+      "Error al sincronizar el modelo con la base de datos: PenalidadesContratoProv",
+      error
+    );
+  });
 
 ContratoProv.sync()
   .then(() => {
@@ -234,4 +269,5 @@ ContratoProv.sync()
 module.exports = {
   Proveedor,
   ContratoProv,
+  PenalidadesContratoProv,
 };

@@ -1,5 +1,10 @@
 const { Router } = require("express");
-const { postLead, getLeads } = require("../controller/lead.controller.js");
+const {
+  postLead,
+  getLeads,
+  updateLeads,
+  deleteLeads,
+} = require("../controller/lead.controller.js");
 const { mailNutricion } = require("../middlewares/mails.js");
 // const {
 //   verifyWhatsAppNumber,
@@ -9,8 +14,10 @@ const router = Router();
 /*
 /api/lead
 */
-router.get("/:id_empresa", getLeads);
+router.get("/leads/:id_empresa", getLeads);
 router.post("/:id_empresa", postLead);
+router.put("/:id", updateLeads);
+router.put("/delete/:id", deleteLeads);
 // router.put("/put-cita/:id", putCita);
 // router.put("/delete-cita/:id", deleteCita);
 

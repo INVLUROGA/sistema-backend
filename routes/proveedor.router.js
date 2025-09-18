@@ -14,6 +14,7 @@ const {
   descargarContratoProvPDF,
   obtenerContratosxProveedores,
   getTrabajos,
+  postPenalidadesContratoProv,
 } = require("../controller/proveedor.controller");
 const { validarJWT } = require("../middlewares/validarJWT");
 const router = Router();
@@ -34,4 +35,6 @@ router.get("/obtener-trabajos-proveedores/:id_empresa", getTrabajos);
 
 router.get("/obtener-contrato-prov/:id_contratoprov", descargarContratoProvPDF);
 router.get("/trabajos/:id_prov", obtenerContratosxProveedores);
+
+router.post("/penalidad/:id_contrato_prov", postPenalidadesContratoProv);
 module.exports = router;

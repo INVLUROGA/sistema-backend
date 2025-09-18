@@ -1,5 +1,9 @@
 const { response, request } = require("express");
-const { Proveedor, ContratoProv } = require("../models/Proveedor");
+const {
+  Proveedor,
+  ContratoProv,
+  PenalidadesContratoProv,
+} = require("../models/Proveedor");
 const uid = require("uuid");
 const { capturarAUDIT } = require("../middlewares/auditoria");
 const { typesCRUD } = require("../types/types");
@@ -19,6 +23,18 @@ ip_user: '127.0.0.1',
   uid: 'b3b6be6f-5f21-4e49-a12b-40a8c7e24e35',
   name: 'Carlos',
 */
+const postPenalidad = async (req = request, res = response) => {
+  try {
+    const { id_contratoProv } = req.params;
+    const { id_penalidad, monto, observacion } = req.body;
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: true,
+      msg: "Error al eliminar el proveedor. Hable con el encargado de sistema",
+    });
+  }
+};
 const getProveedorxUID = async (req = request, res = response) => {
   try {
     const { uid_param } = req.params;
@@ -690,6 +706,30 @@ const obtenerContratosxProveedores = async (req = request, res = response) => {
     console.log(error);
   }
 };
+const postPenalidadesContratoProv = async (req = request, res = response) => {
+  try {
+    const { id_contrato_prov } = req.params;
+    const { id_tipo_penalidad, monto, observacion, fecha } = req.body;
+    const penalidad = new PenalidadesContratoProv({
+      id_tipo_penalidad,
+      fecha,
+      monto,
+      observacion,
+      id_contrato_prov,
+      flag: 1,
+    });
+    await penalidad.save();
+    res.status(201).json({
+      ok: true,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(501).json({
+      ok: true,
+      error,
+    });
+  }
+};
 module.exports = {
   getTBProveedores,
   PostProveedores,
@@ -706,4 +746,5 @@ module.exports = {
   descargarContratoProvPDF,
   getTrabajos,
   obtenerContratosxProveedores,
+  postPenalidadesContratoProv,
 };
