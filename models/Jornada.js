@@ -30,23 +30,19 @@ const diaPorContrato = db.define("tb_diaPorContrato", {
   },
 });
 
-const contrato_empleado = db.define('tb_contrato_empleado',{
+const contrato_empleado = db.define("tb_contrato_empleado", {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
   },
   fecha_inicio: {
-    type: DataTypes.DATE
+    type: DataTypes.DATE,
   },
   fecha_fin: {
-    type: DataTypes.DATE
+    type: DataTypes.DATE,
   },
-  
-})
-
-
-
+});
 
 const Jornada = db.define("tb_jornada_semanas", {
   id: {
@@ -233,5 +229,4 @@ module.exports = {
   Jornada,
   jornadaPlanilla,
   HorasEspeciales,
-  diasReservadosPorContrato,
 };
