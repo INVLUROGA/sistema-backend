@@ -627,6 +627,13 @@ const obtenerServiciosxCliente = async (req = request, res = response) => {
     });
   }
 };
+const postReservasMFit = async(req=request, res=response) => {
+  try {
+    const {  } = req.body;
+  } catch (error) {
+    
+  }
+};
 module.exports = {
   postCita,
   getCitaporID,

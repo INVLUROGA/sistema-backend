@@ -3,42 +3,49 @@ const { db } = require("../database/sequelizeConnection");
 const { Parametros } = require("./Parametros");
 const { Empleado } = require("./Usuarios");
 
-const diasJornada = db.define("tb_diasJornada", {
-  id_dia: {
+const diaPorContrato = db.define("tb_diaPorContrato", {
+  id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
   },
-  uid_dia: {
-    type: DataTypes.STRING(300),
-    defaultValue: 0,
-  },
-  nombre_dia: {
-    type: DataTypes.STRING(100),
-  },
-  semana: {
-    type: DataTypes.STRING(4),
+  id_contrato: {
+    type: DataTypes.INTEGER,
   },
   fecha: {
-    type: DataTypes.DATEONLY,
+    type: DataTypes.DATE,
   },
-  habilitado: {
+  hora_inicio: {
+    type: DataTypes.TIME,
+  },
+  minutos: {
+    type: DataTypes.STRING(4),
+  },
+  id_estado_dia: {
+    type: DataTypes.INTEGER,
+  },
+  flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
-  dias_feriado: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
+});
+
+const contrato_empleado = db.define('tb_contrato_empleado',{
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
   },
-  dias_vacaciones: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
+  fecha_inicio: {
+    type: DataTypes.DATE
   },
-  dias_licencia: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
+  fecha_fin: {
+    type: DataTypes.DATE
   },
+  
 })
+
+
 
 
 const Jornada = db.define("tb_jornada_semanas", {
@@ -226,4 +233,5 @@ module.exports = {
   Jornada,
   jornadaPlanilla,
   HorasEspeciales,
+  diasReservadosPorContrato,
 };

@@ -8,7 +8,7 @@ const postLead = async (req = request, res = response) => {
     const lead = new leadsxDia({
       fecha,
       cantidad,
-      monto,
+      monto: monto * 1.18,
       id_empresa,
       flag: true,
     });

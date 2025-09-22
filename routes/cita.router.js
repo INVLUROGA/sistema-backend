@@ -11,6 +11,7 @@ const {
   getServiciosCita,
   putServiciosCita,
   obtenerServiciosxCliente,
+  postReservasMFit,
 } = require("../controller/cita.controller.js");
 const { mailNutricion } = require("../middlewares/mails.js");
 // const {
@@ -39,5 +40,6 @@ router.get("/get-cita/:id", getCitaporID);
 router.put("/put-cita/:id", putCita);
 router.put("/delete-cita/:id", deleteCita);
 
+// router.post("/reservas-monkey-fit", postReservasMFit);
 // router.get("/get-citas", getCitas);
 module.exports = router;
