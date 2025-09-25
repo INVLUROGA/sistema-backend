@@ -3,7 +3,11 @@ const { Router } = require("express");
 const {
   postJornada,
   obtenerJornadas,
-  obtenerJornadaxEmpl
+  obtenerJornadaxEmpl,
+  postContratoJornadaEmpleado,
+  obtenerContratosxEmpleado,
+  postTipoHorarioContrato,
+  obtenerContratosxFecha,
 } = require("../controller/jornada.controller");
 const router = Router();
 /**
@@ -14,10 +18,13 @@ const router = Router();
 router.post("/post-jornada/:id_enterprice", postJornada);
 router.get("/obtener-jornadas/:id_enterprice", obtenerJornadas);
 
-router.get("/obtener-jornada-x-empl/:uid_empl", obtenerJornadaxEmpl)
+router.get("/obtener-jornada-x-empl/:uid_empl", obtenerJornadaxEmpl);
 
-// router.post()
+router.get("/obtener-contratos", obtenerContratosxFecha);
 
+router.post("/jornada/:id_empl", postContratoJornadaEmpleado);
+router.get("/jornada/:id_empl", obtenerContratosxEmpleado);
+router.post("/diaxcontrato", postTipoHorarioContrato);
 //RUTAS - GASTO FIJO
 // router.get("/get_gfs", obtenerTB_GF);
 // router.get("/get_gf/:id", obtener_GFxID);

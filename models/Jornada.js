@@ -3,13 +3,16 @@ const { db } = require("../database/sequelizeConnection");
 const { Parametros } = require("./Parametros");
 const { Empleado } = require("./Usuarios");
 
-const diaPorContrato = db.define("tb_diaPorContrato", {
+const tipoHorarioContrato = db.define("tb_tipoHorarioContrato", {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
   },
   id_contrato: {
+    type: DataTypes.INTEGER,
+  },
+  id_tipo_horario: {
     type: DataTypes.INTEGER,
   },
   fecha: {
@@ -19,10 +22,10 @@ const diaPorContrato = db.define("tb_diaPorContrato", {
     type: DataTypes.TIME,
   },
   minutos: {
-    type: DataTypes.STRING(4),
-  },
-  id_estado_dia: {
     type: DataTypes.INTEGER,
+  },
+  observacion: {
+    type: DataTypes.STRING(360),
   },
   flag: {
     type: DataTypes.BOOLEAN,
@@ -36,12 +39,37 @@ const contrato_empleado = db.define("tb_contrato_empleado", {
     autoIncrement: true,
     primaryKey: true,
   },
+  id_empl: {
+    type: DataTypes.INTEGER,
+  },
   fecha_inicio: {
     type: DataTypes.DATE,
   },
   fecha_fin: {
     type: DataTypes.DATE,
   },
+  sueldo: {
+    type: DataTypes.DECIMAL(10, 2),
+  },
+  observacion: {
+    type: DataTypes.STRING(260),
+  },
+  flag: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+});
+
+contrato_empleado.hasMany(tipoHorarioContrato, {
+  foreignKey: "id_contrato",
+  sourceKey: "id",
+  as: "contrato_empl",
+});
+
+Empleado.hasMany(contrato_empleado, {
+  foreignKey: "id_empl",
+  sourceKey: "id_empl",
+  as: "_empl",
 });
 
 const Jornada = db.define("tb_jornada_semanas", {
@@ -190,6 +218,32 @@ HorasEspeciales.hasMany(Empleado, {
 });
 
 // Sincroniza el modelo con la base de datos (crea la tabla si no existe)
+tipoHorarioContrato
+  .sync()
+  .then(() => {
+    console.log("La tabla tipoHorarioContrato ha sido creada o ya existe.");
+  })
+  .catch((error) => {
+    console.error(
+      "Error al sincronizar el modelo con la base de datos:",
+      error
+    );
+  });
+
+// Sincroniza el modelo con la base de datos (crea la tabla si no existe)
+contrato_empleado
+  .sync()
+  .then(() => {
+    console.log("La tabla contrato_empleado ha sido creada o ya existe.");
+  })
+  .catch((error) => {
+    console.error(
+      "Error al sincronizar el modelo con la base de datos:",
+      error
+    );
+  });
+
+// Sincroniza el modelo con la base de datos (crea la tabla si no existe)
 Jornada.sync()
   .then(() => {
     console.log("La tabla Jornada ha sido creada o ya existe.");
@@ -229,4 +283,6 @@ module.exports = {
   Jornada,
   jornadaPlanilla,
   HorasEspeciales,
+  contrato_empleado,
+  tipoHorarioContrato,
 };

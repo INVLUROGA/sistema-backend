@@ -29,7 +29,7 @@ const getLeads = async (req = request, res = response) => {
   try {
     const leads = await leadsxDia.findAll({
       where: { flag: true, id_empresa: id_empresa },
-      order: [["id", "desc"]],
+      order: [["fecha", "desc"]],
     });
     res.status(201).json({
       msg: "ok",

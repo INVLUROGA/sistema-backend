@@ -1,6 +1,7 @@
-const { Model, Sequelize } = require("sequelize");
+const { Model, Sequelize, Op } = require("sequelize");
 const { Marcacion } = require("../models/Marcacion");
 const { Cliente, Empleado } = require("../models/Usuarios");
+const { request, response } = require("express");
 
 const obtenerAsistenciaDeClientes = async (req, res) => {
   const { id_enterprice } = req.params;
@@ -269,8 +270,36 @@ const obtenerAsistenciaPorEmpl = async (req, res) => {
   }
 };
 
+const obtenerMarcacionxFecha = async (req = request, res = response) => {
+  try {
+    const { arrayFecha } = req.query;
+    // Si viene como string JSON
+    if (typeof arrayFecha === "string") {
+      arrayFecha = JSON.parse(arrayFecha);
+    }
+    const fecha_desde = arrayFecha[0];
+    const fecha_hasta = arrayFecha[1];
+    const asistencia = await Marcacion.findAll({
+      where: {
+        // id_empresa,
+        tiempo_marcacion: {
+          [Op.between]: [
+            new Date(fecha_desde).toISOString(),
+            new Date(fecha_hasta).toISOString(),
+          ],
+        },
+      },
+    });
+    res.status(201).json({
+      asistencia,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
   obtenerAsistenciaDeClientes,
   obtenerAsistenciaPorClientes,
   obtenerAsistenciaPorEmpl,
+  obtenerMarcacionxFecha,
 };

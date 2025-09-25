@@ -168,6 +168,7 @@ const getGasto = async (req = request, res = response) => {
         "esCompra",
         "id_estado_gasto",
         "monto_venta_cliente",
+        "id_contrato_prov",
       ],
     });
     res.status(200).json({

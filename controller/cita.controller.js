@@ -136,7 +136,7 @@ const getServiciosCita = async (req, res) => {
               model: ServiciosCircus,
               as: "parametro_servicio",
             },
-          ],
+          ],  
         },
       ],
     });

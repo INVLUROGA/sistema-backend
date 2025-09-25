@@ -1,7 +1,12 @@
 const { response, request } = require("express");
-const { Jornada } = require("../models/Jornada");
+const {
+  Jornada,
+  contrato_empleado,
+  tipoHorarioContrato,
+} = require("../models/Jornada");
 const uuid = require("uuid");
 const { Empleado } = require("../models/Usuarios");
+const { Op } = require("sequelize");
 const obtenerTablaJornada = () => {};
 const postJornada = async (req = request, res = response) => {
   try {
@@ -68,9 +73,122 @@ const obtenerJornadaxEmpl = async (req = request, res = response) => {
     console.log(error);
   }
 };
+
+const postContratoJornadaEmpleado = async (req = request, res = response) => {
+  try {
+    const { id_empl } = req.params;
+    const { fecha_inicio, fecha_fin, sueldo, id_cargo, observacion } = req.body;
+    const contrato = new contrato_empleado({
+      id_empl,
+      fecha_inicio,
+      fecha_fin,
+      id_cargo,
+      sueldo,
+      observacion,
+    });
+    await contrato.save();
+    res.status(201).json({
+      msg: "CONTRATO CREADO CON EXITO",
+      contrato,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(501).json({
+      msg: "ERROR",
+      error,
+    });
+  }
+};
+const obtenerContratosxEmpleado = async (req = request, res = response) => {
+  try {
+    const { id_empl } = req.params;
+    const contratos = await contrato_empleado.findAll({
+      where: { id_empl: id_empl },
+    });
+    res.status(201).json({
+      contratos,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const postTipoHorarioContrato = async (req = request, res = response) => {
+  try {
+    await tipoHorarioContrato.bulkCreate(req.body);
+    res.status(201).json({
+      msg: "ok",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(501).json({
+      error,
+    });
+  }
+};
+const obtenerContratosxFecha = async (req = request, res = response) => {
+  try {
+    const { arrayFecha } = req.query;
+    // Si viene como string JSON
+    if (typeof arrayFecha === "string") {
+      arrayFecha = JSON.parse(arrayFecha);
+    }
+    const fecha_desde = arrayFecha[0];
+    const fecha_hasta = arrayFecha[1];
+    console.log({
+      fecha_desde,
+      fecha_hasta,
+      arrayFecha,
+      tm: [
+        new Date(fecha_desde).toISOString(),
+        new Date(fecha_hasta).toISOString(),
+      ],
+    });
+    const empleados = await Empleado.findAll({
+      where: { flag: true, estado_empl: true },
+      include: [
+        {
+          model: contrato_empleado,
+          required: true,
+          as: "_empl",
+          include: [
+            {
+              model: tipoHorarioContrato,
+              where: {
+                fecha: {
+                  [Op.between]: [
+                    new Date(fecha_desde).toISOString(),
+                    new Date(fecha_hasta).toISOString(),
+                  ],
+                },
+              },
+              order: [["fecha", "desc"]],
+              required: true,
+              as: "contrato_empl",
+            },
+          ],
+        },
+      ],
+    });
+    res.status(201).json({
+      msg: "ok",
+      contratos: [],
+      empleados,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      msg: "error",
+      error,
+    });
+  }
+};
 module.exports = {
   obtenerTablaJornada,
   postJornada,
   obtenerJornadas,
   obtenerJornadaxEmpl,
+  postContratoJornadaEmpleado,
+  obtenerContratosxEmpleado,
+  postTipoHorarioContrato,
+  obtenerContratosxFecha,
 };
