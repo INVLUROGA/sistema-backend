@@ -684,7 +684,7 @@ const getTrabajos = async (req = request, res = response) => {
     const { fecha_inicio, fecha_fin } = req.body;
     const { id_empresa } = req.params;
     const dataContratos = await ContratoProv.findAll({
-      where: { estado_contrato: 505, flag: true, id_empresa: id_empresa },
+      where: { flag: true, id_empresa: id_empresa },
     });
     res.status(201).json({
       dataContratos,
