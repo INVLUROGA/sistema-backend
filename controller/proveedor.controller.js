@@ -108,9 +108,7 @@ const getTBProveedores = async (req = request, res = response) => {
       ],
       where: {
         flag: true,
-        es_agente: false,
         estado_prov: estado_prov,
-        id_empresa: id_empresa,
       },
     });
 
