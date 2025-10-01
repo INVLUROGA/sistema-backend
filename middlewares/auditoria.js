@@ -17,7 +17,7 @@ const capturarAUDIT = async (formAuditoria) => {
     // Guarda la auditoría en la base de datos
     await auditoria.save();
   } catch (error) {
-    console.log("Hay error aquii", error);
+    console.log("Hay error", error);
   }
 };
 const capturarAccion = async (formAuditoria) => {
