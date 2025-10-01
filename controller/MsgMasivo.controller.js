@@ -6,7 +6,7 @@ const {
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 const enviarMasivoAlwsp = async () => {
-  const numerosDup = [{ numero: "933102718" }];
+  const numerosDup = [{ numero: "933 102 718" }];
 
   // Normaliza y deduplica por número
   const numeros = [
@@ -29,17 +29,16 @@ const enviarMasivoAlwsp = async () => {
       try {
         const imagenResp = await enviarTextConImagenWsp(
           numero,
-          "https://archivosluroga.blob.core.windows.net/avatar-empleado/WhatsApp-Image-2025-08-27-at-9.52.49-AM-_1_-1756310380876.jpg",
+          "https://archivosluroga.blob.core.windows.net/avatar-empleado/WhatsApp-Image-2025-09-29-at-9.33.30-AM-1759161447605.jpg",
           `
-🔥 El verano se acerca y es momento de decidir cómo quieres verte.
+⏳ El año está por terminar… *¡quedan poco más de 12 semanas!*
 
-En *CHANGE* te damos planes efectivos para transformar tu cuerpo de manera acelerada cuidando sobretodo tu salud. 
+Pregúntate: ¿Cómo quieres llegar a fin de año? 🤔
+👉 Con más energía, menos medidas y orgulloso de tu progreso… o dejando pasar otra oportunidad.
 
-👉 Y si te inscribes antes del domingo, *TE REGALAMOS HASTA 08 SEMANAS GRATIS* 🎁 según el plan que elijas.
+🔥 Únete al *RETO DE 12 SEMANAS CHANGE* y cierra el 2025 con resultados reales.
 
-Solo 10 cupos disponibles ⏳.
-
-*¿Te reservo el tuyo ahora mismo?*
+📅 Inscríbete este 29 y 30 de Setiembre y aprovecha descuentos y semanas de regalo.
               `
         );
         if (!imagenResp.ok) {

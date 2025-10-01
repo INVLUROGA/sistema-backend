@@ -31,7 +31,6 @@ function addBusinessDays(startDate, numberOfDays) {
   const currentDate = new Date(startDate);
   currentDate.setDate(currentDate.getDate() + numberOfDays);
   return currentDate;
-
 }
 const diasLaborables = (fechaInicio, fechaFin) => {
   let diasLaborables = 0;
@@ -1580,11 +1579,10 @@ const getReporteVentas = async (req = request, res = response) => {
       ],
       where: {
         fecha_venta: {
-          [Op.between]: [
-            new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
-            new Date(fechaFin).setUTCHours(23, 59, 59, 999),
-          ],
+          [Op.between]: [new Date(fechaInicio), new Date(fechaFin)],
         },
+        id_empresa: 598,
+        flag: true,
         id_tipoFactura: {
           [Op.ne]: 701, // Excluye los registros con id_tipoFactura igual a 84
         },

@@ -39,7 +39,8 @@ const {
   getParametrosporClientexEmpresa,
   getServiciosxEmpresa,
   obtenerParametrosGruposGastos,
-  obtenerEmpleadosxCargoxDepartamentoxEmpresa
+  obtenerEmpleadosxCargoxDepartamentoxEmpresa,
+  putParametrosGenerales,
 } = require("../controller/Parametros.controller");
 const { obtener_estado_membresia } = require("../middlewares/logicaSistema");
 const {
@@ -54,9 +55,16 @@ const router = Router();
  * /api/parametros/
  */
 // router.get("/get_params/forma_pago")
-
-router.get("/empleados/:id_cargo/:id_departamento/:id_empresa", obtenerEmpleadosxCargoxDepartamentoxEmpresa);
-router.get("/get_params/grupos-gastos/:id_empresa", obtenerParametrosGruposGastos);
+router.put("/params-generales/:id", putParametrosGenerales);
+router.get(`/get-parametros-generales/`, getParametros);
+router.get(
+  "/empleados/:id_cargo/:id_departamento/:id_empresa",
+  obtenerEmpleadosxCargoxDepartamentoxEmpresa
+);
+router.get(
+  "/get_params/grupos-gastos/:id_empresa",
+  obtenerParametrosGruposGastos
+);
 router.get("/get_params/servicios/:id_empresa", getServiciosxEmpresa);
 router.get("/get_params/etiquetas/:entidad/:grupo", getEtiquetasxEntidadGrupo);
 router.post(
@@ -72,7 +80,6 @@ router.get(
   getEtiquetasxIdEntidadGrupo
 );
 router.post("/get_params/etiquetas/:entidad/:grupo/:id_fila", postEtiqueta);
-
 router.get("/get_params/articulo/zonas/:id_enterprice", getParametrosZonas);
 router.get(
   "/get_params/distritos/:department_id/:id_provincia",
@@ -138,7 +145,10 @@ router.get(
 );
 
 router.post("/post-param-3/:entidad", postParametros3);
-router.post("/postRegistrar", postRegistrarParametros);
+router.post(
+  "/postRegistrar/:grupo_param/:entidad_param",
+  postRegistrarParametros
+);
 router.post("/postEliminar", postEliminar);
 router.post("/postActualizar", actualizarParametro);
 

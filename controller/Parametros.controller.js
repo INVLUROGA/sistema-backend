@@ -1115,14 +1115,13 @@ const postEliminar = async (req = request, res = response) => {
 };
 
 const postRegistrarParametros = async (req = request, res = response) => {
-  //const {  } = req.params;
-  const { grupo_param, entidad_param, label_param, sigla_param } = req.body;
+  const { grupo_param, entidad_param } = req.params;
+  const { label_param } = req.body;
   try {
     const parametro = new Parametros({
       grupo_param,
       entidad_param,
       label_param,
-      sigla_param,
     });
     await parametro.save();
     res.status(200).json({
@@ -1209,7 +1208,27 @@ const obtenerParametrosGruposGastos = async (req = request, res = response) => {
     console.log(error);
   }
 };
+const putParametrosGenerales = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const parametros = await Parametros.findOne({
+      where: { id_param: id, flag: true },
+    });
+    await parametros.update(req.body);
+    res.status(201).json({
+      msg: "ok",
+      id,
+      parametros,
+    });
+  } catch (error) {
+    res.status(404).json({
+      error,
+      msg: "no",
+    });
+  }
+};
 module.exports = {
+  putParametrosGenerales,
   obtenerEmpleadosxCargoxDepartamentoxEmpresa,
   obtenerParametrosGruposGastos,
   getParametrosporClientexEmpresa,

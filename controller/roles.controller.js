@@ -208,7 +208,6 @@ const seccionGET = async (req = request, res = response) => {
     }
     if (modulo === "mod-adm") {
       MENU_ITEMS = [
-
         {
           key: "config",
           label: "Recursos Humanos",
@@ -825,6 +824,13 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: false,
           icon: "uil-calender",
           url: "/gest-inventario-circus",
+        },
+        {
+          key: "m-o-f",
+          label: "M.O.F.",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/m-o-f",
         },
         {
           key: "resumen-ejecutivo",
