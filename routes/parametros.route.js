@@ -150,6 +150,6 @@ router.post(
   postRegistrarParametros
 );
 router.post("/postEliminar", postEliminar);
-router.post("/postActualizar", actualizarParametro);
+router.put("/postActualizar/:id", actualizarParametro);
 
 module.exports = router;

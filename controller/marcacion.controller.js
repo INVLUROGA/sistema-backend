@@ -279,13 +279,15 @@ const obtenerMarcacionxFecha = async (req = request, res = response) => {
     }
     const fecha_desde = arrayFecha[0];
     const fecha_hasta = arrayFecha[1];
+    console.log({ arrayFecha });
+
     const asistencia = await Marcacion.findAll({
       where: {
         // id_empresa,
         tiempo_marcacion: {
           [Op.between]: [
-            new Date(fecha_desde).toISOString(),
-            new Date(fecha_hasta).toISOString(),
+            new Date(fecha_desde),
+            new Date(fecha_hasta),
           ],
         },
       },

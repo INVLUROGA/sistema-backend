@@ -84,6 +84,8 @@ const getProveedorxUID = async (req = request, res = response) => {
 const getTBProveedores = async (req = request, res = response) => {
   try {
     const { estado_prov, id_empresa } = req.query;
+    console.log({estado_prov, id_empresa});
+    
     const proveedores = await Proveedor.findAll({
       order: [["id", "desc"]],
       attributes: [
@@ -109,6 +111,7 @@ const getTBProveedores = async (req = request, res = response) => {
       where: {
         flag: true,
         estado_prov: estado_prov,
+        id_empresa: id_empresa,
       },
     });
 

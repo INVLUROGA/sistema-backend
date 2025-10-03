@@ -1068,18 +1068,12 @@ const calcularCitasDisponibles = (
 
 const actualizarParametro = async (req = request, res = response) => {
   try {
-    const { id_param, entidad_param, grupo_param, sigla_param, label_param } =
-      req.body;
+    const { id } = req.params;
+    const { label_param } = req.body;
     const parametro = await Parametros.findOne({
-      where: { id_param: id_param },
+      where: { id_param: id },
     });
-
-    parametro.entidad_param = entidad_param;
-    parametro.grupo_param = grupo_param;
-    parametro.sigla_param = sigla_param;
-    parametro.label_param = label_param;
-
-    await parametro.save();
+    await parametro.update({ label_param });
     res.status(200).json({
       msg: "ok",
       parametro: parametro,

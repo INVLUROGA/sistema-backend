@@ -16,8 +16,5 @@ router.get(
 );
 router.get("/obtener-asistencias-x-empleado", obtenerAsistenciaPorEmpl);
 
-router.get(
-  "/obtenerMarcacionFecha/:id_empresa/:arrayFecha",
-  obtenerMarcacionxFecha
-);
+router.get("/obtenerMarcacionFecha/:id_empresa", obtenerMarcacionxFecha);
 module.exports = router;
