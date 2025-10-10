@@ -263,6 +263,8 @@ const getParametrosporProveedor = async (req, res) => {
           ),
           "label",
         ],
+        ["id_oficio", "id_oficio"],
+        // "id_oficio",
         // ["razon_social_prov", "label"],
       ],
     });
@@ -1221,7 +1223,27 @@ const putParametrosGenerales = async (req = request, res = response) => {
     });
   }
 };
+const deleteParametrosGenerales = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const parametros = await Parametros.findOne({
+      where: { id_param: id, flag: true },
+    });
+    await parametros.update({ flag: false });
+    res.status(201).json({
+      msg: "ok",
+      id,
+      parametros,
+    });
+  } catch (error) {
+    res.status(404).json({
+      error,
+      msg: "no",
+    });
+  }
+};
 module.exports = {
+  deleteParametrosGenerales,
   putParametrosGenerales,
   obtenerEmpleadosxCargoxDepartamentoxEmpresa,
   obtenerParametrosGruposGastos,

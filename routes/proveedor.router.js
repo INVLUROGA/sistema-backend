@@ -31,6 +31,7 @@ router.get("/obtener-contratos/:id_prov", getContratosxProv);
 router.get("/obtener-contrato/:id", getContratoxID);
 router.get("/obtener-gastos/:cod_trabajo/:tipo_moneda", getGastosxCodProv);
 router.post("/post-contrato-prov", postContratoProv);
+router.put("/put-contrato-prov/:id", postContratoProv);
 router.get("/obtener-trabajos-proveedores/:id_empresa", getTrabajos);
 
 router.get("/obtener-contrato-prov/:id_contratoprov", descargarContratoProvPDF);

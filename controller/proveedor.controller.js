@@ -84,8 +84,6 @@ const getProveedorxUID = async (req = request, res = response) => {
 const getTBProveedores = async (req = request, res = response) => {
   try {
     const { estado_prov, id_empresa } = req.query;
-    console.log({estado_prov, id_empresa});
-    
     const proveedores = await Proveedor.findAll({
       order: [["id", "desc"]],
       attributes: [
@@ -309,6 +307,32 @@ const postContratoProv = async (req = request, res = response) => {
       ...req.body,
     });
     await contratoProv.save();
+    let formAUDIT = {
+      id_user: req.id_user,
+      ip_user: req.ip_user,
+      accion: typesCRUD.POST,
+      observacion: `Se registro: contrato del proveedor de id ${contratoProv.id}`,
+      fecha_audit: new Date(),
+    };
+    await capturarAUDIT(formAUDIT);
+    res.status(200).json({
+      msg: "contrato del Proveedor creado con exito",
+      contratoProv,
+      ok: true,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: "Hable con el encargado de sistema",
+    });
+  }
+};
+const putContratoProv = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const contratoProv = ContratoProv.findOne({ where: { id } });
+    await contratoProv.update(req.body);
     let formAUDIT = {
       id_user: req.id_user,
       ip_user: req.ip_user,
@@ -732,6 +756,7 @@ const postPenalidadesContratoProv = async (req = request, res = response) => {
   }
 };
 module.exports = {
+  putContratoProv,
   getTBProveedores,
   PostProveedores,
   getProveedor,

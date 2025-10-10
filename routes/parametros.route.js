@@ -41,6 +41,7 @@ const {
   obtenerParametrosGruposGastos,
   obtenerEmpleadosxCargoxDepartamentoxEmpresa,
   putParametrosGenerales,
+  deleteParametrosGenerales,
 } = require("../controller/Parametros.controller");
 const { obtener_estado_membresia } = require("../middlewares/logicaSistema");
 const {
@@ -56,6 +57,7 @@ const router = Router();
  */
 // router.get("/get_params/forma_pago")
 router.put("/params-generales/:id", putParametrosGenerales);
+router.put("/params-generales/delete/:id", deleteParametrosGenerales);
 router.get(`/get-parametros-generales/`, getParametros);
 router.get(
   "/empleados/:id_cargo/:id_departamento/:id_empresa",
