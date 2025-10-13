@@ -25,8 +25,7 @@ const ReservaMonkFit = db.define(
       type: DataTypes.BOOLEAN,
       defaultValue: true,
     },
-  },
-  {
-    tableName: "tb_cita",
   }
 );
+
+

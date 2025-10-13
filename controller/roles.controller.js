@@ -208,24 +208,24 @@ const seccionGET = async (req = request, res = response) => {
     }
     if (modulo === "mod-adm") {
       MENU_ITEMS = [
-        {
-          key: "config",
-          label: "Recursos Humanos",
-          isTitle: true,
-        },
-        {
-          label: "Reportes Por Planilla",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/reporte-admin/RecursosHumanoReportes",
-        },
-        {
-          key: "reporte-utilidad-pgm",
-          label: "Reporte de asistencias",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/reporte-admin/asistenciaReporte",
-        },
+        // {
+        //   key: "config",
+        //   label: "Recursos Humanos",
+        //   isTitle: true,
+        // },
+        // {
+        //   label: "Reportes Por Planilla",
+        //   isTitle: false,
+        //   icon: "uil-calender",
+        //   url: "/reporte-admin/RecursosHumanoReportes",
+        // },
+        // {
+        //   key: "reporte-utilidad-pgm",
+        //   label: "Reporte de asistencias",
+        //   isTitle: false,
+        //   icon: "uil-calender",
+        //   url: "/reporte-admin/asistenciaReporte",
+        // },
         {
           key: "config",
           label: "INVENTARIO",
@@ -278,13 +278,13 @@ const seccionGET = async (req = request, res = response) => {
           label: "Reportes",
           isTitle: true,
         },
-        {
-          key: "reporte-utilidad-pgm",
-          label: "Planilla",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/reporte-admin/RecursosHumanoReportes",
-        },
+        // {
+        //   key: "reporte-utilidad-pgm",
+        //   label: "Planilla",
+        //   isTitle: false,
+        //   icon: "uil-calender",
+        //   url: "/reporte-admin/RecursosHumanoReportes",
+        // },
         {
           key: "reporte-flujo-caja",
           label: "FLUJO DE CAJA",
@@ -442,6 +442,13 @@ const seccionGET = async (req = request, res = response) => {
           url: "/gestion-auth-usuario",
         },
         {
+          key: "adm-centro-archivos",
+          label: "Centro de archivos",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/centro-archivos",
+        },
+        {
           key: "gest-jornada",
           label: "Gestion de jornadas",
           isTitle: false,
@@ -468,6 +475,24 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: false,
           icon: "uil-calender",
           url: "/tipo-cambio",
+        },
+      ];
+    }
+    if (modulo === "mod-rrhh") {
+      MENU_ITEMS = [
+        {
+          //key: "reporte-utilidad-pgm",
+          label: "GESTION DE FERIADOS",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gest-feriados",
+        },
+        {
+          //key: "reporte-utilidad-pgm",
+          label: "GESTION DE FERIADOS",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gest-feriados",
         },
       ];
     }
@@ -1085,6 +1110,11 @@ const moduleGET = async (req = request, res = response) => {
           name: "Ventas",
           path: "/venta",
           key: "mod-general-ventas",
+        },
+        {
+          name: "RR.HH.",
+          path: "/rrhh",
+          key: "mod-rrhh",
         },
       ];
     }

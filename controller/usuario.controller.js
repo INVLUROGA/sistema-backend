@@ -37,6 +37,8 @@ const {
   SeccionItem,
   ModuloItem,
 } = require("../models/Seccion");
+const { ContactoEmergencia } = require("../models/Modelos");
+const { Parametros } = require("../models/Parametros");
 // Función para contar días laborables entre dos fechas
 function contarDiasLaborables(fechaInicio, fechaFin) {
   let inicio = dayjs(fechaInicio);
@@ -851,6 +853,11 @@ const loginUsuario = async (req = request, res = response) => {
           path: "/venta",
           key: "mod-venta",
         },
+        {
+          name: "RR.HH.",
+          path: "/rrhh",
+          key: "mod-rrhh",
+        },
       ];
     }
     if (usuario.rol_user === 3) {
@@ -982,6 +989,11 @@ const revalidarToken = async (req, res) => {
         path: "/venta",
         key: "mod-venta",
       },
+      {
+        name: "RR.HH.",
+        path: "/rrhh",
+        key: "mod-rrhh",
+      },
     ];
   }
 
@@ -1075,7 +1087,97 @@ const postFiles = async (req = request, res = response) => {
 };
 const postPariente = async (req = request, res = response) => {
   try {
-    const { id_tipo_pariente, nombre, telefono, email, observacion } = req.body;
+    const { uid_location, entidad } = req.query;
+    const { id_tipo_pariente, nombres, telefono, email, comentario } = req.body;
+    const contactoEmergencia = new ContactoEmergencia({
+      id_tipo_pariente,
+      nombres,
+      telefono,
+      email,
+      comentario,
+      uid_location,
+      entidad,
+    });
+    await contactoEmergencia.save();
+    res.status(201).json({
+      msg: "ok",
+      contactoEmergencia,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      error: `Error en el servidor, en controller de postPariente, hable con el administrador: ${error}`,
+    });
+  }
+};
+const getParientes = async (req = request, res = response) => {
+  try {
+    const { uid_location, entidad } = req.params;
+    const contactosEmergencia = await ContactoEmergencia.findAll({
+      where: { uid_location, entidad, flag: true },
+      include: [
+        {
+          model: Parametros,
+          as: "tipo_pariente",
+        },
+      ],
+    });
+    res.status(201).json({
+      msg: "ok",
+      contactosEmergencia,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      error: `Error en el servidor, en controller de getparientes, hable con el administrador: ${error}`,
+    });
+  }
+};
+const getPariente = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const contactoEmergencia = await ContactoEmergencia.findOne({
+      where: { id },
+    });
+    res.status(201).json({
+      contactoEmergencia,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      error: `Error en el servidor, en controller de getparientes, hable con el administrador: ${error}`,
+    });
+  }
+};
+const updatePariente = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const contactoEmergencia = await ContactoEmergencia.findOne({
+      where: { id },
+    });
+    await contactoEmergencia.update(req.body);
+    res.status(201).json({
+      msg: "ok",
+      contactoEmergencia,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      error: `Error en el servidor, en controller de postPariente, hable con el administrador: ${error}`,
+    });
+  }
+};
+const deletePariente = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const contactoEmergencia = await ContactoEmergencia.findOne({
+      where: { id },
+    });
+    await contactoEmergencia.update({flag: false});
+    res.status(201).json({
+      msg: "ok",
+      contactoEmergencia,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({
@@ -1111,4 +1213,8 @@ module.exports = {
   putUsuario,
   loginUsuario,
   revalidarToken,
+  getParientes,
+  getPariente,
+  updatePariente,
+  deletePariente,
 };

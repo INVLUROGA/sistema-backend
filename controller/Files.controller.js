@@ -1,5 +1,5 @@
 const { request, response } = require("express");
-const { Files, ImagePT } = require("../models/Image");
+const { Files, ImagePT, DocumentosInternos } = require("../models/Image");
 const uuid = require("uuid");
 const postFiles = async (req = request, res = response) => {
   try {
@@ -67,8 +67,43 @@ const obtenerFilesxUIDFILE = async (req = request, res = response) => {
     });
   }
 };
+const postFileInterno = async (req = request, res = response) => {
+  try {
+    const { id_empresa } = req.params;
+    const {
+      fecha_registro,
+      id_tipo_doc,
+      titulo,
+      observacion,
+      id_seccionVisible,
+    } = req.body;
+    const uid_file = uuid.v4();
+    const documentoInterno = new DocumentosInternos({
+      id_empresa,
+      fecha_registro,
+      uid_file: uid_file,
+      id_tipo_doc,
+      titulo,
+      observacion,
+      id_seccionVisible,
+    });
+    await documentoInterno.save();
+    res.status(201).json({
+      ok: true,
+      documentoInterno,
+      uid_file,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(501).json({
+      ok: false,
+      msg: error,
+    });
+  }
+};
 module.exports = {
   postFiles,
   deleteFilexID,
   obtenerFilesxUIDFILE,
+  postFileInterno,
 };

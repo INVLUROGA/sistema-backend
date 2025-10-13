@@ -1,6 +1,7 @@
 const { db } = require("../database/sequelizeConnection");
 const { DataTypes } = require("sequelize");
 const { Usuario } = require("./Usuarios");
+const { Parametros } = require("./Parametros");
 
 const Comentario = db.define("tb_comentarios", {
   id_comentario: {
@@ -54,25 +55,35 @@ const Actividad = db.define("auth_actividad", {
   },
 });
 const ContactoEmergencia = db.define("tb_contactoEmergencia", {
-  id_ce: {
+  id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
   },
+  entidad: {
+    type: DataTypes.STRING(100),
+  },
   uid_location: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(150),
   },
-  uid: {
-    type: DataTypes.STRING,
-  },
-  nombreContacto_ce: {
-    type: DataTypes.STRING,
-  },
-  tel_ce: {
-    type: DataTypes.STRING(25),
-  },
-  relacion_ce: {
+  id_tipo_pariente: {
     type: DataTypes.INTEGER,
+  },
+  nombres: {
+    type: DataTypes.STRING(150),
+  },
+  telefono: {
+    type: DataTypes.STRING(50),
+  },
+  email: {
+    type: DataTypes.STRING(150),
+  },
+  comentario: {
+    type: DataTypes.STRING(350),
+  },
+  flag: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
   },
 });
 
@@ -101,6 +112,12 @@ const MensajeEnviados = db.define("tb_mensajes_enviados", {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
+});
+
+ContactoEmergencia.hasOne(Parametros, {
+  foreignKey: "id_param",
+  sourceKey: "id_tipo_pariente",
+  as: "tipo_pariente",
 });
 
 Comentario.sync()

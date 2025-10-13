@@ -21,7 +21,11 @@ const {
   revalidarToken,
   obtenerDatosUltimaMembresia,
   obtenerMarcacionsCliente,
-  
+  postPariente,
+  getParientes,
+  getPariente,
+  updatePariente,
+  deletePariente,
 } = require("../controller/usuario.controller");
 const {
   extraerComentarios,
@@ -43,7 +47,11 @@ const router = Router();
  * /api/usuario
  */
 
-router.post('/pariente', )
+router.post("/pariente", postPariente);
+router.get("/pariente/:id", getPariente);
+router.get(`/pariente/:uid_location/:entidad`, getParientes);
+router.put("/pariente/:id", updatePariente);
+router.put("/pariente/delete/:id", deletePariente);
 router.post(
   "/post-cliente/:id_empresa",
   validarJWT,

@@ -69,6 +69,42 @@ const Files = db.define("tb_files", {
   },
 });
 
+const DocumentosInternos = db.define("tb_documentosInternos", {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  id_seccionVisible: {
+    type: DataTypes.INTEGER,
+  },
+  fecha_registro: {
+    type: DataTypes.DATE,
+  },
+  uid_file: {
+    type: DataTypes.STRING,
+  },
+  id_tipo_doc: {
+    type: DataTypes.INTEGER,
+  },
+  titulo: {
+    type: DataTypes.STRING(120),
+  },
+  observacion: {
+    type: DataTypes.STRING(325),
+  },
+  id_empresa: {
+    type: DataTypes.INTEGER,
+  },
+  id_user: {
+    type: DataTypes.INTEGER,
+  },
+  flag: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+});
+
 Files.hasOne(ImagePT, {
   foreignKey: "uid_location",
   sourceKey: "uid_file",
@@ -86,7 +122,6 @@ ImagePT.belongsTo(ContratoProv, {
   sourceKey: "uid_presupuesto",
 });
 
-
 Parametros_zonas.hasMany(ImagePT, {
   foreignKey: "uid_location",
   sourceKey: "uid_image",
@@ -96,11 +131,20 @@ Parametros.hasMany(ImagePT, {
   sourceKey: "uid_image",
 });
 
-
 Proveedor.hasOne(ImagePT, {
   foreignKey: "uid_location",
   sourceKey: "uid_perfil_image",
 });
+DocumentosInternos.sync()
+  .then(() => {
+    console.log("La tabla DocumentosInternos ha sido creada o ya existe.");
+  })
+  .catch((error) => {
+    console.error(
+      "Error al sincronizar el modelo con la base de datos:",
+      error
+    );
+  });
 Files.sync()
   .then(() => {
     console.log("La tabla files ha sido creada o ya existe.");
@@ -125,4 +169,5 @@ ImagePT.sync()
 module.exports = {
   ImagePT,
   Files,
+  DocumentosInternos,
 };
