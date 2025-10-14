@@ -147,6 +147,12 @@ const ContratoProv = db.define("prov_contratos", {
   monto_contrato: {
     type: DataTypes.DECIMAL(10, 2),
   },
+  mano_obra_soles: {
+    type: DataTypes.DECIMAL(10, 2),
+  },
+  mano_obra_dolares: {
+    type: DataTypes.DECIMAL(10, 2),
+  },
   observacion: {
     type: DataTypes.STRING(660),
   },
@@ -166,6 +172,9 @@ const ContratoProv = db.define("prov_contratos", {
     type: DataTypes.STRING,
   },
   id_empresa: {
+    type: DataTypes.INTEGER,
+  },
+  id_zona: {
     type: DataTypes.INTEGER,
   },
   flag: {

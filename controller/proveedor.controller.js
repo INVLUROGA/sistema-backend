@@ -331,7 +331,7 @@ const postContratoProv = async (req = request, res = response) => {
 const putContratoProv = async (req = request, res = response) => {
   try {
     const { id } = req.params;
-    const contratoProv = ContratoProv.findOne({ where: { id } });
+    const contratoProv = await ContratoProv.findOne({ where: { id } });
     await contratoProv.update(req.body);
     let formAUDIT = {
       id_user: req.id_user,
@@ -343,6 +343,23 @@ const putContratoProv = async (req = request, res = response) => {
     await capturarAUDIT(formAUDIT);
     res.status(200).json({
       msg: "contrato del Proveedor creado con exito",
+      contratoProv,
+      ok: true,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: "Hable con el encargado de sistema",
+    });
+  }
+};
+const obtenerContratoProvxID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const contratoProv = await ContratoProv.findOne({ where: { id } });
+    res.status(200).json({
+      msg: "contrato del Proveedor obtenido con exito",
       contratoProv,
       ok: true,
     });
@@ -773,4 +790,5 @@ module.exports = {
   getTrabajos,
   obtenerContratosxProveedores,
   postPenalidadesContratoProv,
+  obtenerContratoProvxID,
 };

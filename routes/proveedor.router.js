@@ -15,6 +15,8 @@ const {
   obtenerContratosxProveedores,
   getTrabajos,
   postPenalidadesContratoProv,
+  obtenerContratoProvxID,
+  putContratoProv,
 } = require("../controller/proveedor.controller");
 const { validarJWT } = require("../middlewares/validarJWT");
 const router = Router();
@@ -31,9 +33,9 @@ router.get("/obtener-contratos/:id_prov", getContratosxProv);
 router.get("/obtener-contrato/:id", getContratoxID);
 router.get("/obtener-gastos/:cod_trabajo/:tipo_moneda", getGastosxCodProv);
 router.post("/post-contrato-prov", postContratoProv);
-router.put("/put-contrato-prov/:id", postContratoProv);
+router.put("/put-contrato-prov/:id", putContratoProv);
 router.get("/obtener-trabajos-proveedores/:id_empresa", getTrabajos);
-
+router.get("/contrato/:id", obtenerContratoProvxID);
 router.get("/obtener-contrato-prov/:id_contratoprov", descargarContratoProvPDF);
 router.get("/trabajos/:id_prov", obtenerContratosxProveedores);
 
