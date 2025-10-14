@@ -226,6 +226,14 @@ const seccionGET = async (req = request, res = response) => {
         //   icon: "uil-calender",
         //   url: "/reporte-admin/asistenciaReporte",
         // },
+        
+        {
+          key: "resumen-ejecutivo",
+          label: "RESUMEN EJECUTIVO",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/resumen-ejecutivo",
+        },
         {
           key: "config",
           label: "INVENTARIO",
