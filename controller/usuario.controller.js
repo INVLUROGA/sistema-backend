@@ -510,6 +510,10 @@ const postUsuarioEmpleado = (req = request, res = response) => {
       uid_comentario: comentarioUnico_UID,
       uid_contactsEmergencia: contactoEmerg_UID,
       fecha_nacimiento: req.body.fecNac_empl,
+      fecContrato_empl: null,
+      horario_empl: null,
+      salario_empl: 0,
+      tipoContrato_empl: 0,
     });
     empleado.save();
     res.status(200).json({
@@ -1173,7 +1177,7 @@ const deletePariente = async (req = request, res = response) => {
     const contactoEmergencia = await ContactoEmergencia.findOne({
       where: { id },
     });
-    await contactoEmergencia.update({flag: false});
+    await contactoEmergencia.update({ flag: false });
     res.status(201).json({
       msg: "ok",
       contactoEmergencia,

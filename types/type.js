@@ -276,7 +276,7 @@
   },
   {
     key: "planilla",
-    label: "Planilla",
+    label: "RECURSOS HUMANOS",
     isTitle: true,
   },
   {

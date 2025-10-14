@@ -367,7 +367,7 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           key: "planilla",
-          label: "Planilla",
+          label: "RECURSOS HUMANOS",
           isTitle: true,
         },
         {
@@ -800,6 +800,13 @@ const seccionGET = async (req = request, res = response) => {
               parentKey: "reporte-demografico-membresia",
             },
           ],
+        },
+        {
+          key: "gestion-lead",
+          label: "gestion de lead",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/reporte-admin/gestion-lead",
         },
         {
           key: "cliente-admClientes",
