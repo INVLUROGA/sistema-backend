@@ -556,6 +556,7 @@ const getUsuarioEmpleados = async (req = request, res = response) => {
         "email_empl",
         "telefono_empl",
         "email_corporativo",
+        "uid_contactsEmergencia",
         ["estado_empl", "estado"],
       ],
       where: {
@@ -1189,6 +1190,31 @@ const deletePariente = async (req = request, res = response) => {
     });
   }
 };
+const getParientesxEntidad = async (req = request, res = response) => {
+  try {
+    const { entidad } = req.params;
+    console.log({ entidad });
+
+    const contactosEmergencia = await ContactoEmergencia.findAll({
+      where: { entidad, flag: true },
+      include: [
+        {
+          model: Parametros,
+          as: "tipo_pariente",
+        },
+      ],
+    });
+    res.status(201).json({
+      msg: "ok",
+      contactosEmergencia,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      error: `Error en el servidor, en controller de getparientes, hable con el administrador: ${error}`,
+    });
+  }
+};
 module.exports = {
   postFiles,
   postPariente,
@@ -1221,4 +1247,5 @@ module.exports = {
   getPariente,
   updatePariente,
   deletePariente,
+  getParientesxEntidad,
 };

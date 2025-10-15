@@ -26,6 +26,7 @@ const {
   getPariente,
   updatePariente,
   deletePariente,
+  getParientesxEntidad
 } = require("../controller/usuario.controller");
 const {
   extraerComentarios,
@@ -48,6 +49,7 @@ const router = Router();
  */
 
 router.post("/pariente", postPariente);
+router.get(`/pariente/entidad/:entidad`, getParientesxEntidad);
 router.get("/pariente/:id", getPariente);
 router.get(`/pariente/:uid_location/:entidad`, getParientes);
 router.put("/pariente/:id", updatePariente);
