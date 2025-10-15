@@ -3,13 +3,14 @@ const { leadsxDia } = require("../models/Venta");
 
 const postLead = async (req = request, res = response) => {
   try {
-    const { fecha, cantidad, monto } = req.body;
+    const { fecha, cantidad, monto, id_red } = req.body;
     const { id_empresa } = req.params;
     const lead = new leadsxDia({
       fecha,
       cantidad,
       monto: monto * 1.18,
       id_empresa,
+      id_red,
       flag: true,
     });
     await lead.save();
