@@ -67,20 +67,16 @@ const obtenerFilesxUIDFILE = async (req = request, res = response) => {
     });
   }
 };
+// DOCUMENTOS INTERNOS
 const postFileInterno = async (req = request, res = response) => {
   try {
-    const { id_empresa } = req.params;
-    const {
-      fecha_registro,
-      id_tipo_doc,
-      titulo,
-      observacion,
-      id_seccionVisible,
-    } = req.body;
+    const { id_empresa, id_seccionVisible, uid_location } = req.params;
+    const { fecha_registro, id_tipo_doc, titulo, observacion } = req.body;
     const uid_file = uuid.v4();
     const documentoInterno = new DocumentosInternos({
       id_empresa,
       fecha_registro,
+      uid_location,
       uid_file: uid_file,
       id_tipo_doc,
       titulo,
@@ -101,9 +97,33 @@ const postFileInterno = async (req = request, res = response) => {
     });
   }
 };
+const obtenerFileInternoxUidLocation = async (
+  req = request,
+  res = response
+) => {
+  try {
+    const { uid_location, id_seccionVisible } = req.params;
+    const documentosInternos = await DocumentosInternos.findAll({
+      where: { uid_location, id_seccionVisible },
+      include: [
+        {
+          model: ImagePT,
+          attributes: ["name_image"],
+          where: { flag: true },
+        },
+      ],
+    });
+    res.status(201).json({
+      documentosInternos,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
   postFiles,
   deleteFilexID,
   obtenerFilesxUIDFILE,
   postFileInterno,
+  obtenerFileInternoxUidLocation,
 };

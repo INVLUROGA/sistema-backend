@@ -213,20 +213,7 @@ const seccionGET = async (req = request, res = response) => {
         //   label: "Recursos Humanos",
         //   isTitle: true,
         // },
-        // {
-        //   label: "Reportes Por Planilla",
-        //   isTitle: false,
-        //   icon: "uil-calender",
-        //   url: "/reporte-admin/RecursosHumanoReportes",
-        // },
-        // {
-        //   key: "reporte-utilidad-pgm",
-        //   label: "Reporte de asistencias",
-        //   isTitle: false,
-        //   icon: "uil-calender",
-        //   url: "/reporte-admin/asistenciaReporte",
-        // },
-        
+
         {
           key: "resumen-ejecutivo",
           label: "RESUMEN EJECUTIVO",
@@ -384,6 +371,20 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: false,
           icon: "uil-calender",
           url: "/gestion-empleados",
+        },
+
+        {
+          label: "Reportes Por Planilla",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/reporte-admin/RecursosHumanoReportes",
+        },
+        {
+          key: "reporte-utilidad-pgm",
+          label: "Reporte de asistencias",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/reporte-admin/asistenciaReporte",
         },
         {
           key: "gest-serv",

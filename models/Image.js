@@ -81,6 +81,9 @@ const DocumentosInternos = db.define("tb_documentosInternos", {
   fecha_registro: {
     type: DataTypes.DATE,
   },
+  uid_location: {
+    type: DataTypes.STRING,
+  },
   uid_file: {
     type: DataTypes.STRING,
   },
@@ -103,6 +106,16 @@ const DocumentosInternos = db.define("tb_documentosInternos", {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
+});
+
+
+DocumentosInternos.hasOne(ImagePT, {
+  foreignKey: "uid_location",
+  sourceKey: "uid_file",
+});
+ImagePT.belongsTo(DocumentosInternos, {
+  foreignKey: "uid_location",
+  sourceKey: "uid_file",
 });
 
 Files.hasOne(ImagePT, {

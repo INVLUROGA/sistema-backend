@@ -155,7 +155,6 @@ const PostProveedores = async (req, res, next) => {
     const uid_documento_proveedor = uid.v4();
     const uid_foto_prov = uid.v4();
     const proveedor = new Proveedor({
-      estado_prov: false,
       es_agente,
       uid: uid.v4(),
       id_oficio: id_oficio,
