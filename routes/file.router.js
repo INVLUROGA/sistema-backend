@@ -22,6 +22,7 @@ router.post(
   "/interno/:id_seccionVisible/:uid_location/:id_empresa",
   postFileInterno
 );
+router.get("/interno/:id_seccionVisible", obtenerFileInternoxUidLocation);
 router.get(
   "/interno/:uid_location/:id_seccionVisible",
   obtenerFileInternoxUidLocation

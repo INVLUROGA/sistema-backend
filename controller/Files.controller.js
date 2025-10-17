@@ -102,16 +102,16 @@ const obtenerFileInternoxUidLocation = async (
   res = response
 ) => {
   try {
-    const { uid_location, id_seccionVisible } = req.params;
+    const { id_seccionVisible } = req.params;
     const documentosInternos = await DocumentosInternos.findAll({
-      where: { uid_location, id_seccionVisible },
-      include: [
-        {
-          model: ImagePT,
-          attributes: ["name_image"],
-          where: { flag: true },
-        },
-      ],
+      where: { id_seccionVisible },
+      // include: [
+      //   {
+      //     model: ImagePT,
+      //     attributes: ["name_image"],
+      //     where: { flag: true },
+      //   },
+      // ],
     });
     res.status(201).json({
       documentosInternos,
