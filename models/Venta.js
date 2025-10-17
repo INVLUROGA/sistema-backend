@@ -325,6 +325,7 @@ const leadsxDia = db.define("tb_leadsDia", {
   id_red:{
     type: DataTypes.INTEGER,
   },
+   id_red: { type: DataTypes.INTEGER, allowNull: true },   
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
