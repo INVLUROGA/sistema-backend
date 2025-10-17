@@ -102,6 +102,29 @@ const obtenerFileInternoxUidLocation = async (
   res = response
 ) => {
   try {
+    const { id_seccionVisible, uid_location } = req.params;
+    const documentosInternos = await DocumentosInternos.findAll({
+      where: { id_seccionVisible, uid_location },
+      // include: [
+      //   {
+      //     model: ImagePT,
+      //     attributes: ["name_image"],
+      //     where: { flag: true },
+      //   },
+      // ],
+    });
+    res.status(201).json({
+      documentosInternos,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const obtenerFileInternoxseccionVisible = async (
+  req = request,
+  res = response
+) => {
+  try {
     const { id_seccionVisible } = req.params;
     const documentosInternos = await DocumentosInternos.findAll({
       where: { id_seccionVisible },
@@ -126,4 +149,5 @@ module.exports = {
   obtenerFilesxUIDFILE,
   postFileInterno,
   obtenerFileInternoxUidLocation,
+  obtenerFileInternoxseccionVisible,
 };

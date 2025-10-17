@@ -5,6 +5,7 @@ const {
   obtenerFilesxUIDFILE,
   postFileInterno,
   obtenerFileInternoxUidLocation,
+  obtenerFileInternoxseccionVisible
 } = require("../controller/Files.controller");
 
 const router = Router();
@@ -22,7 +23,7 @@ router.post(
   "/interno/:id_seccionVisible/:uid_location/:id_empresa",
   postFileInterno
 );
-router.get("/interno/:id_seccionVisible", obtenerFileInternoxUidLocation);
+router.get("/interno/tb/:id_seccionVisible", obtenerFileInternoxseccionVisible);
 router.get(
   "/interno/:uid_location/:id_seccionVisible",
   obtenerFileInternoxUidLocation
