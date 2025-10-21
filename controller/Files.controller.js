@@ -143,6 +143,51 @@ const obtenerFileInternoxseccionVisible = async (
     console.log(error);
   }
 };
+const postFileCenterInterno = async (req = request, res = response) => {
+  try {
+    const { id_empresa, id_seccionVisible } = req.params;
+    const { fecha_registro, id_tipo_doc, titulo, observacion } = req.body;
+    const uid_file = uuid.v4();
+    const documentoInterno = new DocumentosInternos({
+      id_empresa,
+      fecha_registro,
+      uid_file: uid_file,
+      id_tipo_doc,
+      titulo,
+      observacion,
+      id_seccionVisible,
+    });
+    await documentoInterno.save();
+    res.status(201).json({
+      ok: true,
+      documentoInterno,
+      uid_file,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(501).json({
+      ok: false,
+      msg: error,
+    });
+  }
+};
+const getFileCenterInterno = async (req = request, res = response) => {
+  try {
+    const documentosInternos = await DocumentosInternos.findAll({
+      where: { flag: true },
+      include: [
+        {
+          model: ImagePT,
+        },
+      ],
+    });
+    res.status(201).json({
+      documentosInternos,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
   postFiles,
   deleteFilexID,
@@ -150,4 +195,6 @@ module.exports = {
   postFileInterno,
   obtenerFileInternoxUidLocation,
   obtenerFileInternoxseccionVisible,
+  postFileCenterInterno,
+  getFileCenterInterno,
 };

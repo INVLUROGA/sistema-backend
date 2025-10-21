@@ -90,14 +90,15 @@ const extraerVentaMembresia = async (req, res, next) => {
 };
 const extraerVentaTransferenciaMembresia = (req, res, next) => {
   if (!req.body.dataVenta.detalle_venta_transferencia) return next();
+  console.log({ rb: req.body });
 
   const membresia = req.body.dataVenta.detalle_venta_transferencia.map(
     (transferencia) => {
       return {
-        tarifa_monto: 0, //SOLO POR AHORA
-        horario: transferencia.label_horario,
-        fec_inicio_mem: transferencia.fec_init_mem,
-        fec_fin_mem: transferencia.fec_fin_mem,
+        tarifa_monto: transferencia?.tarifa_monto, //SOLO POR AHORA
+        horario: transferencia?.label_horario,
+        fec_inicio_mem: transferencia?.fec_init_mem,
+        fec_fin_mem: transferencia?.fec_fin_mem,
         ...transferencia,
         // id_membresia:
       };

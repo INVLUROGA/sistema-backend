@@ -30,4 +30,6 @@ router.get("/get-planillas/:uid_empl", obtenerPlanillasxEmpl);
 router.get("/obtener-planilla/:id_planilla", obtenerPlanillaxID);
 router.get("/obtener-planilla/:id_planilla", obtenerPlanillaxID);
 
+// GESTION DE FERIADOS
+
 module.exports = router;

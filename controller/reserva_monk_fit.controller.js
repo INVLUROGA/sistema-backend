@@ -10,6 +10,7 @@ const obtenerReservasMonkFit = async (req = request, res = response) => {
 const postReservaMonkFit = async (req = request, res = response) => {
   try {
     const { id_cli, fecha, id_pgm } = req.body;
+    
   } catch (error) {
     console.log(error);
   }

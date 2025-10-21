@@ -748,6 +748,12 @@ const get_VENTAS = async (req = request, res = response) => {
           ],
         },
         {
+          model: detalleVenta_Transferencia,
+          as: "venta_venta",
+          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
+          attributes: ["id_venta", "tarifa_monto"],
+        },
+        {
           model: detalleVenta_producto,
           required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
           attributes: [
@@ -792,6 +798,8 @@ const get_VENTAS = async (req = request, res = response) => {
         },
       ],
     });
+    console.log({ ventas });
+
     res.status(200).json({
       ok: true,
       ventas,
