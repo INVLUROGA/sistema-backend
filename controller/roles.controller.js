@@ -366,6 +366,20 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: true,
         },
         {
+          key: "colaboradores-cv",
+          label: "CVS",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/colaboradores-cv",
+        },
+        {
+          key: "colaboradores-dni",
+          label: "DNI",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/colaboradores-dni",
+        },
+        {
           key: "colaboradores-admColaboradores",
           label: "Colaboradores",
           isTitle: false,

@@ -280,6 +280,20 @@
     isTitle: true,
   },
   {
+    key: "colaboradores-CVS",
+    label: "CVS",
+    isTitle: false,
+    icon: "uil-calender",
+    url: "/colaboradores-cv",
+  },
+  {
+    key: "colaboradores-DNIS",
+    label: "DNI",
+    isTitle: false,
+    icon: "uil-calender",
+    url: "/colaboradores-dni",
+  },
+  {
     key: "colaboradores-admColaboradores",
     label: "Colaboradores",
     isTitle: false,
