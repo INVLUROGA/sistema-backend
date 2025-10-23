@@ -95,6 +95,7 @@ const getTBProveedores = async (req = request, res = response) => {
         ["estado_prov", "estado"],
         "id",
         "uid",
+        "id_empresa",
       ],
       include: [
         {

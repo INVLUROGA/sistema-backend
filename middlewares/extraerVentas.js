@@ -95,7 +95,7 @@ const extraerVentaTransferenciaMembresia = (req, res, next) => {
   const membresia = req.body.dataVenta.detalle_venta_transferencia.map(
     (transferencia) => {
       return {
-        tarifa_monto: transferencia?.tarifa_monto, //SOLO POR AHORA
+        tarifa_monto: transferencia?.tarifa, //SOLO POR AHORA
         horario: transferencia?.label_horario,
         fec_inicio_mem: transferencia?.fec_init_mem,
         fec_fin_mem: transferencia?.fec_fin_mem,

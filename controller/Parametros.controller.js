@@ -264,6 +264,7 @@ const getParametrosporProveedor = async (req, res) => {
           "label",
         ],
         ["id_oficio", "id_oficio"],
+        ["id_empresa", "id_empresa"],
         // "id_oficio",
         // ["razon_social_prov", "label"],
       ],

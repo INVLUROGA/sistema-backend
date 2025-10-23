@@ -354,6 +354,20 @@ const seccionGET = async (req = request, res = response) => {
           url: "/gestion-proveedores",
         },
         {
+          key: "gest-prov",
+          label: "FORMATO DE DECLARACIÓN JURADA PROVEEDOR",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/declaracion-jurada",
+        },
+        {
+          key: "gest-prov",
+          label: "MODELO DE CONTRATO 2025",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/modelo-contrato",
+        },
+        {
           key: "trab-prov",
           label: "gastos ",
           isTitle: false,
