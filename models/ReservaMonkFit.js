@@ -1,41 +1,25 @@
 const { DataTypes } = require("sequelize");
 const { db } = require("../database/sequelizeConnection");
+const { Parametros } = require("./Parametros");  
 
-const ReservaMonkFit = db.define("tb_reservaMonkFit", {
-  id: {
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
+const ReservaMonkFit = db.define(
+  "tb_reservaMonkFit",
+  {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    id_cli: { type: DataTypes.INTEGER, allowNull: false },
+    id_pgm: { type: DataTypes.INTEGER, allowNull: false },
+    id_estado_param: { type: DataTypes.INTEGER, allowNull: true },
+    fecha: { type: DataTypes.DATE, allowNull: false },
+    flag: { type: DataTypes.BOOLEAN, defaultValue: true },
   },
-  id_cli: {
-    type: DataTypes.INTEGER,
-  },
-  id_pgm: {
-    type: DataTypes.INTEGER,
-  },
-  id_estado: {
-    type: DataTypes.DATE,
-  },
-  fecha: {
-    type: DataTypes.DATE,
-  },
-  flag: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-  },
+  { tableName: "tb_reservaMonkFit", timestamps: true }
+);
+
+ReservaMonkFit.belongsTo(Parametros, {
+  tableName:"tb_parametros",
+  as: "estado",
+  foreignKey: "id_estado_param",
+  targetKey: "id_param",
 });
 
-ReservaMonkFit.sync()
-  .then(() => {
-    console.log("La tabla ReservaMonkFit ha sido creada o ya existe.");
-  })
-  .catch((error) => {
-    console.error(
-      "Error al sincronizar el modelo con la base de datos:",
-      error
-    );
-  });
-
-module.exports = {
-  ReservaMonkFit,
-};
+module.exports = ReservaMonkFit;
