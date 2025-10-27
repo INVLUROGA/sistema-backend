@@ -141,7 +141,7 @@ const alertasUsuario = async () => {
     console.log("en alerta usuario");
 
     const dataAlertas = await AlertasUsuario.findAll({
-      where: { flag: true },
+      where: { flag: true, id_estado: 1 },
       include: [
         {
           model: Usuario,
@@ -173,7 +173,7 @@ const alertasUsuario = async () => {
           where: { id: alerta.id },
         });
 
-        await alertaYaFinalizada.update({ flag: false });
+        await alertaYaFinalizada.update({ id_estado: 0 });
 
         if (alerta.tipo_alerta === 1425) {
           const fechaOriginal = new Date(alertaYaFinalizada.fecha);
@@ -184,7 +184,7 @@ const alertasUsuario = async () => {
             tipo_alerta: alertaYaFinalizada.tipo_alerta,
             mensaje: alertaYaFinalizada.mensaje,
             fecha: nuevaFecha,
-            flag: true,
+            id_estado: 1,
           });
           await alertaNueva.save();
         }

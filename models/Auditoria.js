@@ -80,6 +80,9 @@ const AlertasUsuario = db.define("tb_alertaUsuario", {
   fecha: {
     type: DataTypes.DATE,
   },
+  id_estado: {
+    type: DataTypes.INTEGER,
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,

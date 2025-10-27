@@ -349,10 +349,17 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           key: "gest-prov",
-          label: "Gestion de proveedores",
+          label: "Proveedores activos",
           isTitle: false,
           icon: "uil-calender",
-          url: "/gestion-proveedores",
+          url: "/gestion-proveedores-activo",
+        },
+        {
+          key: "gest-prov",
+          label: "Proveedores Inactivos",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-proveedores-inactivo",
         },
         {
           key: "gest-prov",
@@ -363,7 +370,7 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           key: "gest-prov",
-          label: "MODELO DE CONTRATO 2025",
+          label: "MODELO DE CONTRATO",
           isTitle: false,
           icon: "uil-calender",
           url: "/modelo-contrato",
@@ -396,10 +403,17 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           key: "colaboradores-admColaboradores",
-          label: "Colaboradores",
+          label: "Colaboradores Activos",
           isTitle: false,
           icon: "uil-calender",
-          url: "/gestion-empleados",
+          url: "/gestion-empleados-activo",
+        },
+        {
+          key: "colaboradores-admColaboradores",
+          label: "Colaboradores Inactivo",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-empleados-inactivo",
         },
 
         {
@@ -473,6 +487,13 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: true,
         },
         {
+          key: "gestion-alerta-usuario",
+          label: "gestion alertas De Usuario",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-alerta-usuario",
+        },
+        {
           key: "adm-usuario",
           label: "Administrar usuarios",
           isTitle: false,
@@ -527,10 +548,10 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           //key: "reporte-utilidad-pgm",
-          label: "GESTION DE FERIADOS",
+          label: "Horarios",
           isTitle: false,
           icon: "uil-calender",
-          url: "/gest-feriados",
+          url: "/horarios-colaborador",
         },
       ];
     }
