@@ -23,6 +23,9 @@ const Articulos = db.define("tb_articulos", {
   id_marca: {
     type: DataTypes.INTEGER,
   },
+  modelo:{
+    type: DataTypes.STRING(50),
+  },
   descripcion: {
     type: DataTypes.STRING(890),
   },
