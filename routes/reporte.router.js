@@ -26,7 +26,7 @@ const router = Router();
  * /api/reporte
  */
 
-router.get("/reporte-ventas-x-cliente/:id_cli");
+//router.get("/reporte-ventas-x-cliente/:id_cli",getReporteSeguimientoClientes);
 router.get("/reporte-ventas-formas-de-pago", getReporteFormasDePago);
 router.get("/reporte-obtener-ventas", getReporteVentas);
 router.get("/reporte-seguimiento-membresia/:id_empresa", getReporteSeguimiento);

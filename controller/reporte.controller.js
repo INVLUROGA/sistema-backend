@@ -40,7 +40,8 @@ const diasLaborables = (fechaInicio, fechaFin) => {
   // Determina la dirección de la iteración
   const direccion = fechaFinParsed.isAfter(fechaInicioParsed) ? 1 : -1;
 
-  // Calcula el número total de días
+// Helper para normalizar arrayDate desde querystring
+
   const totalDias = Math.abs(fechaFinParsed.diff(fechaInicioParsed, "day")) + 1;
 
   // Inicializa fechaActual
@@ -1504,17 +1505,48 @@ const getReporteDeUtilidadesTotal = async (req = request, res = response) => {
     });
   }
 };
+function getArrayDate(req) {
+  let range = req.query.arrayDate;
+
+  // fallback: cuando axios manda arrayDate[]=...&arrayDate[]=...
+  if (!range) {
+    range = req.query['arrayDate[]'];
+  }
+
+  // si todavía no hay nada -> no podemos continuar
+  if (!range) {
+    return null;
+  }
+
+  // si viene como string único, lo volvemos array
+  if (!Array.isArray(range)) {
+    range = [range];
+  }
+
+  // limpiamos undefined/null por si acaso
+  range = range.filter(v => v != null);
+
+  return range;
+}
 const getReporteDeTotalDeVentas_ClientesVendedores = async (
   req = request,
   res = response
 ) => {
-  const { arrayDate } = req.query;
-  console.log(arrayDate);
-
-  const fechaInicio = arrayDate[0];
-  const fechaFin = arrayDate[1];
-
   try {
+    const rango = getArrayDate(req);
+
+    if (!rango || rango.length < 2) {
+      return res.status(400).json({
+        ok: false,
+        msg: 'Faltan fechas válidas en arrayDate (debes enviar [inicio, fin])',
+      });
+    }
+
+    const fechaInicio = rango[0];
+    const fechaFin = rango[1];
+
+    console.log('getReporteDeTotalDeVentas_ClientesVendedores rango =>', rango);
+
     const TotalventasPorClientesYVendedores = await Venta.findAll({
       where: {
         flag: true,
@@ -1522,60 +1554,73 @@ const getReporteDeTotalDeVentas_ClientesVendedores = async (
           [Sequelize.Op.between]: [new Date(fechaInicio), new Date(fechaFin)],
         },
       },
-      order: [["fecha_venta", "desc"]],
-      attributes: ["id", "id_cli", "id_empl"],
+      order: [['fecha_venta', 'desc']],
+      attributes: ['id', 'id_cli', 'id_empl'],
       include: [
         {
           model: Cliente,
           attributes: [
-            "id_cli",
+            'id_cli',
             [
               Sequelize.literal(
                 "CONCAT(nombre_cli, ' ', apPaterno_cli, ' ', apMaterno_cli)"
               ),
-              "nombres_apellidos_clientes",
+              'nombres_apellidos_clientes',
             ],
-            "tipoCli_cli",
+            'tipoCli_cli',
           ],
         },
         {
           model: Empleado,
           attributes: [
-            "id_empl",
+            'id_empl',
             [
               Sequelize.literal(
                 "CONCAT(nombre_empl, ' ', apPaterno_empl, ' ', apMaterno_empl)"
               ),
-              "nombres_apellidos_clientes",
+              'nombres_apellidos_clientes',
             ],
           ],
         },
       ],
     });
-    res.status(200).json({
+
+    return res.status(200).json({
+      ok: true,
       reporte: TotalventasPorClientesYVendedores,
     });
   } catch (error) {
-    console.log(error);
-    res.status(505).json({
-      error: error,
+    console.log('ERROR getReporteDeTotalDeVentas_ClientesVendedores:', error);
+    return res.status(500).json({
+      ok: false,
+      error: `${error}`,
     });
   }
 };
 const getReporteVentas = async (req = request, res = response) => {
-  const { arrayDate } = req.query;
-
-  const fechaInicio = arrayDate[0];
-  const fechaFin = arrayDate[1];
   try {
+    const rango = getArrayDate(req);
+
+    if (!rango || rango.length < 2) {
+      return res.status(400).json({
+        ok: false,
+        msg: 'Faltan fechas válidas en arrayDate (debes enviar [inicio, fin])',
+      });
+    }
+
+    const fechaInicio = rango[0];
+    const fechaFin = rango[1];
+
+    console.log('getReporteVentas rango =>', rango);
+
     const ventas = await Venta.findAll({
       attributes: [
-        "id",
-        "id_cli",
-        "id_empl",
-        "id_tipoFactura",
-        "numero_transac",
-        "fecha_venta",
+        'id',
+        'id_cli',
+        'id_empl',
+        'id_tipoFactura',
+        'numero_transac',
+        'fecha_venta',
       ],
       where: {
         fecha_venta: {
@@ -1584,54 +1629,50 @@ const getReporteVentas = async (req = request, res = response) => {
         id_empresa: 598,
         flag: true,
         id_tipoFactura: {
-          [Op.ne]: 701, // Excluye los registros con id_tipoFactura igual a 84
+          [Op.ne]: 701,
         },
       },
-      order: [["id", "DESC"]],
+      order: [['id', 'DESC']],
       include: [
         {
           model: Cliente,
           attributes: [
             [
               Sequelize.fn(
-                "CONCAT",
-                Sequelize.col("nombre_cli"),
-                " ",
-                Sequelize.col("apPaterno_cli"),
-                " ",
-                Sequelize.col("apMaterno_cli")
+                'CONCAT',
+                Sequelize.col('nombre_cli'),
+                ' ',
+                Sequelize.col('apPaterno_cli'),
+                ' ',
+                Sequelize.col('apMaterno_cli')
               ),
-              "nombres_apellidos_cli",
+              'nombres_apellidos_cli',
             ],
-            "estCivil_cli",
-            "sexo_cli",
-            "ubigeo_distrito_cli",
-            "nacionalidad_cli",
-            "tipoCli_cli",
-            "fecNac_cli",
-            "fecha_nacimiento",
-            "createdAt",
+            'estCivil_cli',
+            'sexo_cli',
+            'ubigeo_distrito_cli',
+            'nacionalidad_cli',
+            'tipoCli_cli',
+            'fecNac_cli',
+            'fecha_nacimiento',
+            'createdAt',
           ],
           include: [
+            { model: Distritos, attributes: ['distrito'], as: 'ubigeo_nac' },
             {
-              model: Distritos,
-              attributes: ["distrito"],
-              as: "ubigeo_nac",
+              model: Parametros,
+              attributes: ['id_param', 'label_param'],
+              as: 'parametro_estCivil',
             },
             {
               model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_estCivil",
+              attributes: ['id_param', 'label_param'],
+              as: 'parametro_tipocli',
             },
             {
               model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_tipocli",
-            },
-            {
-              model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_sexo",
+              attributes: ['id_param', 'label_param'],
+              as: 'parametro_sexo',
             },
           ],
         },
@@ -1640,183 +1681,199 @@ const getReporteVentas = async (req = request, res = response) => {
           attributes: [
             [
               Sequelize.fn(
-                "CONCAT",
-                Sequelize.col("nombre_empl"),
-                " ",
-                Sequelize.col("apPaterno_empl"),
-                " ",
-                Sequelize.col("apMaterno_empl")
+                'CONCAT',
+                Sequelize.col('nombre_empl'),
+                ' ',
+                Sequelize.col('apPaterno_empl'),
+                ' ',
+                Sequelize.col('apMaterno_empl')
               ),
-              "nombres_apellidos_empl",
+              'nombres_apellidos_empl',
             ],
           ],
           include: [
             {
-              model: ImagePT,
+              model: ImagePT, // asumes relación Venta -> Empleado -> ImagePT
             },
           ],
         },
         {
           model: detalleVenta_producto,
           attributes: [
-            "id_venta",
-            "id_producto",
-            "cantidad",
-            "precio_unitario",
-            "tarifa_monto",
+            'id_venta',
+            'id_producto',
+            'cantidad',
+            'precio_unitario',
+            'tarifa_monto',
           ],
           include: [
             {
               model: Producto,
-              attributes: ["id", "id_categoria"],
+              attributes: ['id', 'id_categoria'],
             },
           ],
         },
         {
           model: detalleVenta_membresias,
           attributes: [
-            "id_venta",
-            "id_pgm",
-            "id_tarifa",
-            "horario",
-            "id_st",
-            "tarifa_monto",
+            'id_venta',
+            'id_pgm',
+            'id_tarifa',
+            'horario',
+            'id_st',
+            'tarifa_monto',
           ],
-
           include: [
             {
               model: ProgramaTraining,
-              attributes: ["name_pgm", "id_pgm"],
+              attributes: ['name_pgm', 'id_pgm'],
               include: [
                 {
                   model: ImagePT,
-                  attributes: ["name_image", "width", "height", "id"],
+                  attributes: ['name_image', 'width', 'height', 'id'],
                 },
               ],
             },
             {
               model: SemanasTraining,
-              attributes: ["semanas_st", "id_st"],
+              attributes: ['semanas_st', 'id_st'],
             },
           ],
         },
         {
           model: detalleVenta_citas,
-          attributes: ["id_venta", "id_servicio", "tarifa_monto"],
+          attributes: ['id_venta', 'id_servicio', 'tarifa_monto'],
           include: [
             {
               model: Servicios,
-              attributes: ["id", "tipo_servicio"],
+              attributes: ['id', 'tipo_servicio'],
             },
           ],
         },
         {
           model: detalleVenta_pagoVenta,
-          attributes: ["id_venta", "parcial_monto"],
+          attributes: ['id_venta', 'parcial_monto'],
           include: [
             {
               model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_banco",
+              attributes: ['id_param', 'label_param'],
+              as: 'parametro_banco',
             },
             {
               model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_forma_pago",
+              attributes: ['id_param', 'label_param'],
+              as: 'parametro_forma_pago',
             },
             {
               model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_tipo_tarjeta",
+              attributes: ['id_param', 'label_param'],
+              as: 'parametro_tipo_tarjeta',
             },
             {
               model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_tarjeta",
+              attributes: ['id_param', 'label_param'],
+              as: 'parametro_tarjeta',
             },
           ],
         },
       ],
     });
-    res.status(200).json({
+
+    return res.status(200).json({
       ok: true,
       reporte: ventas,
     });
   } catch (error) {
-    res.status(500).json({
+    console.log('ERROR getReporteVentas:', error);
+    return res.status(500).json({
+      ok: false,
       error: `Error en el servidor, en controller de get_VENTAS, hable con el administrador: ${error}`,
     });
   }
 };
 const getReporteFormasDePago = async (req = request, res = response) => {
-  const { arrayDate } = req.query;
-  const fechaInicio = arrayDate[0];
-  const fechaFin = arrayDate[1];
   try {
+    const rango = getArrayDate(req);
+
+    if (!rango || rango.length < 2) {
+      return res.status(400).json({
+        ok: false,
+        msg: 'Faltan fechas válidas en arrayDate (debes enviar [inicio, fin])',
+      });
+    }
+
+    const fechaInicio = rango[0];
+    const fechaFin = rango[1];
+
+    console.log('getReporteFormasDePago rango =>', rango);
+
     const ventasxFormasPago = await Venta.findAll({
       attributes: [
-        "id",
-        "id_cli",
-        "id_empl",
-        "id_tipoFactura",
-        "numero_transac",
-        "fecha_venta",
+        'id',
+        'id_cli',
+        'id_empl',
+        'id_tipoFactura',
+        'numero_transac',
+        'fecha_venta',
       ],
       where: {
         fecha_venta: {
           [Sequelize.Op.between]: [new Date(fechaInicio), new Date(fechaFin)],
         },
       },
-      order: [["id", "DESC"]],
+      order: [['id', 'DESC']],
       include: [
         {
           model: detalleVenta_pagoVenta,
           attributes: [
-            "fecha_pago",
-            "id_forma_pago",
-            "id_tipo_tarjeta",
-            "id_tarjeta",
-            "id_banco",
-            "parcial_monto",
-            "n_operacion",
-            "observacion",
+            'fecha_pago',
+            'id_forma_pago',
+            'id_tipo_tarjeta',
+            'id_tarjeta',
+            'id_banco',
+            'parcial_monto',
+            'n_operacion',
+            'observacion',
           ],
           include: [
             {
               model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_banco",
+              attributes: ['id_param', 'label_param'],
+              as: 'parametro_banco',
             },
             {
               model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_forma_pago",
+              attributes: ['id_param', 'label_param'],
+              as: 'parametro_forma_pago',
             },
             {
               model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_tipo_tarjeta",
+              attributes: ['id_param', 'label_param'],
+              as: 'parametro_tipo_tarjeta',
             },
             {
               model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_tarjeta",
+              attributes: ['id_param', 'label_param'],
+              as: 'parametro_tarjeta',
             },
           ],
         },
       ],
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       ok: true,
       reporte: ventasxFormasPago,
     });
   } catch (error) {
-    res.status(500).json({
+    console.log('ERROR getReporteFormasDePago:', error);
+    return res.status(500).json({
+      ok: false,
       error: `Error en el servidor, en controller de get_VENTAS, hable con el administrador: ${error}`,
     });
   }
 };
+
 const getReporteDeMembresiasxFechaxPrograma = async (
   req = request,
   res = response
