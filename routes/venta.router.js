@@ -117,7 +117,7 @@ router.get(
   "/obtener-contratos-clientes/:id_enterprice",
   obtenerContratosClientes
 );
-router.get("/comparativaPorProgramaApi/?:fecha", comparativaPorProgramaApi);
+router.get("/comparativaPorProgramaApi/:fecha", comparativaPorProgramaApi);
 
 router.get(
   "/reporte/reporte-ventas-x-programa/:id_pgm",

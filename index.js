@@ -214,7 +214,8 @@ const syncRoutes = require("./routes/ZkTeco/bd/syncRoutes");
 const userdata64Routes = require("./routes/ZkTeco/bd/userdata64Routes");
 const path = require("path");
 // enviarMensajes()
-
+const clienteMFRouter = require("./routes/cliente_mf.router");
+app.use("/api/cliente_mf", clienteMFRouter);
 app.use(cdataRoutes);
 app.use(devicecmdRoutes);
 app.use(getrequestRoutes);
