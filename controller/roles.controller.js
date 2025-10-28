@@ -287,7 +287,13 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           url: "/reporte-admin/flujo-caja",
         },
-         { key: "pt-reservas", label: "Reservas MonkFit", isTitle: false, icon: "uil-calender", url: "/gestion-monkfit" },
+        {
+          key: "pt-reservas",
+          label: "Reservas MonkFit",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-monkfit",
+        },
         {
           key: "reporte-comparativa-dia",
           label: "Comparativo por dia",
@@ -360,6 +366,13 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: false,
           icon: "uil-calender",
           url: "/gestion-proveedores-inactivo",
+        },
+        {
+          key: "gest-prov-cuentas-pagar",
+          label: "cuentas por pagar",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/cuentas-pagar",
         },
         {
           key: "gest-prov",
@@ -1082,7 +1095,13 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           url: "/crear-citas-nutricion",
         },
-                { key: "pt-reservas", label: "Reservas MonkFit", isTitle: false, icon: "uil-calender", url: "/gestion-monkfit" },
+        {
+          key: "pt-reservas",
+          label: "Reservas MonkFit",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-monkfit",
+        },
 
         {
           key: "gest-gastos",
