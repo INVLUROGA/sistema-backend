@@ -265,7 +265,7 @@ app.use("/api/egreso", validarJWT, require("./routes/gastos.router.js"));
 //TODO: programas
 app.use(
   "/api/programaTraining",
-  validarJWT,
+
   require("./routes/programaTraining.route.js")
 );
 //TODO: PARAMETROS TODO TIPO(SEXO, TIPO DOC, NACIONALIDAD, TIPOCLIENTE, REFERENCIA DE CONTACTO, ETC)
@@ -280,7 +280,6 @@ app.use("/api/msg-masivos", require("./routes/msgMasivos.route.js"));
 app.use("/api/servicios", validarJWT, require("./routes/servicios.router.js"));
 app.use(
   "/api/generador-fechas",
-  validarJWT,
   require("./routes/generadorFechas.router.js")
 );
 app.use(
@@ -312,7 +311,6 @@ app.use("/api/venta", validarJWT, require("./routes/venta.router.js"));
 app.use("/api/lead", validarJWT, require("./routes/lead.router.js"));
 app.use(
   "/api/reserva_monk_fit",
-  validarJWT,
   require("./routes/reserva_monk_fit.router.js")
 );
 // app.use("/api/pros")

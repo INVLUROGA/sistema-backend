@@ -129,9 +129,9 @@ router.get(
   "/get-ultima-membresia-cliente/:id_cli",
   obtenerDatosUltimaMembresia
 );
-router.get("/get-clientes/:id_empresa", validarJWT, getUsuarioClientes);
-router.get("/get-cliente/:uid_cliente", validarJWT, getUsuarioCliente);
-router.get("/get-cliente/id/:id_cli", validarJWT, getUsuariosClientexID);
+router.get("/get-clientes/:id_empresa", getUsuarioClientes);
+router.get("/get-cliente/:uid_cliente", getUsuarioCliente);
+router.get("/get-cliente/id/:id_cli", getUsuariosClientexID);
 router.put("/put-cliente/:uid_cliente", validarJWT, putUsuarioCliente);
 router.get("/delete-cliente/:uid_cliente", validarJWT, deleteUsuarioCliente);
 router.post("/post-file-dieta/:uid_location", validarJWT);

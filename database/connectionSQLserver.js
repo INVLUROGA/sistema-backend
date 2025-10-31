@@ -1,15 +1,14 @@
 const sql = require("mssql");
-require("dotenv").config(); // Cargar las variables de entorno
+require("dotenv").config(); 
 
-// Configuración de la base de datos
 const dbConfig = {
   user: process.env.USER_DB, // Nombre de usuario de la base de datos
   password: process.env.PASSWORD_DB, // Contraseña del usuario
   server: process.env.HOST, // Nombre o IP del servidor SQL Server
-  database: "respaldo_07102025_luroga", // Nombre de la base de datos
+  database: "db_luroga", // Nombre de la base de datos
   options: {
-    encrypt: true, // Usa encriptación para Azure SQL (opcional)
-    trustServerCertificate: true, // Debe estar en true si usas SSL en local
+    encrypt: true, 
+    trustServerCertificate: true, 
   },
 };
 
