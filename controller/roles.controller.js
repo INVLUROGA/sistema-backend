@@ -375,6 +375,13 @@ const seccionGET = async (req = request, res = response) => {
           url: "/cuentas-pagar",
         },
         {
+          key: "gest-prov-compromiso-pago",
+          label: "compromiso de pago",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/compromiso-pago",
+        },
+        {
           key: "gest-prov",
           label: "FORMATO DE DECLARACIÓN JURADA PROVEEDOR",
           isTitle: false,

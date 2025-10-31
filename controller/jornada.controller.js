@@ -182,6 +182,24 @@ const obtenerContratosxFecha = async (req = request, res = response) => {
     });
   }
 };
+const obtenerDiasLaborablesxIdContrato = async (
+  req = request,
+  res = response
+) => {
+  try {
+    const { idContrato } = req.params;
+    const diasLaborablesEnContrato = await tipoHorarioContrato.findAll({
+      where: { id_contrato: idContrato, flag: true },
+    });
+    console.log({ diasLaborablesEnContrato });
+
+    res.status(201).json({
+      diasLaborablesEnContrato,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
   obtenerTablaJornada,
   postJornada,
@@ -191,4 +209,5 @@ module.exports = {
   obtenerContratosxEmpleado,
   postTipoHorarioContrato,
   obtenerContratosxFecha,
+  obtenerDiasLaborablesxIdContrato,
 };

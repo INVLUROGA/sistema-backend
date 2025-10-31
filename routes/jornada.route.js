@@ -8,6 +8,7 @@ const {
   obtenerContratosxEmpleado,
   postTipoHorarioContrato,
   obtenerContratosxFecha,
+  obtenerDiasLaborablesxIdContrato,
 } = require("../controller/jornada.controller");
 const router = Router();
 /**
@@ -25,6 +26,10 @@ router.get("/obtener-contratos", obtenerContratosxFecha);
 router.post("/jornada/:id_empl", postContratoJornadaEmpleado);
 router.get("/jornada/:id_empl", obtenerContratosxEmpleado);
 router.post("/diaxcontrato", postTipoHorarioContrato);
+router.get(
+  `/dias-laborables/idContrato/:idContrato`,
+  obtenerDiasLaborablesxIdContrato
+);
 //RUTAS - GASTO FIJO
 // router.get("/get_gfs", obtenerTB_GF);
 // router.get("/get_gf/:id", obtener_GFxID);
