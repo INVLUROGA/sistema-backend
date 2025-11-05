@@ -213,13 +213,45 @@ const seccionGET = async (req = request, res = response) => {
         //   label: "Recursos Humanos",
         //   isTitle: true,
         // },
-
         {
-          key: "resumen-ejecutivo",
-          label: "RESUMEN EJECUTIVO",
+          key: "config",
+          label: "M.O.F",
+          isTitle: true,
+        },
+        {
+          //key: "reporte-utilidad-pgm",
+          label: "M.O.F administracion y atencion al cliente",
           isTitle: false,
           icon: "uil-calender",
-          url: "/resumen-ejecutivo",
+          url: "/mof-adm-atencli",
+        },
+        {
+          key: "resumen-ejecutivo",
+          label: "M.O.F mantenimiento",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/mof-mantenimiento",
+        },
+        {
+          //key: "reporte-utilidad-pgm",
+          label: "M.O.F estilista",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/mof-estilista",
+        },
+        {
+          key: "resumen-ejecutivo",
+          label: "M.O.F marketing",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/mof-marketing",
+        },
+        {
+          key: "resumen-ejecutivo",
+          label: "M.O.F sistemas",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/mof-sistemas",
         },
         {
           key: "config",
@@ -879,6 +911,13 @@ const seccionGET = async (req = request, res = response) => {
               parentKey: "reporte-demografico-membresia",
             },
           ],
+        },
+        {
+          key: "proceso-solicitud-licencia-events",
+          label: "PROCESO PARA SOLICITAR LICENCIA PARA EVENTOS",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/proceso-solicitud-licencia-events",
         },
         {
           key: "gestion-lead",

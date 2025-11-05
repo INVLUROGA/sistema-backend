@@ -200,6 +200,54 @@ const obtenerDiasLaborablesxIdContrato = async (
     console.log(error);
   }
 };
+const obtenerDiasLaborablesxFechaxEmpresa = async (
+  req = request,
+  res = response
+) => {
+  try {
+    const { arrayFecha, id_empresa } = req.params;
+    const { arrayDate } = req.query;
+    console.log(
+      { arrayDate, id_empresa },
+      "asdfasdfadfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdf"
+    );
+    const fechaInicio = arrayDate[0];
+    const fechaFin = arrayDate[1];
+
+    const diasLaborablesEnContrato = await Empleado.findAll({
+      where: {
+        id_empresa,
+      },
+      attributes: ["nombre_empl"],
+      estado_empl: true,
+      include: [
+        {
+          model: contrato_empleado,
+          as: "_empl",
+          include: [
+            {
+              model: tipoHorarioContrato,
+              as: "contrato_empl",
+              where: {
+                fecha: {
+                  [Op.between]: [
+                    `${fechaInicio} 00:00:00`,
+                    `${fechaFin} 23:59:59`,
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      ],
+    });
+    res.status(201).json({
+      diasLaborablesEnContrato,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
   obtenerTablaJornada,
   postJornada,
@@ -207,7 +255,10 @@ module.exports = {
   obtenerJornadaxEmpl,
   postContratoJornadaEmpleado,
   obtenerContratosxEmpleado,
+  // dias laborables
   postTipoHorarioContrato,
   obtenerContratosxFecha,
   obtenerDiasLaborablesxIdContrato,
+  obtenerDiasLaborablesxFechaxEmpresa,
+  //
 };

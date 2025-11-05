@@ -7,6 +7,7 @@ const { Parametros } = require("../models/Parametros");
 const { detalleVenta_membresias } = require("../models/Venta");
 const { jornadaPlanilla } = require("../models/Jornada");
 const { Marcacion } = require("../models/Marcacion");
+const { DiasNoLaborables } = require("../models/feriado.model");
 const postContratosEmpl = async (req = request, res = response) => {
   const { uid_empl } = req.params;
   try {
@@ -219,6 +220,43 @@ const getobtenerPlanillaEmpleadoActivos = async (
     });
   }
 };
+const obtenerDiasNoLaborables = async (req = request, res = response) => {
+  const { entidad } = req.params;
+  try {
+    const diasNoLaborables = await DiasNoLaborables.findAll({
+      where: { flag: true, entidad, },
+    });
+    res.status(200).json({
+      diasNoLaborables,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+    });
+  }
+};
+const postDiasNoLaborables = async (req = request, res = response) => {
+  try {
+    await DiasNoLaborables.create(req.body);
+    res.status(201).json({
+      msg: "creado correcto",
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+    });
+  }
+};
+const updateDiasNoLaborables = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    // const diaNoLaborables =
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+    });
+  }
+};
 module.exports = {
   postContratosEmpl,
   GastoPorCargo,
@@ -228,4 +266,7 @@ module.exports = {
   obtenerAsistenciasxEmpl,
   obtenerPlanillaxID,
   getobtenerPlanillaEmpleadoActivos,
+  obtenerDiasNoLaborables,
+  postDiasNoLaborables,
+  updateDiasNoLaborables,
 };
