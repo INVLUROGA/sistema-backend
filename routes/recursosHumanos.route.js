@@ -39,6 +39,6 @@ router.get(
 );
 // GESTION DE FERIADOS
 
-router.get("/licencias-trabajo");
+//router.get("/licencias-trabajo");
 
 module.exports = router;

@@ -233,6 +233,13 @@ const seccionGET = async (req = request, res = response) => {
           url: "/mof-mantenimiento",
         },
         {
+          key: "resumen-ejecutivo",
+          label: "RESUMEN EJECUTIVO",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/resumen-ejecutivo",
+        },
+        {
           //key: "reporte-utilidad-pgm",
           label: "M.O.F estilista",
           isTitle: false,
