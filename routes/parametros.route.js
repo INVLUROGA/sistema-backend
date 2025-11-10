@@ -41,6 +41,11 @@ const {
   obtenerParametrosGruposGastos,
   obtenerEmpleadosxCargoxDepartamentoxEmpresa,
   putParametrosGenerales,
+  getMembresiasVigentesEmpresa,
+  getVigentesResumenEmpresa,
+  getMembresiasLineaDeTiempoEmpresa,
+  getRenovacionesPorVencerEmpresa,
+  getLogicaEstadoMembresias,
   deleteParametrosGenerales,
 } = require("../controller/Parametros.controller");
 const { obtener_estado_membresia } = require("../middlewares/logicaSistema");
@@ -50,6 +55,7 @@ const {
   putEtiquetasxIdEntidadGrupo,
   getEtiquetasxEntidadGrupo,
 } = require("../controller/etiqueta.controller");
+const { get } = require("../config/nodemailer");
 const router = Router();
 /**
  * [API Documentation]
@@ -98,10 +104,15 @@ router.get(
   "/get_params/get_estado_membresia_cli/:id_cli",
   getLogicaEstadoMembresia
 );
+router.get("/membresias/vigentes/resumen", getVigentesResumenEmpresa);
+router.get("/renovaciones/por-vencer", getRenovacionesPorVencerEmpresa);
+router.get("/membresias/vigentes/lista", getMembresiasVigentesEmpresa);
 router.get(
   "/get_params/grupo-gasto/:id_tipo_gasto",
   getParametroGrupoxTIPOGASTO
 );
+router.get("/membresias/linea-de-tiempo", getMembresiasLineaDeTiempoEmpresa);
+
 router.get("/get_params/forma_pago", getParametrosFormaPago);
 router.get("/get_params/colaboradores", getParametrosColaboradoresRegistrados);
 router.get(
