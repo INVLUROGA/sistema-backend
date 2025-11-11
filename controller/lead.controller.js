@@ -41,19 +41,25 @@ const getLeads = async (req = request, res = response) => {
   }
 };
 const updateLeads = async (req = request, res = response) => {
-  try {
-    const { id } = req.params;
-    const lead = await leadsxDia.findOne({ where: { id } });
-    await lead.update(req.body);
-    res.status(201).json({
-      msg: "lead actualizado",
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      msg: `error actualizado: ${error}`,
-    });
-  }
+  try {
+    const { id } = req.params;
+    const datosActualizar = req.body; 
+    if (datosActualizar.monto !== undefined) {
+      datosActualizar.monto = datosActualizar.monto * 1.18;
+    }
+
+    const lead = await leadsxDia.findOne({ where: { id } });
+    await lead.update(datosActualizar); 
+
+    res.status(201).json({
+     msg: "lead actualizado",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      msg: `error actualizado: ${error}`,
+    });
+  }
 };
 const deleteLeads = async (req = request, res = response) => {
   try {

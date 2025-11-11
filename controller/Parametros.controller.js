@@ -831,40 +831,64 @@ const getVigentesResumenEmpresa = async (req, res) => {
   try {
     const empresa = Number(req.query.empresa || 598);
     const dias = Number(req.query.dias || 15);
+    const incluirMontoCero = String(req.query.incluirMontoCero ?? "0") === "1";
+
+    let snapStr = String(req.query.snapshot || "");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(snapStr)) {
+      const now = new Date();
+      const year = Number(req.query.year || now.getFullYear());
+      const selectedMonth = Number(req.query.selectedMonth || (now.getMonth() + 1));
+      const lastDay = new Date(year, selectedMonth, 0).getDate();
+      const isCurrentMonth = (year === now.getFullYear()) && (selectedMonth === now.getMonth() + 1);
+
+      const maxCutAllowed = isCurrentMonth ? Math.min(now.getDate(), lastDay) : lastDay;
+      const cutDay = Math.max(1, Math.min(Number(req.query.cutDay || maxCutAllowed), maxCutAllowed));
+
+      snapStr = `${year}-${String(selectedMonth).padStart(2, "0")}-${String(cutDay).padStart(2, "0")}`;
+    }
+
+    const snapshot = new Date(snapStr); snapshot.setHours(0, 0, 0, 0);
+    const lim = new Date(snapshot); lim.setDate(lim.getDate() + dias);
 
     const rows = await detalleVenta_membresias.findAll({
-      attributes: ["id", "tarifa_monto", "fec_fin_mem", "fec_fin_mem_oftime", "fec_fin_mem_viejo", "flag"],
+      attributes: ["id","tarifa_monto","fec_fin_mem","fec_fin_mem_oftime","fec_fin_mem_viejo","flag"],
       include: [
-        { model: ExtensionMembresia, attributes: ["dias_habiles"] },
-        { model: Venta, attributes: ["id", "id_empresa"], where: { id_empresa: empresa } },
+        { model: ExtensionMembresia, attributes: ["dias_habiles"], required: false },
+        { model: Venta, attributes: ["id","id_empresa"], where: { id_empresa: empresa } },
       ],
     });
 
-    const hoy = new Date(); hoy.setHours(0,0,0,0);
-    const lim = new Date(hoy); lim.setDate(lim.getDate() + dias);
-
-    let vigentes = 0, hoyCount = 0, porVencer = 0, vencidos = 0;
+    let vigentes = 0, venceEnSnapshot = 0, porVencer = 0, vencidos = 0;
 
     for (const m of rows) {
       if (!isActiveFlag(m.flag)) continue;
-      if (!(Number(m.tarifa_monto ?? 0) > 0)) continue;
-      const fin = calcFinEfectivo(m);
+      const monto = Number(m.tarifa_monto ?? 0);
+      if (!incluirMontoCero && !(monto > 0)) continue;
+
+      const fin = calcFinEfectivo(m);     
       if (!fin) continue;
 
-      if (fin < hoy) { vencidos++; continue; }
-      if (fin.getTime() === hoy.getTime()) { hoyCount++; vigentes++; continue; }
-      if (fin > hoy) {
-        vigentes++;
-        if (fin <= lim) porVencer++;
-      }
+      const f = new Date(fin); f.setHours(0, 0, 0, 0);
+
+      if (f < snapshot) { vencidos++; continue; }
+      if (f.getTime() === snapshot.getTime()) { venceEnSnapshot++; vigentes++; continue; }
+      vigentes++;
+      if (f <= lim) porVencer++;
     }
 
-    res.json({ vigentes, hoy: hoyCount, porVencer, vencidos });
+    res.json({
+      snapshot: snapshot.toISOString().slice(0,10),
+      vigentes,
+      hoy: venceEnSnapshot,
+      porVencer,
+      vencidos
+    });
   } catch (e) {
     console.error("getVigentesResumenEmpresa", e);
     res.status(500).json({ error: "Error calculando resumen de vigencia." });
   }
 };
+
 const getMembresiasVigentesEmpresa = async (req, res) => {
   try {
     const empresa = Number(req.query.empresa || 598);
