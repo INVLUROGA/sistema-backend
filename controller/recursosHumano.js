@@ -8,6 +8,7 @@ const { detalleVenta_membresias } = require("../models/Venta");
 const { jornadaPlanilla } = require("../models/Jornada");
 const { Marcacion } = require("../models/Marcacion");
 const { DiasNoLaborables } = require("../models/feriado.model");
+const { TiemposEspeciales } = require("../models/TiemposEspeciales.model");
 const postContratosEmpl = async (req = request, res = response) => {
   const { uid_empl } = req.params;
   try {
@@ -15,117 +16,6 @@ const postContratosEmpl = async (req = request, res = response) => {
     // const contrato = await ContratoEmpl
   } catch (error) {
     console.log(error);
-  }
-};
-const GastoPorCargo = async (req = response, res = response) => {
-  const { fechaDesdeStr, fechaHastaStr } = req.query;
-
-  //console.log(fechaDesdeStr + " " + fechaHastaStr);
-  let fechaDesde = new Date(fechaDesdeStr);
-  let fechaHasta = new Date(fechaHastaStr);
-
-  let responsePorEmpleado = {};
-  let response = {};
-  try {
-    let gastos = await Gastos.findAll({
-      where: {
-        fec_registro: {
-          [Op.between]: [fechaDesde, fechaHasta],
-        },
-        id_gasto: 659,
-      },
-    });
-
-    await Promise.all(
-      gastos.map(async (gasto) => {
-        let proveedor = await Proveedor.findOne({
-          where: {
-            id: gasto.id_prov,
-          },
-        });
-        let empleado;
-        //response.push(proveedor);
-        //console.log(proveedor.toJSON());
-        if (proveedor.dni_vend_prov) {
-          empleado = await Empleado.findOne({
-            where: {
-              numDoc_Empl: proveedor.dni_vend_prov,
-            },
-          });
-
-          if (empleado) {
-            let parametro = await Parametros.findOne({
-              where: {
-                grupo_param: "tipo_oficio",
-                id_param: empleado.departamento_empl,
-              },
-            });
-
-            if (parametro) {
-              // console.log(empleado.toJSON());
-              //console.log(parametro.toJSON());
-              if (!responsePorEmpleado[empleado.numDoc_empl]) {
-                responsePorEmpleado[empleado.numDoc_empl] = {
-                  Departamento: parametro.label_param,
-                  TotalSalario: empleado.salario_empl,
-                };
-                // response[empleado.departamento_empl].TotalSalario = 0;
-              }
-              if (responsePorEmpleado[empleado.numDoc_empl]) {
-                responsePorEmpleado[empleado.numDoc_empl].TotalSalario +=
-                  empleado.salario_empl;
-              }
-
-              if (!response[parametro.label_param]) {
-                response[parametro.label_param] = {
-                  /*Departamento : parametro.label_param ,*/ TotalSalario:
-                    empleado.salario_empl,
-                };
-                // response[empleado.departamento_empl].TotalSalario = 0;
-              }
-              if (response[parametro.label_param]) {
-                response[parametro.label_param].TotalSalario +=
-                  empleado.salario_empl;
-              }
-            }
-          }
-        }
-      })
-    );
-
-    // let ParametroGastos = await ParametroGastos.findOne({
-    //     where:{
-    //         id:659
-    //     }
-    // });
-    // console.log(response);
-    res.status(200).json({
-      ok: true,
-      response: response,
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      ok: true,
-      response: error,
-    });
-  }
-};
-
-const ClienteAuth = async (req = request, res = response) => {
-  try {
-    //let Usuarios = await Usuario.findAll({});
-
-    let datalleMembresias = await detalleVenta_membresias.findAll({});
-
-    res.status(200).json({
-      //usuarios: Usuarios,
-      datalleMembresia: datalleMembresias,
-    });
-  } catch (error) {
-    res.status(500).json({
-      error: error.message,
-    });
   }
 };
 const postPlanillaxEmpl = async (req = request, res = response) => {
@@ -224,7 +114,7 @@ const obtenerDiasNoLaborables = async (req = request, res = response) => {
   const { entidad } = req.params;
   try {
     const diasNoLaborables = await DiasNoLaborables.findAll({
-      where: { flag: true, entidad, },
+      where: { flag: true, entidad },
     });
     res.status(200).json({
       diasNoLaborables,
@@ -257,10 +147,95 @@ const updateDiasNoLaborables = async (req = request, res = response) => {
     });
   }
 };
+
+// tiempos-especiales
+
+// Crear TiemposEspeciale
+const PostTiemposEspeciale = async (req = request, res = response) => {
+  try {
+    const { entidad } = req.params;
+    await TiemposEspeciales.create({ ...req.body, entidad });
+    res.status(201).json({ msg: "TiemposEspeciale creado correctamente" });
+  } catch (error) {
+    res.status(500).json({
+      msg: "ERROR EN LA BASE DE DATOS O SERVIDOR (PostTiemposEspeciale)",
+    });
+  }
+};
+
+// Obtener todos los TiemposEspeciales
+const GetTiemposEspeciales = async (req = request, res = response) => {
+  try {
+    const { entidad, id_empresa } = req.params;
+    const tiempoEspeciales = await TiemposEspeciales.findAll({
+      where: { flag: true, entidad },
+      include: [
+        {
+          as: "_empl",
+          model: Empleado,
+          where: { id_empresa },
+        },
+      ],
+    });
+    res
+      .status(200)
+      .json({ msg: "TiemposEspeciales obtenidos", tiempoEspeciales });
+  } catch (error) {
+    res.status(500).json({
+      msg: "ERROR EN LA BASE DE DATOS O SERVIDOR (GetTiemposEspeciales)",
+    });
+  }
+};
+
+// Obtener TiemposEspeciale por ID
+const GetTiemposEspecialxID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const tiempoEspecial = await TiemposEspeciales.findOne({
+      where: { id, flag: true },
+    });
+    res.status(200).json({ msg: "TiemposEspeciale obtenido", tiempoEspecial });
+  } catch (error) {
+    res.status(500).json({
+      msg: "ERROR EN LA BASE DE DATOS O SERVIDOR (GetTiemposEspeciale)",
+    });
+  }
+};
+
+// Eliminar TiemposEspeciale
+const deleteTiemposEspecialxID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const tiempoEspecial = await TiemposEspeciales.findOne({
+      where: { id, flag: true },
+    });
+    await tiempoEspecial.update({ flag: false });
+    res.status(200).json({ msg: "TiemposEspeciale eliminado correctamente" });
+  } catch (error) {
+    res.status(500).json({
+      msg: "ERROR EN LA BASE DE DATOS O SERVIDOR (deleteTiemposEspeciale)",
+    });
+  }
+};
+
+// Actualizar TiemposEspeciale
+const updateTiemposEspecialxID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const tiempoEspecial = await TiemposEspeciales.findOne({
+      where: { id, flag: true },
+    });
+    await tiempoEspecial.update(req.body);
+    res.status(200).json({ msg: "TiemposEspeciale actualizado correctamente" });
+  } catch (error) {
+    res.status(500).json({
+      msg: "ERROR EN LA BASE DE DATOS O SERVIDOR (updateTiemposEspeciale)",
+    });
+  }
+};
+
 module.exports = {
   postContratosEmpl,
-  GastoPorCargo,
-  ClienteAuth,
   postPlanillaxEmpl,
   obtenerPlanillasxEmpl,
   obtenerAsistenciasxEmpl,
@@ -269,4 +244,10 @@ module.exports = {
   obtenerDiasNoLaborables,
   postDiasNoLaborables,
   updateDiasNoLaborables,
+  // tiempos especiales
+  PostTiemposEspeciale,
+  GetTiemposEspeciales,
+  GetTiemposEspecialxID,
+  deleteTiemposEspecialxID,
+  updateTiemposEspecialxID,
 };

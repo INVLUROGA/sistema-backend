@@ -214,6 +214,13 @@ const seccionGET = async (req = request, res = response) => {
         //   isTitle: true,
         // },
         {
+          key: "resumen-ejecutivo",
+          label: "M.O.F mantenimiento",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/mof-mantenimiento",
+        },
+        {
           key: "config",
           label: "M.O.F",
           isTitle: true,
@@ -224,13 +231,6 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: false,
           icon: "uil-calender",
           url: "/mof-adm-atencli",
-        },
-        {
-          key: "resumen-ejecutivo",
-          label: "M.O.F mantenimiento",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/mof-mantenimiento",
         },
         {
           //key: "reporte-utilidad-pgm",
@@ -605,6 +605,34 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           url: "/horarios-colaborador",
         },
+        {
+          //key: "reporte-utilidad-pgm",
+          label: "Gestion de asistencia",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-asistencia",
+        },
+        {
+          //key: "reporte-utilidad-pgm",
+          label: "Gestion de permisos",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-permisos",
+        },
+        {
+          //key: "reporte-utilidad-pgm",
+          label: "Tardanzas justificadas",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-tardanzas",
+        },
+        // {
+        //   //key: "reporte-utilidad-pgm",
+        //   label: "Horas extras",
+        //   isTitle: false,
+        //   icon: "uil-calender",
+        //   url: "/gestion-asistencia",
+        // },
       ];
     }
     if (modulo === "mod-general-ventas") {
@@ -995,6 +1023,13 @@ const seccionGET = async (req = request, res = response) => {
       MENU_ITEMS = [
         {
           //key: "reporte-utilidad-pgm",
+          label: "GESTION DE INVENTARIO",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gest-inventario",
+        },
+        {
+          //key: "reporte-utilidad-pgm",
           label: "ENTRADA DE ITEMS",
           isTitle: false,
           icon: "uil-calender",
@@ -1009,17 +1044,17 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           //key: "reporte-utilidad-pgm",
-          label: "TRANSFERENCIAS DE ITEMS",
+          label: "TRANSFERENCIA DE ITEMS",
           isTitle: false,
           icon: "uil-calender",
           url: "/transferencia-inventario",
         },
         {
           //key: "reporte-utilidad-pgm",
-          label: "AGREGAR ARTICULOS A CHORRILLOS",
+          label: "INVENTARIO TOTALIZADO",
           isTitle: false,
           icon: "uil-calender",
-          url: "/agregar-articulos-chorrillos",
+          url: "/totalizado-inventario",
         },
       ];
     }

@@ -1,13 +1,16 @@
 const { Router, Route } = require("express");
 
 const {
-  GastoPorCargo,
-  ClienteAuth,
   postPlanillaxEmpl,
   obtenerAsistenciasxEmpl,
   obtenerPlanillaxID,
   obtenerPlanillasxEmpl,
   postContratosEmpl,
+  PostTiemposEspeciale,
+  updateTiemposEspecialxID,
+  GetTiemposEspecialxID,
+  deleteTiemposEspecialxID,
+  GetTiemposEspeciales,
 } = require("../controller/recursosHumano");
 const {
   obtenerAsistenciaPorEmpl,
@@ -20,8 +23,8 @@ const router = Router();
 
 router.post("/contratos/:uid_empl", postContratosEmpl);
 
-router.get("/gasto-por-cargo", GastoPorCargo);
-router.get("/clienteAuth", ClienteAuth);
+// router.get("/gasto-por-cargo", GastoPorCargo);
+// router.get("/clienteAuth", ClienteAuth);
 
 router.post(`/post-planilla/:uid_empleado`, postPlanillaxEmpl);
 router.get(
@@ -39,6 +42,10 @@ router.get(
 );
 // GESTION DE FERIADOS
 
-router.get("/licencias-trabajo");
+router.get("/tiempos-especiales/:id_empresa/:entidad", GetTiemposEspeciales);
+router.post("/tiempos-especiales/:entidad", PostTiemposEspeciale);
+router.put("/tiempos-especiales/:id", updateTiemposEspecialxID);
+router.get("/tiempos-especiales/id/:id", GetTiemposEspecialxID);
+router.put("/tiempos-especiales/delete/:id", deleteTiemposEspecialxID);
 
 module.exports = router;
