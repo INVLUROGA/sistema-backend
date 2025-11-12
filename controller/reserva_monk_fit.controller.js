@@ -47,7 +47,6 @@ const validarEstadoCita = async (id_param) => {
   });
 };
 
-// ================== Endpoints ==================
 const obtenerReservasMonkFit = async (req = request, res = response) => {
   try {
     const qLimit = parseInt(req.query.limit ?? "10", 10);

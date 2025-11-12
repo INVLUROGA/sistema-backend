@@ -30,6 +30,41 @@ const { Inversionista } = require("../models/Aportes");
 const { ExtensionMembresia } = require("../models/ExtensionMembresia");
 const { Distritos } = require("../models/Distritos");
 const { ServiciosCircus } = require("../models/modelsCircus/Servicios");
+const { get } = require("../config/nodemailer");
+
+
+
+const BusinessDays = (date, days) => {
+if (!date || !Number.isFinite(days)) return date;
+let d = new Date(date);
+let add = Math.trunc(days);
+while (add > 0) {
+d.setDate(d.getDate() + 1);
+const wd = d.getDay(); // 0=Dom,6=Sáb
+if (wd !== 0 && wd !== 6) add--;
+}
+return d;
+};
+const parseDateOnly = (s) => {
+  if (!s) return null;
+  const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  return new Date(+m[1], +m[2] - 1, +m[3]);
+  
+};
+const isActiveFlag = (v) => v === 1 || v === true || v === "1" || v === "true";
+const getFinBase = (m) =>
+  parseDateOnly(m?.fec_fin_mem) ||
+  parseDateOnly(m?.fec_fin_mem_oftime) ||
+  parseDateOnly(m?.fec_fin_mem_viejo);
+
+const calcFinEfectivo = (m) => {
+  const base = getFinBase(m);
+  if (!base) return null;
+  const ext = Array.isArray(m.tb_extension_membresia) ? m.tb_extension_membresia : [];
+  const diasHab = ext.reduce((acc, e) => acc + parseInt(e?.dias_habiles ?? 0, 10), 0);
+  return diasHab > 0 ? addBusinessDays(base, diasHab) : base;
+};
 
 const obtenerEmpleadosxCargoxDepartamentoxEmpresa = async (
   req = request,
@@ -567,8 +602,7 @@ const getParametroMetaxAsesor = async (req = request, res = response) => {
       },
     });
     console.log(asesores);
-    //En una meta, cada vez que se registre un asesor en la meta, el asesor desaparece
-    //Quiero ver todo los asesoresMeta que tiene la meta para
+ 
     res.status(200).json(asesores);
   } catch (error) {
     res.status(404).json(error);
@@ -683,6 +717,407 @@ const getProgramasActivos = async (req = request, res = response) => {
     });
   } catch (error) {
     res.status(404).json(error);
+  }
+};
+async function getMembresiasLineaDeTiempoEmpresa(req = request, res = response) {
+  try {
+    const empresa = Number(req.query.empresa);
+    if (!empresa) {
+      return res.status(400).json({ error: "Falta query ?empresa" });
+    }
+const incluirMontoCero = String(req.query.incluirMontoCero ?? "0") === "1";
+
+    const rows = await detalleVenta_membresias.findAll({
+      attributes: [
+        "id",
+        "id_pgm",
+        "tarifa_monto",
+        "fec_fin_mem",
+        "fec_fin_mem_oftime",
+        "fec_fin_mem_viejo",
+        "flag",
+      ],
+      include: [
+        { model: ExtensionMembresia, attributes: ["dias_habiles"], required: false },
+        {
+          model: Venta,
+          attributes: ["id", "id_empresa", "fecha_venta"],
+          where: { id_empresa: empresa },
+          required: true,
+          include: [
+            {
+              model: Cliente,
+              attributes: ["id_cli", "nombre_cli", "apPaterno_cli", "apMaterno_cli"],
+              required: false,
+            },
+            {
+              model: Empleado,
+              attributes: ["nombre_empl", "apPaterno_empl", "apMaterno_empl"],
+              required: false,
+            },
+          ],
+        },
+        { model: ProgramaTraining, attributes: ["id_pgm", "name_pgm"], required: false },
+      ],
+      raw: false,
+    });
+  const idsPgm = [...new Set(rows.map(r => r?.id_pgm).filter(Boolean))];
+    let pgmNameById = {};
+    if (idsPgm.length) {
+      const pgms = await ProgramaTraining.findAll({
+        where: { id_pgm: idsPgm },
+        attributes: ["id_pgm", "name_pgm"],
+        raw: true,
+      });
+      pgmNameById = Object.fromEntries(pgms.map(p => [p.id_pgm, p.name_pgm]));
+    }
+    const timeline = [];
+    for (const m of rows) {
+      if (!isActiveFlag(m?.flag)) continue;
+      const monto = Number(m?.tarifa_monto ?? 0);
+if (!incluirMontoCero && !(monto > 0)) continue;
+
+      const fin = calcFinEfectivo(m);
+      if (!fin) continue;
+
+      let ventaDate = m?.tb_ventum?.fecha_venta ? new Date(m.tb_ventum.fecha_venta) : null;
+      if (!ventaDate || isNaN(ventaDate)) continue;
+      ventaDate.setHours(0, 0, 0, 0);
+
+      const cliObj = m?.tb_ventum?.tb_cliente || {};
+      const id_cli = cliObj.id_cli ?? null;
+      const cliente = [cliObj.nombre_cli, cliObj.apPaterno_cli, cliObj.apMaterno_cli]
+        .filter(Boolean)
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim() || "SIN NOMBRE";
+
+    const plan =
+        m?.tb_programa_training?.name_pgm ||
+        m?.tb_programaTraining?.name_pgm ||
+        m?.tb_programa?.name_pgm ||
+        pgmNameById[m?.id_pgm] ||
+        (m?.id_pgm ? `PGM ${m.id_pgm}` : "-");
+const nombreEmpl = m?.tb_ventum?.tb_empleado?.nombre_empl ?? "";
+      const ejecutivo = nombreEmpl.split(" ")[0] || "-";
+      timeline.push({
+        id_detalle: m.id,
+        id_cli,
+        cliente,
+        plan,
+        monto,
+        ejecutivo,
+        fechaVenta: ventaDate.toISOString().slice(0, 10),
+        fechaFin: fin.toISOString().slice(0, 10),
+      });
+    }
+
+    timeline.sort(
+      (a, b) =>
+        (a.id_cli ?? 0) - (b.id_cli ?? 0) || a.fechaVenta.localeCompare(b.fechaVenta)
+    );
+
+    return res.json({ empresa, total: timeline.length, timeline });
+  } catch (err) {
+    console.error("getMembresiasLineaDeTiempoEmpresa", err);
+    return res.status(500).json({
+      error: "Error obteniendo línea de tiempo de membresías.",
+      detail: err.message,
+    });
+  }
+}
+
+const getVigentesResumenEmpresa = async (req, res) => {
+  try {
+    const empresa = Number(req.query.empresa || 598);
+    const dias = Number(req.query.dias || 15);
+    const incluirMontoCero = String(req.query.incluirMontoCero ?? "0") === "1";
+
+    let snapStr = String(req.query.snapshot || "");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(snapStr)) {
+      const now = new Date();
+      const year = Number(req.query.year || now.getFullYear());
+      const selectedMonth = Number(req.query.selectedMonth || (now.getMonth() + 1));
+      const lastDay = new Date(year, selectedMonth, 0).getDate();
+      const isCurrentMonth = (year === now.getFullYear()) && (selectedMonth === now.getMonth() + 1);
+
+      const maxCutAllowed = isCurrentMonth ? Math.min(now.getDate(), lastDay) : lastDay;
+      const cutDay = Math.max(1, Math.min(Number(req.query.cutDay || maxCutAllowed), maxCutAllowed));
+
+      snapStr = `${year}-${String(selectedMonth).padStart(2, "0")}-${String(cutDay).padStart(2, "0")}`;
+    }
+
+    const snapshot = new Date(snapStr); snapshot.setHours(0, 0, 0, 0);
+    const lim = new Date(snapshot); lim.setDate(lim.getDate() + dias);
+
+    const rows = await detalleVenta_membresias.findAll({
+      attributes: ["id","tarifa_monto","fec_fin_mem","fec_fin_mem_oftime","fec_fin_mem_viejo","flag"],
+      include: [
+        { model: ExtensionMembresia, attributes: ["dias_habiles"], required: false },
+        { model: Venta, attributes: ["id","id_empresa"], where: { id_empresa: empresa } },
+      ],
+    });
+
+    let vigentes = 0, venceEnSnapshot = 0, porVencer = 0, vencidos = 0;
+
+    for (const m of rows) {
+      if (!isActiveFlag(m.flag)) continue;
+      const monto = Number(m.tarifa_monto ?? 0);
+      if (!incluirMontoCero && !(monto > 0)) continue;
+
+      const fin = calcFinEfectivo(m);     
+      if (!fin) continue;
+
+      const f = new Date(fin); f.setHours(0, 0, 0, 0);
+
+      if (f < snapshot) { vencidos++; continue; }
+      if (f.getTime() === snapshot.getTime()) { venceEnSnapshot++; vigentes++; continue; }
+      vigentes++;
+      if (f <= lim) porVencer++;
+    }
+
+    res.json({
+      snapshot: snapshot.toISOString().slice(0,10),
+      vigentes,
+      hoy: venceEnSnapshot,
+      porVencer,
+      vencidos
+    });
+  } catch (e) {
+    console.error("getVigentesResumenEmpresa", e);
+    res.status(500).json({ error: "Error calculando resumen de vigencia." });
+  }
+};
+
+const getMembresiasVigentesEmpresa = async (req, res) => {
+  try {
+    const empresa = Number(req.query.empresa || 598);
+
+    const rows = await detalleVenta_membresias.findAll({
+      attributes: [
+        "id",
+        "tarifa_monto",
+        "fec_fin_mem",
+        "fec_fin_mem_oftime",
+        "fec_fin_mem_viejo",
+        "flag",
+        "id_pgm",
+      ],
+      include: [
+        {
+          model: Venta,
+          attributes: ["id", "id_empresa", "fecha_venta"],
+          where: { id_empresa: empresa },
+          required: true, 
+          include: [
+            {
+              model: Cliente,
+              attributes: [
+                "id_cli",
+                "nombre_cli",
+                "apPaterno_cli",
+                "apMaterno_cli",
+              ],
+              required: false,
+            },
+            { 
+              model: Empleado,
+              attributes: ["nombre_empl", "apPaterno_empl", "apMaterno_empl"],
+              required: false,
+            },
+          ],
+        },
+        { model: ProgramaTraining, attributes: [["name_pgm", "plan_name"]], required  : false },
+        {model: ExtensionMembresia, attributes: ["dias_habiles"], required: false  },
+      ],
+      raw: false,
+    });
+       const idsPgm = [...new Set(rows.map(r => r?.id_pgm).filter(Boolean))];
+    let pgmNameById = {};
+    if (idsPgm.length) {
+      const pgms = await ProgramaTraining.findAll({
+        where: { id_pgm: idsPgm },
+        attributes: ["id_pgm", "name_pgm"],
+        raw: true,
+      });
+      pgmNameById = Object.fromEntries(pgms.map(p => [p.id_pgm, p.name_pgm]));
+    }
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+
+    const vigentes = [];
+    for (const m of rows) {
+      if (!isActiveFlag(m?.flag)) continue;
+      if (!(Number(m?.tarifa_monto ?? 0) > 0)) continue;
+
+      const fin = calcFinEfectivo(m);
+      if (!fin) continue;
+      
+      if (fin < hoy) continue; 
+
+      const cliente =
+        [ m?.tb_ventum?.tb_cliente?.nombre_cli,
+          m?.tb_ventum?.tb_cliente?.apPaterno_cli,
+          m?.tb_ventum?.tb_cliente?.apMaterno_cli
+        ].filter(Boolean).join(" ").trim() || "SIN NOMBRE";
+
+      const nombreEmpl = m?.tb_ventum?.tb_empleado?.nombre_empl ?? "";
+      const ejecutivo = nombreEmpl.split(" ")[0] || "-";
+
+       const plan =
+        m?.tb_programa_training?.name_pgm ||
+        m?.tb_programaTraining?.name_pgm ||
+        m?.tb_programa?.name_pgm ||
+        pgmNameById[m?.id_pgm] ||
+        (m?.id_pgm ? `PGM ${m.id_pgm}` : "-");
+
+      const dias_restantes = Math.ceil((fin - hoy) / 86400000);
+
+      vigentes.push({
+        id: m.id,
+        cliente,
+        plan,
+        fechaFin: fin.toISOString().slice(0, 10),
+        dias_restantes,
+        monto: Number(m?.tarifa_monto) || 0,
+        ejecutivo,
+      });
+    }
+
+    return res.json({ total: vigentes.length, vigentes });
+  } catch (e) {
+    console.error("getVigentesListaEmpresa", e);
+    return res.status(500).json({ error: "Error listando vigentes", detail: e.message });
+  }
+};
+const getRenovacionesPorVencerEmpresa = async (req, res) => {
+  try {
+    const empresa = Number(req.query.empresa || 598);
+    const dias = Number(req.query.dias || 15);
+
+    const rows = await detalleVenta_membresias.findAll({
+      attributes: [
+        "id", "id_pgm", "tarifa_monto",
+        "fec_fin_mem", "fec_fin_mem_oftime", "fec_fin_mem_viejo", "flag",
+      ],
+      include: [
+        { model: ExtensionMembresia, attributes: ["dias_habiles"] },
+        {
+          model: Venta,
+          attributes: ["id"],
+          where: { id_empresa: empresa },
+          include: [
+            { model: Cliente, attributes: ["id_cli", "nombre_cli", "apPaterno_cli", "apMaterno_cli"] },
+            { model: Empleado, attributes: ["nombre_empl", "apPaterno_empl", "apMaterno_empl"] },
+          ],
+        },
+      ],
+    });
+
+    const idsPgm = [...new Set(rows.map(r => r?.id_pgm).filter(Boolean))];
+    let pgmNameById = {};
+    if (idsPgm.length) {
+      const pgms = await ProgramaTraining.findAll({
+        where: { id_pgm: idsPgm },
+        attributes: ["id_pgm", "name_pgm"],
+        raw: true,
+      });
+      pgmNameById = Object.fromEntries(pgms.map(p => [p.id_pgm, p.name_pgm]));
+    }
+
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const lim = new Date(hoy); lim.setDate(lim.getDate() + dias);
+
+    const renewals = [];
+    for (const m of rows) {
+      const flagStr = String(m.flag ?? "").toLowerCase();
+      if (!(flagStr === "1" || flagStr === "true" || m.flag === 1 || m.flag === true)) continue;
+
+      const monto = Number(m.tarifa_monto || 0);
+      if (monto <= 0) continue;
+
+      const finRaw = m.fec_fin_mem || m.fec_fin_mem_oftime || m.fec_fin_mem_viejo;
+      if (!finRaw) continue;
+
+      const fechaFin = new Date(finRaw);
+      if (isNaN(fechaFin)) continue;
+      if (fechaFin < hoy || fechaFin > lim) continue;
+
+      const diff = Math.round((fechaFin - hoy) / 86400000);
+
+      const cliObj = m?.tb_ventum?.tb_cliente || {};
+      const cliente = [
+        cliObj?.nombre_cli,
+        cliObj?.apPaterno_cli,
+        cliObj?.apMaterno_cli,
+      ].filter(Boolean).join(" ").replace(/\s+/g, " ").trim() || "SIN NOMBRE";
+
+      const empObj = m?.tb_ventum?.tb_empleado || {};
+      const ejecutivo = [
+        empObj?.nombre_empl,
+        empObj?.apPaterno_empl,
+        empObj?.apMaterno_empl,
+      ].filter(Boolean).join(" ").split(" ")[0] || "-";
+
+      const plan =
+        m?.tb_programa_training?.name_pgm ||
+        m?.tb_programaTraining?.name_pgm ||
+        m?.tb_programa?.name_pgm ||
+        pgmNameById[m?.id_pgm] ||
+        (m?.id_pgm ? `PGM ${m.id_pgm}` : "-");
+
+      renewals.push({
+        id: m.id,
+        cliente,
+        plan,
+        fechaFin: fechaFin.toISOString().slice(0, 10),
+        dias_restantes: diff,
+        monto,
+        ejecutivo,
+      });
+    }
+
+    res.json({ renewals });
+  } catch (e) {
+    console.error("❌ Error en getRenovacionesPorVencerEmpresa:", e);
+    res.status(500).json({ error: e.message });
+  }
+};
+
+
+const getLogicaEstadoMembresias = async (req, res) => {
+  const { id_cli: uid } = req.params; 
+  try {
+    const membresias = await detalleVenta_membresias.findAll({
+      attributes: ["id", "tarifa_monto", "fec_fin_mem", "fec_fin_mem_oftime", "fec_fin_mem_viejo", "flag", "id_pgm"],
+      order: [["id", "DESC"]],
+      include: [
+        { model: ExtensionMembresia, attributes: ["dias_habiles", "tipo_extension", "extension_inicio", "extension_fin"] },
+        { model: Venta, attributes: ["id", "fecha_venta"],
+          include: [{ model: Cliente, where: { uid }, attributes: ["id_cli","uid",[Sequelize.fn("CONCAT", Sequelize.col("nombre_cli"), " ", Sequelize.col("apPaterno_cli"), " ", Sequelize.col("apMaterno_cli")), "nombres_apellidos_cli"],"email_cli"] }]
+        },
+        { model: ProgramaTraining, attributes: ["id_pgm", "name_pgm"] },
+      ],
+    });
+
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+
+    const mapped = membresias.map(m => {
+      const fin = calcFinEfectivo(m);
+      const dias_restantes = fin ? Math.round((fin - hoy)/86400000) : null;
+      return {
+        id: m.id,
+        plan: m.tb_programa_training?.name_pgm,
+        monto: Number(m.tarifa_monto || 0),
+        flag: m.flag,
+        fechaFin: fin ? fin.toISOString().slice(0,10) : null,
+        dias_restantes,
+      };
+    });
+
+    res.json({ membresias: mapped });
+  } catch (e) {
+    console.error("getLogicaEstadoMembresias", e);
+    res.status(500).json({ error: "Error calculando estado de membresía." });
   }
 };
 const getLogicaEstadoMembresia = async (req = request, res = response) => {
@@ -1053,7 +1488,7 @@ const calcularCitasDisponibles = (
     // Si quedan citas disponibles, devolver el objeto actualizado
     if (citasRestantes > 0) {
       return {
-        id: cita.id, // ID de la cita adquirida
+        id: cita.id, 
         label_membresia:
           cita["detalle_ventaMembresium.tb_semana_training.cita_label"],
         label_venta_cita: cita["detalle_ventaCita.cita_label"],
@@ -1061,11 +1496,9 @@ const calcularCitasDisponibles = (
       };
     }
 
-    // Si no quedan citas disponibles, no incluir este objeto
     return null;
   });
 
-  // Filtrar las citas con más de 0 citas disponibles
   return citasDisponibles.filter((cita) => cita !== null);
 };
 
@@ -1244,8 +1677,10 @@ const deleteParametrosGenerales = async (req = request, res = response) => {
   }
 };
 module.exports = {
+  getMembresiasLineaDeTiempoEmpresa ,
   deleteParametrosGenerales,
   putParametrosGenerales,
+  getMembresiasVigentesEmpresa,
   obtenerEmpleadosxCargoxDepartamentoxEmpresa,
   obtenerParametrosGruposGastos,
   getParametrosporClientexEmpresa,
@@ -1276,6 +1711,9 @@ module.exports = {
   getParametroGasto,
   getProgramasActivos,
   getLogicaEstadoMembresia,
+  getLogicaEstadoMembresias,
+  getRenovacionesPorVencerEmpresa,
+  getVigentesResumenEmpresa,
   getParametrosVendedoresVendiendoTodo,
   getParametrosInversionistasRegistrados,
   getParametrosColaboradoresRegistrados,
