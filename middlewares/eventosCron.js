@@ -164,11 +164,6 @@ const alertasUsuario = async () => {
         ahora.getHours() === fechaAlerta.getHours();
 
       if (coincide) {
-        await enviarMensajesWsp(
-          alerta.auth_user.telefono_user,
-          `${alerta.mensaje}`
-        );
-
         const alertaYaFinalizada = await AlertasUsuario.findOne({
           where: { id: alerta.id },
         });
@@ -188,6 +183,10 @@ const alertasUsuario = async () => {
           });
           await alertaNueva.save();
         }
+        await enviarMensajesWsp(
+          alerta.auth_user.telefono_user,
+          `${alerta.mensaje}`
+        );
       }
     }
     console.log("fin de alerta...");

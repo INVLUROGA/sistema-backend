@@ -213,6 +213,14 @@ const seccionGET = async (req = request, res = response) => {
         //   label: "Recursos Humanos",
         //   isTitle: true,
         // },
+
+        {
+          key: "resumen-ejecutivo",
+          label: "RESUMEN EJECUTIVO",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/resumen-ejecutivo",
+        },
         {
           key: "resumen-ejecutivo",
           label: "M.O.F mantenimiento",
