@@ -8,7 +8,10 @@ const { ExtensionMembresia } = require("../models/ExtensionMembresia");
 const { Sequelize } = require("sequelize");
 const { Cliente } = require("../models/Usuarios");
 const { Distritos } = require("../models/Distritos");
-const { ProgramaTraining, SemanasTraining } = require("../models/ProgramaTraining");
+const {
+  ProgramaTraining,
+  SemanasTraining,
+} = require("../models/ProgramaTraining");
 const { ImagePT } = require("../models/Image");
 
 const getReporteSeguimientoClientes = async (req = request, res = response) => {
@@ -30,7 +33,7 @@ const getReporteSeguimientoClientes = async (req = request, res = response) => {
         {
           model: Venta,
           attributes: ["id", "fecha_venta", "id_tipoFactura"],
-          where: { id_empresa: id_empresa },
+          where: { id_empresa: id_empresa, flag: true },
           include: [
             {
               model: Cliente,

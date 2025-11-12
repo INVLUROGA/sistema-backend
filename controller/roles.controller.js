@@ -222,7 +222,7 @@ const seccionGET = async (req = request, res = response) => {
           url: "/resumen-ejecutivo",
         },
         {
-          key: "resumen-ejecutivo",
+          key: "mof-mant",
           label: "M.O.F mantenimiento",
           isTitle: false,
           icon: "uil-calender",

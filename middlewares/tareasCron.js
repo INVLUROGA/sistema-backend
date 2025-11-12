@@ -21,6 +21,9 @@ const EnviarMensajeDeRecordatorioMembresia = async (
         include: [
           {
             model: Venta,
+            where: {
+              flag: true,
+            },
             include: [
               {
                 model: Cliente,
