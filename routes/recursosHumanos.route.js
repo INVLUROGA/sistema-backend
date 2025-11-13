@@ -43,7 +43,7 @@ router.get(
 // GESTION DE FERIADOS
 
 router.get("/tiempos-especiales/:id_empresa/:entidad", GetTiemposEspeciales);
-router.post("/tiempos-especiales/:entidad", PostTiemposEspeciale);
+router.post("/tiempos-especiales/:id_empresa/:entidad", PostTiemposEspeciale);
 router.put("/tiempos-especiales/:id", updateTiemposEspecialxID);
 router.get("/tiempos-especiales/id/:id", GetTiemposEspecialxID);
 router.put("/tiempos-especiales/delete/:id", deleteTiemposEspecialxID);

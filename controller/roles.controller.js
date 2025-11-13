@@ -1064,6 +1064,12 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           url: "/totalizado-inventario",
         },
+        {
+          label: "TERMINOLOGIAS",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/configuracion-terminos",
+        },
       ];
     }
     if (modulo === "mod-recepcion") {
