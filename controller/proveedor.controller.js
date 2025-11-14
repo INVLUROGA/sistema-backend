@@ -723,7 +723,7 @@ const getTBAgentes = async (req = request, res = response) => {
 };
 const getTrabajos = async (req = request, res = response) => {
   try {
-    const { fecha_inicio, fecha_fin } = req.body;
+    const { fecha_inicio, fecha_fin } = req.query;
     const { id_empresa } = req.params;
     const dataContratos = await ContratoProv.findAll({
       where: { flag: true, id_empresa: id_empresa },

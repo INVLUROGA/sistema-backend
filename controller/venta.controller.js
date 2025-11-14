@@ -1957,7 +1957,6 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
                 fecha_venta: {
                   [Op.between]: [fechaInicio, fechaFin],
                 },
-                flag: true,
               },
               include: [
                 {
