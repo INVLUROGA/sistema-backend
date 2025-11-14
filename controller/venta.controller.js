@@ -930,6 +930,7 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
                 "precio",
                 "duracion",
                 "id_categoria",
+                "precio_compra"
               ],
             },
             {

@@ -389,6 +389,14 @@ const seccionGET = async (req = request, res = response) => {
           url: "/aporte-ingresos",
         },
         {
+  key: "gestion-gfgv",
+  label: "Resumen Membresías",
+  isTitle: false,
+  icon: "uil-calender",
+  url: "/resumen-membresias",
+},
+
+        {
           key: "prov",
           label: "Proveedores",
           isTitle: true,
@@ -656,6 +664,13 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: false,
           icon: "uil-calender",
           url: "/nueva-venta",
+        },
+         {
+          key: "pt-reservas",
+          label: "Reservas MonkFit",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-monkfit",
         },
         {
           key: "gestion-ventas",

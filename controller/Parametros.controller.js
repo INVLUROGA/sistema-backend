@@ -889,50 +889,55 @@ const getVigentesResumenEmpresa = async (req, res) => {
   }
 };
 
+// Este es tu controlador getMembresiasVigentesEmpresa, PERO CORREGIDO
 const getMembresiasVigentesEmpresa = async (req, res) => {
   try {
     const empresa = Number(req.query.empresa || 598);
 
+    // --- PASO 1: Copiar la lógica de fecha de 'getVigentesResumenEmpresa' ---
+    let snapStr = String(req.query.snapshot || "");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(snapStr)) {
+      const now = new Date();
+      const year = Number(req.query.year || now.getFullYear());
+      const selectedMonth = Number(req.query.selectedMonth || (now.getMonth() + 1));
+      const lastDay = new Date(year, selectedMonth, 0).getDate();
+      const isCurrentMonth = (year === now.getFullYear()) && (selectedMonth === now.getMonth() + 1);
+
+      const maxCutAllowed = isCurrentMonth ? Math.min(now.getDate(), lastDay) : lastDay;
+      const cutDay = Math.max(1, Math.min(Number(req.query.cutDay || maxCutAllowed), maxCutAllowed));
+
+      snapStr = `${year}-${String(selectedMonth).padStart(2, "0")}-${String(cutDay).padStart(2, "0")}`;
+    }
+
+    const snapshot = new Date(snapStr); // <-- Esta es tu fecha de corte
+    snapshot.setHours(0, 0, 0, 0);
+    // --- Fin del PASO 1 ---
+
     const rows = await detalleVenta_membresias.findAll({
+      // ... (todos tus attributes e includes se quedan igual)
       attributes: [
-        "id",
-        "tarifa_monto",
-        "fec_fin_mem",
-        "fec_fin_mem_oftime",
-        "fec_fin_mem_viejo",
-        "flag",
-        "id_pgm",
+        "id", "tarifa_monto", "fec_fin_mem", "fec_fin_mem_oftime",
+        "fec_fin_mem_viejo", "flag", "id_pgm",
       ],
       include: [
         {
           model: Venta,
           attributes: ["id", "id_empresa", "fecha_venta"],
           where: { id_empresa: empresa },
-          required: true, 
+          required: true,
           include: [
-            {
-              model: Cliente,
-              attributes: [
-                "id_cli",
-                "nombre_cli",
-                "apPaterno_cli",
-                "apMaterno_cli",
-              ],
-              required: false,
-            },
-            { 
-              model: Empleado,
-              attributes: ["nombre_empl", "apPaterno_empl", "apMaterno_empl"],
-              required: false,
-            },
+            { model: Cliente, attributes: [/*...snip...*/], required: false, },
+            { model: Empleado, attributes: [/*...snip...*/], required: false, },
           ],
         },
-        { model: ProgramaTraining, attributes: [["name_pgm", "plan_name"]], required  : false },
-        {model: ExtensionMembresia, attributes: ["dias_habiles"], required: false  },
+        { model: ProgramaTraining, attributes: [["name_pgm", "plan_name"]], required: false },
+        { model: ExtensionMembresia, attributes: ["dias_habiles"], required: false },
       ],
       raw: false,
     });
-       const idsPgm = [...new Set(rows.map(r => r?.id_pgm).filter(Boolean))];
+    
+    // ... (la lógica de pgmNameById se queda igual)
+    const idsPgm = [...new Set(rows.map(r => r?.id_pgm).filter(Boolean))];
     let pgmNameById = {};
     if (idsPgm.length) {
       const pgms = await ProgramaTraining.findAll({
@@ -942,7 +947,9 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
       });
       pgmNameById = Object.fromEntries(pgms.map(p => [p.id_pgm, p.name_pgm]));
     }
-    const hoy = new Date(); hoy.setHours(0,0,0,0);
+
+    // --- PASO 2: Cambiar el filtro de 'hoy' por 'snapshot' ---
+    // const hoy = new Date(); hoy.setHours(0,0,0,0); // <-- BORRAR ESTO
 
     const vigentes = [];
     for (const m of rows) {
@@ -952,32 +959,20 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
       const fin = calcFinEfectivo(m);
       if (!fin) continue;
       
-      if (fin < hoy) continue; 
+      if (fin < snapshot) continue; 
 
-      const cliente =
-        [ m?.tb_ventum?.tb_cliente?.nombre_cli,
-          m?.tb_ventum?.tb_cliente?.apPaterno_cli,
-          m?.tb_ventum?.tb_cliente?.apMaterno_cli
-        ].filter(Boolean).join(" ").trim() || "SIN NOMBRE";
+      const cliente = [/*...snip...*/].filter(Boolean).join(" ").trim() || "SIN NOMBRE";
+      const ejecutivo = (m?.tb_ventum?.tb_empleado?.nombre_empl ?? "").split(" ")[0] || "-";
+      const plan = pgmNameById[m?.id_pgm] || /*...snip...*/ "-";
 
-      const nombreEmpl = m?.tb_ventum?.tb_empleado?.nombre_empl ?? "";
-      const ejecutivo = nombreEmpl.split(" ")[0] || "-";
-
-       const plan =
-        m?.tb_programa_training?.name_pgm ||
-        m?.tb_programaTraining?.name_pgm ||
-        m?.tb_programa?.name_pgm ||
-        pgmNameById[m?.id_pgm] ||
-        (m?.id_pgm ? `PGM ${m.id_pgm}` : "-");
-
-      const dias_restantes = Math.ceil((fin - hoy) / 86400000);
+      const dias_restantes = Math.ceil((fin - snapshot) / 86400000);
 
       vigentes.push({
         id: m.id,
         cliente,
         plan,
         fechaFin: fin.toISOString().slice(0, 10),
-        dias_restantes,
+        dias_restantes, 
         monto: Number(m?.tarifa_monto) || 0,
         ejecutivo,
       });
