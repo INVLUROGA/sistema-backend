@@ -13,6 +13,7 @@ const TiemposEspeciales = db.define("rrhh_tiemposEspeciales", {
   },
   id_colaborador: {
     type: DataTypes.INTEGER,
+    defaultValue: 0,
   },
   fechaDesde: {
     type: DataTypes.DATE,
@@ -29,20 +30,29 @@ const TiemposEspeciales = db.define("rrhh_tiemposEspeciales", {
   },
   id_tipo: {
     type: DataTypes.INTEGER,
+    defaultValue: 0,
   },
   minutos: {
     type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
+  nombre: {
+    type: DataTypes.STRING(260),
+  },
+  id_empresa: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
   },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
 });
-TiemposEspeciales.hasOne(Empleado,{
-    foreignKey: "id_empl",
+TiemposEspeciales.hasOne(Empleado, {
+  foreignKey: "id_empl",
   sourceKey: "id_colaborador",
   as: "_empl",
-})
+});
 TiemposEspeciales.sync()
   .then(() => {
     console.log("La tabla TiemposEspeciales ha sido creada o ya existe.");

@@ -557,6 +557,7 @@ const getUsuarioEmpleados = async (req = request, res = response) => {
         "telefono_empl",
         "email_corporativo",
         "uid_contactsEmergencia",
+        "id_empresa",
         ["estado_empl", "estado"],
       ],
       where: {

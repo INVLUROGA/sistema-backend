@@ -136,6 +136,7 @@ async function estadosClienteMembresiaV2(
           [Op.ne]: 701, // Excluye los registros con id_tipoFactura igual a 84
         },
       },
+      flag: true,
       include: [
         {
           model: Cliente,
@@ -190,6 +191,8 @@ async function estadosClienteMembresiaV2(
           [Op.ne]: 701, // Excluye los registros con id_tipoFactura igual a 84
         },
       },
+      flag: true,
+
       include: [
         {
           model: detalleVenta_membresias,
@@ -441,6 +444,7 @@ async function comparativaPorPrograma(fecha) {
   let ventasMesActual = await Venta.findAll({
     where: {
       fecha_venta: { [Op.between]: [primerDiaMesActual, ultimoDiaMesActual] },
+      flag: true,
     },
   });
 
@@ -1953,6 +1957,7 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
                 fecha_venta: {
                   [Op.between]: [fechaInicio, fechaFin],
                 },
+                flag: true,
               },
               include: [
                 {
@@ -1992,6 +1997,7 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
             new Date(fechaFin).setUTCHours(23, 59, 59, 999),
           ],
         },
+        flag: true,
       },
       include: [
         {
@@ -2053,7 +2059,7 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
         {
           model: Venta,
           attributes: ["id", "fecha_venta", "id_tipoFactura"],
-          where: { id_empresa: 598 },
+          where: { id_empresa: 598, flag: true },
           include: [
             {
               model: Cliente,
@@ -2382,6 +2388,7 @@ const obtenerComparativoResumenClientes = async (
             new Date(fechaFin).setUTCHours(23, 59, 59, 999),
           ],
         },
+        flag: true,
       },
       include: [
         {
@@ -2438,7 +2445,7 @@ const obtenerComparativoResumenClientes = async (
         {
           model: Venta,
           attributes: ["id", "fecha_venta", "id_tipoFactura"],
-          where: { id_empresa: 598 },
+          where: { id_empresa: 598, flag: true },
           include: [
             {
               model: Cliente,
@@ -3031,6 +3038,7 @@ const obtenerTransferenciasxFecha = async (req = request, res = response) => {
             new Date(arrayDate[1]).setUTCHours(23, 59, 59, 999),
           ],
         },
+        flag: true,
       },
       include: [
         {
@@ -3172,6 +3180,7 @@ const obtenerTransferenciasResumenxMes = async (
             new Date(fechaFin).setUTCHours(23, 59, 59, 999),
           ],
         },
+        flag: true,
       },
       attributes: ["id"],
       include: [
@@ -3254,6 +3263,7 @@ const obtenerMembresias = async (req = request, res = response) => {
             new Date(dateRanges[1]).setUTCHours(23, 59, 59, 999),
           ], // Suponiendo que fecha_inicial y fecha_final son variables con las fechas deseadas
         },
+        flag: true,
       },
       include: [
         {
@@ -3305,6 +3315,7 @@ const obtenerMarcacionesClientexMembresias = async (
       order: [["fecha_venta", "DESC"]],
       where: {
         id_empresa: id_enterprice,
+        flag: true,
       },
       include: [
         {
@@ -3380,6 +3391,7 @@ const obtenerMembresiasxUIDcliente = async (req, res) => {
       order: [["fecha_venta", "DESC"]],
       where: {
         id_cli: id_cli,
+        flag: true,
       },
       include: [
         {

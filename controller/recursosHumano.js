@@ -153,10 +153,32 @@ const updateDiasNoLaborables = async (req = request, res = response) => {
 // Crear TiemposEspeciale
 const PostTiemposEspeciale = async (req = request, res = response) => {
   try {
-    const { entidad } = req.params;
-    await TiemposEspeciales.create({ ...req.body, entidad });
+    const { entidad, id_empresa } = req.params;
+    const {
+      id_colaborador,
+      fechaDesde,
+      fechaHasta,
+      conGoceSueldo,
+      observacion,
+      id_tipo,
+      minutos,
+      nombre,
+    } = req.body;
+    await TiemposEspeciales.create({
+      nombre,
+      id_colaborador,
+      fechaDesde,
+      fechaHasta,
+      conGoceSueldo,
+      observacion,
+      id_tipo,
+      minutos,
+      entidad,
+      id_empresa,
+    });
     res.status(201).json({ msg: "TiemposEspeciale creado correctamente" });
   } catch (error) {
+    console.log(error);
     res.status(500).json({
       msg: "ERROR EN LA BASE DE DATOS O SERVIDOR (PostTiemposEspeciale)",
     });
@@ -168,14 +190,7 @@ const GetTiemposEspeciales = async (req = request, res = response) => {
   try {
     const { entidad, id_empresa } = req.params;
     const tiempoEspeciales = await TiemposEspeciales.findAll({
-      where: { flag: true, entidad },
-      include: [
-        {
-          as: "_empl",
-          model: Empleado,
-          where: { id_empresa },
-        },
-      ],
+      where: { flag: true, entidad, id_empresa },
     });
     res
       .status(200)

@@ -222,7 +222,7 @@ const seccionGET = async (req = request, res = response) => {
           url: "/resumen-ejecutivo",
         },
         {
-          key: "resumen-ejecutivo",
+          key: "mof-mant",
           label: "M.O.F mantenimiento",
           isTitle: false,
           icon: "uil-calender",
@@ -1078,6 +1078,12 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: false,
           icon: "uil-calender",
           url: "/totalizado-inventario",
+        },
+        {
+          label: "TERMINOLOGIAS",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/configuracion-terminos",
         },
       ];
     }
