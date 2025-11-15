@@ -934,6 +934,7 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
                 "precio",
                 "duracion",
                 "id_categoria",
+                "precio_compra"
               ],
             },
             {
@@ -1956,7 +1957,6 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
                 fecha_venta: {
                   [Op.between]: [fechaInicio, fechaFin],
                 },
-                flag: true,
               },
               include: [
                 {

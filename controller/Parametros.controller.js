@@ -32,28 +32,67 @@ const { Distritos } = require("../models/Distritos");
 const { ServiciosCircus } = require("../models/modelsCircus/Servicios");
 const { get } = require("../config/nodemailer");
 
-const BusinessDays = (date, days) => {
-  if (!date || !Number.isFinite(days)) return date;
-  let d = new Date(date);
-  let add = Math.trunc(days);
-  while (add > 0) {
-    d.setDate(d.getDate() + 1);
-    const wd = d.getDay(); // 0=Dom,6=Sáb
-    if (wd !== 0 && wd !== 6) add--;
-  }
-  return d;
-};
 const parseDateOnly = (s) => {
   if (!s) return null;
   const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (!m) return null;
   return new Date(+m[1], +m[2] - 1, +m[3]);
 };
+const getInicioBase = (m) => {
+  // 1) usa fec_inicio_mem si existe
+  let inicio =
+    parseDateOnly(m?.fec_inicio_mem) ||
+    // 2) si no, usa fecha_venta como inicio
+    (m?.tb_ventum?.fecha_venta ? new Date(m.tb_ventum.fecha_venta) : null);
+
+  if (!inicio || isNaN(inicio)) return null;
+  inicio.setHours(0, 0, 0, 0);
+  return inicio;
+};
+
+function addBusinessDays(startDate, numberOfDays) {
+  let currentDate = new Date(startDate);
+  let daysAdded = 0;
+
+  while (daysAdded < numberOfDays) {
+    currentDate.setDate(currentDate.getDate() + 1);
+
+    const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+      // Check if it's Monday to Friday
+      daysAdded++;
+    }
+  }
+
+  return currentDate;
+}
 const isActiveFlag = (v) => v === 1 || v === true || v === "1" || v === "true";
+const getFinBaseFromSemanas = (m) => {
+  const semanas =
+    Number(m?.tb_semana_training?.semanas_st ?? m?.semanas_st ?? 0);
+  if (!semanas) return null;
+
+  let inicio =
+    parseDateOnly(m?.fec_inicio_mem) ||
+    (m?.tb_ventum?.fecha_venta
+      ? new Date(m.tb_ventum.fecha_venta)
+      : null);
+
+  if (!inicio || isNaN(inicio)) return null;
+
+  inicio.setHours(0, 0, 0, 0);
+  const fin = new Date(inicio);
+  fin.setDate(fin.getDate() + semanas * 7); // semanas * 7 días
+
+  return fin;
+};
+
 const getFinBase = (m) =>
+  getFinBaseFromSemanas(m) ||
   parseDateOnly(m?.fec_fin_mem) ||
   parseDateOnly(m?.fec_fin_mem_oftime) ||
   parseDateOnly(m?.fec_fin_mem_viejo);
+
 
 const calcFinEfectivo = (m) => {
   const base = getFinBase(m);
@@ -136,22 +175,7 @@ const obtenerDistritosxDepartamentoxProvincia = async (
   }
 };
 
-function addBusinessDays(startDate, numberOfDays) {
-  let currentDate = new Date(startDate);
-  let daysAdded = 0;
 
-  while (daysAdded < numberOfDays) {
-    currentDate.setDate(currentDate.getDate() + 1);
-
-    const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-      // Check if it's Monday to Friday
-      daysAdded++;
-    }
-  }
-
-  return currentDate;
-}
 const getParametrosTipoAportes = async (req = request, res = response) => {
   try {
   } catch (error) {
@@ -888,6 +912,7 @@ const getVigentesResumenEmpresa = async (req, res) => {
       attributes: [
         "id",
         "tarifa_monto",
+        "fec_inicio_mem",
         "fec_fin_mem",
         "fec_fin_mem_oftime",
         "fec_fin_mem_viejo",
@@ -902,8 +927,14 @@ const getVigentesResumenEmpresa = async (req, res) => {
         {
           model: Venta,
           attributes: ["id", "id_empresa"],
-          where: { id_empresa: empresa },
+          where: { id_empresa: empresa,flag:true },
+          required:true,
         },
+        {
+          model: SemanasTraining,
+          attributes:["id_st","semanas_st"],
+          required: false,
+        }
       ],
     });
 
@@ -913,6 +944,35 @@ const getVigentesResumenEmpresa = async (req, res) => {
       vencidos = 0;
 
     for (const m of rows) {
+  if (!isActiveFlag(m.flag)) continue;
+  const monto = Number(m.tarifa_monto ?? 0);
+  if (!incluirMontoCero && !(monto > 0)) continue;
+
+  const fin = calcFinEfectivo(m);
+  if (!fin) continue;
+
+  const inicio = getInicioBase(m);
+  // 👇 si la membresía empieza DESPUÉS del snapshot, aún no está vigente
+  if (inicio && inicio > snapshot) {
+    continue;
+  }
+
+  const f = new Date(fin);
+  f.setHours(0, 0, 0, 0);
+
+  if (f < snapshot) {
+    vencidos++;
+    continue;
+  }
+  if (f.getTime() === snapshot.getTime()) {
+    venceEnSnapshot++;
+    vigentes++;
+    continue;
+  }
+  vigentes++;
+  if (f <= lim) porVencer++;
+}
+for (const m of rows) {
       if (!isActiveFlag(m.flag)) continue;
       const monto = Number(m.tarifa_monto ?? 0);
       if (!incluirMontoCero && !(monto > 0)) continue;
@@ -957,6 +1017,7 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
       attributes: [
         "id",
         "tarifa_monto",
+        "fec_inicio_mem",       
         "fec_fin_mem",
         "fec_fin_mem_oftime",
         "fec_fin_mem_viejo",
@@ -997,9 +1058,15 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
           attributes: ["dias_habiles"],
           required: false,
         },
+        {
+          model: SemanasTraining,
+          attributes: ["id_st", "semanas_st"],
+          required: false,
+        },
       ],
       raw: false,
     });
+
     const idsPgm = [...new Set(rows.map((r) => r?.id_pgm).filter(Boolean))];
     let pgmNameById = {};
     if (idsPgm.length) {
@@ -1010,51 +1077,82 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
       });
       pgmNameById = Object.fromEntries(pgms.map((p) => [p.id_pgm, p.name_pgm]));
     }
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
+
+    let snapStr = String(req.query.snapshot || "");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(snapStr)) {
+      const now = new Date();
+      const year = Number(req.query.year || now.getFullYear());
+      const selectedMonth = Number(
+        req.query.selectedMonth || now.getMonth() + 1
+      );
+      const lastDay = new Date(year, selectedMonth, 0).getDate();
+      const isCurrentMonth =
+        year === now.getFullYear() && selectedMonth === now.getMonth() + 1;
+
+      const maxCutAllowed = isCurrentMonth
+        ? Math.min(now.getDate(), lastDay)
+        : lastDay;
+      const cutDay = Math.max(
+        1,
+        Math.min(Number(req.query.cutDay || maxCutAllowed), maxCutAllowed)
+      );
+
+      snapStr = `${year}-${String(selectedMonth).padStart(2, "0")}-${String(
+        cutDay
+      ).padStart(2, "0")}`;
+    }
+
+    const snapshot = new Date(snapStr);
+    snapshot.setHours(0, 0, 0, 0);
 
     const vigentes = [];
-    for (const m of rows) {
-      if (!isActiveFlag(m?.flag)) continue;
-      if (!(Number(m?.tarifa_monto ?? 0) > 0)) continue;
+for (const m of rows) {
+  if (!isActiveFlag(m?.flag)) continue;
+  if (!(Number(m?.tarifa_monto ?? 0) > 0)) continue;
 
-      const fin = calcFinEfectivo(m);
-      if (!fin) continue;
+  const fin = calcFinEfectivo(m);
+  if (!fin) continue;
 
-      if (fin < hoy) continue;
+  const inicio = getInicioBase(m);
+  // 👇 si empieza después del snapshot, aún no cuenta como vigente
+  if (inicio && inicio > snapshot) continue;
 
-      const cliente =
-        [
-          m?.tb_ventum?.tb_cliente?.nombre_cli,
-          m?.tb_ventum?.tb_cliente?.apPaterno_cli,
-          m?.tb_ventum?.tb_cliente?.apMaterno_cli,
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .trim() || "SIN NOMBRE";
+  // vigentes respecto a snapshot
+  if (fin < snapshot) continue;
 
-      const nombreEmpl = m?.tb_ventum?.tb_empleado?.nombre_empl ?? "";
-      const ejecutivo = nombreEmpl.split(" ")[0] || "-";
+  const cliente =
+    [
+      m?.tb_ventum?.tb_cliente?.nombre_cli,
+      m?.tb_ventum?.tb_cliente?.apPaterno_cli,
+      m?.tb_ventum?.tb_cliente?.apMaterno_cli,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .trim() || "SIN NOMBRE";
 
-      const plan =
-        m?.tb_programa_training?.name_pgm ||
-        m?.tb_programaTraining?.name_pgm ||
-        m?.tb_programa?.name_pgm ||
-        pgmNameById[m?.id_pgm] ||
-        (m?.id_pgm ? `PGM ${m.id_pgm}` : "-");
+  const nombreEmpl = m?.tb_ventum?.tb_empleado?.nombre_empl ?? "";
+  const ejecutivo = nombreEmpl.split(" ")[0] || "-";
 
-      const dias_restantes = Math.ceil((fin - hoy) / 86400000);
+  const plan =
+    m?.tb_programa_training?.name_pgm ||
+    m?.tb_programaTraining?.name_pgm ||
+    m?.tb_programa?.name_pgm ||
+    pgmNameById[m?.id_pgm] ||
+    (m?.id_pgm ? `PGM ${m.id_pgm}` : "-");
 
-      vigentes.push({
-        id: m.id,
-        cliente,
-        plan,
-        fechaFin: fin.toISOString().slice(0, 10),
-        dias_restantes,
-        monto: Number(m?.tarifa_monto) || 0,
-        ejecutivo,
-      });
-    }
+  const dias_restantes = Math.ceil((fin - snapshot) / 86400000);
+
+  vigentes.push({
+    id: m.id,
+    cliente,
+    plan,
+    fechaFin: fin.toISOString().slice(0, 10),
+    dias_restantes,
+    monto: Number(m?.tarifa_monto) || 0,
+    ejecutivo,
+  });
+}
+
 
     return res.json({ total: vigentes.length, vigentes });
   } catch (e) {
@@ -1074,6 +1172,7 @@ const getRenovacionesPorVencerEmpresa = async (req, res) => {
         "id",
         "id_pgm",
         "tarifa_monto",
+        "fec_inicio_mem",       
         "fec_fin_mem",
         "fec_fin_mem_oftime",
         "fec_fin_mem_viejo",
@@ -1100,6 +1199,12 @@ const getRenovacionesPorVencerEmpresa = async (req, res) => {
               attributes: ["nombre_empl", "apPaterno_empl", "apMaterno_empl"],
             },
           ],
+          
+        },
+        {
+          model: SemanasTraining,
+          attributes: ["id_st", "semanas_st"],
+          required: false,
         },
       ],
     });
@@ -1136,12 +1241,12 @@ const getRenovacionesPorVencerEmpresa = async (req, res) => {
       const monto = Number(m.tarifa_monto || 0);
       if (monto <= 0) continue;
 
-      const finRaw =
-        m.fec_fin_mem || m.fec_fin_mem_oftime || m.fec_fin_mem_viejo;
-      if (!finRaw) continue;
+          const fin = calcFinEfectivo(m);
+      if (!fin) continue;
 
-      const fechaFin = new Date(finRaw);
-      if (isNaN(fechaFin)) continue;
+      const fechaFin = new Date(fin);
+      fechaFin.setHours(0, 0, 0, 0);
+
       if (fechaFin < hoy || fechaFin > lim) continue;
 
       const diff = Math.round((fechaFin - hoy) / 86400000);
