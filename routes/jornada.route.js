@@ -6,7 +6,7 @@ const {
   obtenerJornadaxEmpl,
   postContratoJornadaEmpleado,
   obtenerContratosxEmpleado,
-  postTipoHorarioContrato,
+  postDiasLaborables,
   obtenerContratosxFecha,
   obtenerDiasLaborablesxIdContrato,
 } = require("../controller/jornada.controller");
@@ -25,7 +25,7 @@ router.get("/obtener-contratos", obtenerContratosxFecha);
 
 router.post("/jornada/:id_empl", postContratoJornadaEmpleado);
 router.get("/jornada/:id_empl", obtenerContratosxEmpleado);
-router.post("/diaxcontrato", postTipoHorarioContrato);
+router.post("/diaxcontrato", postDiasLaborables);
 router.get(
   `/dias-laborables/idContrato/:idContrato`,
   obtenerDiasLaborablesxIdContrato

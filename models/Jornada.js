@@ -3,7 +3,7 @@ const { db } = require("../database/sequelizeConnection");
 const { Parametros } = require("./Parametros");
 const { Empleado } = require("./Usuarios");
 
-const tipoHorarioContrato = db.define("tb_tipoHorarioContrato", {
+const DiasLaborables = db.define("rrhh_diasLaborables", {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -26,6 +26,9 @@ const tipoHorarioContrato = db.define("tb_tipoHorarioContrato", {
   },
   observacion: {
     type: DataTypes.STRING(360),
+  },
+  hex: {
+    type: DataTypes.STRING(20)
   },
   flag: {
     type: DataTypes.BOOLEAN,
@@ -60,7 +63,7 @@ const contrato_empleado = db.define("tb_contrato_empleado", {
   },
 });
 
-contrato_empleado.hasMany(tipoHorarioContrato, {
+contrato_empleado.hasMany(DiasLaborables, {
   foreignKey: "id_contrato",
   sourceKey: "id",
   as: "contrato_empl",
@@ -218,10 +221,10 @@ HorasEspeciales.hasMany(Empleado, {
 });
 
 // Sincroniza el modelo con la base de datos (crea la tabla si no existe)
-tipoHorarioContrato
+DiasLaborables
   .sync()
   .then(() => {
-    console.log("La tabla tipoHorarioContrato ha sido creada o ya existe.");
+    console.log("La tabla DiasLaborables ha sido creada o ya existe.");
   })
   .catch((error) => {
     console.error(
@@ -284,5 +287,5 @@ module.exports = {
   jornadaPlanilla,
   HorasEspeciales,
   contrato_empleado,
-  tipoHorarioContrato,
+  DiasLaborables,
 };

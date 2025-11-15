@@ -2,7 +2,7 @@ const { response, request } = require("express");
 const {
   Jornada,
   contrato_empleado,
-  tipoHorarioContrato,
+  DiasLaborables,
 } = require("../models/Jornada");
 const uuid = require("uuid");
 const { Empleado } = require("../models/Usuarios");
@@ -112,9 +112,9 @@ const obtenerContratosxEmpleado = async (req = request, res = response) => {
     console.log(error);
   }
 };
-const postTipoHorarioContrato = async (req = request, res = response) => {
+const postDiasLaborables = async (req = request, res = response) => {
   try {
-    await tipoHorarioContrato.bulkCreate(req.body);
+    await DiasLaborables.bulkCreate(req.body);
     res.status(201).json({
       msg: "ok",
     });
@@ -152,7 +152,7 @@ const obtenerContratosxFecha = async (req = request, res = response) => {
           as: "_empl",
           include: [
             {
-              model: tipoHorarioContrato,
+              model: DiasLaborables,
               where: {
                 fecha: {
                   [Op.between]: [
@@ -188,7 +188,7 @@ const obtenerDiasLaborablesxIdContrato = async (
 ) => {
   try {
     const { idContrato } = req.params;
-    const diasLaborablesEnContrato = await tipoHorarioContrato.findAll({
+    const diasLaborablesEnContrato = await DiasLaborables.findAll({
       where: { id_contrato: idContrato, flag: true },
     });
     console.log({ diasLaborablesEnContrato });
@@ -207,10 +207,6 @@ const obtenerDiasLaborablesxFechaxEmpresa = async (
   try {
     const { arrayFecha, id_empresa } = req.params;
     const { arrayDate } = req.query;
-    console.log(
-      { arrayDate, id_empresa },
-      "asdfasdfadfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdf"
-    );
     const fechaInicio = arrayDate[0];
     const fechaFin = arrayDate[1];
 
@@ -226,7 +222,7 @@ const obtenerDiasLaborablesxFechaxEmpresa = async (
           as: "_empl",
           include: [
             {
-              model: tipoHorarioContrato,
+              model: DiasLaborables,
               as: "contrato_empl",
               where: {
                 fecha: {
@@ -256,7 +252,7 @@ module.exports = {
   postContratoJornadaEmpleado,
   obtenerContratosxEmpleado,
   // dias laborables
-  postTipoHorarioContrato,
+  postDiasLaborables,
   obtenerContratosxFecha,
   obtenerDiasLaborablesxIdContrato,
   obtenerDiasLaborablesxFechaxEmpresa,
