@@ -222,6 +222,11 @@ const seccionGET = async (req = request, res = response) => {
           url: "/resumen-ejecutivo",
         },
         {
+          key: "config",
+          label: "M.O.F",
+          isTitle: true,
+        },
+        {
           key: "mof-mant",
           label: "M.O.F mantenimiento",
           isTitle: false,
@@ -229,9 +234,11 @@ const seccionGET = async (req = request, res = response) => {
           url: "/mof-mantenimiento",
         },
         {
-          key: "config",
-          label: "M.O.F",
-          isTitle: true,
+          key: "responsabilidades-administrativas",
+          label: "RESPONSABILIDADES AREA ADMINISTRATIVA",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/responsabilidades-administrativas",
         },
         {
           //key: "reporte-utilidad-pgm",
@@ -389,12 +396,12 @@ const seccionGET = async (req = request, res = response) => {
           url: "/aporte-ingresos",
         },
         {
-  key: "gestion-gfgv",
-  label: "Resumen Membresías",
-  isTitle: false,
-  icon: "uil-calender",
-  url: "/resumen-membresias",
-},
+          key: "gestion-gfgv",
+          label: "Resumen Membresías",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/resumen-membresias",
+        },
 
         {
           key: "prov",
@@ -665,7 +672,7 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           url: "/nueva-venta",
         },
-         {
+        {
           key: "pt-reservas",
           label: "Reservas MonkFit",
           isTitle: false,

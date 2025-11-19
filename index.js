@@ -342,6 +342,7 @@ app.use("/api/parametroGasto", require("./routes/parametroGasto.router.js"));
 //CIRCUS----
 app.use("/api/circus", require("./routes/routersCircus/servicios.router.js"));
 app.use("/api/canjes", require("./routes/canjes.router.js"));
+app.use('/api/penalidad', require('./routes/penalidad.router.js'))
 // app.use("/circus/")
 obtenerDataSeguimiento();
 //Escuchar peticiones
