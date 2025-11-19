@@ -1212,13 +1212,6 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           url: "/crear-citas-nutricion",
         },
-        {
-          key: "pt-reservas",
-          label: "Reservas MonkFit",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/gestion-monkfit",
-        },
 
         {
           key: "gest-gastos",
