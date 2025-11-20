@@ -976,6 +976,55 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
     });
   }
 };
+const updateDetalleServicio = async(req = request, res= response)=>{
+  const {id}= req.params;
+
+  const {id_empl,tarifa_monto}=req.body;
+
+  try{
+    const detalle = await detalleventa_servicios.findByPk(id);
+    if(!detalle){
+      return res.status(404).json({ok:false, msg:'Detalle no encontrado'})
+    }
+    await detalle.update({
+      id_empl,
+      tarifa_monto
+    });
+    res.status(200).json({
+      ok:true,
+      msg:'Servicio Actualizado'
+    });
+  } catch (error){
+    console.log(error);
+    res.status(500).json({
+      ok:false,
+      error:'error en la actualizacion: ${error}'
+    });
+  }
+};
+const updateDetalleProducto = async (req = request, res = response) => {
+    const { id } = req.params;
+    const { id_empl, tarifa_monto } = req.body; // Ajusta si tu campo de precio se llama distinto
+
+    try {
+        // Asegúrate de importar el modelo detalleVenta_producto
+        const detalle = await detalleVenta_producto.findByPk(id);
+
+        if (!detalle) {
+            return res.status(404).json({ ok: false, msg: 'Producto no encontrado' });
+        }
+
+        await detalle.update({
+            id_producto_empleado: id_empl, 
+            tarifa_monto
+        });
+
+        res.status(200).json({ ok: true, msg: 'Producto actualizado' });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ ok: false, error: `Error: ${error}` });
+    }
+};
 const get_VENTA_ID = async (req = request, res = response) => {
   const { id } = req.params;
   try {
@@ -3752,6 +3801,7 @@ module.exports = {
   obtenerUltimasVentasxComprobantes,
   putVentaxId,
   postCajaApertura,
+
   obtenerMembresiasxUIDcliente,
   obtenerComparativoResumenClientes,
   obtenerTransferenciasResumenxMes,
@@ -3783,4 +3833,6 @@ module.exports = {
   obtenerMarcacionesClientexMembresias,
   obtenerComparativoTotal,
   buscarCajasxFecha,
+  updateDetalleProducto,
+  updateDetalleServicio
 };

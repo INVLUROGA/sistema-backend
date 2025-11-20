@@ -52,6 +52,8 @@ const {
   postVentaServicios,
   postComanda,
   getComandas,
+  updateDetalleProducto,
+  updateDetalleServicio,
 } = require("../controller/venta.controller");
 
 const {
@@ -109,7 +111,8 @@ router.get("/get-ventas/:id_empresa", get_VENTAS);
 router.post("/invoice-mail/:id_venta", mailMembresia);
 router.get("/get-id-ventas/:id", get_VENTA_ID);
 router.post("/invoice-PDFcontrato", obtener_contrato_pdf);
-
+router.put('/update-colaborador-servicio/:id', updateDetalleServicio);
+router.put('/update-colaborador-producto/:id', updateDetalleProducto); 
 // router.post("/")
 router.post("/estado-membresia", estadosClienteMembresiaVar);
 
