@@ -4,6 +4,7 @@ const { ImagePT } = require("./Image");
 const { Parametros, Parametros_zonas, EtiquetasxIds } = require("./Parametros");
 const uuid = require("uuid");
 const { ProspectoLead } = require("./ProspectoLead");
+const { Usuario } = require("./Usuarios");
 
 const Articulos = db.define("tb_articulos", {
   id: {
@@ -23,7 +24,7 @@ const Articulos = db.define("tb_articulos", {
   id_marca: {
     type: DataTypes.INTEGER,
   },
-  modelo:{
+  modelo: {
     type: DataTypes.STRING(50),
   },
   descripcion: {
@@ -70,7 +71,81 @@ const Articulos = db.define("tb_articulos", {
     defaultValue: true,
   },
 });
+const HisCamArticulos = db.define("hiscam_articulos", {
+  id_hc: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  id_articulo: {
+    type: DataTypes.INTEGER,
+  },
+  fecha_entrada: {
+    type: DataTypes.STRING(12),
+  },
+  uid_image: {
+    type: DataTypes.STRING,
+  },
+  producto: {
+    type: DataTypes.STRING(40),
+  },
+  id_marca: {
+    type: DataTypes.INTEGER,
+  },
+  modelo: {
+    type: DataTypes.STRING(50),
+  },
+  descripcion: {
+    type: DataTypes.STRING(890),
+  },
+  etiquetas_busqueda: {
+    type: DataTypes.STRING(1000),
+  },
+  cantidad: {
+    type: DataTypes.INTEGER,
+  },
+  costo_unitario_soles: {
+    type: DataTypes.DECIMAL(10, 2),
+  },
+  costo_unitario_dolares: {
+    type: DataTypes.DECIMAL(10, 2),
+  },
+  costo_total_soles: {
+    type: DataTypes.DECIMAL(10, 2),
+  },
+  costo_total_dolares: {
+    type: DataTypes.DECIMAL(10, 2),
+  },
+  mano_obra_soles: {
+    type: DataTypes.DECIMAL(10, 2),
+  },
+  mano_obra_dolares: {
+    type: DataTypes.DECIMAL(10, 2),
+  },
+  lugar_compra_cotizacion: {
+    type: DataTypes.STRING,
+  },
+  id_lugar: {
+    type: DataTypes.INTEGER,
+  },
+  nivel: {
+    type: DataTypes.INTEGER,
+  },
+  id_empresa: {
+    type: DataTypes.INTEGER,
+  },
+  id_usuario: {
+    type: DataTypes.INTEGER,
+  },
+  id_accion: {
+    type: DataTypes.INTEGER,
+  },
 
+  flag: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+});
 const Kardex_Inventario = db.define("tb_kardex_inventario", {
   id: {
     type: DataTypes.INTEGER,
@@ -106,7 +181,11 @@ const Kardex_Inventario = db.define("tb_kardex_inventario", {
     defaultValue: true,
   },
 });
-
+HisCamArticulos.hasOne(Usuario, {
+  sourceKey: "id_usuario",
+  foreignKey: "id_user",
+  as: "usuario",
+});
 // const Kardex_Inventario_Transferencia = db.define("tb_kardex_inventario_transferencia", {
 //   id: {
 //     type: DataTypes.INTEGER,
@@ -181,6 +260,17 @@ Articulos.sync()
       error
     );
   });
+
+HisCamArticulos.sync()
+  .then(() => {
+    console.log("La tabla HisCamArticulos ha sido sync o ya existe.");
+  })
+  .catch((error) => {
+    console.error(
+      "Error al sincronizar el modelo con la base de datos:",
+      error
+    );
+  });
 Kardex_Inventario.sync()
   .then(() => {
     console.log("La tabla Kardex_Inventario ha sido sync o ya existe.");
@@ -223,4 +313,5 @@ const carcel = async () => {
 module.exports = {
   Articulos,
   Kardex_Inventario,
+  HisCamArticulos,
 };

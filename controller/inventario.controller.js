@@ -1,5 +1,9 @@
 const { request, response } = require("express");
-const { Articulos, Kardex_Inventario } = require("../models/Articulo");
+const {
+  Articulos,
+  Kardex_Inventario,
+  HisCamArticulos,
+} = require("../models/Articulo");
 const uid = require("uuid");
 const { ImagePT } = require("../models/Image");
 const {
@@ -12,6 +16,7 @@ const { GeneradorFechas } = require("../models/GeneradorFechas");
 const { capturarAUDIT, capturarAccion } = require("../middlewares/auditoria");
 const { typesCRUD } = require("../types/types");
 const { enviarMensajesWsp } = require("../config/whatssap-web");
+const { Usuario } = require("../models/Usuarios");
 async function obtenerArticulosActivos(id_empresa) {
   return await Articulos.findAll({
     where: { flag: true, id_empresa },
@@ -107,6 +112,13 @@ const registrarArticulo = async (req = request, res = response) => {
     };
     await capturarAUDIT(formAUDIT);
     await capturarAccion(formAUDIT);
+
+    await HisCamArticulos.create({
+      ...req.body,
+      id_accion: typesCRUD.POST,
+      id_usuario: req.id_user,
+      id_articulo: articulo.id,
+    });
     res.status(201).json({
       msg: "Articulo registrado correctamente",
       articulo,
@@ -145,6 +157,12 @@ const actualizarArticulo = async (req = request, res = response) => {
     await capturarAUDIT(formAUDIT);
     await capturarAccion(formAUDIT);
     await articulo.update(req.body);
+    await HisCamArticulos.create({
+      ...req.body,
+      id_accion: typesCRUD.PUT,
+      id_usuario: req.id_user,
+      id_articulo: req.body.id,
+    });
     res.status(200).json({
       msg: "Articulo actualizado correctament",
       articulo,
@@ -181,6 +199,12 @@ const eliminarArticulo = async (req = request, res = response) => {
     await capturarAUDIT(formAUDIT);
     await capturarAccion(formAUDIT);
     await articulo.update({ flag: false });
+    await HisCamArticulos.create({
+      ...req.body,
+      id_accion: typesCRUD.DELETE,
+      id_usuario: req.id_user,
+      id_articulo: req.body.id,
+    });
     res.status(200).json({
       msg: "Articulo eliminado correctamente",
       articulo,
@@ -623,7 +647,36 @@ function generarInventario(
 
   return resultados;
 }
+const obtenerHistorialCambiosArticuloxIDARTICULO = async (
+  req = request,
+  res = response
+) => {
+  try {
+    const { idArticulo } = req.params;
+    const hisCamArticuloxID = await HisCamArticulos.findAll({
+      where: {
+        id_articulo: idArticulo,
+      },
+      include: [
+        {
+          model: Usuario,
+          as: "usuario",
+        },
+      ],
+    });
+    res.status(201).json({
+      hisCamArticuloxID,
+      ok: true,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(505).json({
+      ok: false,
+    });
+  }
+};
 module.exports = {
+  obtenerHistorialCambiosArticuloxIDARTICULO,
   obtenerInventario,
   registrarArticulo,
   actualizarArticulo,

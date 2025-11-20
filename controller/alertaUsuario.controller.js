@@ -61,11 +61,27 @@ const updateAlertaUsuario = async (req = request, res = response) => {
     });
   }
 };
-
+const updateMensaje = async (req = request, res = response) => {
+  try {
+    const { mensaje, mensajeAnterior } = req.body;
+    const alertasXmensaje = await AlertasUsuario.findAll({
+      where: { mensaje: mensajeAnterior, flag: true, id_estado: 1 },
+    });
+    for (const alerta of alertasXmensaje) {
+      await alerta.update({ mensaje });
+    }
+    res.status(200).json({ msg: "AlertaUsuario actualizado correctamente" });
+  } catch (error) {
+    res.status(500).json({
+      msg: "ERROR EN LA BASE DE DATOS O SERVIDOR (updateAlertaUsuario)",
+    });
+  }
+};
 module.exports = {
   PostAlertaUsuario,
   GetAlertaUsuarios,
   GetAlertaUsuario,
   deleteAlertaUsuario,
   updateAlertaUsuario,
+  updateMensaje,
 };
