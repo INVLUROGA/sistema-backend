@@ -787,7 +787,7 @@ const get_VENTAS = async (req = request, res = response) => {
         },
         {
           model: detalleVenta_citas,
-          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
+          required: false,
           attributes: ["id_venta", "id_servicio", "tarifa_monto"],
         },
         {
@@ -823,7 +823,7 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
       attributes: [
         "id",
         "id_cli",
-        "id_empl",
+        "id_empl",          
         "id_origen",
         "id_tipoFactura",
         "numero_transac",
@@ -852,6 +852,30 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
             "apMaterno_cli",
           ],
         },
+        {
+          model: Empleado,
+          as: "tb_empleado",
+          attributes: [
+            "id_empl",
+            "uid",
+            "uid_avatar",
+            "nombre_empl",
+            "apPaterno_empl",
+            "apMaterno_empl",
+            [
+              Sequelize.fn(
+                "CONCAT",
+                Sequelize.col("tb_empleado.nombre_empl"),
+                " ",
+                Sequelize.col("tb_empleado.apPaterno_empl"),
+                " ",
+                Sequelize.col("tb_empleado.apMaterno_empl")
+              ),
+              "nombres_apellidos_empl",
+            ],
+          ],
+        },
+
         {
           model: detalleVenta_producto,
           required: false,
@@ -934,7 +958,7 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
                 "precio",
                 "duracion",
                 "id_categoria",
-                "precio_compra"
+                "precio_compra",
               ],
             },
             {
@@ -964,22 +988,20 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
         },
       ],
     });
-    res.status(200).json({
-      ok: true,
-      ventas,
-    });
+
+    res.status(200).json({ ok: true, ventas });
   } catch (error) {
     console.log(error);
-
     res.status(500).json({
       error: `Error en el servidor, en controller de get_VENTAS, hable con el administrador: ${error}`,
     });
   }
 };
+
 const updateDetalleServicio = async(req = request, res= response)=>{
   const {id}= req.params;
 
-  const {id_empl,tarifa_monto}=req.body;
+  const {id_empl,tarifa_monto,id_servicio}=req.body;
 
   try{
     const detalle = await detalleventa_servicios.findByPk(id);
@@ -987,18 +1009,22 @@ const updateDetalleServicio = async(req = request, res= response)=>{
       return res.status(404).json({ok:false, msg:'Detalle no encontrado'})
     }
     await detalle.update({
-      id_empl,
-      tarifa_monto
+      // solo actualizo lo que venga definido
+      ...(id_empl && { id_empl }),
+      ...(id_servicio && { id_servicio }),
+      ...(tarifa_monto != null && { tarifa_monto }),
     });
-    res.status(200).json({
-      ok:true,
-      msg:'Servicio Actualizado'
+
+    return res.status(200).json({
+      ok: true,
+      msg: "Servicio actualizado",
+      detalle,
     });
-  } catch (error){
+  } catch (error) {
     console.log(error);
-    res.status(500).json({
-      ok:false,
-      error:'error en la actualizacion: ${error}'
+    return res.status(500).json({
+      ok: false,
+      error: `Error en la actualización: ${error}`,
     });
   }
 };
