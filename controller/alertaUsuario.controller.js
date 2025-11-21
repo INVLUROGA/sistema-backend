@@ -17,7 +17,9 @@ const PostAlertaUsuario = async (req = request, res = response) => {
 // Obtener todos los AlertaUsuarios
 const GetAlertaUsuarios = async (req = request, res = response) => {
   try {
-    const alertas = await AlertasUsuario.findAll({ where: { flag: true } });
+    const alertas = await AlertasUsuario.findAll({
+      where: { flag: true, id_estado: 1 },
+    });
     res.status(200).json({ msg: "AlertaUsuarios obtenidos", alertas });
   } catch (error) {
     res.status(500).json({
