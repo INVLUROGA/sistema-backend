@@ -78,10 +78,36 @@ const postUploadsImgs = async (req, res) => {
     });
   }
 };
+const viewFile = async (req = request, res = response) => {
+  try {
+    const {containerName} = req.query;
+    const containerClient = blobService.getContainerClient(containerName);
+    // OJO: el fileName viene URL-encodeado
+    const fileName = decodeURIComponent(req.params.fileName);
+    if (!fileName) {
+      return res.status(400).send("Falta el nombre del archivo");
+    }
 
+    const blobClient = containerClient.getBlobClient(fileName);
+    const exists = await blobClient.exists();
+    if (!exists) {
+      return res.status(404).send("No se encontró el archivo");
+    }
+    const downloadResponse = await blobClient.download();
+    // Cabeceras para que se vea en el navegador (inline) y como PDF
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${encodeURIComponent(fileName)}"`
+    );
+    // Pipe del stream hacia la respuesta
+    downloadResponse.readableStreamBody.pipe(res);
+  } catch (error) {}
+};
 module.exports = {
   getImagesxUID,
   uploadBlob,
   getUploadOnexUidLocation,
   postUploadsImgs,
+  viewFile,
 };

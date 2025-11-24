@@ -1,7 +1,8 @@
 const { DataTypes } = require("sequelize");
 const { db } = require("../database/sequelizeConnection");
-const { ContratoProv, Proveedor } = require("./Proveedor");
+const { Proveedor } = require("./Proveedor");
 const { Parametros, Parametros_zonas } = require("./Parametros");
+const { ContratoProv } = require("./ContratoProv.model");
 
 const ImagePT = db.define(
   "tb_image",
@@ -108,7 +109,6 @@ const DocumentosInternos = db.define("tb_documentosInternos", {
   },
 });
 
-
 DocumentosInternos.hasOne(ImagePT, {
   foreignKey: "uid_location",
   sourceKey: "uid_file",
@@ -126,13 +126,24 @@ ImagePT.belongsTo(Files, {
   foreignKey: "uid_location",
   sourceKey: "uid_file",
 });
+// ContratoProv.hasOne(ImagePT, {
+//   foreignKey: "uid_location",
+//   sourceKey: "uid_presupuesto",
+// });
+// ImagePT.belongsTo(ContratoProv, {
+//   foreignKey: "uid_location",
+//   sourceKey: "uid_presupuesto",
+// });
+
 ContratoProv.hasOne(ImagePT, {
+  sourceKey: "uid_compromisoPago",
   foreignKey: "uid_location",
-  sourceKey: "uid_presupuesto",
+  as: "compromisoPago",
 });
-ImagePT.belongsTo(ContratoProv, {
+ContratoProv.hasOne(ImagePT, {
+  sourceKey: "uid_contrato",
   foreignKey: "uid_location",
-  sourceKey: "uid_presupuesto",
+  as: "contratoProv",
 });
 
 Parametros_zonas.hasMany(ImagePT, {

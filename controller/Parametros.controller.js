@@ -745,6 +745,9 @@ const getProgramasActivos = async (req = request, res = response) => {
     res.status(404).json(error);
   }
 };
+
+
+
 async function getMembresiasLineaDeTiempoEmpresa(
   req = request,
   res = response

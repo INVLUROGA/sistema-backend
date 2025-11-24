@@ -423,11 +423,25 @@ const seccionGET = async (req = request, res = response) => {
           url: "/gestion-proveedores-inactivo",
         },
         {
-          key: "gest-prov-cuentas-pagar",
+          key: "reporte-cuentas-pagar-prov",
           label: "cuentas por pagar",
           isTitle: false,
           icon: "uil-calender",
-          url: "/cuentas-pagar",
+          url: "/reporte-cuentas-pagar-prov",
+        },
+        {
+          key: "gest-contratos-proveedores",
+          label: "contratos de proveedores",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/contratos-prov",
+        },
+        {
+          key: "gest-deudas-prov",
+          label: "deudas de proveedores",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/deudas-proveedores",
         },
         {
           key: "gest-prov-compromiso-pago",

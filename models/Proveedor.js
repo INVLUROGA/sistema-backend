@@ -117,71 +117,72 @@ const Proveedor = db.define(
   { tableName: "tb_Proveedor" }
 );
 
-const ContratoProv = db.define("prov_contratos", {
-  id: {
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
-  },
-  cod_trabajo: {
-    type: DataTypes.STRING(10),
-  },
-  id_prov: {
-    type: DataTypes.INTEGER,
-  },
-  fecha_inicio: {
-    type: DataTypes.STRING(24),
-  },
-  fecha_fin: {
-    type: DataTypes.STRING(24),
-  },
-  hora_fin: {
-    type: DataTypes.TIME,
-  },
-  penalidad_porcentaje: {
-    type: DataTypes.DECIMAL(10, 2),
-  },
-  penalidad_fijo: {
-    type: DataTypes.DECIMAL(10, 2),
-  },
-  monto_contrato: {
-    type: DataTypes.DECIMAL(10, 2),
-  },
-  mano_obra_soles: {
-    type: DataTypes.DECIMAL(10, 2),
-  },
-  mano_obra_dolares: {
-    type: DataTypes.DECIMAL(10, 2),
-  },
-  observacion: {
-    type: DataTypes.STRING(660),
-  },
-  tipo_moneda: {
-    type: DataTypes.STRING(4),
-  },
-  estado_contrato: {
-    type: DataTypes.INTEGER,
-  },
-  uid_presupuesto: {
-    type: DataTypes.STRING,
-  },
-  uid_contrato: {
-    type: DataTypes.STRING,
-  },
-  uid_compromisoPago: {
-    type: DataTypes.STRING,
-  },
-  id_empresa: {
-    type: DataTypes.INTEGER,
-  },
-  id_zona: {
-    type: DataTypes.INTEGER,
-  },
-  flag: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-  },
-});
+// const ContratoProv = db.define("prov_contratos", {
+//   id: {
+//     type: DataTypes.INTEGER,
+//     autoIncrement: true,
+//     primaryKey: true,
+//   },
+//   cod_trabajo: {
+//     type: DataTypes.STRING(10),
+//   },
+//   id_prov: {
+//     type: DataTypes.INTEGER,
+//   },
+//   fecha_inicio: {
+//     type: DataTypes.STRING(24),
+//   },
+//   fecha_fin: {
+//     type: DataTypes.STRING(24),
+//   },
+//   hora_fin: {
+//     type: DataTypes.TIME,
+//   },
+//   penalidad_porcentaje: {
+//     type: DataTypes.DECIMAL(10, 2),
+//   },
+//   penalidad_fijo: {
+//     type: DataTypes.DECIMAL(10, 2),
+//   },
+//   monto_contrato: {
+//     type: DataTypes.DECIMAL(10, 2),
+//   },
+//   mano_obra_soles: {
+//     type: DataTypes.DECIMAL(10, 2),
+//   },
+//   mano_obra_dolares: {
+//     type: DataTypes.DECIMAL(10, 2),
+//   },
+//   observacion: {
+//     type: DataTypes.STRING(660),
+//   },
+//   tipo_moneda: {
+//     type: DataTypes.STRING(4),
+//   },
+//   estado_contrato: {
+//     type: DataTypes.INTEGER,
+//   },
+//   uid_presupuesto: {
+//     type: DataTypes.STRING,
+//   },
+//   uid_contrato: {
+//     type: DataTypes.STRING,
+//   },
+//   uid_compromisoPago: {
+//     type: DataTypes.STRING,
+//   },
+//   id_empresa: {
+//     type: DataTypes.INTEGER,
+//   },
+//   id_zona: {
+//     type: DataTypes.INTEGER,
+//   },
+//   flag: {
+//     type: DataTypes.BOOLEAN,
+//     defaultValue: true,
+//   },
+// });
+
 const PenalidadesContratoProv = db.define("penalidades_contrato", {
   id: {
     type: DataTypes.INTEGER,
@@ -207,30 +208,6 @@ const PenalidadesContratoProv = db.define("penalidades_contrato", {
     type: DataTypes.BOOLEAN,
   },
 });
-const PagosContratoProv = db.define("contratos_prov_pagos", {
-  id: {
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
-  },
-  id_contrato_prov: {
-    type: DataTypes.INTEGER,
-  },
-  fecha_pago: {
-    type: DataTypes.STRING(24),
-  },
-  monto_pagado: {
-    type: DataTypes.DECIMAL(10, 2),
-  },
-  observacion_pagado: {
-    type: DataTypes.STRING(660),
-  },
-  flag: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-  },
-});
-
 // // En Proveedor.js
 Proveedor.hasOne(Parametros, {
   foreignKey: "id_param", // clave foránea en Proveedor
@@ -265,18 +242,7 @@ PenalidadesContratoProv.sync()
     );
   });
 
-ContratoProv.sync()
-  .then(() => {
-    console.log("La tabla ContratoProv ha sido creada o ya existe.");
-  })
-  .catch((error) => {
-    console.error(
-      "Error al sincronizar el modelo con la base de datos: ContratoProv",
-      error
-    );
-  });
 module.exports = {
   Proveedor,
-  ContratoProv,
   PenalidadesContratoProv,
 };

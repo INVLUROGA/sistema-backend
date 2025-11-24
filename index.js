@@ -259,6 +259,7 @@ app.use("/api/fils", require("./routes/file.router.js"));
 app.use("/api/kardex", require("./routes/kardex.router.js"));
 // //TODO proveedores // sexo, tipoDoc, estadoCivil, etc
 app.use("/api/proveedor", validarJWT, require("./routes/proveedor.router.js"));
+app.use("/api/contrato-prov", validarJWT, require("./routes/contratoProv.router.js"));
 app.use("/api/producto", validarJWT, require("./routes/producto.route.js"));
 //TODO: JUNTAR LOS DOS EN UNA RUTA
 app.use("/api/egreso", validarJWT, require("./routes/gastos.router.js"));

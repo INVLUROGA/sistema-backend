@@ -5,6 +5,7 @@ const {
   getImagesxUID,
   getUploadOnexUidLocation,
   postUploadsImgs,
+  viewFile,
 } = require("../../controller/upload/blob.controller");
 const router = Router();
 /*
@@ -13,7 +14,7 @@ const router = Router();
 const upload = multer();
 
 router.post("/create/:uid_location", upload.single("file"), uploadBlob);
-
+router.get("/view/:fileName", viewFile);
 router.post("/create/uploads", postUploadsImgs);
 
 router.get("/upload/gets-upload/:uidLocation", getImagesxUID);

@@ -1,7 +1,6 @@
 const { response, request } = require("express");
 const {
   Proveedor,
-  ContratoProv,
   PenalidadesContratoProv,
 } = require("../models/Proveedor");
 const uid = require("uuid");
@@ -9,14 +8,8 @@ const { capturarAUDIT } = require("../middlewares/auditoria");
 const { typesCRUD } = require("../types/types");
 const { Parametros } = require("../models/Parametros");
 const { Gastos } = require("../models/GastosFyV");
-const PDFDocument = require("pdfkit");
-const { convertirNumeroATexto } = require("../helpers/isFormat");
-const dayjs = require("dayjs");
-
-const PdfPrinter = require("pdfmake");
-const fs = require("fs");
-const fonts = require("pdfmake/build/vfs_fonts");
 const { ImagePT } = require("../models/Image");
+const { ContratoProv } = require("../models/ContratoProv.model");
 
 /*
 ip_user: '127.0.0.1',

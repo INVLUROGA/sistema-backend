@@ -62,6 +62,7 @@ const router = Router();
  * /api/parametros/
  */
 // router.get("/get_params/forma_pago")
+
 router.put("/params-generales/:id", putParametrosGenerales);
 router.put("/params-generales/delete/:id", deleteParametrosGenerales);
 router.get(`/get-parametros-generales/`, getParametros);
@@ -128,6 +129,7 @@ router.get("/get_param/param_gasto/:id", getParametroGasto);
 router.get("/get_params/producto/proveedor", getParametrosporProveedor);
 router.get("/get_params/clientes", getParametrosporCliente);
 router.get("/get_params/clientes/:id_empresa", getParametrosporClientexEmpresa);
+router.get("/get_params/clientes/clientes/:id_empresa", getParametrosporClientexEmpresa);
 router.get("/get_params/empleados/:departamento", getParametrosEmpleadosxDep);
 router.get(
   "/get_params/empleados/:departamento/:id_empresa",
@@ -151,6 +153,7 @@ router.get("/get_params/:entidad", getParametrosporEntidad);
 router.get("/get_params/:id_param", getParametrosporId);
 
 router.post("/post_param/:entidad/:sigla", postParametros);
+router.get("/get_params/cliente/cliente", getParametrosporENTIDADyGRUPO);
 router.get("/get_params/:entidad/:grupo", getParametrosporENTIDADyGRUPO);
 router.get(
   "/get_params_periodo/:entidad/:grupo",
