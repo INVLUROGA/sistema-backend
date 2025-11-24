@@ -8,6 +8,7 @@ const { ImagePT } = require("../models/Image");
 const { Penalidad } = require("../models/Penalidad");
 const { Parametros_zonas } = require("../models/Parametros");
 const { Gastos } = require("../models/GastosFyV");
+const { Sequelize } = require("sequelize");
 
 // Crear ContratoProv
 const PostContratoProv = async (req = request, res = response) => {
@@ -140,11 +141,42 @@ const updateContratoProvxID = async (req = request, res = response) => {
     });
   }
 };
-
+const obtenerComboContratosxIdProv = async (req = request, res = response) => {
+  try {
+    const { id_prov } = req.params;
+    const contratosProv = await ContratoProv.findAll({
+      where: {
+        id_prov,
+        flag: true,
+      },
+      attributes: [
+        ["id", "value"],
+        [
+          Sequelize.fn(
+            "CONCAT",
+            Sequelize.col("id"),
+            " | ",
+            Sequelize.col("observacion")
+          ),
+          "label",
+        ],
+      ],
+    });
+    res.status(201).json({
+      contratosProv,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      msg: "ERROR EN LA BASE DE DATOS O SERVIDOR (updateContratoProv)",
+    });
+  }
+};
 module.exports = {
   PostContratoProv,
   GetContratoProvs,
   GetContratoProvxID,
   deleteContratoProvxID,
   updateContratoProvxID,
+  obtenerComboContratosxIdProv,
 };
