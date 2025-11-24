@@ -820,7 +820,6 @@ async function getMembresiasLineaDeTiempoEmpresa(
     for (const m of rows) {
       if (!isActiveFlag(m?.flag)) continue;
       const monto = Number(m?.tarifa_monto ?? 0);
-      if (!incluirMontoCero && !(monto > 0)) continue;
 
       const fin = calcFinEfectivo(m);
       if (!fin) continue;
@@ -876,12 +875,16 @@ async function getMembresiasLineaDeTiempoEmpresa(
   }
 }
 
+// pero mucho más rápido porque no trae Clientes, Empleados ni Nombres aquí.
 const getVigentesResumenEmpresa = async (req, res) => {
   try {
     const empresa = Number(req.query.empresa || 598);
     const dias = Number(req.query.dias || 15);
     const incluirMontoCero = String(req.query.incluirMontoCero ?? "0") === "1";
 
+    // ==========================
+    // 1) Calcular snapshot y límite
+    // ==========================
     let snapStr = String(req.query.snapshot || "");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(snapStr)) {
       const now = new Date();
@@ -896,6 +899,7 @@ const getVigentesResumenEmpresa = async (req, res) => {
       const maxCutAllowed = isCurrentMonth
         ? Math.min(now.getDate(), lastDay)
         : lastDay;
+
       const cutDay = Math.max(
         1,
         Math.min(Number(req.query.cutDay || maxCutAllowed), maxCutAllowed)
@@ -908,9 +912,26 @@ const getVigentesResumenEmpresa = async (req, res) => {
 
     const snapshot = new Date(snapStr);
     snapshot.setHours(0, 0, 0, 0);
+    const snapshotTime = snapshot.getTime();
+
     const lim = new Date(snapshot);
     lim.setDate(lim.getDate() + dias);
+    lim.setHours(0, 0, 0, 0);
+    const limTime = lim.getTime();
 
+    // ==========================
+    // 2) Armar where usando Op (filtramos lo obvio en DB)
+    // ==========================
+    const whereDetalle = {};
+
+    // Si NO se deben incluir montos 0, filtramos ya en la DB
+    if (!incluirMontoCero) {
+      whereDetalle.tarifa_monto = { [Op.gt]: 0 };
+    }
+
+    // ==========================
+    // 3) Traer solo lo necesario desde la BD
+    // ==========================
     const rows = await detalleVenta_membresias.findAll({
       attributes: [
         "id",
@@ -921,6 +942,7 @@ const getVigentesResumenEmpresa = async (req, res) => {
         "fec_fin_mem_viejo",
         "flag",
       ],
+      where: whereDetalle,
       include: [
         {
           model: ExtensionMembresia,
@@ -930,76 +952,64 @@ const getVigentesResumenEmpresa = async (req, res) => {
         {
           model: Venta,
           attributes: ["id", "id_empresa"],
-          where: { id_empresa: empresa,flag:true },
-          required:true,
+          where: { id_empresa: empresa, flag: true },
+          required: true,
         },
         {
           model: SemanasTraining,
-          attributes:["id_st","semanas_st"],
+          attributes: ["id_st", "semanas_st"],
           required: false,
-        }
+        },
       ],
     });
 
-    let vigentes = 0,
-      venceEnSnapshot = 0,
-      porVencer = 0,
-      vencidos = 0;
+    // ==========================
+    // 4) Recorrer filas y clasificar
+    // ==========================
+    let vigentes = 0;
+    let venceEnSnapshot = 0;
+    let porVencer = 0;
+    let vencidos = 0;
 
     for (const m of rows) {
-  if (!isActiveFlag(m.flag)) continue;
-  const monto = Number(m.tarifa_monto ?? 0);
-  if (!incluirMontoCero && !(monto > 0)) continue;
-
-  const fin = calcFinEfectivo(m);
-  if (!fin) continue;
-
-  const inicio = getInicioBase(m);
-  // 👇 si la membresía empieza DESPUÉS del snapshot, aún no está vigente
-  if (inicio && inicio > snapshot) {
-    continue;
-  }
-
-  const f = new Date(fin);
-  f.setHours(0, 0, 0, 0);
-
-  if (f < snapshot) {
-    vencidos++;
-    continue;
-  }
-  if (f.getTime() === snapshot.getTime()) {
-    venceEnSnapshot++;
-    vigentes++;
-    continue;
-  }
-  vigentes++;
-  if (f <= lim) porVencer++;
-}
-for (const m of rows) {
       if (!isActiveFlag(m.flag)) continue;
+
       const monto = Number(m.tarifa_monto ?? 0);
-      if (!incluirMontoCero && !(monto > 0)) continue;
+      if (!incluirMontoCero && monto <= 0) continue;
 
       const fin = calcFinEfectivo(m);
       if (!fin) continue;
 
+      const inicio = getInicioBase(m);
+      // si la membresía empieza DESPUÉS del snapshot, no está vigente todavía
+      if (inicio && inicio > snapshot) continue;
+
       const f = new Date(fin);
       f.setHours(0, 0, 0, 0);
+      const fTime = f.getTime();
 
-      if (f < snapshot) {
+      if (fTime < snapshotTime) {
         vencidos++;
         continue;
       }
-      if (f.getTime() === snapshot.getTime()) {
+
+      if (fTime === snapshotTime) {
         venceEnSnapshot++;
         vigentes++;
         continue;
       }
+
+      // vigente después del snapshot
       vigentes++;
-      if (f <= lim) porVencer++;
+      if (fTime <= limTime) {
+        porVencer++;
+      }
     }
 
-    res.json({
+    // ==========================
+    // 5) Respuesta
+    // ==========================
+    return res.json({
       snapshot: snapshot.toISOString().slice(0, 10),
       vigentes,
       hoy: venceEnSnapshot,
@@ -1008,9 +1018,12 @@ for (const m of rows) {
     });
   } catch (e) {
     console.error("getVigentesResumenEmpresa", e);
-    res.status(500).json({ error: "Error calculando resumen de vigencia." });
+    return res
+      .status(500)
+      .json({ error: "Error calculando resumen de vigencia." });
   }
 };
+
 
 const getMembresiasVigentesEmpresa = async (req, res) => {
   try {
