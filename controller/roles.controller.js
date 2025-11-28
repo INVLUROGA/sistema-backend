@@ -247,13 +247,13 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           url: "/mof-adm-atencli",
         },
-        {
-          //key: "reporte-utilidad-pgm",
-          label: "M.O.F estilista",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/mof-estilista",
-        },
+        // {
+        //   //key: "reporte-utilidad-pgm",
+        //   label: "M.O.F estilista",
+        //   isTitle: false,
+        //   icon: "uil-calender",
+        //   url: "/mof-estilista",
+        // },
         {
           key: "resumen-ejecutivo",
           label: "M.O.F marketing",

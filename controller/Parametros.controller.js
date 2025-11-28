@@ -68,15 +68,14 @@ function addBusinessDays(startDate, numberOfDays) {
 }
 const isActiveFlag = (v) => v === 1 || v === true || v === "1" || v === "true";
 const getFinBaseFromSemanas = (m) => {
-  const semanas =
-    Number(m?.tb_semana_training?.semanas_st ?? m?.semanas_st ?? 0);
+  const semanas = Number(
+    m?.tb_semana_training?.semanas_st ?? m?.semanas_st ?? 0
+  );
   if (!semanas) return null;
 
   let inicio =
     parseDateOnly(m?.fec_inicio_mem) ||
-    (m?.tb_ventum?.fecha_venta
-      ? new Date(m.tb_ventum.fecha_venta)
-      : null);
+    (m?.tb_ventum?.fecha_venta ? new Date(m.tb_ventum.fecha_venta) : null);
 
   if (!inicio || isNaN(inicio)) return null;
 
@@ -92,7 +91,6 @@ const getFinBase = (m) =>
   parseDateOnly(m?.fec_fin_mem) ||
   parseDateOnly(m?.fec_fin_mem_oftime) ||
   parseDateOnly(m?.fec_fin_mem_viejo);
-
 
 const calcFinEfectivo = (m) => {
   const base = getFinBase(m);
@@ -174,7 +172,6 @@ const obtenerDistritosxDepartamentoxProvincia = async (
     res.status(501).json(error);
   }
 };
-
 
 const getParametrosTipoAportes = async (req = request, res = response) => {
   try {
@@ -285,6 +282,7 @@ const getParametrosporEntidad = async (req, res) => {
       attributes: [
         ["id_param", "value"],
         ["label_param", "label"],
+        ["grupo_param", "grupo"],
       ],
     });
     res.status(200).json(parametros);
@@ -293,6 +291,22 @@ const getParametrosporEntidad = async (req, res) => {
   }
 };
 const getParametrosporENTIDADyGRUPO = async (req = request, res = response) => {
+  const { grupo, entidad } = req.params;
+  try {
+    const parametros = await Parametros.findAll({
+      order: [["id_param", "DESC"]],
+      where: { entidad_param: entidad, grupo_param: grupo, flag: true },
+      attributes: [
+        ["id_param", "value"],
+        ["label_param", "label"],
+      ],
+    });
+    res.status(200).json(parametros);
+  } catch (error) {
+    res.status(404).json(error);
+  }
+};
+const getParametrosporENTIDAD = async (req = request, res = response) => {
   const { grupo, entidad } = req.params;
   try {
     const parametros = await Parametros.findAll({
@@ -746,8 +760,6 @@ const getProgramasActivos = async (req = request, res = response) => {
   }
 };
 
-
-
 async function getMembresiasLineaDeTiempoEmpresa(
   req = request,
   res = response
@@ -1024,7 +1036,6 @@ const getVigentesResumenEmpresa = async (req, res) => {
   }
 };
 
-
 const getMembresiasVigentesEmpresa = async (req, res) => {
   try {
     const empresa = Number(req.query.empresa || 598);
@@ -1033,7 +1044,7 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
       attributes: [
         "id",
         "tarifa_monto",
-        "fec_inicio_mem",       
+        "fec_inicio_mem",
         "fec_fin_mem",
         "fec_fin_mem_oftime",
         "fec_fin_mem_viejo",
@@ -1122,53 +1133,52 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
     snapshot.setHours(0, 0, 0, 0);
 
     const vigentes = [];
-for (const m of rows) {
-  if (!isActiveFlag(m?.flag)) continue;
-  if (!(Number(m?.tarifa_monto ?? 0) > 0)) continue;
+    for (const m of rows) {
+      if (!isActiveFlag(m?.flag)) continue;
+      if (!(Number(m?.tarifa_monto ?? 0) > 0)) continue;
 
-  const fin = calcFinEfectivo(m);
-  if (!fin) continue;
+      const fin = calcFinEfectivo(m);
+      if (!fin) continue;
 
-  const inicio = getInicioBase(m);
-  // 👇 si empieza después del snapshot, aún no cuenta como vigente
-  if (inicio && inicio > snapshot) continue;
+      const inicio = getInicioBase(m);
+      // 👇 si empieza después del snapshot, aún no cuenta como vigente
+      if (inicio && inicio > snapshot) continue;
 
-  // vigentes respecto a snapshot
-  if (fin < snapshot) continue;
+      // vigentes respecto a snapshot
+      if (fin < snapshot) continue;
 
-  const cliente =
-    [
-      m?.tb_ventum?.tb_cliente?.nombre_cli,
-      m?.tb_ventum?.tb_cliente?.apPaterno_cli,
-      m?.tb_ventum?.tb_cliente?.apMaterno_cli,
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .trim() || "SIN NOMBRE";
+      const cliente =
+        [
+          m?.tb_ventum?.tb_cliente?.nombre_cli,
+          m?.tb_ventum?.tb_cliente?.apPaterno_cli,
+          m?.tb_ventum?.tb_cliente?.apMaterno_cli,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .trim() || "SIN NOMBRE";
 
-  const nombreEmpl = m?.tb_ventum?.tb_empleado?.nombre_empl ?? "";
-  const ejecutivo = nombreEmpl.split(" ")[0] || "-";
+      const nombreEmpl = m?.tb_ventum?.tb_empleado?.nombre_empl ?? "";
+      const ejecutivo = nombreEmpl.split(" ")[0] || "-";
 
-  const plan =
-    m?.tb_programa_training?.name_pgm ||
-    m?.tb_programaTraining?.name_pgm ||
-    m?.tb_programa?.name_pgm ||
-    pgmNameById[m?.id_pgm] ||
-    (m?.id_pgm ? `PGM ${m.id_pgm}` : "-");
+      const plan =
+        m?.tb_programa_training?.name_pgm ||
+        m?.tb_programaTraining?.name_pgm ||
+        m?.tb_programa?.name_pgm ||
+        pgmNameById[m?.id_pgm] ||
+        (m?.id_pgm ? `PGM ${m.id_pgm}` : "-");
 
-  const dias_restantes = Math.ceil((fin - snapshot) / 86400000);
+      const dias_restantes = Math.ceil((fin - snapshot) / 86400000);
 
-  vigentes.push({
-    id: m.id,
-    cliente,
-    plan,
-    fechaFin: fin.toISOString().slice(0, 10),
-    dias_restantes,
-    monto: Number(m?.tarifa_monto) || 0,
-    ejecutivo,
-  });
-}
-
+      vigentes.push({
+        id: m.id,
+        cliente,
+        plan,
+        fechaFin: fin.toISOString().slice(0, 10),
+        dias_restantes,
+        monto: Number(m?.tarifa_monto) || 0,
+        ejecutivo,
+      });
+    }
 
     return res.json({ total: vigentes.length, vigentes });
   } catch (e) {
@@ -1188,7 +1198,7 @@ const getRenovacionesPorVencerEmpresa = async (req, res) => {
         "id",
         "id_pgm",
         "tarifa_monto",
-        "fec_inicio_mem",       
+        "fec_inicio_mem",
         "fec_fin_mem",
         "fec_fin_mem_oftime",
         "fec_fin_mem_viejo",
@@ -1215,7 +1225,6 @@ const getRenovacionesPorVencerEmpresa = async (req, res) => {
               attributes: ["nombre_empl", "apPaterno_empl", "apMaterno_empl"],
             },
           ],
-          
         },
         {
           model: SemanasTraining,
@@ -1257,7 +1266,7 @@ const getRenovacionesPorVencerEmpresa = async (req, res) => {
       const monto = Number(m.tarifa_monto || 0);
       if (monto <= 0) continue;
 
-          const fin = calcFinEfectivo(m);
+      const fin = calcFinEfectivo(m);
       if (!fin) continue;
 
       const fechaFin = new Date(fin);
@@ -1995,4 +2004,5 @@ module.exports = {
   getParametrosporENTIDADyGRUPO__PERIODO,
   postParametros__PERIODO,
   getServiciosxEmpresa,
+  getParametrosporENTIDAD,
 };

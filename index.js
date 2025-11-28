@@ -256,7 +256,7 @@ app.use("/api/fils", require("./routes/file.router.js"));
 //************************ */
 //**************Rutas***** */
 //************************ */
-app.use("/api/kardex", require("./routes/kardex.router.js"));
+app.use("/api/movimiento-articulo", require("./routes/kardex.router.js"));
 // //TODO proveedores // sexo, tipoDoc, estadoCivil, etc
 
 app.use("/api/proveedor", validarJWT, require("./routes/proveedor.router.js"));

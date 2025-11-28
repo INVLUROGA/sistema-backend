@@ -384,16 +384,6 @@ const obtenerKardex = async (req = request, res = response) => {
     console.log(error);
   }
 };
-
-const postFechaReportKardex = async (req = request, res = response) => {
-  try {
-    const { fecha_hasta } = req.body;
-    // const fechaInventariado =
-  } catch (error) {
-    console.log(error);
-  }
-};
-
 const obtenerMovimientosxArticulo = async (req = request, res = response) => {
   try {
     const { id_articulo, movimiento } = req.params;
@@ -418,8 +408,6 @@ const obtenerMovimientosxArticulo = async (req = request, res = response) => {
     console.log(error);
   }
 };
-const removeFechaReportKardex = async (req = request, res = response) => {};
-const obtenerFechaReportKardex = async (req = request, res = response) => {};
 
 const getInventarioxKardexxFechasxEmpresa = async (
   req = request,
@@ -675,7 +663,15 @@ const obtenerHistorialCambiosArticuloxIDARTICULO = async (
     });
   }
 };
+const obtenerKardexArticulos = async (req = request, res = response) => {
+  try {
+    const { idArticulo } = req.params;
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
+  obtenerKardexArticulos,
   obtenerHistorialCambiosArticuloxIDARTICULO,
   obtenerInventario,
   registrarArticulo,
@@ -687,9 +683,6 @@ module.exports = {
   postKardexEntraSale,
   eliminarEntraSale,
   obtenerKardex,
-  postFechaReportKardex,
-  removeFechaReportKardex,
-  obtenerFechaReportKardex,
   getInventarioxKardexxFechasxEmpresa,
   obtenerMovimientosxArticulo,
 };

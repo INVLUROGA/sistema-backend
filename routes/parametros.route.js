@@ -129,7 +129,10 @@ router.get("/get_param/param_gasto/:id", getParametroGasto);
 router.get("/get_params/producto/proveedor", getParametrosporProveedor);
 router.get("/get_params/clientes", getParametrosporCliente);
 router.get("/get_params/clientes/:id_empresa", getParametrosporClientexEmpresa);
-router.get("/get_params/clientes/clientes/:id_empresa", getParametrosporClientexEmpresa);
+router.get(
+  "/get_params/clientes/clientes/:id_empresa",
+  getParametrosporClientexEmpresa
+);
 router.get("/get_params/empleados/:departamento", getParametrosEmpleadosxDep);
 router.get(
   "/get_params/empleados/:departamento/:id_empresa",
