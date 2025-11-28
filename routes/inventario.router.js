@@ -11,10 +11,6 @@ const {
   eliminarEntraSale,
   obtenerKardex,
   getInventarioxKardexxFechasxEmpresa,
-
-  postFechaReportKardex,
-  removeFechaReportKardex,
-  obtenerFechaReportKardex,
   obtenerMovimientosxArticulo,
   obtenerHistorialCambiosArticuloxIDARTICULO,
 } = require("../controller/inventario.controller");
@@ -23,6 +19,7 @@ const router = Router();
 /*
 /api/inventario
 */
+router.get('/kardex-articulos/:idArticulo')
 router.get("/hist-cam-id/:idArticulo", obtenerHistorialCambiosArticuloxIDARTICULO);
 router.get(
   "/obtener-inventario-y-kardex-x-fechas/:id_empresa",

@@ -1,31 +1,102 @@
 const { request, response } = require("express");
+const { MovimientoArticulo } = require("../models/MovimientoArticulo");
 
-const obtenerKardexEntrada = (req = request, res = response) => {
+const obtenerMovimientosxArticulo = async (req = request, res = response) => {
   try {
-    const { id_empresa } = req.params;
+    const { idArticulo, movimiento } = req.params;
+    const movimientoArticulo = await MovimientoArticulo.findAll({
+      where: { id_articulo: idArticulo, movimiento, flag: true },
+    });
+    res.status(201).json({
+      movimientoArticulo,
+    });
   } catch (error) {
     console.log(error);
   }
 };
-const obtenerKardexSalidas = () => {
+const postMovimientoxArticulo = async (req = request, res = response) => {
   try {
+    const { idArticulo, movimiento } = req.params;
+    const {
+      id_lugar_destino,
+      fechaCambio,
+      observacion,
+      id_motivo,
+      id_empresa,
+    } = req.body;
+    const movimientoArticulo = await MovimientoArticulo.create({
+      id_articulo: idArticulo,
+      movimiento,
+      id_lugar_destino,
+      fechaCambio,
+      observacion,
+      id_motivo,
+      id_empresa,
+    });
+    res.status(201).json({
+      movimientoArticulo,
+    });
   } catch (error) {
     console.log(error);
+    res.status(501).json({
+      msg: `error: ${error}`,
+    });
   }
 };
-const obtenerItemKardex = ({ req, res }) => {};
-const postKardexxAccion = (req, res) => {};
-const obtenerMovimientosxArticulo = (req, res)=>{
+const obtenerMovimientoxId = async (req = request, res = response) => {
   try {
-    
+    const { id } = req.params;
+    const movimientoArticulo = await MovimientoArticulo.findOne({
+      where: { id },
+    });
+    res.status(201).json({
+      movimientoArticulo,
+    });
   } catch (error) {
-    
+    console.log(error);
+    res.status(501).json({
+      msg: `error: ${error}`,
+    });
   }
-}
+};
+const updateMovimientoArticuloxId = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const movimientoArticulo = await MovimientoArticulo.findOne({
+      where: { id },
+    });
+    await MovimientoArticulo.update(req.body);
+    res.status(201).json({
+      movimientoArticulo,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(501).json({
+      msg: `error: ${error}`,
+    });
+  }
+};
+const deleteMovimientoArticuloxId = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const movimientoArticulo = await MovimientoArticulo.findOne({
+      where: { id },
+    });
+    await movimientoArticulo.update({ flag: false });
+    res.status(201).json({
+      movimientoArticulo,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(501).json({
+      msg: `error: ${error}`,
+    });
+  }
+};
 module.exports = {
-  obtenerKardexSalidas,
-  obtenerKardexEntrada,
-  obtenerItemKardex,
-  postKardexxAccion,
-  obtenerMovimientosxArticulo
+  obtenerMovimientoxId,
+  obtenerMovimientosxArticulo,
+  postMovimientoxArticulo,
+  updateMovimientoArticuloxId,
+  deleteMovimientoArticuloxId,
 };
