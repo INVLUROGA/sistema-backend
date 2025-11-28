@@ -4,14 +4,13 @@ const env = process.env;
 
 const transporterU = nodemailer.createTransport({
   host: "mail.change.com.pe",
-  port: 465,
-  secure: true, // use TLS
+  port: 587,
+  secure: false,
   auth: {
     user: env.EMAIL_CONTRATOS,
     pass: env.PSW_CONTRATOS,
   },
   tls: {
-    // do not fail on invalid certs
     rejectUnauthorized: false,
   },
 });

@@ -74,15 +74,15 @@ const extraerVentaMembresia = async (req, res, next) => {
 
   const membresia = req.body.dataVenta.detalle_venta_programa.map((Pgm) => {
     return {
-      id_pgm: Pgm.id_pgm,
-      id_tarifa: Pgm.id_tt,
-      id_st: Pgm.id_st,
-      horario: Pgm.time_h,
-      tarifa_monto: Pgm.tarifa,
-      semanas: Pgm.semanas,
-      name_pgm: Pgm.name_pgm,
-      fec_fin_mem: Pgm.fechaFinal,
-      fec_inicio_mem: Pgm.fechaInicio_programa,
+      id_pgm: Pgm.dataPrograma.id_pgm,
+      id_tarifa: Pgm.dataTarifa.value,
+      id_st: Pgm.dataSemana.value,
+      horario: Pgm.dataHorario.horario,
+      tarifa_monto: Pgm.dataTarifa.tarifa,
+      semanas: Pgm.dataSemana.semanas,
+      name_pgm: Pgm.dataPrograma.name_pgm,
+      fec_fin_mem: Pgm.fecha_fin,
+      fec_inicio_mem: Pgm.fecha_inicio,
     };
   });
   req.ventaProgramas = membresia;

@@ -274,6 +274,13 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: true,
         },
         {
+          key: "adm-videos-infraestructura",
+          label: "Videos infraestructura",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/videos-infraestructura",
+        },
+        {
           //key: "reporte-utilidad-pgm",
           label: "GESTION DE INVENTARIO",
           isTitle: false,
@@ -595,6 +602,13 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: false,
           icon: "uil-calender",
           url: "/centro-archivos",
+        },
+        {
+          key: "adm-videos-infraestructura",
+          label: "Videos infraestructura",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/videos-infraestructura",
         },
         {
           key: "gest-jornada",
@@ -1065,6 +1079,13 @@ const seccionGET = async (req = request, res = response) => {
     }
     if (modulo === "mod-inventario") {
       MENU_ITEMS = [
+        {
+          key: "adm-videos-infraestructura",
+          label: "Videos infraestructura",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/videos-infraestructura",
+        },
         {
           //key: "reporte-utilidad-pgm",
           label: "GESTION DE INVENTARIO",

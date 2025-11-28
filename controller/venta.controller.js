@@ -25,32 +25,22 @@ const { v4 } = require("uuid");
 const { typesCRUD } = require("../types/types");
 const { capturarAUDIT } = require("../middlewares/auditoria");
 const { Servicios } = require("../models/Servicios");
-const fs = require("fs");
-const fontkit = require("fontkit");
-const path = require("path");
 const { Client_Contrato } = require("../helpers/pdf/Client_Contrato");
 const dayjs = require("dayjs");
 const transporterU = require("../config/nodemailer");
 const { mailMembresiaSTRING } = require("../middlewares/mails");
-const { error } = require("console");
-const { Result } = require("express-validator");
 require("dotenv").config();
 const env = process.env;
 
-const { detalleVenta_transferenciasMembresias } = require("../models/Venta");
-const { CLIENT_RENEG_LIMIT } = require("tls");
 const { ImagePT } = require("../models/Image");
-const { KeyObject } = require("crypto");
 const { Distritos } = require("../models/Distritos");
 const { FormatMoney } = require("../helpers/formatMoney");
-const {
-  mailContratoMembresia,
-} = require("../middlewares/mailContratoMembresia");
 const utc = require("dayjs/plugin/utc");
 const { Marcacion } = require("../models/Marcacion");
 const { Cita, eventoServicio } = require("../models/Cita");
 const { ExtensionMembresia } = require("../models/ExtensionMembresia");
 const { ServiciosCircus } = require("../models/modelsCircus/Servicios");
+const sumarSemanas = require("../helpers/sumarSemanas");
 
 // Cargar el plugin
 dayjs.extend(utc);
@@ -598,11 +588,17 @@ const postVenta = async (req = request, res = response) => {
 const obtener_contrato_pdf = async (req = request, res = response) => {
   try {
     const { dataVenta, detalle_cli_modelo, dataPagos } = req.body;
+    console.log({ rb: req.body, dataVenta });
 
     const pdfContrato = await getPDF_CONTRATO(
-      dataVenta,
+      dataVenta.dataSemana?.value,
       detalle_cli_modelo,
-      dataPagos
+      dataPagos,
+      dataVenta.dataHorario.horario,
+      0,
+      dataVenta.dataTarifa.value,
+      dataVenta.fecha_inicio,
+      dataVenta.firmaCli
     );
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
@@ -615,13 +611,18 @@ const obtener_contrato_pdf = async (req = request, res = response) => {
   }
 };
 const getPDF_CONTRATO = async (
-  detalle_membresia,
+  id_st,
   dataVenta,
   dataPago,
-  id_venta
+  horario,
+  id_venta,
+  id_tarifa,
+  fecha_inicio,
+  firmaCli
 ) => {
-  const {
-    semanas,
+  //
+  /*
+semanas,
     firmaCli,
     nutric,
     cong,
@@ -631,9 +632,9 @@ const getPDF_CONTRATO = async (
     fechaInicio_programa,
     fechaFinal,
     tarifa,
-  } = detalle_membresia;
-  console.log(time_h, "EL HORARIO");
-
+*/
+  // const { dataPrograma, dataSemana, dataTarifa, dataHorario } =
+  //   detalle_membresia;
   const { id_empl, id_cli, id_origen, fecha_venta } = dataVenta;
 
   const data_cliente = await Cliente.findOne({
@@ -648,36 +649,50 @@ const getPDF_CONTRATO = async (
   const data_origen = await Parametros.findOne({
     where: { flag: true, id_param: id_origen },
   });
+  const dataSemanas = await SemanasTraining.findOne({
+    where: { flag: true, id_st: id_st },
+  });
+  const dataPrograma = await ProgramaTraining.findOne({
+    where: { flag: true, id_pgm: dataSemanas.id_pgm },
+  });
+  const dataTarifa = await TarifaTraining.findOne({
+    where: { flag: true, id_tt: id_tarifa },
+  });
   const dataInfo = {
     nombresCliente: data_cliente.nombre_cli,
     apPaternoCliente: data_cliente.apPaterno_cli,
     apMaternoCliente: data_cliente.apMaterno_cli,
     dni: `${data_cliente.numDoc_cli}`,
-    DireccionCliente: data_cliente.direccion_cli,
+    DireccionCliente: data_cliente?.direccion_cli,
     PaisCliente: "Peru",
-    CargoCliente: data_cliente.cargo_cli,
-    EmailCliente: data_cliente.email_cli,
+    CargoCliente: `${data_cliente?.cargo_cli}`,
+    EmailCliente: data_cliente?.email_cli,
     EdadCliente: `${calcularEdad(data_cliente.fecha_nacimiento)}`,
-    DistritoCliente: data_Distrito.distrito,
+    DistritoCliente: `${data_Distrito?.distrito}`,
     FechaDeNacimientoCliente: `${dayjs(data_cliente.fecha_nacimiento).format(
       "DD/MM/YYYY"
     )}`,
-    CentroDeTrabajoCliente: data_cliente.trabajo_cli,
+    CentroDeTrabajoCliente: `${data_cliente.trabajo_cli}`,
     origenCliente: `${data_origen?.label_param}`,
     sede: "Miraflores",
-    nContrato: id_venta,
-    codigoSocio: id_cli,
+    nContrato: `${id_venta}`,
+    codigoSocio: `${id_cli}`,
     fecha_venta: `${dayjs.utc(fecha_venta).format("DD/MM/YYYY")}`,
     hora_venta: `${dayjs.utc(fecha_venta).format("hh:mm:ss A")}`,
     //datos de membresia
-    id_pgm: `${id_pgm}`,
-    Programa: name_pgm,
-    fec_inicio: `${dayjs.utc(fechaInicio_programa).format("DD/MM/YYYY")}`,
-    fec_fin: `${dayjs(fechaFinal, "YYYY-MM-DD").format("DD/MM/YYYY")}`,
-    horario: `${dayjs.utc(time_h).format("hh:mm A")}`,
-    semanas: semanas,
-    dias_cong: `${cong}`,
-    sesiones_nutricion: `${nutric}`,
+    id_pgm: `${dataPrograma.id_pgm}`,
+    Programa: `${dataPrograma.name_pgm}`,
+    fec_inicio: `${dayjs.utc(fecha_inicio).format("DD/MM/YYYY")}`,
+    fec_fin: `${dayjs(
+      sumarSemanas(fecha_inicio, dataSemanas.semanas_st),
+      "YYYY-MM-DD"
+    ).format("DD/MM/YYYY")}`,
+    horario: `${dayjs.utc(horario).format("hh:mm A")}`,
+    semanas: `${dataSemanas.semanas_st}`,
+    sesiones: `${dataSemanas.sesiones}`,
+    dias_cong: `${dataSemanas.congelamiento_st}`,
+
+    sesiones_nutricion: `${dataSemanas.nutricion_st}`,
     asesor: `${data_empl.nombre_empl.split(" ")[0]}`,
     forma_pago: dataPago?.map((item) => {
       if (item.id_forma_pago === 597) {
@@ -686,7 +701,7 @@ const getPDF_CONTRATO = async (
         return item.label_forma_pago;
       }
     }),
-    monto: `${FormatMoney(tarifa, "S/. ")}`,
+    monto: `${FormatMoney(dataTarifa.tarifaCash_tt, "S/. ")}`,
     //Firma
     firma_cli: firmaCli,
   };
@@ -823,7 +838,7 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
       attributes: [
         "id",
         "id_cli",
-        "id_empl",          
+        "id_empl",
         "id_origen",
         "id_tipoFactura",
         "numero_transac",
@@ -998,15 +1013,15 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
   }
 };
 
-const updateDetalleServicio = async(req = request, res= response)=>{
-  const {id}= req.params;
+const updateDetalleServicio = async (req = request, res = response) => {
+  const { id } = req.params;
 
-  const {id_empl,tarifa_monto,id_servicio}=req.body;
+  const { id_empl, tarifa_monto, id_servicio } = req.body;
 
-  try{
+  try {
     const detalle = await detalleventa_servicios.findByPk(id);
-    if(!detalle){
-      return res.status(404).json({ok:false, msg:'Detalle no encontrado'})
+    if (!detalle) {
+      return res.status(404).json({ ok: false, msg: "Detalle no encontrado" });
     }
     await detalle.update({
       // solo actualizo lo que venga definido
@@ -1029,27 +1044,27 @@ const updateDetalleServicio = async(req = request, res= response)=>{
   }
 };
 const updateDetalleProducto = async (req = request, res = response) => {
-    const { id } = req.params;
-    const { id_empl, tarifa_monto } = req.body; // Ajusta si tu campo de precio se llama distinto
+  const { id } = req.params;
+  const { id_empl, tarifa_monto } = req.body; // Ajusta si tu campo de precio se llama distinto
 
-    try {
-        // Asegúrate de importar el modelo detalleVenta_producto
-        const detalle = await detalleVenta_producto.findByPk(id);
+  try {
+    // Asegúrate de importar el modelo detalleVenta_producto
+    const detalle = await detalleVenta_producto.findByPk(id);
 
-        if (!detalle) {
-            return res.status(404).json({ ok: false, msg: 'Producto no encontrado' });
-        }
-
-        await detalle.update({
-            id_producto_empleado: id_empl, 
-            tarifa_monto
-        });
-
-        res.status(200).json({ ok: true, msg: 'Producto actualizado' });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ ok: false, error: `Error: ${error}` });
+    if (!detalle) {
+      return res.status(404).json({ ok: false, msg: "Producto no encontrado" });
     }
+
+    await detalle.update({
+      id_producto_empleado: id_empl,
+      tarifa_monto,
+    });
+
+    res.status(200).json({ ok: true, msg: "Producto actualizado" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ ok: false, error: `Error: ${error}` });
+  }
 };
 const get_VENTA_ID = async (req = request, res = response) => {
   const { id } = req.params;
@@ -1440,6 +1455,7 @@ const mailMembresia = async (req = request, res = response) => {
       fechaInicio_programa: detalleMembresia.fec_inicio_mem,
       fechaFinal: detalleMembresia.fec_fin_mem,
       tarifa: detalleMembresia.tarifa_monto,
+      id_tarifa: detalleMembresia.id_tarifa,
     };
     const detalleVenta = {
       id_cli: venta.id_cli,
@@ -1459,10 +1475,14 @@ const mailMembresia = async (req = request, res = response) => {
     console.log(detalle_membresia, "EN DETALLE VENTA");
 
     const pdfContrato = await getPDF_CONTRATO(
-      detalle_membresia,
+      detalleMembresia.id_st,
       detalleVenta,
-      dataPago,
-      id_venta
+      [],
+      detalle_membresia.time_h,
+      id_venta,
+      detalle_membresia.id_tarifa,
+      detalle_membresia.fechaInicio_programa,
+      firma_base64
     );
 
     const base64_contratoPDF = `data:application/pdf;base64,${Buffer.from(
@@ -1488,7 +1508,6 @@ const mailMembresia = async (req = request, res = response) => {
       from: env.EMAIL_CONTRATOS, // Remitente
       to: dataCliente.email_cli, // Destinatario(s)
       subject: "CONTRATO CHANGE THE SLIM STUDIO", // Asunto
-      text: "Contenido del mensaje", // Cuerpo del correo en texto plano
       attachments: [
         banner1_Attachment,
         banner2_Attachment,
@@ -1538,125 +1557,6 @@ const mailMembresia = async (req = request, res = response) => {
     res.status(501).json({
       ok: false,
       error,
-    });
-  }
-};
-const obtenerVentasxFecha = async (req = request, res = response) => {
-  const { id_empresa, RANGE_DATE } = req.params;
-  try {
-    const ventas = await Venta.findAll({
-      where: { flag: true, id_empresa: id_empresa },
-      attributes: [
-        "id",
-        "id_cli",
-        "id_empl",
-        "id_origen",
-        "id_tipoFactura",
-        "numero_transac",
-        "fecha_venta",
-        "status_remove",
-        "observacion",
-      ],
-      order: [["fecha_venta", "DESC"]],
-      include: [
-        {
-          model: Cliente,
-          attributes: [
-            [
-              Sequelize.fn(
-                "CONCAT",
-                Sequelize.col("nombre_cli"),
-                " ",
-                Sequelize.col("apPaterno_cli"),
-                " ",
-                Sequelize.col("apMaterno_cli")
-              ),
-              "nombres_apellidos_cli",
-            ],
-          ],
-          include: [
-            {
-              model: ImagePT,
-            },
-          ],
-        },
-        {
-          model: Empleado,
-          attributes: [
-            [
-              Sequelize.fn(
-                "CONCAT",
-                Sequelize.col("nombre_empl"),
-                " ",
-                Sequelize.col("apPaterno_empl"),
-                " ",
-                Sequelize.col("apMaterno_empl")
-              ),
-              "nombres_apellidos_empl",
-            ],
-          ],
-        },
-        {
-          model: detalleVenta_producto,
-          where: { flag: true }, // <-- Filtro aplicado aquí
-          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
-          attributes: [
-            "id_venta",
-            "id_producto",
-            "cantidad",
-            "precio_unitario",
-            "tarifa_monto",
-          ],
-        },
-        {
-          model: detalleVenta_membresias,
-          where: { flag: true }, // <-- Filtro aplicado aquí
-          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
-          attributes: [
-            "id_venta",
-            "id_pgm",
-            "id_tarifa",
-            "horario",
-            "id_st",
-            "tarifa_monto",
-          ],
-          include: [
-            {
-              model: ProgramaTraining,
-            },
-          ],
-        },
-        {
-          model: detalleVenta_citas,
-          where: { flag: true }, // <-- Filtro aplicado aquí
-          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
-          attributes: ["id_venta", "id_servicio", "tarifa_monto"],
-        },
-        {
-          model: detalleVenta_pagoVenta,
-          attributes: ["id_venta", "parcial_monto"],
-          include: [
-            {
-              model: Parametros,
-              as: "parametro_forma_pago",
-            },
-          ],
-        },
-        {
-          model: detalleventa_servicios,
-          where: { flag: true }, // <-- Filtro aplicado aquí
-          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
-          attributes: ["id", "tarifa_monto"],
-        },
-      ],
-    });
-    res.status(200).json({
-      ok: true,
-      ventas,
-    });
-  } catch (error) {
-    res.status(500).json({
-      error: `Error en el servidor, en controller de get_VENTAS, hable con el administrador: ${error}`,
     });
   }
 };
@@ -3809,16 +3709,6 @@ const getComandas = async (req = request, res = response) => {
     console.log(error);
   }
 };
-function bytesToBase64(bytes) {
-  // Convertir bytes a cadena binaria
-  let binaryString = "";
-  bytes.forEach((byte) => {
-    binaryString += String.fromCharCode(byte);
-  });
-
-  // Convertir la cadena binaria en Base64
-  return btoa(binaryString);
-}
 module.exports = {
   getComandas,
   postComanda,
@@ -3860,5 +3750,5 @@ module.exports = {
   obtenerComparativoTotal,
   buscarCajasxFecha,
   updateDetalleProducto,
-  updateDetalleServicio
+  updateDetalleServicio,
 };

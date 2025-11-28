@@ -2,7 +2,10 @@ const fs = require("fs");
 const fontkit = require("fontkit");
 const path = require("path");
 const { PDFDocument, rgb } = require("pdf-lib");
-
+const safeText = (value) => {
+  if (value === null || value === undefined) return "";
+  return String(value);
+};
 const Client_Contrato = async (dataInfo) => {
   // Cargar el archivo de tipografía (ejemplo: Arial.ttf)
   // Cargar el PDF existente
@@ -106,7 +109,7 @@ const Client_Contrato = async (dataInfo) => {
   }
 
   //   //*DATOS CABECERA
-  const sede = firstPage.drawText(dataInfo.sede, {
+  const sede = firstPage.drawText(safeText(dataInfo.sede), {
     x: 90,
     y: 660,
     size: 12,
@@ -172,31 +175,31 @@ const Client_Contrato = async (dataInfo) => {
       color: rgb(0, 0, 0),
     }
   );
-  const dniCliente = firstPage.drawText(dataInfo.dni, {
+  const dniCliente = firstPage.drawText(safeText(dataInfo.dni), {
     x: 175,
     y: 538,
     size: 9,
     color: rgb(0, 0, 0),
   });
-  const DireccionCliente = firstPage.drawText(dataInfo.DireccionCliente, {
+  const DireccionCliente = firstPage.drawText(safeText(dataInfo.DireccionCliente), {
     x: 175,
     y: 509,
     size: 9,
     color: rgb(0, 0, 0),
   });
-  const PaisCliente = firstPage.drawText(dataInfo.PaisCliente, {
+  const PaisCliente = firstPage.drawText(safeText(dataInfo.PaisCliente), {
     x: 175,
     y: 477,
     size: 9,
     color: rgb(0, 0, 0),
   });
-  const CargoCliente = firstPage.drawText(dataInfo.CargoCliente, {
+  const CargoCliente = firstPage.drawText(safeText(dataInfo.CargoCliente), {
     x: 175,
     y: 447,
     size: 9,
     color: rgb(0, 0, 0),
   });
-  const EmailCliente = firstPage.drawText(dataInfo.EmailCliente, {
+  const EmailCliente = firstPage.drawText(safeText(dataInfo.EmailCliente), {
     x: 175,
     y: 417,
     size: 9,
@@ -223,14 +226,14 @@ const Client_Contrato = async (dataInfo) => {
       color: rgb(0, 0, 0),
     }
   );
-  const DistritoCliente = firstPage.drawText(dataInfo.DistritoCliente, {
+  const DistritoCliente = firstPage.drawText(safeText(dataInfo.DistritoCliente), {
     x: 388,
     y: 538,
     size: 9,
     color: rgb(0, 0, 0),
   });
   const FechaDeNacimientoCliente = firstPage.drawText(
-    dataInfo.FechaDeNacimientoCliente,
+    safeText(dataInfo.FechaDeNacimientoCliente),
     {
       x: 385,
       y: 590,
@@ -239,7 +242,7 @@ const Client_Contrato = async (dataInfo) => {
     }
   );
   const CentroDeTrabajoCliente = firstPage.drawText(
-    dataInfo.CentroDeTrabajoCliente,
+    safeText(dataInfo.CentroDeTrabajoCliente),
     {
       x: 388,
       y: 479,
@@ -247,7 +250,7 @@ const Client_Contrato = async (dataInfo) => {
       color: rgb(0, 0, 0),
     }
   );
-  const origenCliente = firstPage.drawText(dataInfo.origenCliente, {
+  const origenCliente = firstPage.drawText(safeText(dataInfo.origenCliente), {
     x: 388,
     y: 447,
     size: 9,
@@ -256,13 +259,13 @@ const Client_Contrato = async (dataInfo) => {
 
   //*DATOS DEL PROGRAMA
   //Columna 1
-  const Programa = firstPage.drawText(dataInfo.Programa, {
+  const Programa = firstPage.drawText(safeText(dataInfo.Programa), {
     x: 175,
     y: 279,
     size: 9,
     color: rgb(0, 0, 0),
   });
-  const FecInicio = firstPage.drawText(dataInfo.fec_inicio, {
+  const FecInicio = firstPage.drawText(safeText(dataInfo.fec_inicio), {
     x: 175,
     y: 251,
     size: 9,
@@ -281,7 +284,7 @@ const Client_Contrato = async (dataInfo) => {
       color: rgb(0, 0, 0),
     }
   );
-  const DiasDeCongelamiento = firstPage.drawText(dataInfo.dias_cong, {
+  const DiasDeCongelamiento = firstPage.drawText(safeText(dataInfo.dias_cong), {
     x: 176,
     y: 196,
     size: 9,

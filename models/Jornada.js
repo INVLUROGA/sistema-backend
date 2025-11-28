@@ -28,7 +28,40 @@ const DiasLaborables = db.define("rrhh_diasLaborables", {
     type: DataTypes.STRING(360),
   },
   hex: {
-    type: DataTypes.STRING(20)
+    type: DataTypes.STRING(20),
+  },
+  flag: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+});
+
+const HorariosEspecialesEnDia = db.define("rrhh_horariosEspecialesEnDia", {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  id_diaLaborable: {
+    type: DataTypes.INTEGER,
+  },
+  id_tipo_horario: {
+    type: DataTypes.INTEGER,
+  },
+  fecha: {
+    type: DataTypes.DATE,
+  },
+  hora_inicio: {
+    type: DataTypes.TIME,
+  },
+  minutos: {
+    type: DataTypes.INTEGER,
+  },
+  observacion: {
+    type: DataTypes.STRING(360),
+  },
+  hex: {
+    type: DataTypes.STRING(20),
   },
   flag: {
     type: DataTypes.BOOLEAN,
@@ -221,8 +254,7 @@ HorasEspeciales.hasMany(Empleado, {
 });
 
 // Sincroniza el modelo con la base de datos (crea la tabla si no existe)
-DiasLaborables
-  .sync()
+DiasLaborables.sync()
   .then(() => {
     console.log("La tabla DiasLaborables ha sido creada o ya existe.");
   })
@@ -238,6 +270,18 @@ contrato_empleado
   .sync()
   .then(() => {
     console.log("La tabla contrato_empleado ha sido creada o ya existe.");
+  })
+  .catch((error) => {
+    console.error(
+      "Error al sincronizar el modelo con la base de datos:",
+      error
+    );
+  });
+
+// Sincroniza el modelo con la base de datos (crea la tabla si no existe)
+HorariosEspecialesEnDia.sync()
+  .then(() => {
+    console.log("La tabla HorariosEspecialesEnDia ha sido creada o ya existe.");
   })
   .catch((error) => {
     console.error(
