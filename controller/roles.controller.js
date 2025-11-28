@@ -274,6 +274,13 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: true,
         },
         {
+          key: "maestro-productos-v2",
+          label: "AGREGAR PRODUCTOS(CIRCUS)",
+          isTitle: false,
+          icon: "uil-box", // Icono sugerido (o usa uil-calender como los demas)
+          url: "/gest-inventario/maestro-productos", // Esta URL debe coincidir con la de ProtectedRoutes
+        },
+        {
           key: "adm-videos-infraestructura",
           label: "Videos infraestructura",
           isTitle: false,

@@ -1,6 +1,9 @@
 const { DataTypes } = require("sequelize");
 const { db } = require("../database/sequelizeConnection");
-const { detalleVenta_producto } = require("./Venta");
+
+// --- CORRECCIÓN CRÍTICA ---
+// ELIMINAMOS la importación de Venta aquí para romper el ciclo infinito.
+// const { detalleVenta_producto } = require("./Venta"); <--- ESTA LINEA CAUSABA EL ERROR
 
 const Producto = db.define(
   "tb_producto",
@@ -69,18 +72,14 @@ const Producto = db.define(
   },
   { tableName: "tb_producto" }
 );
-detalleVenta_producto.hasOne(Producto, {
-  foreignKey: "id",
-  sourceKey: "id_producto",
-});
-Producto.belongsTo(detalleVenta_producto, {
-  foreignKey: "id_producto",
-  targetKey: "id",
-});
+
+// --- IMPORTANTE ---
+// No definas relaciones con Venta aquí. Ya están definidas en Venta.js.
+// Esto mantiene el modelo limpio y evita el error de "undefined".
 
 Producto.sync()
   .then(() => {
-    console.log("La tabla Producto ha sido creada o ya existe.");
+    console.log("La tabla Producto ha sido sincronizada.");
   })
   .catch((error) => {
     console.error(
@@ -88,6 +87,7 @@ Producto.sync()
       error
     );
   });
+
 module.exports = {
   Producto,
 };
