@@ -155,6 +155,33 @@ const enviarImagenWsp = async (numberWsp, image) => {
   }
 };
 
+const enviarDocumentoxWsp = async (numberWsp, httpDoc) => {
+  const data = qs.stringify({
+    token: "xy1mryu3skys910j",
+    to: numberWsp,
+    filename: "contrato.pdf",
+    document: httpDoc,
+  });
+
+  const config = {
+    method: "post",
+    url: "https://api.ultramsg.com/instance102151/messages/document",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    data: data,
+  };
+
+  try {
+    const response = await axios(config);
+    console.log(JSON.stringify(response.data), numberWsp);
+    return { ok: true };
+  } catch (error) {
+    console.error(error.message || error, numberWsp);
+    return { ok: false, msg: error.message || "Error desconocido" };
+  }
+};
+
 const enviarTextConImagenWsp = async (numberWsp, image, bodyMsg) => {
   const data = qs.stringify({
     token: "xy1mryu3skys910j",
@@ -199,6 +226,7 @@ module.exports = {
   enviarTextConImagenWsp,
   enviarMensajesWsp__CIRCUS,
   enviarMensajesWsp__CHANGE,
+  enviarDocumentoxWsp,
 };
 
 // const qrcode = require("qrcode-terminal");

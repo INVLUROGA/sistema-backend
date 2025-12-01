@@ -227,6 +227,20 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: true,
         },
         {
+          key: "dni-tramitadores-municipalidad",
+          label: "DNI TRAMITADORES MUNICIPALIDAD",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/dni-tramitadores-municipalidad",
+        },
+        {
+          key: "mof-tramite-municipal-karaoke",
+          label: "M.O.F TRAMITE MUNICIPAL KARAOKE",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/mof-tramite-municipal-karaoke",
+        },
+        {
           key: "mof-mant",
           label: "M.O.F mantenimiento",
           isTitle: false,
@@ -275,7 +289,7 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           key: "adm-videos-infraestructura",
-          label: "Videos infraestructura",
+          label: "Videos explicativos infraestructura",
           isTitle: false,
           icon: "uil-calender",
           url: "/videos-infraestructura",
@@ -605,7 +619,7 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           key: "adm-videos-infraestructura",
-          label: "Videos infraestructura",
+          label: "Videos explicativos infraestructura",
           isTitle: false,
           icon: "uil-calender",
           url: "/videos-infraestructura",
@@ -1081,7 +1095,7 @@ const seccionGET = async (req = request, res = response) => {
       MENU_ITEMS = [
         {
           key: "adm-videos-infraestructura",
-          label: "Videos infraestructura",
+          label: "Videos explicativos infraestructura",
           isTitle: false,
           icon: "uil-calender",
           url: "/videos-infraestructura",
