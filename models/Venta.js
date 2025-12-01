@@ -2,6 +2,9 @@ const { DataTypes } = require("sequelize");
 const uuid = require("uuid");
 const { db } = require("../database/sequelizeConnection");
 const { Cliente, Empleado } = require("./Usuarios");
+// IMPORTAMOS PRODUCTO AQUÍ
+const { Producto } = require("./Producto"); 
+
 const {
   ProgramaTraining,
   SemanasTraining,
@@ -31,6 +34,7 @@ const cajasMovimientos = db.define("tb_cajas_movimiento", {
     defaultValue: true,
   },
 });
+
 const Venta = db.define("tb_venta", {
   id: {
     type: DataTypes.INTEGER,
@@ -72,6 +76,7 @@ const Venta = db.define("tb_venta", {
     defaultValue: true,
   },
 });
+
 const detalleVenta_membresias = db.define("detalle_ventaMembresia", {
   id: {
     type: DataTypes.INTEGER,
@@ -119,6 +124,7 @@ const detalleVenta_membresias = db.define("detalle_ventaMembresia", {
     defaultValue: true,
   },
 });
+
 const detalleVenta_Transferencia = db.define("detalle_ventaTransferencia", {
   id: {
     type: DataTypes.INTEGER,
@@ -143,9 +149,6 @@ const detalleVenta_Transferencia = db.define("detalle_ventaTransferencia", {
   horario: {
     type: DataTypes.TIME,
   },
-  // id_horario: {
-  //   type: DataTypes.INTEGER,
-  // },
   fec_inicio_mem: {
     type: DataTypes.STRING(12),
   },
@@ -157,6 +160,7 @@ const detalleVenta_Transferencia = db.define("detalle_ventaTransferencia", {
     defaultValue: true,
   },
 });
+
 const detalleVenta_producto = db.define("detalle_ventaProducto", {
   id: {
     type: DataTypes.INTEGER,
@@ -186,6 +190,7 @@ const detalleVenta_producto = db.define("detalle_ventaProducto", {
     defaultValue: true,
   },
 });
+
 const detalleVenta_citas = db.define("detalle_ventaCitas", {
   id: {
     type: DataTypes.INTEGER,
@@ -209,6 +214,7 @@ const detalleVenta_citas = db.define("detalle_ventaCitas", {
     defaultValue: true,
   },
 });
+
 const detalleVenta_pagoVenta = db.define("detalleVenta_pagoVenta", {
   id: {
     type: DataTypes.INTEGER,
@@ -322,15 +328,17 @@ const leadsxDia = db.define("tb_leadsDia", {
   id_empresa: {
     type: DataTypes.INTEGER,
   },
-  id_red:{
-    type: DataTypes.INTEGER,
-  },
-   id_red: { type: DataTypes.INTEGER, allowNull: true },   
+  id_red: { 
+    type: DataTypes.INTEGER, 
+    allowNull: true 
+  },   
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
 });
+
+// ASOCIACIONES
 
 detalleVenta_membresias.hasOne(HorarioProgramaPT, {
   foreignKey: "id_HorarioPgm",
@@ -393,11 +401,6 @@ detalle_cambioPrograma.hasOne(ProgramaTraining, {
   sourceKey: "id_pgm",
 });
 
-// detalle_cambioPrograma.hasOne(Cliente, {
-//   foreignKey: "id_cli",
-//   sourceKey: "id_cli",
-// });
-
 detalleVenta_membresias.hasOne(ImagePT, {
   foreignKey: "uid_location",
   sourceKey: "uid_contrato",
@@ -409,268 +412,158 @@ detalleVenta_membresias.hasOne(ImagePT, {
   sourceKey: "uid_firma",
   as: "firma_cli",
 });
-// Definición de la relación entre Venta y Cliente
+
+// Relación Venta - Cliente
 Venta.belongsTo(Cliente, {
-  foreignKey: "id_cli", // Este debe ser el nombre de la columna en Cliente
+  foreignKey: "id_cli",
   sourceKey: "id",
 });
 Cliente.hasMany(Venta, {
-  foreignKey: "id_cli", // Este debe coincidir con el anterior
+  foreignKey: "id_cli",
   targetKey: "id",
 });
 
-// Definición de la relación entre Venta y Empleado
+// Relación Venta - Empleado
 Venta.belongsTo(Empleado, {
-  foreignKey: "id_empl", // Este debe ser el nombre de la columna en Empleado
+  foreignKey: "id_empl",
   sourceKey: "id",
 });
 Empleado.hasMany(Venta, {
-  foreignKey: "id_empl", // Este debe coincidir con el anterior
+  foreignKey: "id_empl",
   targetKey: "id",
 });
 
-// Definición de la relación entre Venta y detalleVenta_producto
+// Relación Venta - Detalle Producto
 Venta.hasMany(detalleVenta_producto, {
-  foreignKey: "id_venta", // Este debe ser el nombre de la columna en detalleVenta_producto
+  foreignKey: "id_venta",
   sourceKey: "id",
 });
 detalleVenta_producto.belongsTo(Venta, {
-  foreignKey: "id_venta", // Este debe coincidir con el anterior
+  foreignKey: "id_venta",
   targetKey: "id",
 });
 
-// Definición de la relación entre Venta y detalleVenta_membresias
+// Relación Venta - Detalle Servicios
 Venta.hasMany(detalleventa_servicios, {
-  foreignKey: "id_venta", // Este debe ser el nombre de la columna en detalleVenta_membresias
+  foreignKey: "id_venta",
   sourceKey: "id",
 });
 detalleventa_servicios.belongsTo(Venta, {
-  foreignKey: "id_venta", // Este debe coincidir con el anterior
+  foreignKey: "id_venta",
   targetKey: "id",
 });
-// Definición de la relación entre Venta y detalleVenta_membresias
+
+// Detalle Servicios - Servicios Circus
 detalleventa_servicios.hasOne(ServiciosCircus, {
-  foreignKey: "id", // Este debe ser el nombre de la columna en detalleVenta_membresias
+  foreignKey: "id",
   sourceKey: "id_servicio",
 });
 ServiciosCircus.belongsTo(detalleventa_servicios, {
-  foreignKey: "id", // Este debe coincidir con el anterior
+  foreignKey: "id",
   targetKey: "id_servicio",
 });
-// Un detalle de servicio pertenece a un empleado
+
+// Detalle Servicios - Empleado
 detalleventa_servicios.belongsTo(Empleado, {
   foreignKey: "id_empl",
   as: "empleado_servicio",
 });
-
-// Un empleado puede tener muchos servicios registrados (opcional, solo si consultas inversamente)
 Empleado.hasMany(detalleventa_servicios, {
   foreignKey: "id_empl",
   as: "servicios_realizados",
 });
 
-// TODO
+// --- ASOCIACIONES CORREGIDAS PARA PRODUCTOS ---
 
-// Un detalle de servicio pertenece a un empleado
+// 1. Detalle Venta Producto pertenece a un Empleado
 detalleVenta_producto.belongsTo(Empleado, {
   foreignKey: "id_empl",
   as: "empleado_producto",
 });
-
-// Un empleado puede tener muchos servicios registrados (opcional, solo si consultas inversamente)
 Empleado.hasMany(detalleVenta_producto, {
   foreignKey: "id_empl",
   as: "productos_realizados",
 });
 
-// Definición de la relación entre Venta y detalleVenta_membresias
+// 2. Detalle Venta Producto pertenece a un Producto (ESTA FALTABA EN VENTA.JS)
+// Esta relación usa el id_producto que está en detalle_ventaProducto
+detalleVenta_producto.belongsTo(Producto, {
+  foreignKey: "id_producto",
+  targetKey: "id",
+});
+Producto.hasMany(detalleVenta_producto, {
+  foreignKey: "id_producto",
+  sourceKey: "id"
+});
+
+// ----------------------------------------------
+
+// Relación Venta - Detalle Membresías
 Venta.hasMany(detalleVenta_membresias, {
-  foreignKey: "id_venta", // Este debe ser el nombre de la columna en detalleVenta_membresias
+  foreignKey: "id_venta",
   sourceKey: "id",
 });
 detalleVenta_membresias.belongsTo(Venta, {
-  foreignKey: "id_venta", // Este debe coincidir con el anterior
+  foreignKey: "id_venta",
   targetKey: "id",
 });
-// Definición de la relación entre Venta y detalleVenta_membresias
+
+// Relación Venta - Detalle Transferencia
 Venta.hasMany(detalleVenta_Transferencia, {
-  foreignKey: "id_venta", // Este debe ser el nombre de la columna en detalleVenta_membresias
+  foreignKey: "id_venta",
   sourceKey: "id",
   as: "venta_venta",
 });
 detalleVenta_Transferencia.belongsTo(Venta, {
-  foreignKey: "id_venta", // Este debe coincidir con el anterior
+  foreignKey: "id_venta",
   targetKey: "id",
   as: "venta_venta",
 });
 detalleVenta_Transferencia.hasMany(Venta, {
-  foreignKey: "id", // Este debe ser el nombre de la columna en detalleVenta_membresias
+  foreignKey: "id",
   sourceKey: "id_membresia",
   as: "venta_transferencia",
 });
 Venta.belongsTo(detalleVenta_Transferencia, {
-  foreignKey: "id", // Este debe coincidir con el anterior
+  foreignKey: "id",
   targetKey: "id_membresia",
   as: "venta_transferencia",
 });
-// Definición de la relación entre Venta y detalleVenta_citas
+
+// Relación Venta - Detalle Citas
 Venta.hasMany(detalleVenta_citas, {
-  foreignKey: "id_venta", // Este debe ser el nombre de la columna en detalleVenta_citas
+  foreignKey: "id_venta",
   sourceKey: "id",
 });
 detalleVenta_citas.belongsTo(Venta, {
-  foreignKey: "id_venta", // Este debe coincidir con el anterior
+  foreignKey: "id_venta",
   targetKey: "id",
 });
 
-// Definición de la relación entre Venta y detalleVenta_pagoVenta
+// Relación Venta - Pagos
 Venta.hasMany(detalleVenta_pagoVenta, {
-  foreignKey: "id_venta", // Este debe ser el nombre de la columna en detalleVenta_pagoVenta
+  foreignKey: "id_venta",
   sourceKey: "id",
 });
 detalleVenta_pagoVenta.belongsTo(Venta, {
-  foreignKey: "id_venta", // Este debe coincidir con el anterior
+  foreignKey: "id_venta",
   targetKey: "id",
 });
 
-// detalle_cambioPrograma.sync().
+// Syncs (Opcional si ya usas migrations o sync global)
 /*
-
+leadsxDia.sync();
+detalleventa_servicios.sync();
+detalle_cambioPrograma.sync();
+detalleVenta_Transferencia.sync();
+cajasMovimientos.sync();
+Venta.sync();
+detalleVenta_membresias.sync();
+detalleVenta_pagoVenta.sync();
+detalleVenta_citas.sync();
+detalleVenta_producto.sync();
 */
-leadsxDia
-  .sync()
-  .then(() => {
-    console.log("La tabla leadsxdia ha sido creada o ya existe.");
-  })
-  .catch((error) => {
-    console.error(
-      "Error al sincronizar el modelo con la base de datos:",
-      error
-    );
-  });
-detalleventa_servicios
-  .sync()
-  .then(() => {
-    console.log("La tabla detalleventa_servicios ha sido creada o ya existe.");
-  })
-  .catch((error) => {
-    console.error(
-      "Error al sincronizar el modelo con la base de datos:",
-      error
-    );
-  });
-detalle_cambioPrograma
-  .sync()
-  .then(() => {
-    console.log("La tabla detalle_cambioPrograma ha sido creada o ya existe.");
-  })
-  .catch((error) => {
-    console.error(
-      "Error al sincronizar el modelo con la base de datos:",
-      error
-    );
-  });
 
-detalleVenta_Transferencia
-  .sync()
-  .then(() => {
-    console.log("La tabla transferencia ha sido creada o ya existe.");
-  })
-  .catch((error) => {
-    console.error(
-      "Error al sincronizar el modelo con la base de datos:",
-      error
-    );
-  });
-cajasMovimientos
-  .sync()
-  .then(() => {
-    console.log("La tabla cajasMovimientos ha sido creada o ya existe.");
-  })
-  .catch((error) => {
-    console.error(
-      "Error al sincronizar el modelo con la base de datos:",
-      error
-    );
-  });
-Venta.sync()
-  .then(() => {
-    console.log("La tabla Venta ha sido creada o ya existe.");
-  })
-  .catch((error) => {
-    console.error(
-      "Error al sincronizar el modelo con la base de datos:",
-      error
-    );
-  });
-detalleVenta_membresias
-  .sync()
-  .then(() => {
-    console.log("La tabla detalleVenta_membresias ha sido creada o ya existe.");
-  })
-  .catch((error) => {
-    console.error(
-      "Error al sincronizar el modelo con la base de datos:",
-      error
-    );
-  });
-detalleVenta_pagoVenta
-  .sync()
-  .then(() => {
-    console.log("La tabla detalleVenta_pagoVenta ha sido creada o ya existe.");
-  })
-  .catch((error) => {
-    console.error(
-      "Error al sincronizar el modelo con la base de datos:",
-      error
-    );
-  });
-detalleVenta_citas
-  .sync()
-  .then(() => {
-    console.log("La tabla detalleVenta_citas ha sido creada o ya existe.");
-  })
-  .catch((error) => {
-    console.error(
-      "Error al sincronizar el modelo con la base de datos:",
-      error
-    );
-  });
-detalleVenta_producto
-  .sync()
-  .then(() => {
-    console.log("La tabla detalleVenta_producto ha sido creada o ya existe.");
-  })
-  .catch((error) => {
-    console.error(
-      "Error al sincronizar el modelo con la base de datos:",
-      error
-    );
-  });
-
-const carcel = async () => {
-  try {
-    // Encuentra todas las filas de la tabla (o puedes hacerlo con un filtro específico)
-    const filas = await detalleVenta_membresias.findAll();
-
-    // Itera sobre cada fila para asignar un UUID distinto
-    for (const fila of filas) {
-      // Genera un nuevo UUID
-      const UUID = uuid.v4();
-      const UUID_CONTRATO = uuid.v4();
-      // Actualiza la fila con el nuevo UUID
-      await fila.update({
-        uid_firma: UUID,
-        uid_contrato: UUID_CONTRATO,
-      });
-    }
-
-    console.log("ContratoProv  asignados correctamente.");
-  } catch (error) {
-    console.error("Error al asignar UUID:", error);
-  }
-};
-// carcel();
 module.exports = {
   Venta,
   detalleVenta_membresias,
