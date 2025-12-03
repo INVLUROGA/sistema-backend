@@ -238,7 +238,6 @@ const recordatorioReservaCita24hAntes = async () => {
     console.log(error);
   }
 };
-
 const recordatorioReservaCita2hAntes = async () => {
   try {
     console.log("Ejecutando recordatorio 2h antes...");
@@ -280,69 +279,6 @@ const recordatorioReservaCita2hAntes = async () => {
   } catch (error) {
     console.log(error);
   }
-};
-
-const obtenerUltimaVenta = (clientes) => {
-  return clientes.map((cliente) => {
-    // Obtener la última venta según la fecha de venta
-    let ultimaVenta = cliente.tb_venta.reduce((ultima, actual) => {
-      return new Date(actual.fecha_venta) > new Date(ultima.fecha_venta)
-        ? actual
-        : ultima;
-    });
-    // Retornar los datos del cliente con su última venta
-    return {
-      id_cli: cliente.id_cli,
-      nombre_cli: cliente.nombre_cli,
-      ultima_venta: ultimaVenta,
-    };
-  });
-};
-
-const obtenerUltimaExtension = (ultima_venta) => {
-  // Obtener la última extensión según la fecha de extensión_fin
-  const ultimaExtension = ultima_venta.tb_extension_membresia?.reduce(
-    (ultima, actual) => {
-      return new Date(actual.extension_fin) > new Date(ultima.extension_fin)
-        ? actual
-        : ultima;
-    }
-  );
-  return ultimaExtension;
-};
-const procesarClientes = (clientes) => {
-  return clientes.map((cliente) => {
-    // Procesar las extensiones en la última venta
-    const detalleMembresia = cliente.ultima_venta.detalle_ventaMembresia.map(
-      (membresia) => {
-        if (membresia.tb_extension_membresia.length > 0) {
-          // Seleccionar la extensión con la fecha de extension_fin más grande
-          const ultimaExtension = membresia.tb_extension_membresia.reduce(
-            (max, actual) => {
-              return new Date(actual.extension_fin) >
-                new Date(max.extension_fin)
-                ? actual
-                : max;
-            }
-          );
-          // Asignar la última extensión
-          membresia.ultima_extension = ultimaExtension;
-        } else {
-          membresia.ultima_extension = null; // Si no hay extensiones
-        }
-        return membresia;
-      }
-    );
-
-    // Retornar el cliente con la membresía procesada
-    return {
-      ...cliente,
-      ultima_venta: {
-        ...cliente.ultima_venta,
-        detalle_ventaMembresia: detalleMembresia,
-      },
-    };
-  });
 };
 const obtenerCumpleaniosCliente = async () => {
   try {
@@ -672,7 +608,6 @@ const obtenerDataSeguimiento = async () => {
     throw error;
   }
 };
-
 const enviarMensajesxCitasxHorasFinales = async () => {
   console.log("procedio");
 
@@ -694,7 +629,6 @@ const enviarMensajesxCitasxHorasFinales = async () => {
     console.log(error);
   }
 };
-
 //TODO: FUNCIONES PARA ORGANIZAR DATOS
 function organizarDatos(
   ventas = [],
@@ -746,104 +680,14 @@ function organizarDatos(
     console.log(error);
   }
 }
-const esDiaHabil = (fecha) => {
-  const dia = fecha.getDay();
-  return dia !== 0 && dia !== 6; // No cuenta sábados (6) ni domingos (0)
-};
-function diasHabilesRestantes(fecInicio, fecFin) {
-  // const inicio = new Date(fecInicio);
-  // const fin = new Date(fecFin);
-  // let diasHabiles = 0;
-
-  // while (inicio <= fin) {
-  //   const dia = inicio.getDay();
-  //   if (dia !== 0 && dia !== 6) diasHabiles++; // Excluir sábados (6) y domingos (0)
-  //   inicio.setDate(inicio.getDate() + 1);
-  // }
-  // Determinar si ambas fechas son hábiles
-
-  // return diasHabiles;
-  let inicio = dayjs(fecInicio);
-  let fin = dayjs(fecFin);
-
-  // Determinar la dirección del conteo
-  let step = inicio.isBefore(fin) ? 1 : -1;
-
-  // Asegurar que inicio siempre sea menor para calcular correctamente
-  if (step === -1) {
-    [inicio, fin] = [fin, inicio]; // Intercambia valores
-  }
-
-  let totalDias = fin.diff(inicio, "day") + 1; // Contamos ambos extremos
-  let semanasCompletas = Math.floor(totalDias / 7);
-  let diasHabiles = semanasCompletas * 5; // Cada semana completa tiene 5 días hábiles
-
-  let extra = 0;
-  for (let i = 0; i < totalDias % 7; i++) {
-    let dia = inicio.add(i, "day").day();
-    if (dia !== 0 && dia !== 6) extra++; // Excluir sábados (6) y domingos (0)
-  }
-
-  return step * (diasHabiles + extra);
-}
-function sumarDiasHabiles(fecha, numeroDias) {
-  const fechaInicial = new Date(fecha);
-  let diasAgregados = 0;
-
-  if (esDiaHabil(fechaInicial)) diasAgregados++;
-
-  while (diasAgregados < numeroDias) {
-    fechaInicial.setDate(fechaInicial.getDate() + 1);
-    const dia = fechaInicial.getDay();
-    if (dia !== 0 && dia !== 6) diasAgregados++; // Excluir sábados (6) y domingos (0)
-  }
-
-  return fechaInicial.toISOString().split("T")[0]; // Retorna en formato YYYY-MM-DD
-}
-const obtenerExtensionStatus = (
-  fecha_actual,
-  fecha_inicio_mem,
-  fecha_fin_mem,
-  extensiones
-) => {
-  const fechaActual = new Date(fecha_actual);
-  const inicioMem = new Date(fecha_inicio_mem);
-  const finMem = new Date(fecha_fin_mem);
-
-  // Buscar una extensión donde la fecha actual esté entre extension_inicio y extension_fin
-  const extension = extensiones.find((ext) => {
-    const inicioExt = new Date(ext.extension_inicio);
-    const finExt = new Date(ext.extension_fin);
-    return fechaActual >= inicioExt && fechaActual <= finExt;
-  });
-
-  if (extension) {
-    return { extension, status: extension.tipo_extension };
-  }
-
-  // Evaluar el estado si no hay extensión activa en la fecha actual
-  if (fechaActual < inicioMem) return { extension: null, status: "espera" };
-  if (fechaActual > finMem) return { extension: null, status: "inactivo" };
-
-  return { extension: null, status: "activo" };
-};
-// Función para determinar si una fecha es día hábil (lunes a viernes)
-// Función que determina si un día es laborable (lunes a viernes)
-// function isBusinessDay(date) {
-//   const dayOfWeek = date.day(); // 0: domingo, 6: sábado
-//   return dayOfWeek !== 0 && dayOfWeek !== 6;
-// }
-
 function isBusinessDay(date) {
   const dayOfWeek = date.getDay(); // 0: domingo, 6: sábado
   return dayOfWeek !== 0 && dayOfWeek !== 6;
 }
-
 function isBusinessDayJS(date) {
   // Verifica si el día no es sábado ni domingo
   return date.day() !== 0 && date.day() !== 6;
 }
-
 // Función auxiliar para sumar días hábiles a una fecha y almacenar cada día considerado
 const addBusinessDays = (startDate, businessDays) => {
   let date = new Date(startDate);
@@ -867,7 +711,6 @@ const addBusinessDays = (startDate, businessDays) => {
   }
   return { fecha: date, diasCon };
 };
-
 // Función que cuenta los días hábiles entre dos fechas de forma inclusiva,
 // contando la fecha de inicio y la fecha de fin si son días hábiles.
 const getBusinessDaysDiffInclusive = (start, end) => {
@@ -908,7 +751,6 @@ const getBusinessDaysDiffInclusive = (start, end) => {
     dateInit: { start, end },
   };
 };
-
 // Función principal que procesa un array de ventas
 function calcularFechasVentas(ventas) {
   return ventas.map((venta) => {
@@ -976,14 +818,11 @@ function calcularFechasVentas(ventas) {
     };
   });
 }
-const obtenerCitasDosDiasAntes = () => {};
-
 module.exports = {
   recordatorioReservaCita2hAntes,
   obtenerCumpleaniosCliente,
   insertaDatosTEST,
   insertarDatosSeguimientoDeClientes,
-  obtenerCitasDosDiasAntes,
   obtenerDataSeguimiento,
   enviarMensajesxCitasxHorasFinales,
   alertasUsuario,

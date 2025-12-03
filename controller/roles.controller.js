@@ -228,7 +228,7 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           key: "dni-tramitadores-municipalidad",
-          label: "DNI TRAMITADORES MUNICIPALIDAD",
+          label: "DNI TRAMITADORES MUNICIPALIDAD CHORRILLOS",
           isTitle: false,
           icon: "uil-calender",
           url: "/dni-tramitadores-municipalidad",

@@ -47,7 +47,7 @@ const getGastos = async (req = request, res = response) => {
           [Sequelize.Op.not]: 2548,
         },
       },
-      order: [["fec_registro", "desc"]],
+      order: [["updatedAt", "desc"]],
       attributes: [
         "id",
         "moneda",
