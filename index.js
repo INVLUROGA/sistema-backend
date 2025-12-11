@@ -157,6 +157,7 @@ app.use("/api/fils", require("./routes/file.router.js"));
 //**************Rutas***** */
 //************************ */
 app.use("/api/movimiento-articulo", require("./routes/kardex.router.js"));
+app.use('/api/articulo', require('./routes/articulo.router.js'))
 // //TODO proveedores // sexo, tipoDoc, estadoCivil, etc
 
 app.use("/api/proveedor", validarJWT, require("./routes/proveedor.router.js"));
@@ -178,6 +179,7 @@ app.use("/api/usuario", require("./routes/usuario.route.js"));
 app.use("/api/apireniec", require("./routes/api.reniec.route.js"));
 app.use("/api/cambio-programa", require("./routes/cambioPrograma.route.js"));
 app.use("/api/msg-masivos", require("./routes/msgMasivos.route.js"));
+app.use("/api/wsp", require("./routes/wsp.route.js"));
 
 app.use("/api/servicios", validarJWT, require("./routes/servicios.router.js"));
 app.use(

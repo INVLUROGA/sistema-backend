@@ -864,6 +864,11 @@ const loginUsuario = async (req = request, res = response) => {
           path: "/rrhh",
           key: "mod-rrhh",
         },
+        {
+          name: "INFORME GERENCIAL",
+          path: "/informe-gerencial",
+          key: "mod-informe-gerencial",
+        },
       ];
     }
     if (usuario.rol_user === 3) {
@@ -999,6 +1004,11 @@ const revalidarToken = async (req, res) => {
         name: "RR.HH.",
         path: "/rrhh",
         key: "mod-rrhh",
+      },
+      {
+        name: "INFORME GERENCIAL",
+        path: "/informe-gerencial",
+        key: "mod-informe-gerencial",
       },
     ];
   }

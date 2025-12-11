@@ -31,6 +31,11 @@ const generarJWT = (uid, name, rol_user, ip_user, id_user) => {
         path: "/rrhh",
         key: "mod-rrhh",
       },
+      {
+        name: "INFORME GERENCIAL",
+        path: "/informe-gerencial",
+        key: "mod-informe-gerencial",
+      },
     ];
   }
   if (rol_user === 3) {

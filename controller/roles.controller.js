@@ -1327,6 +1327,24 @@ const seccionGET = async (req = request, res = response) => {
         },
       ];
     }
+    if (modulo === "mod-informe-gerencial") {
+      MENU_ITEMS = [
+        {
+          //key: "reporte-utilidad-pgm",
+          label: "DETALLE ORIGEN",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/detalle-origen",
+        },
+        {
+          //key: "reporte-utilidad-pgm",
+          label: "COMPARATIVO MENSUAL VS MES ACTUAL",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/detalle-origen",
+        },
+      ];
+    }
     res.status(200).json({
       msg: "success",
       MENU_ITEMS,
@@ -1368,6 +1386,11 @@ const moduleGET = async (req = request, res = response) => {
           name: "RR.HH.",
           path: "/rrhh",
           key: "mod-rrhh",
+        },
+        {
+          name: "INFORME GERENCIAL",
+          path: "/informe-gerencial",
+          key: "mod-informe-gerencial",
         },
       ];
     }

@@ -72,6 +72,7 @@ const router = Router();
 router.get("/comanda/:id_empresa", getComandas);
 router.post("/comanda/:id_empresa", postComanda);
 router.post("/servicios/:id_venta", validarComandaPagada, postVentaServicios);
+router.get("/get-ventas-x-fecha/:id_empresa", getVentasxFecha);
 router.post("/productos/:id_venta", validarComandaPagada, postVentaProductos);
 router.get(
   "/obtener-ventas-x-comprobante/:id_comprobante/:id_empresa",
@@ -105,14 +106,13 @@ router.post("/post-venta/agregar-firma-en-contrato", agregarFirmaEnContrato);
 router.get("/reporte/obtener-todo-membresias", obtenerMembresias);
 router.get("/reporte/obtener-todo-membresias-x-fecha", obtenerMembresias);
 router.post("/traspaso-membresia", postTraspasoMembresia);
-router.get("/get-ventas-x-fecha/:id_empresa", getVentasxFecha);
 router.get("/get-ventas/599", get_VENTAS_CIRCUS);
 router.get("/get-ventas/:id_empresa", get_VENTAS);
 router.post("/invoice-mail/:id_venta", mailMembresia);
 router.get("/get-id-ventas/:id", get_VENTA_ID);
 router.post("/invoice-PDFcontrato", obtener_contrato_pdf);
-router.put('/update-colaborador-servicio/:id', updateDetalleServicio);
-router.put('/update-colaborador-producto/:id', updateDetalleProducto); 
+router.put("/update-colaborador-servicio/:id", updateDetalleServicio);
+router.put("/update-colaborador-producto/:id", updateDetalleProducto);
 // router.post("/")
 router.post("/estado-membresia", estadosClienteMembresiaVar);
 

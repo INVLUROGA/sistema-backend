@@ -1281,12 +1281,11 @@ const getVentasxFecha = async (req = request, res = response) => {
         "id_tipoFactura",
         "id_origen",
         "numero_transac",
-        "flag",
         "fecha_venta",
       ],
       where: {
         fecha_venta: {
-          [Op.between]: [new Date(fechaInicio), new Date(fechaFin)],
+          [Op.between]: [fechaInicio, fechaFin],
         },
         flag: true,
         id_empresa: id_empresa,
@@ -1399,20 +1398,20 @@ const getVentasxFecha = async (req = request, res = response) => {
             },
           ],
         },
-        {
-          model: detalleventa_servicios,
-          attributes: ["cantidad", "tarifa_monto"],
-          include: [
-            {
-              model: ServiciosCircus,
-              include: [
-                {
-                  model: Parametros,
-                },
-              ],
-            },
-          ],
-        },
+        // {
+        //   model: detalleventa_servicios,
+        //   attributes: ["cantidad", "tarifa_monto"],
+        //   include: [
+        //     {
+        //       model: ServiciosCircus,
+        //       include: [
+        //         {
+        //           model: Parametros,
+        //         },
+        //       ],
+        //     },
+        //   ],
+        // },
       ],
     });
     res.status(200).json({
