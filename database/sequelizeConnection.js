@@ -12,7 +12,7 @@ const db = new Sequelize("db_luroga", env.USER_DB, env.PASSWORD_DB, {
       useUTC: true,
       encrypt: true,
       rowCollectionOnRequestCompletion: true,
-      requestTimeout: 30000, // <-- Aquí está bien colocado
+      requestTimeout: 120000, // <-- Aquí está bien colocado
     },
   },
 
