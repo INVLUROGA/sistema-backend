@@ -1,11 +1,15 @@
 const { request, response } = require("express");
 const { Articulos } = require("../models/Articulo");
-
+const { ImagePT } = require("../models/Image");
+const { Parametros, Parametros_zonas } = require("../models/Parametros");
+const uid = require("uuid");
 // Crear Articulo
 const PostArticulo = async (req = request, res = response) => {
   try {
-    await Articulos.create(req.body);
-    res.status(201).json({ msg: "Articulo creado correctamente" });
+    const { id_empresa } = req.params;
+    const uid_image = uid.v4();
+    await Articulos.create({ ...req.body, id_empresa, uid_image });
+    res.status(201).json({ msg: "Articulo creado correctamente", uid_image });
   } catch (error) {
     res
       .status(500)
@@ -14,7 +18,7 @@ const PostArticulo = async (req = request, res = response) => {
 };
 
 // Obtener todos los Articulos
-const GetArticulos = async (req = request, res = response) => {
+const GetArticulosxEmpresa = async (req = request, res = response) => {
   try {
     const { id_empresa } = req.params;
     const articulos = await Articulos.findAll({
@@ -22,6 +26,34 @@ const GetArticulos = async (req = request, res = response) => {
         id_empresa,
         flag: true,
       },
+      include: [
+        {
+          model: ImagePT,
+          attributes: ["id", "name_image"],
+          where: { flag: true },
+          required: false,
+        },
+        // {
+        //   model: Parametros,
+        //   as: "parametro_marca",
+        // },
+        {
+          model: Parametros_zonas,
+          as: "parametro_lugar_encuentro",
+          attributes: [
+            ["nombre_zona", "label_param"],
+            ["orden_zona", "orden_param"],
+            ["nivel", "nivel"],
+          ],
+          include: [
+            {
+              model: ImagePT,
+              // where: { flag: true },
+              attributes: ["name_image"],
+            },
+          ],
+        },
+      ],
     });
     res.status(200).json({ msg: "Articulos obtenidos", articulos });
   } catch (error) {
@@ -40,6 +72,14 @@ const GetArticuloxID = async (req = request, res = response) => {
         id,
         flag: true,
       },
+      include: [
+        {
+          model: ImagePT,
+          attributes: ["id", "name_image"],
+          where: { flag: true },
+          required: false,
+        },
+      ],
     });
     res.status(200).json({ msg: "Articulo obtenido", articulo });
   } catch (error) {
@@ -72,6 +112,7 @@ const deleteArticuloxID = async (req = request, res = response) => {
 const updateArticuloxID = async (req = request, res = response) => {
   try {
     const { id } = req.params;
+    const uid_image = uid.v4();
     const articulo = await Articulos.findOne({
       where: {
         id,
@@ -79,7 +120,9 @@ const updateArticuloxID = async (req = request, res = response) => {
       },
     });
     await articulo.update(req.body);
-    res.status(200).json({ msg: "Articulo actualizado correctamente" });
+    res
+      .status(200)
+      .json({ msg: "Articulo actualizado correctamente", uid_image });
   } catch (error) {
     res
       .status(500)
@@ -89,7 +132,7 @@ const updateArticuloxID = async (req = request, res = response) => {
 
 module.exports = {
   PostArticulo,
-  GetArticulos,
+  GetArticulosxEmpresa,
   GetArticuloxID,
   deleteArticuloxID,
   updateArticuloxID,

@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const {
   GetArticuloxID,
-  GetArticulos,
+  GetArticulosxEmpresa,
   PostArticulo,
   deleteArticuloxID,
   updateArticuloxID,
@@ -11,9 +11,9 @@ const router = Router();
 /**
  * /api/producto
  */
-router.post("/", PostArticulo);
+router.post("/:id_empresa", PostArticulo);
 router.get("/id/:id", GetArticuloxID);
-router.get("/", GetArticulos);
+router.get("/:id_empresa", GetArticulosxEmpresa);
 router.put("/id/:id", updateArticuloxID);
 router.put("/delete/id/:id", deleteArticuloxID);
 

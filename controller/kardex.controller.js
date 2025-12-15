@@ -1,5 +1,9 @@
 const { request, response } = require("express");
 const { MovimientoArticulo } = require("../models/MovimientoArticulo");
+const { Articulos } = require("../models/Articulo");
+const {
+  updateArticuloxIDxMovimientos,
+} = require("../middlewares/updateArticuloxIDxMovimientos");
 
 const obtenerMovimientosxArticulo = async (req = request, res = response) => {
   try {
@@ -23,6 +27,7 @@ const postMovimientoxArticulo = async (req = request, res = response) => {
       observacion,
       id_motivo,
       id_empresa,
+      cantidad,
     } = req.body;
     const movimientoArticulo = await MovimientoArticulo.create({
       id_articulo: idArticulo,
@@ -31,8 +36,10 @@ const postMovimientoxArticulo = async (req = request, res = response) => {
       fechaCambio,
       observacion,
       id_motivo,
+      cantidad,
       id_empresa,
     });
+    await updateArticuloxIDxMovimientos(idArticulo);
     res.status(201).json({
       movimientoArticulo,
     });
@@ -66,6 +73,7 @@ const updateMovimientoArticuloxId = async (req = request, res = response) => {
       where: { id },
     });
     await MovimientoArticulo.update(req.body);
+    await updateArticuloxIDxMovimientos(movimientoArticulo?.id_articulo);
     res.status(201).json({
       movimientoArticulo,
     });
@@ -83,6 +91,7 @@ const deleteMovimientoArticuloxId = async (req = request, res = response) => {
       where: { id },
     });
     await movimientoArticulo.update({ flag: false });
+    await updateArticuloxIDxMovimientos(movimientoArticulo?.id_articulo);
     res.status(201).json({
       movimientoArticulo,
     });

@@ -6,6 +6,9 @@ const MovimientoArticulo = db.define("articulo_movimiento", {
     autoIncrement: true,
     primaryKey: true,
   },
+  cantidad: {
+    type: DataTypes.INTEGER,
+  },
   id_articulo: {
     type: DataTypes.INTEGER,
   },
