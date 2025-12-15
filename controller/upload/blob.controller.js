@@ -29,6 +29,7 @@ const uploadBlob = async (req = request, res = response) => {
     await img.save();
     res.status(200).json({
       msg: "success",
+      img,
     });
   } catch (error) {
     console.log(error);
@@ -80,7 +81,7 @@ const postUploadsImgs = async (req, res) => {
 };
 const viewFile = async (req = request, res = response) => {
   try {
-    const {containerName} = req.query;
+    const { containerName } = req.query;
     const containerClient = blobService.getContainerClient(containerName);
     // OJO: el fileName viene URL-encodeado
     const fileName = decodeURIComponent(req.params.fileName);
