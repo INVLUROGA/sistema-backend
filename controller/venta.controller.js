@@ -1962,6 +1962,7 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
         },
       ],
     });
+
     const ventasTransferencias = await Venta.findAll({
       order: [["fecha_venta", "DESC"]],
       where: {
@@ -2171,6 +2172,105 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
     });
   } catch (error) {
     console.log(error);
+  }
+};
+
+const getVencimientosPorMes = async (req = request, res = response) => {
+  const { year, id_empresa } = req.query;
+
+  try {
+    if (!year) {
+      return res.status(400).json({
+        ok: false,
+        msg: "El parámetro 'year' es obligatorio.",
+      });
+    }
+
+    const empresaID = id_empresa || 598;
+    const currentYear = Number(year);
+    const previousYear = currentYear - 1;
+
+    const colFechaFin = "TRY_CAST(detalle_ventaMembresia.fec_fin_mem AS DATE)";
+
+    const dataVencimientos = await detalleVenta_membresias.findAll({
+      attributes: [
+        [Sequelize.literal(`FORMAT(${colFechaFin}, 'yyyy-MM')`), "mes"],
+        [Sequelize.fn("COUNT", Sequelize.col("detalle_ventaMembresia.id_venta")), "cantidad"]
+      ],
+      where: {
+        flag: true,
+        tarifa_monto: { [Op.gt]: 0 },
+        [Op.and]: [
+          Sequelize.where(Sequelize.literal(`YEAR(${colFechaFin})`), {
+            [Op.in]: [currentYear, previousYear]
+          })
+        ]
+      },
+      include: [{
+        model: Venta,
+        attributes: [],
+        where: {
+          flag: true,
+          id_empresa: empresaID
+        }
+      }],
+      group: [Sequelize.literal(`FORMAT(${colFechaFin}, 'yyyy-MM')`)],
+      raw: true
+    });
+
+    const dataRenovaciones = await Venta.findAll({
+      attributes: [
+        [Sequelize.literal("FORMAT(fecha_venta, 'yyyy-MM')"), "mes"],
+        [Sequelize.fn("COUNT", Sequelize.col("id")), "cantidad"]
+      ],
+      where: {
+        flag: true,
+        id_empresa: empresaID,
+        id_origen: 691,
+        [Op.and]: [
+          Sequelize.where(Sequelize.fn("YEAR", Sequelize.col("fecha_venta")), {
+            [Op.in]: [currentYear, previousYear]
+          })
+        ]
+      },
+      group: [Sequelize.literal("FORMAT(fecha_venta, 'yyyy-MM')")],
+      raw: true
+    });
+
+    const mapVencimientos = {};
+    dataVencimientos.forEach(d => mapVencimientos[d.mes] = d.cantidad);
+
+    const mapRenovaciones = {};
+    dataRenovaciones.forEach(d => mapRenovaciones[d.mes] = d.cantidad);
+
+    const todosLosMeses = new Set([...Object.keys(mapVencimientos), ...Object.keys(mapRenovaciones)]);
+
+    const resultados = Array.from(todosLosMeses).sort().map(mes => {
+      const vencimientos = mapVencimientos[mes] || 0;
+      const renovaciones = mapRenovaciones[mes] || 0;
+
+      const pendienteCalculado = vencimientos - renovaciones;
+      const pendienteReal = pendienteCalculado < 0 ? 0 : pendienteCalculado;
+
+      return {
+        Mes: mes,
+        "Vencimientos (Fec Fin)": vencimientos,
+        "Renovaciones (Pagadas)": renovaciones,
+        "Pendiente Real": pendienteReal
+      };
+    });
+
+    res.status(200).json({
+      ok: true,
+      data: resultados,
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: `Error al obtener vencimientos: ${error.message || error}`,
+    });
   }
 };
 const obtenerComparativoTotal = async (req = request, res = response) => {
@@ -3082,7 +3182,7 @@ const obtenerTransferenciasxFecha = async (req = request, res = response) => {
   }
 };
 
-const obtenerVentasxTipoFactura = async (req = request, res = response) => {};
+const obtenerVentasxTipoFactura = async (req = request, res = response) => { };
 
 const obtenerClientesConMembresia = async (req = request, res = response) => {
   try {
@@ -3717,7 +3817,6 @@ module.exports = {
   obtenerUltimasVentasxComprobantes,
   putVentaxId,
   postCajaApertura,
-
   obtenerMembresiasxUIDcliente,
   obtenerComparativoResumenClientes,
   obtenerTransferenciasResumenxMes,
@@ -3730,6 +3829,7 @@ module.exports = {
   getPDF_CONTRATO,
   obtener_contrato_pdf,
   getVentasxFecha,
+  getVencimientosPorMes,
   mailMembresia,
   postTraspasoMembresia,
   estadosClienteMembresiaVar,
