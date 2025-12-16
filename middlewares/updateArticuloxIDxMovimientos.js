@@ -17,7 +17,10 @@ const updateArticuloxIDxMovimientos = async (idArticulo) => {
     const TraspasoDeArticulo = movimientoArticulo.filter(
       (e) => e.movimiento === "traspaso"
     );
-    const ultimoTraspaso = TraspasoDeArticulo[0].id_lugar_destino;
+    const ultimoTraspaso = {
+      lugar_destino: TraspasoDeArticulo[0].id_lugar_destino,
+      id_empresa: TraspasoDeArticulo[0].id_empresa,
+    };
     const sumaCantidadesEntrada = entradasDeArticulo?.reduce(
       (total, item) => total + (item?.cantidad || 0),
       0
@@ -33,7 +36,8 @@ const updateArticuloxIDxMovimientos = async (idArticulo) => {
     });
     await articulo.update({
       cantidad: sumaCantidadesEntrada - sumaCantidadesSalida,
-      id_lugar_destino: ultimoTraspaso,
+      id_lugar: ultimoTraspaso.lugar_destino,
+      id_empresa: ultimoTraspaso.id_empresa,
     });
     console.log({ idArticulo, ok: true });
 
