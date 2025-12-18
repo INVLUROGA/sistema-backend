@@ -2186,13 +2186,13 @@ const getVencimientosPorMes = async (req = request, res = response) => {
     const empresaID = Number(id_empresa) || 598;
     const targetYear = Number(year);
 
-    // 1. Fetch Renovaciones (Ya están filtradas por año en la BD)
+    // 1. Fetch Renovaciones (Sin cambios aquí)
     const renovacionesDB = await Venta.findAll({
       attributes: ['fecha_venta'],
       where: {
         flag: true,
         id_empresa: empresaID,
-        id_origen: 691, // Renovación
+        id_origen: 691,
         fecha_venta: {
           [Op.between]: [
             new Date(`${targetYear}-01-01T00:00:00`),
@@ -2203,17 +2203,15 @@ const getVencimientosPorMes = async (req = request, res = response) => {
       raw: true
     });
 
-    // Agrupar renovaciones por mes (JS)
-    const mapRenovaciones = {}; // "2025-01": 5
+    const mapRenovaciones = {};
     renovacionesDB.forEach(r => {
       const d = new Date(r.fecha_venta);
       const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       mapRenovaciones[k] = (mapRenovaciones[k] || 0) + 1;
     });
 
-
+    // 2. Fetch Vencimientos
     const startWindow = new Date(`${targetYear - 2}-01-01`);
-    const endWindow = new Date(`${targetYear}-12-31`);
 
     const membresiasDB = await detalleVenta_membresias.findAll({
       attributes: [
@@ -2228,7 +2226,8 @@ const getVencimientosPorMes = async (req = request, res = response) => {
       include: [
         {
           model: Venta,
-          attributes: ['id', 'fecha_venta'],
+          // IMPORTANTE: Agregamos 'id_cli' para poder agrupar
+          attributes: ['id', 'fecha_venta', 'id_cli'],
           where: {
             flag: true,
             id_empresa: empresaID,
@@ -2249,17 +2248,14 @@ const getVencimientosPorMes = async (req = request, res = response) => {
       ]
     });
 
-    const mapVencimientos = {};
+    // === LÓGICA DE AGRUPACIÓN (REPLICA TU SQL) ===
+    const clientMaxDates = new Map(); // Key: id_cli, Value: Date (La fecha más lejana)
 
     membresiasDB.forEach(mem => {
-
       const fechaVenta = mem.tb_ventum ? new Date(mem.tb_ventum.fecha_venta) : null;
       let inicio = mem.fec_inicio_mem ? new Date(mem.fec_inicio_mem) : null;
 
-      if (!inicio || isNaN(inicio.getTime())) {
-        inicio = fechaVenta;
-      }
-
+      if (!inicio || isNaN(inicio.getTime())) inicio = fechaVenta;
       if (!inicio || isNaN(inicio.getTime())) return;
 
       let finBase = null;
@@ -2287,14 +2283,38 @@ const getVencimientosPorMes = async (req = request, res = response) => {
         });
       }
 
+      // Fecha final calculada de esta fila
       const finEfectiva = new Date(finBase);
       finEfectiva.setDate(finEfectiva.getDate() + diasExtension);
 
-      if (finEfectiva.getFullYear() === targetYear) {
-        const k = `${finEfectiva.getFullYear()}-${String(finEfectiva.getMonth() + 1).padStart(2, '0')}`;
+      // --- AQUÍ ESTA LA CORRECCIÓN ---
+      // En lugar de sumar +1 al mes directamente, guardamos la mejor fecha por cliente
+      const idCliente = mem.tb_ventum?.id_cli;
+
+      if (idCliente) {
+        if (!clientMaxDates.has(idCliente)) {
+          clientMaxDates.set(idCliente, finEfectiva);
+        } else {
+          // Si el cliente ya existe, nos quedamos con la fecha MAYOR (MAX en SQL)
+          const fechaGuardada = clientMaxDates.get(idCliente);
+          if (finEfectiva > fechaGuardada) {
+            clientMaxDates.set(idCliente, finEfectiva);
+          }
+        }
+      }
+    });
+
+    // === CONTEO FINAL ===
+    // Ahora iteramos sobre los clientes únicos, no sobre las filas
+    const mapVencimientos = {};
+
+    clientMaxDates.forEach((maxDate) => {
+      if (maxDate.getFullYear() === targetYear) {
+        const k = `${maxDate.getFullYear()}-${String(maxDate.getMonth() + 1).padStart(2, '0')}`;
         mapVencimientos[k] = (mapVencimientos[k] || 0) + 1;
       }
     });
+    // ============================================
 
     let acumuladoCartera = 0;
     const mesesLabels = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
@@ -2310,19 +2330,16 @@ const getVencimientosPorMes = async (req = request, res = response) => {
         ? ((renovaciones / vencimientos) * 100).toFixed(1)
         : "0.0";
 
-
       acumuladoCartera += (vencimientos - renovaciones);
 
       return {
         Mes: mesesNombres[idx],
-
         "MÉTRICA": mesesNombres[idx],
         "RENOVACIONES DEL MES": renovaciones,
         "RENOVACIONES %": parseFloat(porcentaje),
         "VENCIMIENTOS POR MES": vencimientos,
         "PENDIENTE DE RENOVACIONES": pendiente,
         "ACUMULADO CARTERA": acumuladoCartera,
-
         "Vencimientos (Fec Fin)": vencimientos,
         "Renovaciones (Pagadas)": renovaciones
       };
