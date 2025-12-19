@@ -2176,184 +2176,101 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
 };
 
 const getVencimientosPorMes = async (req = request, res = response) => {
-  const { year, id_empresa, id_st } = req.query;
+  const { year, id_empresa } = req.query;
 
   try {
     if (!year) {
-      return res.status(400).json({ ok: false, msg: "El parámetro 'year' es obligatorio." });
+      return res.status(400).json({
+        ok: false,
+        msg: "El parámetro 'year' es obligatorio.",
+      });
     }
 
-    const empresaID = Number(id_empresa) || 598;
-    const targetYear = Number(year);
+    const empresaID = id_empresa || 598;
+    const currentYear = Number(year);
+    const previousYear = currentYear - 1;
 
-    // 1. Fetch Renovaciones (Sin cambios aquí)
-    const renovacionesDB = await Venta.findAll({
-      attributes: ['fecha_venta'],
-      where: {
-        flag: true,
-        id_empresa: empresaID,
-        id_origen: 691,
-        fecha_venta: {
-          [Op.between]: [
-            new Date(`${targetYear}-01-01T00:00:00`),
-            new Date(`${targetYear}-12-31T23:59:59`)
-          ]
-        }
-      },
-      raw: true
-    });
+    const colFechaFin = "TRY_CAST(detalle_ventaMembresia.fec_fin_mem AS DATE)";
 
-    const mapRenovaciones = {};
-    renovacionesDB.forEach(r => {
-      const d = new Date(r.fecha_venta);
-      const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      mapRenovaciones[k] = (mapRenovaciones[k] || 0) + 1;
-    });
-
-    // 2. Fetch Vencimientos
-    const startWindow = new Date(`${targetYear - 2}-01-01`);
-
-    const membresiasDB = await detalleVenta_membresias.findAll({
+    const dataVencimientos = await detalleVenta_membresias.findAll({
       attributes: [
-        'id', 'id_venta', 'fec_inicio_mem', 'fec_fin_mem',
-        'fec_fin_mem_oftime', 'fec_fin_mem_viejo', 'tarifa_monto'
+        [Sequelize.literal(`FORMAT(${colFechaFin}, 'yyyy-MM')`), "mes"],
+        [Sequelize.fn("COUNT", Sequelize.col("detalle_ventaMembresia.id_venta")), "cantidad"]
       ],
       where: {
         flag: true,
         tarifa_monto: { [Op.gt]: 0 },
-        ...(id_st && { id_st: id_st })
+        [Op.and]: [
+          Sequelize.where(Sequelize.literal(`YEAR(${colFechaFin})`), {
+            [Op.in]: [currentYear, previousYear]
+          })
+        ]
       },
-      include: [
-        {
-          model: Venta,
-          // IMPORTANTE: Agregamos 'id_cli' para poder agrupar
-          attributes: ['id', 'fecha_venta', 'id_cli'],
-          where: {
-            flag: true,
-            id_empresa: empresaID,
-            fecha_venta: { [Op.gte]: startWindow }
-          },
-          required: true
-        },
-        {
-          model: SemanasTraining,
-          attributes: ['semanas_st'],
-          required: false
-        },
-        {
-          model: ExtensionMembresia,
-          attributes: ['dias_habiles', 'flag'],
-          required: false
+      include: [{
+        model: Venta,
+        attributes: [],
+        where: {
+          flag: true,
+          id_empresa: empresaID
         }
-      ]
+      }],
+      group: [Sequelize.literal(`FORMAT(${colFechaFin}, 'yyyy-MM')`)],
+      raw: true
     });
 
-    // === LÓGICA DE AGRUPACIÓN (REPLICA TU SQL) ===
-    const clientMaxDates = new Map(); // Key: id_cli, Value: Date (La fecha más lejana)
-
-    membresiasDB.forEach(mem => {
-      const fechaVenta = mem.tb_ventum ? new Date(mem.tb_ventum.fecha_venta) : null;
-      let inicio = mem.fec_inicio_mem ? new Date(mem.fec_inicio_mem) : null;
-
-      if (!inicio || isNaN(inicio.getTime())) inicio = fechaVenta;
-      if (!inicio || isNaN(inicio.getTime())) return;
-
-      let finBase = null;
-      const semanas = mem.tb_semana_training?.semanas_st;
-
-      if (semanas) {
-        const diasDuracion = semanas * 7;
-        finBase = new Date(inicio);
-        finBase.setDate(finBase.getDate() + diasDuracion);
-      } else {
-        const f1 = mem.fec_fin_mem ? new Date(mem.fec_fin_mem) : null;
-        const f2 = mem.fec_fin_mem_oftime ? new Date(mem.fec_fin_mem_oftime) : null;
-        const f3 = mem.fec_fin_mem_viejo ? new Date(mem.fec_fin_mem_viejo) : null;
-        finBase = f1 || f2 || f3;
-      }
-
-      if (!finBase || isNaN(finBase.getTime())) return;
-
-      let diasExtension = 0;
-      if (mem.tb_extension_membresia && Array.isArray(mem.tb_extension_membresia)) {
-        mem.tb_extension_membresia.forEach(ext => {
-          if (ext.flag && !isNaN(parseInt(ext.dias_habiles))) {
-            diasExtension += parseInt(ext.dias_habiles);
-          }
-        });
-      }
-
-      // Fecha final calculada de esta fila
-      const finEfectiva = new Date(finBase);
-      finEfectiva.setDate(finEfectiva.getDate() + diasExtension);
-
-      // --- AQUÍ ESTA LA CORRECCIÓN ---
-      // En lugar de sumar +1 al mes directamente, guardamos la mejor fecha por cliente
-      const idCliente = mem.tb_ventum?.id_cli;
-
-      if (idCliente) {
-        if (!clientMaxDates.has(idCliente)) {
-          clientMaxDates.set(idCliente, finEfectiva);
-        } else {
-          // Si el cliente ya existe, nos quedamos con la fecha MAYOR (MAX en SQL)
-          const fechaGuardada = clientMaxDates.get(idCliente);
-          if (finEfectiva > fechaGuardada) {
-            clientMaxDates.set(idCliente, finEfectiva);
-          }
-        }
-      }
+    const dataRenovaciones = await Venta.findAll({
+      attributes: [
+        [Sequelize.literal("FORMAT(fecha_venta, 'yyyy-MM')"), "mes"],
+        [Sequelize.fn("COUNT", Sequelize.col("id")), "cantidad"]
+      ],
+      where: {
+        flag: true,
+        id_empresa: empresaID,
+        id_origen: 691,
+        [Op.and]: [
+          Sequelize.where(Sequelize.fn("YEAR", Sequelize.col("fecha_venta")), {
+            [Op.in]: [currentYear, previousYear]
+          })
+        ]
+      },
+      group: [Sequelize.literal("FORMAT(fecha_venta, 'yyyy-MM')")],
+      raw: true
     });
 
-    // === CONTEO FINAL ===
-    // Ahora iteramos sobre los clientes únicos, no sobre las filas
     const mapVencimientos = {};
+    dataVencimientos.forEach(d => mapVencimientos[d.mes] = d.cantidad);
 
-    clientMaxDates.forEach((maxDate) => {
-      if (maxDate.getFullYear() === targetYear) {
-        const k = `${maxDate.getFullYear()}-${String(maxDate.getMonth() + 1).padStart(2, '0')}`;
-        mapVencimientos[k] = (mapVencimientos[k] || 0) + 1;
-      }
-    });
-    // ============================================
+    const mapRenovaciones = {};
+    dataRenovaciones.forEach(d => mapRenovaciones[d.mes] = d.cantidad);
 
-    let acumuladoCartera = 0;
-    const mesesLabels = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
-    const mesesNombres = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEPT", "OCT", "NOV", "DIC"];
+    const todosLosMeses = new Set([...Object.keys(mapVencimientos), ...Object.keys(mapRenovaciones)]);
 
-    const dataFinal = mesesLabels.map((m, idx) => {
-      const mesKey = `${targetYear}-${m}`;
-      const vencimientos = mapVencimientos[mesKey] || 0;
-      const renovaciones = mapRenovaciones[mesKey] || 0;
-      const pendiente = vencimientos - renovaciones;
+    const resultados = Array.from(todosLosMeses).sort().map(mes => {
+      const vencimientos = mapVencimientos[mes] || 0;
+      const renovaciones = mapRenovaciones[mes] || 0;
 
-      const porcentaje = vencimientos > 0
-        ? ((renovaciones / vencimientos) * 100).toFixed(1)
-        : "0.0";
-
-      acumuladoCartera += (vencimientos - renovaciones);
+      const pendienteCalculado = vencimientos - renovaciones;
+      const pendienteReal = pendienteCalculado < 0 ? 0 : pendienteCalculado;
 
       return {
-        Mes: mesesNombres[idx],
-        "MÉTRICA": mesesNombres[idx],
-        "RENOVACIONES DEL MES": renovaciones,
-        "RENOVACIONES %": parseFloat(porcentaje),
-        "VENCIMIENTOS POR MES": vencimientos,
-        "PENDIENTE DE RENOVACIONES": pendiente,
-        "ACUMULADO CARTERA": acumuladoCartera,
+        Mes: mes,
         "Vencimientos (Fec Fin)": vencimientos,
-        "Renovaciones (Pagadas)": renovaciones
+        "Renovaciones (Pagadas)": renovaciones,
+        "Pendiente Real": pendienteReal
       };
     });
 
     res.status(200).json({
       ok: true,
-      year: targetYear,
-      data: dataFinal
+      data: resultados,
     });
 
   } catch (error) {
-    console.error("Error en getVencimientosPorMes (JS Logic):", error);
-    res.status(500).json({ ok: false, msg: "Error al generar reporte de vencimientos" });
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: `Error al obtener vencimientos: ${error.message || error}`,
+    });
   }
 };
 const obtenerComparativoTotal = async (req = request, res = response) => {
