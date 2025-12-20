@@ -2176,101 +2176,175 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
 };
 
 const getVencimientosPorMes = async (req = request, res = response) => {
-  const { year, id_empresa } = req.query;
+  const { year, id_empresa, id_st } = req.query;
 
   try {
     if (!year) {
-      return res.status(400).json({
-        ok: false,
-        msg: "El parámetro 'year' es obligatorio.",
-      });
+      return res.status(400).json({ ok: false, msg: "El parámetro 'year' es obligatorio." });
     }
 
-    const empresaID = id_empresa || 598;
-    const currentYear = Number(year);
-    const previousYear = currentYear - 1;
+    const empresaID = Number(id_empresa) || 598;
+    const targetYear = Number(year);
 
-    const colFechaFin = "TRY_CAST(detalle_ventaMembresia.fec_fin_mem AS DATE)";
-
-    const dataVencimientos = await detalleVenta_membresias.findAll({
-      attributes: [
-        [Sequelize.literal(`FORMAT(${colFechaFin}, 'yyyy-MM')`), "mes"],
-        [Sequelize.fn("COUNT", Sequelize.col("detalle_ventaMembresia.id_venta")), "cantidad"]
-      ],
-      where: {
-        flag: true,
-        tarifa_monto: { [Op.gt]: 0 },
-        [Op.and]: [
-          Sequelize.where(Sequelize.literal(`YEAR(${colFechaFin})`), {
-            [Op.in]: [currentYear, previousYear]
-          })
-        ]
-      },
-      include: [{
-        model: Venta,
-        attributes: [],
-        where: {
-          flag: true,
-          id_empresa: empresaID
-        }
-      }],
-      group: [Sequelize.literal(`FORMAT(${colFechaFin}, 'yyyy-MM')`)],
-      raw: true
-    });
-
-    const dataRenovaciones = await Venta.findAll({
-      attributes: [
-        [Sequelize.literal("FORMAT(fecha_venta, 'yyyy-MM')"), "mes"],
-        [Sequelize.fn("COUNT", Sequelize.col("id")), "cantidad"]
-      ],
+    const renovacionesDB = await Venta.findAll({
+      attributes: ['fecha_venta'],
       where: {
         flag: true,
         id_empresa: empresaID,
         id_origen: 691,
-        [Op.and]: [
-          Sequelize.where(Sequelize.fn("YEAR", Sequelize.col("fecha_venta")), {
-            [Op.in]: [currentYear, previousYear]
-          })
-        ]
+        fecha_venta: {
+          [Op.between]: [
+            new Date(`${targetYear}-01-01T00:00:00`),
+            new Date(`${targetYear}-12-31T23:59:59`)
+          ]
+        }
       },
-      group: [Sequelize.literal("FORMAT(fecha_venta, 'yyyy-MM')")],
       raw: true
     });
 
-    const mapVencimientos = {};
-    dataVencimientos.forEach(d => mapVencimientos[d.mes] = d.cantidad);
-
     const mapRenovaciones = {};
-    dataRenovaciones.forEach(d => mapRenovaciones[d.mes] = d.cantidad);
+    renovacionesDB.forEach(r => {
+      const d = new Date(r.fecha_venta);
+      const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      mapRenovaciones[k] = (mapRenovaciones[k] || 0) + 1;
+    });
 
-    const todosLosMeses = new Set([...Object.keys(mapVencimientos), ...Object.keys(mapRenovaciones)]);
+    const startWindow = new Date(`${targetYear - 2}-01-01`);
 
-    const resultados = Array.from(todosLosMeses).sort().map(mes => {
-      const vencimientos = mapVencimientos[mes] || 0;
-      const renovaciones = mapRenovaciones[mes] || 0;
+    const membresiasDB = await detalleVenta_membresias.findAll({
+      attributes: [
+        'id', 'id_venta', 'fec_inicio_mem', 'fec_fin_mem',
+        'fec_fin_mem_oftime', 'fec_fin_mem_viejo', 'tarifa_monto',
+        'flag'
+      ],
+      where: {
+        flag: true,
+        tarifa_monto: { [Op.gt]: 0 },
+        ...(id_st && { id_st: id_st })
+      },
+      include: [
+        {
+          model: Venta,
+          attributes: ['id', 'fecha_venta', 'id_cli'],
+          where: {
+            flag: true,
+            id_empresa: empresaID,
+            fecha_venta: { [Op.gte]: startWindow }
+          },
+          required: true
+        },
+        {
+          model: SemanasTraining,
+          attributes: ['semanas_st'],
+          required: false
+        },
+        {
+          model: ExtensionMembresia,
+          attributes: ['dias_habiles', 'flag'],
+          required: false
+        }
+      ]
+    });
 
-      const pendienteCalculado = vencimientos - renovaciones;
-      const pendienteReal = pendienteCalculado < 0 ? 0 : pendienteCalculado;
+    const clientMaxDates = new Map();
+
+    membresiasDB.forEach(mem => {
+      const fechaVenta = mem.tb_ventum ? new Date(mem.tb_ventum.fecha_venta) : null;
+      let inicio = mem.fec_inicio_mem ? new Date(mem.fec_inicio_mem) : null;
+
+      if (!inicio || isNaN(inicio.getTime())) inicio = fechaVenta;
+      if (!inicio || isNaN(inicio.getTime())) return;
+
+      let finBase = null;
+      const semanas = mem.tb_semana_training?.semanas_st;
+
+      if (semanas) {
+        const diasDuracion = semanas * 7;
+        finBase = new Date(inicio);
+        finBase.setDate(finBase.getDate() + diasDuracion);
+      } else {
+        const f1 = mem.fec_fin_mem ? new Date(mem.fec_fin_mem) : null;
+        const f2 = mem.fec_fin_mem_oftime ? new Date(mem.fec_fin_mem_oftime) : null;
+        const f3 = mem.fec_fin_mem_viejo ? new Date(mem.fec_fin_mem_viejo) : null;
+        finBase = f1 || f2 || f3;
+      }
+
+      if (!finBase || isNaN(finBase.getTime())) return;
+
+      let diasExtension = 0;
+      if (mem.tb_extension_membresia && Array.isArray(mem.tb_extension_membresia)) {
+        mem.tb_extension_membresia.forEach(ext => {
+          if (ext.flag && !isNaN(parseInt(ext.dias_habiles))) {
+            diasExtension += parseInt(ext.dias_habiles);
+          }
+        });
+      }
+
+      const finEfectiva = new Date(finBase);
+      finEfectiva.setDate(finEfectiva.getDate() + diasExtension);
+
+      const idCliente = mem.tb_ventum?.id_cli;
+
+      if (idCliente) {
+        if (!clientMaxDates.has(idCliente)) {
+          clientMaxDates.set(idCliente, finEfectiva);
+        } else {
+          const fechaGuardada = clientMaxDates.get(idCliente);
+          if (finEfectiva > fechaGuardada) {
+            clientMaxDates.set(idCliente, finEfectiva);
+          }
+        }
+      }
+    });
+
+
+    const mapVencimientos = {};
+
+    clientMaxDates.forEach((maxDate) => {
+      if (maxDate.getFullYear() === targetYear) {
+        const k = `${maxDate.getFullYear()}-${String(maxDate.getMonth() + 1).padStart(2, '0')}`;
+        mapVencimientos[k] = (mapVencimientos[k] || 0) + 1;
+      }
+
+    });
+
+
+    let acumuladoCartera = 0;
+    const mesesLabels = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+    const mesesNombres = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEPT", "OCT", "NOV", "DIC"];
+
+    const dataFinal = mesesLabels.map((m, idx) => {
+      const mesKey = `${targetYear}-${m}`;
+      const vencimientos = mapVencimientos[mesKey] || 0;
+      const renovaciones = mapRenovaciones[mesKey] || 0;
+      const pendiente = vencimientos - renovaciones;
+
+      const porcentaje = vencimientos > 0
+        ? ((renovaciones / vencimientos) * 100).toFixed(1)
+        : "0.0";
+
+      acumuladoCartera += (vencimientos - renovaciones);
 
       return {
-        Mes: mes,
-        "Vencimientos (Fec Fin)": vencimientos,
-        "Renovaciones (Pagadas)": renovaciones,
-        "Pendiente Real": pendienteReal
+        Mes: mesesNombres[idx],
+        "MÉTRICA": mesesNombres[idx],
+        "RENOVACIONES DEL MES": renovaciones,
+        "RENOVACIONES %": parseFloat(porcentaje),
+        "VENCIMIENTOS POR MES": vencimientos,
+        "PENDIENTE DE RENOVACIONES": pendiente,
+        "ACUMULADO CARTERA": acumuladoCartera
       };
     });
 
     res.status(200).json({
       ok: true,
-      data: resultados,
+      year: targetYear,
+      data: dataFinal
     });
 
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      ok: false,
-      msg: `Error al obtener vencimientos: ${error.message || error}`,
-    });
+    console.error("Error en getVencimientosPorMes:", error);
+    res.status(500).json({ ok: false, msg: "Error al generar reporte." });
   }
 };
 const obtenerComparativoTotal = async (req = request, res = response) => {

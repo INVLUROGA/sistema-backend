@@ -1189,14 +1189,10 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
   }
 };
 
+
 const getRenovacionesPorVencerEmpresa = async (req, res) => {
   try {
-    const empresa = Number(req.query.empresa || 598);
-    const year = req.query.year ? Number(req.query.year) : null;
-    const month = req.query.month ? Number(req.query.month) : null;
-    const initDay = req.query.initDay ? Number(req.query.initDay) : 1;
-    const cutDayParam = req.query.cutDay ? Number(req.query.cutDay) : null;
-    const dias = Number(req.query.dias || 15);
+    const { empresa = 598, year, month, initDay = 1, cutDay, dias = 15 } = req.query;
 
     const rows = await detalleVenta_membresias.findAll({
       attributes: ["id", "id_pgm", "tarifa_monto", "fec_inicio_mem", "fec_fin_mem", "fec_fin_mem_oftime", "fec_fin_mem_viejo", "flag"],
@@ -1204,11 +1200,11 @@ const getRenovacionesPorVencerEmpresa = async (req, res) => {
         { model: ExtensionMembresia, attributes: ["dias_habiles"] },
         {
           model: Venta,
-          attributes: ["id"],
+          attributes: ["id", "fecha_venta"],
           where: {
             id_empresa: empresa,
             flag: true,
-            fecha_venta: { [Op.gte]: '2023-01-01 00:00:00' } // Filtro de limpieza
+            fecha_venta: { [Op.gte]: '2023-01-01 00:00:00' }
           },
           include: [
             { model: Cliente, attributes: ["id_cli", "nombre_cli", "apPaterno_cli", "apMaterno_cli"] },
@@ -1227,27 +1223,22 @@ const getRenovacionesPorVencerEmpresa = async (req, res) => {
     }
 
     let rangeStart = new Date();
-    rangeStart.setHours(0, 0, 0, 0);
-    let rangeEnd = new Date(rangeStart);
+    let rangeEnd = new Date();
 
     if (year && month) {
-      const lastDayOfMonth = new Date(year, month, 0).getDate();
-      const dayStart = Math.max(1, Math.min(initDay, lastDayOfMonth));
-      let dayEnd = lastDayOfMonth;
-      if (cutDayParam !== null) dayEnd = Math.max(1, Math.min(cutDayParam, lastDayOfMonth));
+      const lastDay = new Date(year, month, 0).getDate();
+      const cDay = cutDay ? Math.min(cutDay, lastDay) : lastDay;
 
-      rangeStart = new Date(year, month - 1, dayStart);
-      rangeStart.setHours(0, 0, 0, 0);
-      rangeEnd = new Date(year, month - 1, dayEnd);
-      rangeEnd.setHours(0, 0, 0, 0);
+      rangeStart = new Date(year, month - 1, initDay);
+      rangeEnd = new Date(year, month - 1, cDay);
     } else {
-      rangeEnd.setDate(rangeEnd.getDate() + dias);
-      rangeEnd.setHours(0, 0, 0, 0);
+      rangeEnd.setDate(rangeEnd.getDate() + Number(dias));
     }
+    rangeStart.setHours(0, 0, 0, 0);
+    rangeEnd.setHours(0, 0, 0, 0);
 
-    const renewals = [];
-    const nowForDiff = new Date();
-    nowForDiff.setHours(0, 0, 0, 0);
+
+    const clientMap = new Map();
 
     for (const m of rows) {
       const flagStr = String(m.flag ?? "").toLowerCase();
@@ -1260,34 +1251,57 @@ const getRenovacionesPorVencerEmpresa = async (req, res) => {
       const ext = Array.isArray(m.tb_extension_membresia) ? m.tb_extension_membresia : [];
       const diasHab = ext.reduce((acc, e) => acc + parseInt(e?.dias_habiles ?? 0, 10), 0);
 
-      const fechaFin = new Date(base);
-      fechaFin.setDate(fechaFin.getDate() + diasHab);
-      fechaFin.setHours(0, 0, 0, 0);
+      const fechaFinCalculada = new Date(base);
+      fechaFinCalculada.setDate(fechaFinCalculada.getDate() + diasHab);
+      fechaFinCalculada.setHours(0, 0, 0, 0);
 
-      if (fechaFin < rangeStart || fechaFin > rangeEnd) continue;
+      const cliObj = m?.tb_ventum?.tb_cliente;
+      if (!cliObj || !cliObj.id_cli) continue;
+      const idCliente = cliObj.id_cli;
 
-      const diff = Math.round((fechaFin - nowForDiff) / 86400000);
+      if (!clientMap.has(idCliente) || fechaFinCalculada > clientMap.get(idCliente).fechaSort) {
 
-      const cliObj = m?.tb_ventum?.tb_cliente || {};
-      const cliente = [cliObj?.nombre_cli, cliObj?.apPaterno_cli, cliObj?.apMaterno_cli].filter(Boolean).join(" ").replace(/\s+/g, " ").trim() || "SIN NOMBRE";
-      const empObj = m?.tb_ventum?.tb_empleado || {};
-      const ejecutivo = [empObj?.nombre_empl, empObj?.apPaterno_empl, empObj?.apMaterno_empl].filter(Boolean).join(" ").split(" ")[0] || "-";
-      const plan = pgmNameById[m?.id_pgm] || (m?.id_pgm ? `PGM ${m.id_pgm}` : "-");
+        const empObj = m?.tb_ventum?.tb_empleado || {};
+        const clienteNombre = [cliObj?.nombre_cli, cliObj?.apPaterno_cli, cliObj?.apMaterno_cli].filter(Boolean).join(" ").trim();
+        const ejecutivo = [empObj?.nombre_empl, empObj?.apPaterno_empl, empObj?.apMaterno_empl].filter(Boolean).join(" ").split(" ")[0] || "-";
+        const plan = pgmNameById[m?.id_pgm] || (m?.id_pgm ? `PGM ${m.id_pgm}` : "-");
 
-      renewals.push({
-        id: m.id,
-        cliente,
-        plan,
-        fechaFin: fechaFin.toISOString().slice(0, 10),
-        dias_restantes: diff,
-        monto: Number(m.tarifa_monto),
-        ejecutivo,
-      });
+        clientMap.set(idCliente, {
+          fechaSort: fechaFinCalculada,
+          data: {
+            id: m.id,
+            cliente: clienteNombre,
+            plan,
+            fechaFin: fechaFinCalculada.toISOString().slice(0, 10),
+            monto: Number(m.tarifa_monto),
+            ejecutivo,
+            fechaFinDate: fechaFinCalculada
+          }
+        });
+      }
     }
+
+
+    const renewals = [];
+    const nowForDiff = new Date();
+    nowForDiff.setHours(0, 0, 0, 0);
+
+    clientMap.forEach((val) => {
+      const f = val.fechaSort;
+
+      if (f >= rangeStart && f <= rangeEnd) {
+
+        const diff = Math.round((f - nowForDiff) / 86400000);
+
+        renewals.push({
+          ...val.data,
+          dias_restantes: diff
+        });
+      }
+    });
 
     res.json({ renewals });
   } catch (e) {
-    console.error(e);
     res.status(500).json({ error: e.message });
   }
 };
