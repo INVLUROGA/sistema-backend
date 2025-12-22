@@ -11,7 +11,6 @@ const router = Router();
 /*
 /api/ingreso
 */
-//
 router.get("/get-ingreso/:id", getIngresoPorID);
 router.post("/", postIngreso);
 router.get("/:id_empresa", getIngresos);
