@@ -231,7 +231,7 @@ app.use(
 app.use("/api/cita", validarJWT, require("./routes/cita.router.js"));
 app.use("/api/prospecto", validarJWT, require("./routes/prospecto.router.js"));
 app.use("/api/auditoria", validarJWT, require("./routes/auditoria.router.js"));
-app.use("/api/aporte", validarJWT, require("./routes/aportes.router.js"));
+app.use("/api/ingreso", validarJWT, require("./routes/ingresos.router.js"));
 app.use("/api/dieta", require("./routes/dieta.router.js"));
 
 app.use(

@@ -75,14 +75,13 @@ const terminologiasPorEntidad = async (req = request, res = response) => {
 };
 
 const terminologiasGastosxEmpresa = async (req = request, res = response) => {
-  const { id_empresa } = req.params;
+  const { id_empresa, id_tipo } = req.params;
   try {
-    console.log({ id_empresa });
-
     const termGastos = await ParametroGastos.findAll({
       where: {
         flag: true,
         id_empresa: id_empresa,
+        tipo: id_tipo,
       },
       order: [["id", "desc"]],
       include: [
@@ -92,6 +91,8 @@ const terminologiasGastosxEmpresa = async (req = request, res = response) => {
         },
       ],
     });
+    console.log({ id_tipo, termGastos });
+
     res.status(201).json({
       termGastos,
     });

@@ -288,11 +288,25 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: true,
         },
         {
-          key: "maestro-productos-v2",
-          label: "AGREGAR PRODUCTOS(CIRCUS)",
+          key: "planos-ubicacion-routers-otros",
+          label: "DISTRIBUCION DE AMBIENTES POR NIVELES",
           isTitle: false,
-          icon: "uil-box", // Icono sugerido (o usa uil-calender como los demas)
-          url: "/gest-inventario/maestro-productos", // Esta URL debe coincidir con la de ProtectedRoutes
+          icon: "uil-calender",
+          url: "/planos-ubicacion-routers-otros",
+        },
+        {
+          key: "planos-ubicacion-routers-otros",
+          label: "DISTRIBUCION POR PROYECTOS",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/planos-ubicacion-routers-otros",
+        },
+        {
+          key: "planos-ubicacion-routers-otros",
+          label: "UBICACION ROUTERS Y OTROS DISPOSITIVOS",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/planos-ubicacion-routers-otros",
         },
         {
           key: "adm-videos-infraestructura",
@@ -399,37 +413,37 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           key: "gf-gv",
-          label: "Egresos y Aportes",
+          label: "Ingresos y Egresos",
           isTitle: true,
         },
         {
-          key: "gestion-gfgv",
+          key: "gestion-compra",
           label: "Registro de compra",
           isTitle: false,
           icon: "uil-calender",
           url: "/orden-compra",
         },
         {
-          key: "gestion-gfgv",
+          key: "gestion-egresos",
           label: "Egresos",
           isTitle: false,
           icon: "uil-calender",
-          url: "/gestion-gastosF-gastosV",
+          url: "/gestion-egresos",
         },
         {
-          key: "gestion-gfgv",
-          label: "Aportes",
+          key: "gestion-ingresos",
+          label: "Ingresos",
           isTitle: false,
           icon: "uil-calender",
-          url: "/aporte-ingresos",
+          url: "/gestion-ingresos",
         },
-        {
-          key: "gestion-gfgv",
-          label: "Resumen Membresías",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/resumen-membresias",
-        },
+        // {
+        //   key: "gestion-gfgv",
+        //   label: "Resumen Membresías",
+        //   isTitle: false,
+        //   icon: "uil-calender",
+        //   url: "/resumen-membresias",
+        // },
 
         {
           key: "prov",
@@ -624,13 +638,13 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           url: "/centro-archivos",
         },
-        {
-          key: "adm-videos-infraestructura",
-          label: "Videos explicativos infraestructura",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/videos-infraestructura",
-        },
+        // {
+        //   key: "adm-videos-infraestructura",
+        //   label: "Videos explicativos infraestructura",
+        //   isTitle: false,
+        //   icon: "uil-calender",
+        //   url: "/videos-infraestructura",
+        // },
         {
           key: "gest-jornada",
           label: "Gestion de jornadas",

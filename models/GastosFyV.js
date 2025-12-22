@@ -41,6 +41,9 @@ const ParametroGastos = db.define("tb_parametros_gastos", {
   id_tipoGasto: {
     type: DataTypes.INTEGER,
   },
+  tipo: {
+    type: DataTypes.INTEGER,
+  },
   orden: {
     type: DataTypes.INTEGER,
   },
@@ -131,7 +134,6 @@ const Gastos = db.define("tb_egresos", {
     defaultValue: true,
   },
 });
-
 
 Gastos.hasOne(Parametros, {
   foreignKey: "id_param",

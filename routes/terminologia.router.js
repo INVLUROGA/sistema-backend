@@ -12,7 +12,10 @@ const router = Router();
 
 router.get("/terminologiaPorEntidad", terminologiasPorEntidad);
 
-router.get("/terminologiaxEmpresa/:id_empresa", terminologiasGastosxEmpresa);
+router.get(
+  "/terminologiaxEmpresa/:id_empresa/:id_tipo",
+  terminologiasGastosxEmpresa
+);
 router.post("/terminologiaxEmpresa", postterminologiasGastosxEmpresa);
 router.put("/terminologiagastoxid/:id", putterminologiasGastosxEmpresa);
 router.put(

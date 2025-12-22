@@ -1,5 +1,5 @@
 const { Sequelize, Op, where, fn, col } = require("sequelize");
-const { Inversionista } = require("../models/Aportes");
+const { Inversionista } = require("../models/Ingresos");
 const { ExtensionMembresia } = require("../models/ExtensionMembresia");
 const { ImagePT } = require("../models/Image");
 const {

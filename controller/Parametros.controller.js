@@ -26,7 +26,7 @@ const {
 } = require("../models/Venta");
 const { Servicios } = require("../models/Servicios");
 const { ParametroGastos, ParametroGrupo } = require("../models/GastosFyV");
-const { Inversionista } = require("../models/Aportes");
+const { Inversionista } = require("../models/Ingresos");
 const { ExtensionMembresia } = require("../models/ExtensionMembresia");
 const { Distritos } = require("../models/Distritos");
 const { ServiciosCircus } = require("../models/modelsCircus/Servicios");
