@@ -31,7 +31,7 @@ const { ExtensionMembresia } = require("../models/ExtensionMembresia");
 const { Distritos } = require("../models/Distritos");
 const { ServiciosCircus } = require("../models/modelsCircus/Servicios");
 const { get } = require("../config/nodemailer");
-
+const { Op } = require("sequelize");
 const parseDateOnly = (s) => {
   if (!s) return null;
   const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -194,7 +194,7 @@ const getParametrosporId = async (req = request, res = response) => {
   }
 };
 const getParametrosxEntidadxGrupo = async (req = request, res = response) => {
-  const {} = req.params;
+  const { } = req.params;
   try {
     const parametros = await Parametros.findAll({ where: { flag: true } });
     return res.status(200).json(parametros);
@@ -1188,134 +1188,123 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
       .json({ error: "Error listando vigentes", detail: e.message });
   }
 };
+
+
 const getRenovacionesPorVencerEmpresa = async (req, res) => {
   try {
-    const empresa = Number(req.query.empresa || 598);
-    const dias = Number(req.query.dias || 15);
+    const { empresa = 598, year, month, initDay = 1, cutDay, dias = 15 } = req.query;
 
     const rows = await detalleVenta_membresias.findAll({
-      attributes: [
-        "id",
-        "id_pgm",
-        "tarifa_monto",
-        "fec_inicio_mem",
-        "fec_fin_mem",
-        "fec_fin_mem_oftime",
-        "fec_fin_mem_viejo",
-        "flag",
-      ],
+      attributes: ["id", "id_pgm", "tarifa_monto", "fec_inicio_mem", "fec_fin_mem", "fec_fin_mem_oftime", "fec_fin_mem_viejo", "flag"],
       include: [
         { model: ExtensionMembresia, attributes: ["dias_habiles"] },
         {
           model: Venta,
-          attributes: ["id"],
-          where: { id_empresa: empresa, flag: true },
+          attributes: ["id", "fecha_venta"],
+          where: {
+            id_empresa: empresa,
+            flag: true,
+            fecha_venta: { [Op.gte]: '2023-01-01 00:00:00' }
+          },
           include: [
-            {
-              model: Cliente,
-              attributes: [
-                "id_cli",
-                "nombre_cli",
-                "apPaterno_cli",
-                "apMaterno_cli",
-              ],
-            },
-            {
-              model: Empleado,
-              attributes: ["nombre_empl", "apPaterno_empl", "apMaterno_empl"],
-            },
+            { model: Cliente, attributes: ["id_cli", "nombre_cli", "apPaterno_cli", "apMaterno_cli"] },
+            { model: Empleado, attributes: ["nombre_empl", "apPaterno_empl", "apMaterno_empl"] },
           ],
         },
-        {
-          model: SemanasTraining,
-          attributes: ["id_st", "semanas_st"],
-          required: false,
-        },
+        { model: SemanasTraining, attributes: ["id_st", "semanas_st"], required: false },
       ],
     });
 
     const idsPgm = [...new Set(rows.map((r) => r?.id_pgm).filter(Boolean))];
     let pgmNameById = {};
     if (idsPgm.length) {
-      const pgms = await ProgramaTraining.findAll({
-        where: { id_pgm: idsPgm },
-        attributes: ["id_pgm", "name_pgm"],
-        raw: true,
-      });
+      const pgms = await ProgramaTraining.findAll({ where: { id_pgm: idsPgm }, attributes: ["id_pgm", "name_pgm"], raw: true });
       pgmNameById = Object.fromEntries(pgms.map((p) => [p.id_pgm, p.name_pgm]));
     }
 
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    const lim = new Date(hoy);
-    lim.setDate(lim.getDate() + dias);
+    let rangeStart = new Date();
+    let rangeEnd = new Date();
 
-    const renewals = [];
+    if (year && month) {
+      const lastDay = new Date(year, month, 0).getDate();
+      const cDay = cutDay ? Math.min(cutDay, lastDay) : lastDay;
+
+      rangeStart = new Date(year, month - 1, initDay);
+      rangeEnd = new Date(year, month - 1, cDay);
+    } else {
+      rangeEnd.setDate(rangeEnd.getDate() + Number(dias));
+    }
+    rangeStart.setHours(0, 0, 0, 0);
+    rangeEnd.setHours(0, 0, 0, 0);
+
+
+    const clientMap = new Map();
+
     for (const m of rows) {
       const flagStr = String(m.flag ?? "").toLowerCase();
-      if (
-        !(
-          flagStr === "1" ||
-          flagStr === "true" ||
-          m.flag === 1 ||
-          m.flag === true
-        )
-      )
-        continue;
+      if (!(flagStr === "1" || flagStr === "true" || m.flag === 1 || m.flag === true)) continue;
+      if (Number(m.tarifa_monto || 0) <= 0) continue;
 
-      const monto = Number(m.tarifa_monto || 0);
-      if (monto <= 0) continue;
+      const base = getFinBase(m);
+      if (!base) continue;
 
-      const fin = calcFinEfectivo(m);
-      if (!fin) continue;
+      const ext = Array.isArray(m.tb_extension_membresia) ? m.tb_extension_membresia : [];
+      const diasHab = ext.reduce((acc, e) => acc + parseInt(e?.dias_habiles ?? 0, 10), 0);
 
-      const fechaFin = new Date(fin);
-      fechaFin.setHours(0, 0, 0, 0);
+      const fechaFinCalculada = new Date(base);
+      fechaFinCalculada.setDate(fechaFinCalculada.getDate() + diasHab);
+      fechaFinCalculada.setHours(0, 0, 0, 0);
 
-      if (fechaFin < hoy || fechaFin > lim) continue;
+      const cliObj = m?.tb_ventum?.tb_cliente;
+      if (!cliObj || !cliObj.id_cli) continue;
+      const idCliente = cliObj.id_cli;
 
-      const diff = Math.round((fechaFin - hoy) / 86400000);
+      if (!clientMap.has(idCliente) || fechaFinCalculada > clientMap.get(idCliente).fechaSort) {
 
-      const cliObj = m?.tb_ventum?.tb_cliente || {};
-      const cliente =
-        [cliObj?.nombre_cli, cliObj?.apPaterno_cli, cliObj?.apMaterno_cli]
-          .filter(Boolean)
-          .join(" ")
-          .replace(/\s+/g, " ")
-          .trim() || "SIN NOMBRE";
+        const empObj = m?.tb_ventum?.tb_empleado || {};
+        const clienteNombre = [cliObj?.nombre_cli, cliObj?.apPaterno_cli, cliObj?.apMaterno_cli].filter(Boolean).join(" ").trim();
+        const ejecutivo = [empObj?.nombre_empl, empObj?.apPaterno_empl, empObj?.apMaterno_empl].filter(Boolean).join(" ").split(" ")[0] || "-";
+        const plan = pgmNameById[m?.id_pgm] || (m?.id_pgm ? `PGM ${m.id_pgm}` : "-");
 
-      const empObj = m?.tb_ventum?.tb_empleado || {};
-      const ejecutivo =
-        [empObj?.nombre_empl, empObj?.apPaterno_empl, empObj?.apMaterno_empl]
-          .filter(Boolean)
-          .join(" ")
-          .split(" ")[0] || "-";
-
-      const plan =
-        m?.tb_programa_training?.name_pgm ||
-        m?.tb_programaTraining?.name_pgm ||
-        m?.tb_programa?.name_pgm ||
-        pgmNameById[m?.id_pgm] ||
-        (m?.id_pgm ? `PGM ${m.id_pgm}` : "-");
-
-      renewals.push({
-        id: m.id,
-        cliente,
-        plan,
-        fechaFin: fechaFin.toISOString().slice(0, 10),
-        dias_restantes: diff,
-        monto,
-        ejecutivo,
-      });
+        clientMap.set(idCliente, {
+          fechaSort: fechaFinCalculada,
+          data: {
+            id: m.id,
+            cliente: clienteNombre,
+            plan,
+            fechaFin: fechaFinCalculada.toISOString().slice(0, 10),
+            monto: Number(m.tarifa_monto),
+            ejecutivo,
+            fechaFinDate: fechaFinCalculada
+          }
+        });
+      }
     }
+
+
+    const renewals = [];
+    const nowForDiff = new Date();
+    nowForDiff.setHours(0, 0, 0, 0);
+
+    clientMap.forEach((val) => {
+      const f = val.fechaSort;
+
+      if (f >= rangeStart && f <= rangeEnd) {
+
+        const diff = Math.round((f - nowForDiff) / 86400000);
+
+        renewals.push({
+          ...val.data,
+          dias_restantes: diff
+        });
+      }
+    });
 
     res.json({ renewals });
   } catch (e) {
-    console.error("❌ Error en getRenovacionesPorVencerEmpresa:", e);
     res.status(500).json({ error: e.message });
   }
 };
-
 const getLogicaEstadoMembresias = async (req, res) => {
   const { id_cli: uid } = req.params;
   try {

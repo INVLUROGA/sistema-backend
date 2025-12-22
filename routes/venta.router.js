@@ -54,6 +54,7 @@ const {
   getComandas,
   updateDetalleProducto,
   updateDetalleServicio,
+  getVencimientosPorMes,
 } = require("../controller/venta.controller");
 
 const {
@@ -163,4 +164,7 @@ router.get(
   "/reporte/obtenerMembresiasxFecha/:id_enterprice",
   obtenerMembresiasxFecha
 );
+
+router.get("/vencimientos-mes", getVencimientosPorMes);
+
 module.exports = router;
