@@ -194,7 +194,7 @@ const getParametrosporId = async (req = request, res = response) => {
   }
 };
 const getParametrosxEntidadxGrupo = async (req = request, res = response) => {
-  const { } = req.params;
+  const {} = req.params;
   try {
     const parametros = await Parametros.findAll({ where: { flag: true } });
     return res.status(200).json(parametros);
@@ -697,9 +697,11 @@ const getParametrosFormaPago = async (req = request, res = response) => {
 };
 const getParametrosFinanzas = async (req, res) => {
   try {
+    const { tipo } = req.params;
     const finanzas = await ParametroGastos.findAll({
       where: {
         flag: true,
+        tipo,
       },
       attributes: ["id", "id_empresa", "grupo", "id_tipoGasto", "nombre_gasto"],
     });
@@ -1189,13 +1191,28 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
   }
 };
 
-
 const getRenovacionesPorVencerEmpresa = async (req, res) => {
   try {
-    const { empresa = 598, year, month, initDay = 1, cutDay, dias = 15 } = req.query;
+    const {
+      empresa = 598,
+      year,
+      month,
+      initDay = 1,
+      cutDay,
+      dias = 15,
+    } = req.query;
 
     const rows = await detalleVenta_membresias.findAll({
-      attributes: ["id", "id_pgm", "tarifa_monto", "fec_inicio_mem", "fec_fin_mem", "fec_fin_mem_oftime", "fec_fin_mem_viejo", "flag"],
+      attributes: [
+        "id",
+        "id_pgm",
+        "tarifa_monto",
+        "fec_inicio_mem",
+        "fec_fin_mem",
+        "fec_fin_mem_oftime",
+        "fec_fin_mem_viejo",
+        "flag",
+      ],
       include: [
         { model: ExtensionMembresia, attributes: ["dias_habiles"] },
         {
@@ -1204,21 +1221,40 @@ const getRenovacionesPorVencerEmpresa = async (req, res) => {
           where: {
             id_empresa: empresa,
             flag: true,
-            fecha_venta: { [Op.gte]: '2023-01-01 00:00:00' }
+            fecha_venta: { [Op.gte]: "2023-01-01 00:00:00" },
           },
           include: [
-            { model: Cliente, attributes: ["id_cli", "nombre_cli", "apPaterno_cli", "apMaterno_cli"] },
-            { model: Empleado, attributes: ["nombre_empl", "apPaterno_empl", "apMaterno_empl"] },
+            {
+              model: Cliente,
+              attributes: [
+                "id_cli",
+                "nombre_cli",
+                "apPaterno_cli",
+                "apMaterno_cli",
+              ],
+            },
+            {
+              model: Empleado,
+              attributes: ["nombre_empl", "apPaterno_empl", "apMaterno_empl"],
+            },
           ],
         },
-        { model: SemanasTraining, attributes: ["id_st", "semanas_st"], required: false },
+        {
+          model: SemanasTraining,
+          attributes: ["id_st", "semanas_st"],
+          required: false,
+        },
       ],
     });
 
     const idsPgm = [...new Set(rows.map((r) => r?.id_pgm).filter(Boolean))];
     let pgmNameById = {};
     if (idsPgm.length) {
-      const pgms = await ProgramaTraining.findAll({ where: { id_pgm: idsPgm }, attributes: ["id_pgm", "name_pgm"], raw: true });
+      const pgms = await ProgramaTraining.findAll({
+        where: { id_pgm: idsPgm },
+        attributes: ["id_pgm", "name_pgm"],
+        raw: true,
+      });
       pgmNameById = Object.fromEntries(pgms.map((p) => [p.id_pgm, p.name_pgm]));
     }
 
@@ -1237,19 +1273,31 @@ const getRenovacionesPorVencerEmpresa = async (req, res) => {
     rangeStart.setHours(0, 0, 0, 0);
     rangeEnd.setHours(0, 0, 0, 0);
 
-
     const clientMap = new Map();
 
     for (const m of rows) {
       const flagStr = String(m.flag ?? "").toLowerCase();
-      if (!(flagStr === "1" || flagStr === "true" || m.flag === 1 || m.flag === true)) continue;
+      if (
+        !(
+          flagStr === "1" ||
+          flagStr === "true" ||
+          m.flag === 1 ||
+          m.flag === true
+        )
+      )
+        continue;
       if (Number(m.tarifa_monto || 0) <= 0) continue;
 
       const base = getFinBase(m);
       if (!base) continue;
 
-      const ext = Array.isArray(m.tb_extension_membresia) ? m.tb_extension_membresia : [];
-      const diasHab = ext.reduce((acc, e) => acc + parseInt(e?.dias_habiles ?? 0, 10), 0);
+      const ext = Array.isArray(m.tb_extension_membresia)
+        ? m.tb_extension_membresia
+        : [];
+      const diasHab = ext.reduce(
+        (acc, e) => acc + parseInt(e?.dias_habiles ?? 0, 10),
+        0
+      );
 
       const fechaFinCalculada = new Date(base);
       fechaFinCalculada.setDate(fechaFinCalculada.getDate() + diasHab);
@@ -1259,12 +1307,26 @@ const getRenovacionesPorVencerEmpresa = async (req, res) => {
       if (!cliObj || !cliObj.id_cli) continue;
       const idCliente = cliObj.id_cli;
 
-      if (!clientMap.has(idCliente) || fechaFinCalculada > clientMap.get(idCliente).fechaSort) {
-
+      if (
+        !clientMap.has(idCliente) ||
+        fechaFinCalculada > clientMap.get(idCliente).fechaSort
+      ) {
         const empObj = m?.tb_ventum?.tb_empleado || {};
-        const clienteNombre = [cliObj?.nombre_cli, cliObj?.apPaterno_cli, cliObj?.apMaterno_cli].filter(Boolean).join(" ").trim();
-        const ejecutivo = [empObj?.nombre_empl, empObj?.apPaterno_empl, empObj?.apMaterno_empl].filter(Boolean).join(" ").split(" ")[0] || "-";
-        const plan = pgmNameById[m?.id_pgm] || (m?.id_pgm ? `PGM ${m.id_pgm}` : "-");
+        const clienteNombre = [
+          cliObj?.nombre_cli,
+          cliObj?.apPaterno_cli,
+          cliObj?.apMaterno_cli,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .trim();
+        const ejecutivo =
+          [empObj?.nombre_empl, empObj?.apPaterno_empl, empObj?.apMaterno_empl]
+            .filter(Boolean)
+            .join(" ")
+            .split(" ")[0] || "-";
+        const plan =
+          pgmNameById[m?.id_pgm] || (m?.id_pgm ? `PGM ${m.id_pgm}` : "-");
 
         clientMap.set(idCliente, {
           fechaSort: fechaFinCalculada,
@@ -1275,12 +1337,11 @@ const getRenovacionesPorVencerEmpresa = async (req, res) => {
             fechaFin: fechaFinCalculada.toISOString().slice(0, 10),
             monto: Number(m.tarifa_monto),
             ejecutivo,
-            fechaFinDate: fechaFinCalculada
-          }
+            fechaFinDate: fechaFinCalculada,
+          },
         });
       }
     }
-
 
     const renewals = [];
     const nowForDiff = new Date();
@@ -1290,12 +1351,11 @@ const getRenovacionesPorVencerEmpresa = async (req, res) => {
       const f = val.fechaSort;
 
       if (f >= rangeStart && f <= rangeEnd) {
-
         const diff = Math.round((f - nowForDiff) / 86400000);
 
         renewals.push({
           ...val.data,
-          dias_restantes: diff
+          dias_restantes: diff,
         });
       }
     });

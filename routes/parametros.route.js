@@ -151,7 +151,7 @@ router.get(
   "/get_params/cita-disponible/:id_cli/:tipo_serv",
   getCitasDisponibleporClient
 );
-router.get("/get_params/params-tb-finanzas", getParametrosFinanzas);
+router.get("/get_params/params-tb-finanzas/:tipo", getParametrosFinanzas);
 router.get("/get_params/:entidad", getParametrosporEntidad);
 router.get("/get_params/:id_param", getParametrosporId);
 

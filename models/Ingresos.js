@@ -2,6 +2,7 @@ const { DataTypes } = require("sequelize");
 const { db } = require("../database/sequelizeConnection");
 const { Parametros } = require("./Parametros");
 const { ParametroGastos } = require("./GastosFyV");
+const { Proveedor } = require("./Proveedor");
 const Ingreso = db.define("tb_ingreso", {
   id: {
     type: DataTypes.INTEGER,
@@ -51,10 +52,19 @@ const Ingreso = db.define("tb_ingreso", {
   id_prov: {
     type: DataTypes.INTEGER,
   },
+  id_empresa: {
+    type: DataTypes.INTEGER,
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
+});
+
+Ingreso.belongsTo(Proveedor, {
+  foreignKey: "id_prov",
+  targetKey: "id",
+  // as: "proveedor", // Opcional: alias para la relación
 });
 
 Ingreso.hasOne(ParametroGastos, {

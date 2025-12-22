@@ -5,11 +5,12 @@ const { Sequelize, Op } = require("sequelize");
 const { capturarAUDIT } = require("../middlewares/auditoria");
 const { typesCRUD } = require("../types/types");
 const { Parametros } = require("../models/Parametros");
-const { ParametroGastos } = require("../models/GastosFyV");
+const { ParametroGastos, ParametroGrupo } = require("../models/GastosFyV");
+const { Proveedor } = require("../models/Proveedor");
 
 const postIngreso = async (req = request, res = response) => {
   try {
-    const ingreso = Ingreso.create(req.body);
+    const ingreso = await Ingreso.create(req.body);
     let formAUDIT = {
       id_user: req.id_user,
       ip_user: req.ip_user,
@@ -24,7 +25,7 @@ const postIngreso = async (req = request, res = response) => {
     });
   }
 };
-const getIngresos = async (req = request, res = response) => {
+const getIngresosxEmpresa = async (req = request, res = response) => {
   const { id_empresa } = req.params;
   try {
     const ingresos = await Ingreso.findAll({
@@ -42,8 +43,21 @@ const getIngresos = async (req = request, res = response) => {
           as: "banco",
         },
         {
-          model: Parametros,
-          as: "concepto",
+          model: Proveedor,
+          attributes: ["razon_social_prov"],
+        },
+        {
+          model: ParametroGastos,
+          attributes: ["id_empresa", "nombre_gasto", "grupo", "id_tipoGasto"],
+          where: {
+            id_empresa: id_empresa,
+          },
+          include: [
+            {
+              model: ParametroGrupo,
+              as: "parametro_grupo",
+            },
+          ],
         },
       ],
     });
@@ -162,9 +176,9 @@ const putIngresoxID = async (req = request, res = response) => {
 };
 module.exports = {
   postIngreso,
-  getIngresos,
   getIngresoPorID,
   putIngresoxID,
   deleteIngresoxID,
+  getIngresosxEmpresa,
   getIngresosxFechaxEmpresa,
 };
