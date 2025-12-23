@@ -126,7 +126,7 @@ router.get(
 );
 router.get("/get_params/programas-activos", getProgramasActivos);
 router.get("/get_param/param_gasto/:id", getParametroGasto);
-router.get("/get_params/producto/proveedor", getParametrosporProveedor);
+router.get("/get_params/producto/proveedor/:tipo", getParametrosporProveedor);
 router.get("/get_params/clientes", getParametrosporCliente);
 router.get("/get_params/clientes/:id_empresa", getParametrosporClientexEmpresa);
 router.get(

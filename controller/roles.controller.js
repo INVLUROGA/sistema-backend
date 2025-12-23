@@ -446,6 +446,18 @@ const seccionGET = async (req = request, res = response) => {
         // },
 
         {
+          key: "per-ing",
+          label: "PERSONAS INGRESANTES",
+          isTitle: true,
+        },
+        {
+          key: "gestion-ingresantes-activo",
+          label: "INGRESANTES activos",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-ingresantes-activo",
+        },
+        {
           key: "prov",
           label: "Proveedores",
           isTitle: true,

@@ -22,7 +22,7 @@ const {
 const { validarJWT } = require("../middlewares/validarJWT");
 const router = Router();
 
-router.get("/obtener-proveedores", getTBProveedores);
+router.get("/obtener-proveedores/:tipo", getTBProveedores);
 router.get("/obtener-agentes", getTBAgentes);
 router.get("/obtener-proveedor-uid/:uid_param", getProveedorxUID);
 router.post("/post-proveedor", PostProveedores);

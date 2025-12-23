@@ -324,8 +324,9 @@ const getParametrosporENTIDAD = async (req = request, res = response) => {
 };
 const getParametrosporProveedor = async (req, res) => {
   try {
+    const { tipo } = req.params;
     const parametros = await Proveedor.findAll({
-      where: { flag: true },
+      where: { flag: true, tipo },
       order: [["id", "desc"]],
       attributes: [
         ["id", "value"],

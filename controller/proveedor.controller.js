@@ -1,8 +1,5 @@
 const { response, request } = require("express");
-const {
-  Proveedor,
-  PenalidadesContratoProv,
-} = require("../models/Proveedor");
+const { Proveedor, PenalidadesContratoProv } = require("../models/Proveedor");
 const uid = require("uuid");
 const { capturarAUDIT } = require("../middlewares/auditoria");
 const { typesCRUD } = require("../types/types");
@@ -77,6 +74,7 @@ const getProveedorxUID = async (req = request, res = response) => {
 const getTBProveedores = async (req = request, res = response) => {
   try {
     const { estado_prov, id_empresa } = req.query;
+    const { tipo } = req.params;
     const proveedores = await Proveedor.findAll({
       order: [["id", "desc"]],
       attributes: [
@@ -104,6 +102,7 @@ const getTBProveedores = async (req = request, res = response) => {
         flag: true,
         estado_prov: estado_prov,
         id_empresa: id_empresa,
+        tipo: tipo,
       },
     });
 

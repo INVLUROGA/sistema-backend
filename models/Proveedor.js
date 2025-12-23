@@ -106,6 +106,9 @@ const Proveedor = db.define(
     correo_contacto: {
       type: DataTypes.STRING(250),
     },
+    tipo: {
+      type: DataTypes.INTEGER,
+    },
     id_empresa: {
       type: DataTypes.INTEGER,
     },
