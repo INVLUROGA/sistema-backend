@@ -79,6 +79,31 @@ const getIngresoPorID = async (req = request, res = response) => {
     }
     const ingreso = await Ingreso.findOne({
       where: { flag: true, id: id },
+
+      include: [
+        {
+          model: Parametros,
+          as: "tarjeta",
+        },
+        {
+          model: Parametros,
+          as: "banco",
+        },
+        {
+          model: Proveedor,
+          attributes: ["razon_social_prov"],
+        },
+        {
+          model: ParametroGastos,
+          attributes: ["id_empresa", "nombre_gasto", "grupo", "id_tipoGasto"],
+          include: [
+            {
+              model: ParametroGrupo,
+              as: "parametro_grupo",
+            },
+          ],
+        },
+      ],
     });
     if (!ingreso) {
       return res.status(404).json({
@@ -161,6 +186,13 @@ const deleteIngresoxID = async (req = request, res = response) => {
 };
 const putIngresoxID = async (req = request, res = response) => {
   try {
+    const { id } = req.params;
+    const ingreso = await Ingreso.findOne({
+      where: {
+        id: id,
+      },
+    });
+    await ingreso.update(req.body);
     let formAUDIT = {
       id_user: req.id_user,
       ip_user: req.ip_user,
@@ -168,6 +200,7 @@ const putIngresoxID = async (req = request, res = response) => {
       observacion: `Se actualizo: El ingreso de id 22`,
     };
     await capturarAUDIT(formAUDIT);
+    res.status(200).json({ msg: "Success", ingreso });
   } catch (error) {
     res.status(500).json({
       error: `Error en el servidor, en controller, hable con el administrador: ${error}`,
