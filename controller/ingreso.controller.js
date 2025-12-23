@@ -138,9 +138,16 @@ const getIngresosxFechaxEmpresa = async (req = request, res = response) => {
         {
           model: ParametroGastos,
           attributes: ["id_empresa", "nombre_gasto", "grupo", "id_tipoGasto"],
-          where: {
-            id_empresa: id_empresa,
-          },
+          include: [
+            {
+              model: ParametroGrupo,
+              as: "parametro_grupo",
+            },
+          ],
+        },
+        {
+          model: Proveedor,
+          attributes: ["razon_social_prov"],
         },
       ],
     });
