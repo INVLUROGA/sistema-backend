@@ -21,7 +21,13 @@ const {
   recordatorioReservaCita2hAntes,
   obtenerCumpleaniosDeEmpleados,
 } = require("./middlewares/eventosCron.js");
+const {
+  obtenerCumpleaniosDelMesSiguiente,
+} = require("./middlewares/EventosCron/obtenerCumpleañosDelMesSiguiente.js");
+
 // Programa una tarea para las 9 AM todos los días
+const cum = obtenerCumpleaniosDelMesSiguiente();
+console.log(cum);
 
 cron.schedule("0 15 * * *", () => {
   // insertaDatosTEST();
@@ -33,6 +39,9 @@ cron.schedule("55 * * * *", () => {
   recordatorioReservaCita24hAntes();
 });
 cron.schedule("30 8 * * *", () => {
+  recordatorioReservaCita2hAntes();
+});
+cron.schedule("59 23 * * *", () => {
   recordatorioReservaCita2hAntes();
 });
 const fileServer = express.static;
@@ -157,11 +166,15 @@ app.use("/api/fils", require("./routes/file.router.js"));
 //**************Rutas***** */
 //************************ */
 app.use("/api/movimiento-articulo", require("./routes/kardex.router.js"));
-app.use('/api/articulo', require('./routes/articulo.router.js'))
+app.use("/api/articulo", require("./routes/articulo.router.js"));
 // //TODO proveedores // sexo, tipoDoc, estadoCivil, etc
 
 app.use("/api/proveedor", validarJWT, require("./routes/proveedor.router.js"));
-app.use("/api/contrato-prov", validarJWT, require("./routes/contratoProv.router.js"));
+app.use(
+  "/api/contrato-prov",
+  validarJWT,
+  require("./routes/contratoProv.router.js")
+);
 app.use("/api/producto", require("./routes/producto.route.js"));
 //TODO: JUNTAR LOS DOS EN UNA RUTA
 app.use("/api/egreso", validarJWT, require("./routes/gastos.router.js"));
@@ -182,10 +195,7 @@ app.use("/api/msg-masivos", require("./routes/msgMasivos.route.js"));
 app.use("/api/wsp", require("./routes/wsp.route.js"));
 
 app.use("/api/servicios", validarJWT, require("./routes/servicios.router.js"));
-app.use(
-  "/api/generador-fechas",
-  require("./routes/generadorFechas.router.js")
-);
+app.use("/api/generador-fechas", require("./routes/generadorFechas.router.js"));
 app.use(
   "/api/extension-membresia",
   require("./routes/extension_mem.router.js")
@@ -246,7 +256,7 @@ app.use("/api/parametroGasto", require("./routes/parametroGasto.router.js"));
 //CIRCUS----
 app.use("/api/circus", require("./routes/routersCircus/servicios.router.js"));
 app.use("/api/canjes", require("./routes/canjes.router.js"));
-app.use('/api/penalidad', require('./routes/penalidad.router.js'))
+app.use("/api/penalidad", require("./routes/penalidad.router.js"));
 // app.use("/circus/")
 obtenerDataSeguimiento();
 //Escuchar peticiones

@@ -33,6 +33,7 @@ const getIngresosxEmpresa = async (req = request, res = response) => {
         flag: true,
         id_empresa: id_empresa,
       },
+      order: [["id", "desc"]],
       include: [
         {
           model: Parametros,
