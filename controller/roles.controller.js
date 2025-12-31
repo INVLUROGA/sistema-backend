@@ -283,6 +283,13 @@ const seccionGET = async (req = request, res = response) => {
           url: "/mof-sistemas",
         },
         {
+          key: "pasos-entrega-local-arrendado",
+          label: "PASOS PARA ENTREGA DE LOCAL ARRENDADO",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/pasos-entrega-local-arrendado",
+        },
+        {
           key: "config",
           label: "INVENTARIO",
           isTitle: true,
@@ -436,6 +443,25 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: false,
           icon: "uil-calender",
           url: "/gestion-ingresos",
+        },
+        {
+          key: "cuentas-balances",
+          label: "Cuentas Balances",
+          isTitle: true,
+        },
+        {
+          key: "cuentas-cobrar",
+          label: "Cuentas por cobrar",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/cuentas-cobrar",
+        },
+        {
+          key: "cuentas-pagar",
+          label: "Cuentas por pagar",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/cuentas-pagar",
         },
         // {
         //   key: "gestion-gfgv",

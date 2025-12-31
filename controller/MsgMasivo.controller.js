@@ -6,7 +6,7 @@ const {
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 const enviarMasivoAlwsp = async () => {
-  const numerosDup = [{ numero: "933102718" }];
+  const numerosDup = [];
 
   // Normaliza y deduplica por número
   const numeros = [

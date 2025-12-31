@@ -14,20 +14,7 @@ const {
   TarifaTraining,
 } = require("../models/ProgramaTraining");
 const uid = require("uuid");
-/**
- *  id_venta: '',
-  id_empl: 3531,
-  id_cliente: 6326,
-  id_tipo_transaccion: 0,
-  numero_transac: '',
-  id_origen: 0,
-  observacion: '',
-  email_cli: 'carlosrosales21092002@hotmail.com',
-  label_cli: 'Carlos Rosales Morales',
-  label_empl: 'mmm mmmm mmmm',
-  value: 3531,
-  label: 'mmm mmmm mmmm'
- */
+
 const generarContrato = async (req = request, res = response, next) => {
   const {} = req.body;
   const pdfContrato = await getPDF_CONTRATO(
