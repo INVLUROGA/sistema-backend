@@ -159,6 +159,8 @@ const obtenerSeleccionableActivos = async (req = request, res = response) => {
       attributes: [
         ["id", "value"],
         ["nombre_producto", "label"],
+        ["prec_venta", "prec_venta"],
+        ["id_categoria", "id_cat"],
       ],
     });
     res.status(200).json({
