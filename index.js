@@ -27,7 +27,7 @@ const {
 
 // Programa una tarea para las 9 AM todos los días
 const cum = obtenerCumpleaniosDelMesSiguiente();
-console.log(cum);
+// console.log(cum);
 
 cron.schedule("0 15 * * *", () => {
   // insertaDatosTEST();

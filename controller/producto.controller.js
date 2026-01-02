@@ -2,49 +2,14 @@ const { request, response } = require("express");
 const { Producto } = require("../models/Producto");
 const uid = require("uuid");
 const { eliminarCaracter } = require("../helpers/isFormat");
+const { Parametros } = require("../models/Parametros");
+const { Proveedor } = require("../models/Proveedor");
 
 // === CREAR PRODUCTO ===
 const postProducto = async (req = request, res = response) => {
-  const {
-    id_marca,
-    id_categoria,
-    id_presentacion,
-    codigo_lote,
-    codigo_producto,
-    codigo_contable,
-    id_prov,
-    nombre_producto,
-    prec_venta,
-    prec_compra,
-    stock_minimo,
-    stock_producto,
-    ubicacion_producto,
-    fec_vencimiento,
-    estado_producto,
-    // id_empresa, // Si lo envías desde el front, úsalo. Si no, fíjalo abajo.
-  } = req.body;
-
   try {
-    const producto = new Producto({
-      uid: uid.v4(),
-      id_marca,
-      id_categoria,
-      id_presentacion,
-      codigo_lote,
-      codigo_producto,
-      codigo_contable,
-      id_prov,
-      nombre_producto,
-      prec_venta: eliminarCaracter(prec_venta, ","),
-      prec_compra: eliminarCaracter(prec_compra, ","),
-      stock_minimo,
-      stock_producto,
-      ubicacion_producto,
-      fec_vencimiento,
-      estado_product: estado_producto !== undefined ? estado_producto : true,
-      id_empresa: 599, // <--- FIJAMOS LA EMPRESA 599 AQUÍ TAMBIÉN POR SEGURIDAD
-    });
-
+    const { id_empresa } = req.params;
+    const producto = new Producto({ ...req.body, id_empresa });
     await producto.save();
     res.status(200).json(producto);
   } catch (error) {
@@ -56,36 +21,35 @@ const postProducto = async (req = request, res = response) => {
   }
 };
 
-const getTBProductos = async (req = request, res = response) => {
+const getProductosxEmpresa = async (req = request, res = response) => {
   try {
+    const { id_empresa } = req.params;
     const producto = await Producto.findAll({
-      where: { 
-        flag: true, 
-        id_empresa: 599 
+      where: {
+        flag: true,
+        id_empresa: id_empresa,
       },
-      attributes: [
-        "id", 
-        "uid",
-        "nombre_producto",
-        "prec_venta", 
-        "prec_compra",
-        "stock_producto", 
-        "stock_minimo",
-        "codigo_producto", 
-        "codigo_lote", 
-        "codigo_contable",
-        "ubicacion_producto",
-        "fec_vencimiento",  // <--- CRUCIAL PARA QUE CARGUE LA FECHA
-        "id_marca",         // <--- CRUCIAL PARA EL SELECT DE MARCA
-        "id_categoria",     // <--- CRUCIAL PARA EL SELECT DE CATEGORÍA
-        "id_presentacion",
-        "id_prov",
-        ["estado_product", "estado"], // Alias para usar 'estado' en la tabla
-        "estado_product"              // El valor real para el switch del modal
+      order: [["id", "DESC"]],
+      include: [
+        {
+          model: Parametros,
+          as: "objMarca",
+        },
+        {
+          model: Parametros,
+          as: "objCategoria",
+        },
+        {
+          model: Parametros,
+          as: "objPresentacion",
+        },
+        {
+          model: Proveedor,
+          as: "objProveedor",
+        },
       ],
-      order: [['id', 'DESC']]
     });
-    
+
     res.status(200).json({
       msg: true,
       producto,
@@ -104,7 +68,7 @@ const getProducto = async (req = request, res = response) => {
   try {
     const { id } = req.params;
     const producto = await Producto.findOne({
-      where: { id: id, flag: true }
+      where: { id: id, flag: true },
     });
 
     if (!producto) {
@@ -131,16 +95,6 @@ const getProducto = async (req = request, res = response) => {
 const updateProducto = async (req = request, res = response) => {
   try {
     const { id } = req.params;
-    
-    // Desestructuramos para sacar 'id' y 'uid' del body para NO actualizarlos
-    const { 
-      id: idBody,   // Lo sacamos para evitar error de PK
-      uid: uidBody, // Lo sacamos para no cambiar el UID
-      prec_venta, 
-      prec_compra, 
-      ...restoCampos 
-    } = req.body;
-
     const producto = await Producto.findByPk(id);
 
     if (!producto) {
@@ -150,13 +104,7 @@ const updateProducto = async (req = request, res = response) => {
       });
     }
 
-    const dataUpdate = {
-      ...restoCampos, // Aquí ya no va el 'id', evitando el error 500
-      prec_venta: prec_venta ? eliminarCaracter(String(prec_venta), ",") : producto.prec_venta,
-      prec_compra: prec_compra ? eliminarCaracter(String(prec_compra), ",") : producto.prec_compra,
-    };
-
-    await producto.update(dataUpdate);
+    await producto.update(req.body);
 
     res.status(200).json({
       ok: true,
@@ -168,7 +116,7 @@ const updateProducto = async (req = request, res = response) => {
     res.status(500).json({
       ok: false,
       msg: "Hable con el encargado de sistema (updateProducto)",
-      error: error.message // Enviamos el detalle para que veas qué pasa en Postman
+      error: error.message, // Enviamos el detalle para que veas qué pasa en Postman
     });
   }
 };
@@ -185,10 +133,7 @@ const deleteProducto = async (req = request, res = response) => {
         msg: "El producto no existe",
       });
     }
-
-    // Eliminación lógica (Soft Delete)
     await producto.update({ flag: false });
-
     res.status(200).json({
       ok: true,
       msg: "Producto eliminado correctamente",
@@ -201,11 +146,38 @@ const deleteProducto = async (req = request, res = response) => {
     });
   }
 };
-
+const obtenerSeleccionableActivos = async (req = request, res = response) => {
+  try {
+    const { id_empresa } = req.params;
+    const productos = await Producto.findAll({
+      where: {
+        flag: true,
+        id_empresa: id_empresa,
+        estado_product: true,
+      },
+      order: [["id", "DESC"]],
+      attributes: [
+        ["id", "value"],
+        ["nombre_producto", "label"],
+      ],
+    });
+    res.status(200).json({
+      msg: true,
+      productos,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      ok: false,
+      msg: "Hable con el encargado de sistema (deleteProducto)",
+    });
+  }
+};
 module.exports = {
   postProducto,
   getProducto,
-  getTBProductos,
+  getProductosxEmpresa,
   updateProducto,
   deleteProducto,
+  obtenerSeleccionableActivos,
 };

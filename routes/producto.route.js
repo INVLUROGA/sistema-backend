@@ -2,9 +2,10 @@ const { Router } = require("express");
 const {
   postProducto,
   getProducto,
-  getTBProductos,
+  getProductosxEmpresa,
   updateProducto,
   deleteProducto,
+  obtenerSeleccionableActivos
 } = require("../controller/producto.controller");
 const { validarJWT } = require("../middlewares/validarJWT");
 const router = Router();
@@ -12,10 +13,10 @@ const router = Router();
 /**
  * /api/producto
  */
-router.post("/post-producto", validarJWT, postProducto);
-router.get("/get-producto/:id", validarJWT, getProducto);
-router.get("/get-tb-productos", validarJWT, getTBProductos);
-router.put("/put-producto/:id", validarJWT, updateProducto);
-router.put("/delete-producto/:id", validarJWT, deleteProducto);
-
+router.post("/:id_empresa", postProducto);
+router.get("/id/:id", getProducto);
+router.get("/empresa/:id_empresa", getProductosxEmpresa);
+router.put("/id/:id", updateProducto);
+router.put("/delete/id/:id", deleteProducto);
+router.get('/combo-activos/:id_empresa', obtenerSeleccionableActivos)
 module.exports = router;
