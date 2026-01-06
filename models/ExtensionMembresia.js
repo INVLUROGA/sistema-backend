@@ -23,6 +23,12 @@ const ExtensionMembresia = db.define("tb_extension_membresia", {
   observacion: {
     type: DataTypes.STRING(360),
   },
+  fecha_inicio: {
+    type: DataTypes.DATE,
+  },
+  fecha_fin: {
+    type: DataTypes.DATE,
+  },
   uid_img_prueba_extension: {
     type: DataTypes.STRING(360),
   },

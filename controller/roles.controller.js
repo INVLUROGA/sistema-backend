@@ -1383,10 +1383,10 @@ const seccionGET = async (req = request, res = response) => {
       MENU_ITEMS = [
         {
           //key: "reporte-utilidad-pgm",
-          label: "DETALLE ORIGEN",
+          label: "DETALLE RENOVACIONES",
           isTitle: false,
           icon: "uil-calender",
-          url: "/detalle-origen",
+          url: "/detalle-renovaciones",
         },
         {
           //key: "reporte-utilidad-pgm",

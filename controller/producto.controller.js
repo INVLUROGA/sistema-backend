@@ -152,7 +152,7 @@ const obtenerSeleccionableActivos = async (req = request, res = response) => {
     const productos = await Producto.findAll({
       where: {
         flag: true,
-        id_empresa: id_empresa,
+        id_empresa: id_empresa, 
         estado_product: true,
       },
       order: [["id", "DESC"]],

@@ -5,6 +5,9 @@ const cors = require("cors");
 const { urlArchivos, urlArchivoLogos } = require("./config/constant");
 const { db } = require("./database/sequelizeConnection.js");
 const transporterU = require("./config/nodemailer.js");
+const {
+  obtenerDataSeguimientos,
+} = require("./middlewares/EventosCron/obtenerDataSeguimientos.js");
 const { validarJWT } = require("./middlewares/validarJWT.js");
 const cron = require("node-cron");
 const {
@@ -14,7 +17,6 @@ const {
   insertaDatosTEST,
   insertarDatosSeguimientoDeClientes,
   obtenerCumpleaniosCliente,
-  obtenerDataSeguimiento,
   enviarMensajesxCitasxHorasFinales,
   alertasUsuario,
   recordatorioReservaCita24hAntes,
@@ -26,7 +28,7 @@ const {
 } = require("./middlewares/EventosCron/obtenerCumpleañosDelMesSiguiente.js");
 
 // Programa una tarea para las 9 AM todos los días
-const cum = obtenerCumpleaniosDelMesSiguiente();
+// const cum = obtenerDataSeguimientos();
 // console.log(cum);
 
 cron.schedule("0 15 * * *", () => {
@@ -165,6 +167,7 @@ app.use("/api/fils", require("./routes/file.router.js"));
 //************************ */
 //**************Rutas***** */
 //************************ */
+app.use("/api/seguimiento", require("./routes/seguimiento.router.js"));
 app.use("/api/movimiento-articulo", require("./routes/kardex.router.js"));
 app.use("/api/articulo", require("./routes/articulo.router.js"));
 app.use("/api/cuenta-balance", require("./routes/cuentaBalance.router.js"));
@@ -258,8 +261,6 @@ app.use("/api/parametroGasto", require("./routes/parametroGasto.router.js"));
 app.use("/api/circus", require("./routes/routersCircus/servicios.router.js"));
 app.use("/api/canjes", require("./routes/canjes.router.js"));
 app.use("/api/penalidad", require("./routes/penalidad.router.js"));
-// app.use("/circus/")
-obtenerDataSeguimiento();
 //Escuchar peticiones
 app.listen(env.PORT || 3001, env.IP, () => {
   console.log(`Servidor corriendo en el puerto ${env.IP}${env.PORT || 3001}`);

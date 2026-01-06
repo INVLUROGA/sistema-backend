@@ -9,7 +9,7 @@ const obtenerCumpleaniosDelMesSiguiente = async () => {
   const siguienteMes = new Date(hoy);
   siguienteMes.setMonth(hoy.getMonth() + 1);
   const year = hoy.getFullYear();
-  const month = hoy.getMonth() === 12 ? 11 : hoy.getMonth() + 1; // +1 = siguiente mes
+  const month = hoy.getMonth(); // +1 = siguiente mes
 
   // último día del mes siguiente
   const lastDay = new Date(year, month + 1, 0).getDate();
@@ -47,7 +47,7 @@ const obtenerCumpleaniosDelMesSiguiente = async () => {
       (em) => {
         return {
           id_user: e.id_user,
-          mensaje: `EN ${em?.i} DIAS ES EL CUMPLEAÑOS DE --- ${em?.nombre_apellidos_empl}`,
+          mensaje: `EN ${em?.i} DIAS ES EL CUMPLEAÑOS DE --- ${em?.nombre_apellidos_empl} ${em?.diaMes}`,
           tipo_alerta: 1566,
           id_estado: 1,
           flag: true,
@@ -65,7 +65,7 @@ const obtenerCumpleaniosDelMesSiguiente = async () => {
       empleadosFiltrados: generarDiasAntes(empleadosFiltrados, 3),
       alertas1565,
       fechas,
-      agregarAlerta: JSON.stringify(agregarAlerta, null, 2),
+      agregarAlerta: JSON.stringify(agregarAlerta.flat(), null, 2),
     },
     hoy.getMonth()
   );

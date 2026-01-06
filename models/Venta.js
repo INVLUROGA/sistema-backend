@@ -3,7 +3,7 @@ const uuid = require("uuid");
 const { db } = require("../database/sequelizeConnection");
 const { Cliente, Empleado } = require("./Usuarios");
 // IMPORTAMOS PRODUCTO AQUÍ
-const { Producto } = require("./Producto"); 
+const { Producto } = require("./Producto");
 
 const {
   ProgramaTraining,
@@ -119,6 +119,9 @@ const detalleVenta_membresias = db.define("detalle_ventaMembresia", {
   tarifa_monto: {
     type: DataTypes.DECIMAL(10, 2),
   },
+  fecha_inicio: {
+    type: DataTypes.DATE,
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
@@ -154,6 +157,12 @@ const detalleVenta_Transferencia = db.define("detalle_ventaTransferencia", {
   },
   fec_fin_mem: {
     type: DataTypes.STRING(12),
+  },
+  fecha_inicio: {
+    type: DataTypes.DATE,
+  },
+  fecha_fin: {
+    type: DataTypes.DATE,
   },
   flag: {
     type: DataTypes.BOOLEAN,
@@ -328,10 +337,10 @@ const leadsxDia = db.define("tb_leadsDia", {
   id_empresa: {
     type: DataTypes.INTEGER,
   },
-  id_red: { 
-    type: DataTypes.INTEGER, 
-    allowNull: true 
-  },   
+  id_red: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
@@ -493,7 +502,7 @@ detalleVenta_producto.belongsTo(Producto, {
 });
 Producto.hasMany(detalleVenta_producto, {
   foreignKey: "id_producto",
-  sourceKey: "id"
+  sourceKey: "id",
 });
 
 // ----------------------------------------------

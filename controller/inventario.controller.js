@@ -417,8 +417,6 @@ const getInventarioxKardexxFechasxEmpresa = async (
     const { id_empresa } = req.params;
     const inventario = await Articulos.findAll({
       where: { flag: true, id_empresa: id_empresa },
-      raw: true,
-      nest: true,
       include: [
         {
           model: Parametros_zonas,
@@ -434,52 +432,10 @@ const getInventarioxKardexxFechasxEmpresa = async (
         },
       ],
     });
-    const fechas = await GeneradorFechas.findAll({
-      where: { entidad: "inventario" },
-      attributes: [["fecha_fin", "fecha_hasta"]],
-      order: [["fecha_hasta", "DESC"]],
-      raw: true,
-      nest: true,
-    });
-    const kardexEntrada = await Kardex_Inventario.findAll({
-      where: { flag: true, action: "entrada" },
-      include: [
-        {
-          model: Articulos,
-          as: "articulos_kardex",
-          where: { id_empresa: id_empresa },
-        },
-      ],
-      raw: true,
-      nest: true,
-    });
-    const kardexSalida = await Kardex_Inventario.findAll({
-      where: { flag: true, action: "salida" },
-      include: [
-        {
-          model: Articulos,
-          as: "articulos_kardex",
-          where: { id_empresa: id_empresa },
-        },
-      ],
-      raw: true,
-      nest: true,
-    });
-
-    console.dir(
-      generarInventario(inventario, kardexEntrada, kardexSalida, fechas),
-      { depth: null, colors: true }
-    );
     res.status(201).json({
-      inventario_x_fechas: generarInventario(
-        inventario,
-        kardexEntrada,
-        kardexSalida,
-        fechas,
-        []
-      ),
+      inventario_x_fechas: inventario,
     });
-  } catch (error) {
+  } catch (error) { 
     console.log(error);
   }
 };
