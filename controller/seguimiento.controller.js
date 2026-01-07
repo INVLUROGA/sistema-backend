@@ -1,11 +1,17 @@
 const { request, response } = require("express");
 const { Seguimiento } = require("../models/Seguimientos");
 const { detalleVenta_membresias, Venta } = require("../models/Venta");
+const { Op } = require("sequelize");
 
 const getSeguimientos = async (req = request, res = response) => {
   try {
     const seguimiento = await Seguimiento.findAll({
-      where: { flag: true },
+      where: {
+        flag: true,
+        fecha_vencimiento: {
+          [Op.ne]: null, // 👈 no null
+        },
+      },
       include: [
         {
           model: detalleVenta_membresias,
