@@ -2,6 +2,7 @@ const { request, response } = require("express");
 const { CuentaBalance } = require("../models/CuentaBalances");
 const { Parametros } = require("../models/Parametros");
 const { Proveedor } = require("../models/Proveedor");
+const { Op } = require("sequelize");
 
 // Crear CuentaBalance
 const PostCuentaBalance = async (req = request, res = response) => {
@@ -52,10 +53,48 @@ const GetCuentaBalancesxIDEmpresaxTipo = async (
   }
 };
 
+const GetCuentaBalancesxIDEmpresaxTipoxFecComprobante = async (
+  req = request,
+  res = response
+) => {
+  try {
+    const { id_empresa, tipo } = req.params;
+    const { arrayDate } = req.query;
+    const fechaInicio = arrayDate[0];
+    const fechaFin = arrayDate[1];
+    const cuentasBalances = await CuentaBalance.findAll({
+      where: {
+        id_empresa: id_empresa,
+        flag: true,
+        tipo,
+        fecha_comprobante: {
+          [Op.between]: [fechaInicio, fechaFin],
+        },
+      },
+      order: [["id", "desc"]],
+      include: [
+        {
+          model: Parametros,
+          as: "concepto",
+        },
+        {
+          model: Proveedor,
+        },
+      ],
+    });
+    res.status(200).json({ msg: "CuentaBalances obtenidos", cuentasBalances });
+  } catch (error) {
+    res.status(500).json({
+      msg: `ERROR EN LA BASE DE DATOS O SERVIDOR (GetCuentaBalances) ${error}`,
+    });
+  }
+};
+
 // Obtener CuentaBalance por ID
 const GetCuentaBalancexID = async (req = request, res = response) => {
   try {
     const { id } = req.params;
+    const { arrayRangeDate } = req.query;
     const cuenta = await CuentaBalance.findOne({
       where: {
         id,
@@ -114,4 +153,5 @@ module.exports = {
   GetCuentaBalancexID,
   deleteCuentaBalancexID,
   updateCuentaBalancexID,
+  GetCuentaBalancesxIDEmpresaxTipoxFecComprobante,
 };
