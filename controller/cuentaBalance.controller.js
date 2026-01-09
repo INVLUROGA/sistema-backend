@@ -33,6 +33,7 @@ const GetCuentaBalancesxIDEmpresaxTipo = async (
         flag: true,
         tipo,
       },
+      order: [["id", "desc"]],
       include: [
         {
           model: Parametros,

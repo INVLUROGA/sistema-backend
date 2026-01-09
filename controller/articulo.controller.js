@@ -1,5 +1,5 @@
 const { request, response } = require("express");
-const { Articulos } = require("../models/Articulo");
+const { Articulos, HisCamArticulos } = require("../models/Articulo");
 const { ImagePT } = require("../models/Image");
 const { Parametros, Parametros_zonas } = require("../models/Parametros");
 const uid = require("uuid");
@@ -129,11 +129,61 @@ const updateArticuloxID = async (req = request, res = response) => {
       .json({ msg: "ERROR EN LA BASE DE DATOS O SERVIDOR (updateArticulo)" });
   }
 };
-
+const getHistArticulosxEmpresa = async (req = request, res = response) => {
+  try {
+    const { id_empresa } = req.params;
+    const historialArticulos = await HisCamArticulos.findAll({
+      where: {
+        id_empresa,
+        flag: true,
+      },
+      order: [["id_hc", "desc"]],
+      include: [
+        {
+          model: ImagePT,
+          attributes: ["id", "name_image"],
+          where: { flag: true },
+          required: false,
+        },
+        {
+          model: Articulos,
+          attributes: ["id", "producto"],
+          as: "articulo",
+        },
+        // {
+        //   model: Parametros,
+        //   as: "parametro_marca",
+        // },
+        {
+          model: Parametros_zonas,
+          as: "parametro_lugar_encuentro",
+          attributes: [
+            ["nombre_zona", "label_param"],
+            ["orden_zona", "orden_param"],
+            ["nivel", "nivel"],
+          ],
+          include: [
+            {
+              model: ImagePT,
+              // where: { flag: true },
+              attributes: ["name_image"],
+            },
+          ],
+        },
+      ],
+    });
+    res.status(201).json({
+      historialArticulos,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
   PostArticulo,
   GetArticulosxEmpresa,
   GetArticuloxID,
   deleteArticuloxID,
   updateArticuloxID,
+  getHistArticulosxEmpresa,
 };

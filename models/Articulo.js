@@ -250,6 +250,25 @@ Articulos.hasOne(Parametros_zonas, {
   sourceKey: "id_lugar",
   as: "parametro_lugar_encuentro",
 });
+HisCamArticulos.hasOne(Articulos, {
+  foreignKey: "id",
+  sourceKey: "id_articulo",
+  as: "articulo",
+});
+HisCamArticulos.hasMany(ImagePT, {
+  foreignKey: "uid_location",
+  sourceKey: "uid_image",
+});
+HisCamArticulos.hasOne(Parametros, {
+  foreignKey: "id_param",
+  sourceKey: "id_marca",
+  as: "parametro_marca",
+});
+HisCamArticulos.hasOne(Parametros_zonas, {
+  foreignKey: "id",
+  sourceKey: "id_lugar",
+  as: "parametro_lugar_encuentro",
+});
 Articulos.sync()
   .then(() => {
     console.log("La tabla Articulos ha sido sync o ya existe.");

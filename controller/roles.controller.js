@@ -255,6 +255,13 @@ const seccionGET = async (req = request, res = response) => {
           url: "/responsabilidades-administrativas",
         },
         {
+          key: "dni-tramitadores-municipalidad",
+          label: "DNI TRAMITADORES MUNICIPALIDAD CHORRILLOS",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/dni-tramitadores-municipalidad",
+        },
+        {
           //key: "reporte-utilidad-pgm",
           label: "M.O.F administracion y atencion al cliente",
           isTitle: false,
@@ -328,6 +335,13 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: false,
           icon: "uil-calender",
           url: "/gest-inventario",
+        },
+        {
+          //key: "reporte-utilidad-pgm",
+          label: "AUDITORIA INVENTARIO",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/auditoria-inventario",
         },
         {
           //key: "reporte-utilidad-pgm",

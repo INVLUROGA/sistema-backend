@@ -11,6 +11,7 @@ const db = new Sequelize("db_luroga", env.USER_DB, env.PASSWORD_DB, {
     options: {
       useUTC: true,
       encrypt: true,
+      trustServerCertificate: false,
       rowCollectionOnRequestCompletion: true,
       requestTimeout: 120000, // <-- Aquí está bien colocado
     },
