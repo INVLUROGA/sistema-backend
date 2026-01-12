@@ -26,7 +26,7 @@ const {
   getPariente,
   updatePariente,
   deletePariente,
-  getParientesxEntidad
+  getParientesxEntidad,
 } = require("../controller/usuario.controller");
 const {
   extraerComentarios,
@@ -140,9 +140,9 @@ router.post("/post-file-dieta/:uid_location", validarJWT);
 router.post(
   "/post-empleado",
   validarJWT,
-  // extraerUpload,
-  // extraerComentarios,
-  // extraerContactoEmergencia,
+  extraerUpload,
+  extraerComentarios,
+  extraerContactoEmergencia,
   postUsuarioEmpleado
 );
 router.get("/get-empleados", validarJWT, getUsuarioEmpleados);
