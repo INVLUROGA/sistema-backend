@@ -39,6 +39,9 @@ const {
 } = require("../models/Seccion");
 const { ContactoEmergencia } = require("../models/Modelos");
 const { Parametros } = require("../models/Parametros");
+const { AlertasUsuario } = require("../models/Auditoria");
+const { obtenerUsuariosxCodigo } = require("../helpers/obtenerUsuariosxCodigo");
+const { fechasAnteriores } = require("../helpers/fechasAnteriores");
 // Función para contar días laborables entre dos fechas
 function contarDiasLaborables(fechaInicio, fechaFin) {
   let inicio = dayjs(fechaInicio);
@@ -499,7 +502,7 @@ const obtenerMarcacionsCliente = async (req = request, res = response) => {
   }
 };
 //Colaborador
-const postUsuarioEmpleado = (req = request, res = response) => {
+const postUsuarioEmpleado = async (req = request, res = response) => {
   try {
     const { comentarioUnico_UID, contactoEmerg_UID, avatar_UID } = req;
 
@@ -515,7 +518,34 @@ const postUsuarioEmpleado = (req = request, res = response) => {
       salario_empl: 0,
       tipoContrato_empl: 0,
     });
-    empleado.save();
+    await empleado.save();
+    const usuariosParaAlerta = await AlertasUsuario.findAll({
+      where: { mensaje: "1565" },
+      raw: true,
+    });
+    const alertasDeCumpleanios = fechasAnteriores(
+      empleado.fecha_nacimiento,
+      3
+    ).flatMap((aler, i) =>
+      usuariosParaAlerta.map((us) => ({
+        id_user: us.id_user,
+        tipo_alerta: us?.tipo_alerta,
+        fecha: aler,
+        mensaje: `CUMPLEAÑOS DE ${empleado.nombre_empl} en ${i} dias`,
+        id_estado: 1,
+        id_empl_cumple: empleado.id_empl,
+      }))
+    );
+    console.log({
+      fa: fechasAnteriores(empleado.fecha_nacimiento, 2),
+      usuariosParaAlerta,
+      alertasDeCumpleanios,
+    });
+    try {
+      await AlertasUsuario.bulkCreate(alertasDeCumpleanios);
+    } catch (error) {
+      console.log(error);
+    }
     res.status(200).json({
       msg: "success",
       empleado,
@@ -989,6 +1019,31 @@ const revalidarToken = async (req, res) => {
     ];
   }
   if (user.rol_user === 2) {
+    MODULOS_ITEMS = [
+      {
+        name: "Administracion",
+        path: "/adm",
+        key: "mod-adm",
+      },
+      {
+        name: "Ventas",
+        path: "/venta",
+        key: "mod-venta",
+      },
+      {
+        name: "RR.HH.",
+        path: "/rrhh",
+        key: "mod-rrhh",
+      },
+      {
+        name: "INFORME GERENCIAL",
+        path: "/informe-gerencial",
+        key: "mod-informe-gerencial",
+      },
+    ];
+  }
+
+  if (user.rol_user === 54) {
     MODULOS_ITEMS = [
       {
         name: "Administracion",

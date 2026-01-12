@@ -127,50 +127,6 @@ const obtenerDataSeguimientos = async () => {
         "id_venta",
       ],
     });
-
-    const agrupaxIdCli = Object.values(
-      VentasMembresias.reduce((acc, v) => {
-        const idCli = v.id_cli;
-
-        if (!acc[idCli]) {
-          acc[idCli] = { id_cli: idCli, membresias: [] };
-        }
-        acc[idCli].membresias.push({
-          id_empl: v.id_empl,
-          observacion: v.observacion,
-          semanas:
-            v.detalle_ventaMembresia[0]?.tb_semana_training?.sesiones ?? null,
-          id_membresia: v.detalle_ventaMembresia[0]?.id ?? null,
-          id_tarifa: v.detalle_ventaMembresia[0]?.id_tarifa ?? null,
-          id_st: v.detalle_ventaMembresia[0]?.id_st ?? null,
-          fecha_inicio: v.detalle_ventaMembresia[0]?.fecha_inicio ?? null,
-          id_pgm: v.detalle_ventaMembresia[0]?.id_pgm ?? null,
-          id_venta: v.detalle_ventaMembresia[0]?.id_venta ?? null,
-        });
-        return acc;
-      }, {})
-    ).map((e) => {
-      const ultimaMembresia = e.membresias[0];
-      // VER EN LOS DATOS DE TRANSFERENCIAS, CUAL ID CONCUERDA CON LA ULTIMA MEMBRESIA
-      const transferenciasxIdMembresia = VentasTransferencias.filter(
-        (transferencia) =>
-          transferencia?.venta_venta[0]?.id_membresia ===
-          ultimaMembresia.id_venta
-      );
-      const regalosxIdMembresia = dataRegalos.filter(
-        (reg) => reg?.id_venta === ultimaMembresia.id_venta
-      );
-      const congelamientosxIdMembresia = dataCongelamientos.filter(
-        (cong) => cong?.id_venta === ultimaMembresia.id_venta
-      );
-      return {
-        ...e,
-        ultimaMembresia: e.membresias[0],
-        transferenciasxIdMembresia,
-        congelamientosxIdMembresia,
-        regalosxIdMembresia,
-      };
-    });
     const ventasMembresiasConTransferencias = VentasMembresias.map((v) => {
       const det = v.detalle_ventaMembresia?.[0] ?? null;
 
@@ -214,7 +170,6 @@ const obtenerDataSeguimientos = async () => {
       const congelamientosxIdMembresia = dataCongelamientos.filter(
         (cong) => cong?.id_venta === membresia.id_venta
       );
-
       const cantCongelamiento = congelamientosxIdMembresia.reduce(
         (acc, item) => acc + Number(item.dias_habiles || 0),
         0

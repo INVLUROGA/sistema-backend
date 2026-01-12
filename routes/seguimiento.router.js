@@ -8,4 +8,6 @@ const router = Router();
 
 router.get("/", getSeguimientos);
 
+router.get('/inactivo-x-3-meses')
+
 module.exports = router;

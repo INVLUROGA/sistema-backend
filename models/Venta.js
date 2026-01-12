@@ -83,6 +83,9 @@ const detalleVenta_membresias = db.define("detalle_ventaMembresia", {
     autoIncrement: true,
     primaryKey: true,
   },
+  id_membresia_anterior: {
+    type: DataTypes.INTEGER,
+  },
   id_venta: {
     type: DataTypes.INTEGER,
   },

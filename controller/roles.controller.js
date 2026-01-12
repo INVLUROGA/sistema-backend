@@ -1404,6 +1404,13 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           //key: "reporte-utilidad-pgm",
+          label: "DETALLE RENOVACIONES POR DIA",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/detalle-renovaciones-x-dia",
+        },
+        {
+          //key: "reporte-utilidad-pgm",
           label: "COMPARATIVO MENSUAL VS MES ACTUAL",
           isTitle: false,
           icon: "uil-calender",

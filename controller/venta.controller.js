@@ -795,6 +795,7 @@ const get_VENTAS = async (req = request, res = response) => {
             "id_st",
             "tarifa_monto",
             "fecha_inicio",
+            "id_membresia_anterior",
           ],
           include: [
             {
