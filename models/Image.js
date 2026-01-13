@@ -85,6 +85,9 @@ const DocumentosInternos = db.define("tb_documentosInternos", {
   uid_location: {
     type: DataTypes.STRING,
   },
+  urlLink: {
+    type: DataTypes.INTEGER,
+  },
   uid_file: {
     type: DataTypes.STRING,
   },
@@ -107,6 +110,18 @@ const DocumentosInternos = db.define("tb_documentosInternos", {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
+});
+
+DocumentosInternos.hasOne(Parametros, {
+  foreignKey: "id_param",
+  sourceKey: "id_seccionVisible",
+  as: "visibles",
+});
+
+DocumentosInternos.hasOne(Parametros, {
+  foreignKey: "id_param",
+  sourceKey: "id_tipo_doc",
+  as: "tipo",
 });
 
 DocumentosInternos.hasOne(ImagePT, {

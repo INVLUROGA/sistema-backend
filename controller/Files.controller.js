@@ -1,6 +1,7 @@
 const { request, response } = require("express");
 const { Files, ImagePT, DocumentosInternos } = require("../models/Image");
 const uuid = require("uuid");
+const { Parametros } = require("../models/Parametros");
 const postFiles = async (req = request, res = response) => {
   try {
     const { uid_file } = req.params;
@@ -175,9 +176,18 @@ const getFileCenterInterno = async (req = request, res = response) => {
   try {
     const documentosInternos = await DocumentosInternos.findAll({
       where: { flag: true },
+      order: [["id", "desc"]],
       include: [
         {
           model: ImagePT,
+        },
+        {
+          model: Parametros,
+          as: "tipo",
+        },
+        {
+          model: Parametros,
+          as: "visibles",
         },
       ],
     });
@@ -189,8 +199,24 @@ const getFileCenterInterno = async (req = request, res = response) => {
     console.log(error);
   }
 };
+const deleteArchivoxID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const documento = await DocumentosInternos.findOne({
+      where: { id },
+    });
+    await documento.update({ flag: false });
+    res.status(201).json({
+      documento,
+      ok: true,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
   postFiles,
+  deleteArchivoxID,
   deleteFilexID,
   obtenerFilesxUIDFILE,
   postFileInterno,
