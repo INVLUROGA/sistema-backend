@@ -529,7 +529,7 @@ const postUsuarioEmpleado = async (req = request, res = response) => {
     ).flatMap((aler, i) =>
       usuariosParaAlerta.map((us) => ({
         id_user: us.id_user,
-        tipo_alerta: us?.tipo_alerta,
+        tipo_alerta: 1563,
         fecha: aler,
         mensaje: `CUMPLEAÑOS DE ${empleado.nombre_empl} en ${i} dias`,
         id_estado: 1,
