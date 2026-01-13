@@ -9,6 +9,7 @@ const {
   postFileCenterInterno,
   deleteArchivoxID,
   getFileCenterInterno,
+  getFileCenterInternoxIdEmpresa,
 } = require("../controller/Files.controller");
 
 const router = Router();
@@ -28,7 +29,7 @@ router.post(
   postFileCenterInterno
 );
 router.get("/interno/center", getFileCenterInterno);
-router.get("/interno/center/:id_empresa", postFileCenterInterno);
+router.get("/interno/center/:id_empresa", getFileCenterInternoxIdEmpresa);
 router.post(
   "/interno/:id_seccionVisible/:uid_location/:id_empresa",
   postFileInterno

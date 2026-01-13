@@ -199,6 +199,37 @@ const getFileCenterInterno = async (req = request, res = response) => {
     console.log(error);
   }
 };
+const getFileCenterInternoxIdEmpresa = async (
+  req = request,
+  res = response
+) => {
+  try {
+    const { id_empresa } = req.params;
+    const documentosInternos = await DocumentosInternos.findAll({
+      where: { flag: true, id_empresa },
+      order: [["id", "desc"]],
+      include: [
+        {
+          model: ImagePT,
+        },
+        {
+          model: Parametros,
+          as: "tipo",
+        },
+        {
+          model: Parametros,
+          as: "visibles",
+        },
+      ],
+    });
+
+    res.status(201).json({
+      documentosInternos,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 const deleteArchivoxID = async (req = request, res = response) => {
   try {
     const { id } = req.params;
@@ -223,5 +254,6 @@ module.exports = {
   obtenerFileInternoxUidLocation,
   obtenerFileInternoxseccionVisible,
   postFileCenterInterno,
+  getFileCenterInternoxIdEmpresa,
   getFileCenterInterno,
 };
