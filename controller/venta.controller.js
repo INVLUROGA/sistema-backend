@@ -1285,6 +1285,7 @@ const getVentasxFecha = async (req = request, res = response) => {
         "id_origen",
         "numero_transac",
         "fecha_venta",
+        "id_empresa",
       ],
       where: {
         fecha_venta: {
