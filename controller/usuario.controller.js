@@ -524,7 +524,7 @@ const postUsuarioEmpleado = async (req = request, res = response) => {
       raw: true,
     });
     const alertasDeCumpleanios = fechasAnteriores(
-      empleado.fecha_nacimiento,
+      req.body.fecNac_empl,
       3
     ).flatMap((aler, i) =>
       usuariosParaAlerta.map((us) => ({
@@ -537,20 +537,17 @@ const postUsuarioEmpleado = async (req = request, res = response) => {
       }))
     );
     console.log({
-      fa: fechasAnteriores(empleado.fecha_nacimiento, 2),
+      fa: fechasAnteriores(req.body.fecNac_empl, 2),
       usuariosParaAlerta,
       alertasDeCumpleanios,
     });
-    try {
-      await AlertasUsuario.bulkCreate(alertasDeCumpleanios);
-    } catch (error) {
-      console.log(error);
-    }
+    await AlertasUsuario.bulkCreate(alertasDeCumpleanios);
     res.status(200).json({
       msg: "success",
       empleado,
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({
       error: `Error en el servidor, en controller de postUsuarioEmpleado, hable con el administrador: ${error}`,
     });

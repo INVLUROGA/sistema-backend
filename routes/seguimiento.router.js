@@ -1,5 +1,8 @@
 const { Router } = require("express");
-const { getSeguimientos } = require("../controller/seguimiento.controller");
+const {
+  getSeguimientos,
+  obtenerSeguimientosxIdCli,
+} = require("../controller/seguimiento.controller");
 const router = Router();
 
 /**
@@ -8,6 +11,6 @@ const router = Router();
 
 router.get("/", getSeguimientos);
 
-router.get('/inactivo-x-3-meses')
+router.get("/id_cli/:id_cli", obtenerSeguimientosxIdCli);
 
 module.exports = router;

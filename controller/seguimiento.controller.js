@@ -2,6 +2,7 @@ const { request, response } = require("express");
 const { Seguimiento } = require("../models/Seguimientos");
 const { detalleVenta_membresias, Venta } = require("../models/Venta");
 const { Op } = require("sequelize");
+const { ProgramaTraining } = require("../models/ProgramaTraining");
 
 const getSeguimientos = async (req = request, res = response) => {
   try {
@@ -33,6 +34,39 @@ const getSeguimientos = async (req = request, res = response) => {
     console.log(error);
   }
 };
+const obtenerSeguimientosxIdCli = async (req = request, res = response) => {
+  try {
+    const { id_cli } = req.params;
+    const seguimientos = await Seguimiento.findAll({
+      where: { flag: true },
+      include: [
+        {
+          model: detalleVenta_membresias,
+          as: "venta",
+          required: true,
+          include: [
+            {
+              model: ProgramaTraining,
+            },
+            {
+              model: Venta,
+              required: true,
+              where: { id_cli },
+            },
+          ],
+        },
+      ],
+    });
+    console.log({ id_cli });
+
+    res.status(201).json({
+      seguimientos,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
   getSeguimientos,
+  obtenerSeguimientosxIdCli,
 };

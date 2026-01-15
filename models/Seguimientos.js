@@ -37,9 +37,14 @@ const Seguimiento = db.define("tb_seguimiento", {
     defaultValue: true,
   },
 });
-Seguimiento.hasOne(detalleVenta_membresias, {
-  foreignKey: "id",
-  sourceKey: "id_membresia",
+detalleVenta_membresias.hasOne(Seguimiento, {
+  foreignKey: "id_membresia",
+  sourceKey: "id",
+  as: "seguimiento",
+});
+Seguimiento.belongsTo(detalleVenta_membresias, {
+  foreignKey: "id_membresia", // FK en Seguimiento
+  targetKey: "id", // PK en detalleVenta_membresias
   as: "venta",
 });
 Seguimiento.hasOne(detalle_cambioPrograma, {

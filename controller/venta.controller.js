@@ -3931,7 +3931,131 @@ const getComandas = async (req = request, res = response) => {
     console.log(error);
   }
 };
+const obtenerVentasxIdCli = async (req = request, res = response) => {
+  const { id_cli } = req.params;
+  try {
+    const ventas = await Venta.findAll({
+      where: { flag: true, id_cli },
+      attributes: [
+        "id",
+        "id_cli",
+        "id_empl",
+        "id_origen",
+        "id_tipoFactura",
+        "numero_transac",
+        "fecha_venta",
+        "status_remove",
+        "observacion",
+      ],
+      order: [["fecha_venta", "DESC"]],
+      include: [
+        {
+          model: Cliente,
+          attributes: [
+            [
+              Sequelize.fn(
+                "CONCAT",
+                Sequelize.col("nombre_cli"),
+                " ",
+                Sequelize.col("apPaterno_cli"),
+                " ",
+                Sequelize.col("apMaterno_cli")
+              ),
+              "nombres_apellidos_cli",
+            ],
+          ],
+          include: [
+            {
+              model: ImagePT,
+            },
+          ],
+        },
+        {
+          model: Empleado,
+          attributes: [
+            [
+              Sequelize.fn(
+                "CONCAT",
+                Sequelize.col("nombre_empl"),
+                " ",
+                Sequelize.col("apPaterno_empl"),
+                " ",
+                Sequelize.col("apMaterno_empl")
+              ),
+              "nombres_apellidos_empl",
+            ],
+          ],
+        },
+        {
+          model: detalleVenta_Transferencia,
+          as: "venta_venta",
+          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
+          attributes: ["id_venta", "tarifa_monto"],
+        },
+        {
+          model: detalleVenta_producto,
+          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
+          attributes: [
+            "id_venta",
+            "id_producto",
+            "cantidad",
+            "precio_unitario",
+            "tarifa_monto",
+          ],
+        },
+        {
+          model: detalleVenta_membresias,
+          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
+          attributes: [
+            "id",
+            "id_venta",
+            "id_pgm",
+            "id_tarifa",
+            "horario",
+            "id_st",
+            "tarifa_monto",
+            "fecha_inicio",
+            "id_membresia_anterior",
+          ],
+          include: [
+            {
+              model: ProgramaTraining,
+            },
+          ],
+        },
+        {
+          model: detalleVenta_citas,
+          required: false,
+          attributes: ["id_venta", "id_servicio", "tarifa_monto"],
+        },
+        {
+          model: detalleVenta_pagoVenta,
+          attributes: ["id_venta", "parcial_monto"],
+          include: [
+            {
+              model: Parametros,
+              as: "parametro_forma_pago",
+            },
+          ],
+        },
+      ],
+    });
+    console.log({ ventas });
+
+    res.status(200).json({
+      ok: true,
+      ventas,
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      error: `Error en el servidor, en controller de get_VENTAS, hable con el administrador: ${error}`,
+    });
+  }
+};
 module.exports = {
+  obtenerVentasxIdCli,
   getComandas,
   postComanda,
   postVentaProductos,

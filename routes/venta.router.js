@@ -55,6 +55,7 @@ const {
   updateDetalleProducto,
   updateDetalleServicio,
   getVencimientosPorMes,
+  obtenerVentasxIdCli,
 } = require("../controller/venta.controller");
 
 const {
@@ -70,6 +71,7 @@ const router = Router();
 /*
 /api/venta
 */
+router.get("/id_cli/:id_cli", obtenerVentasxIdCli);
 router.get("/comanda/:id_empresa", getComandas);
 router.post("/comanda/:id_empresa", postComanda);
 router.post("/servicios/:id_venta", validarComandaPagada, postVentaServicios);

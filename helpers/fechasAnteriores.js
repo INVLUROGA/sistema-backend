@@ -3,7 +3,7 @@ function fechasAnteriores(fechaBase, cantidad) {
   const anioActual = hoy.getFullYear();
 
   // Extraemos mes y día de la fecha base
-  const [, mes, dia] = fechaBase.split("-");
+  const [, mes, dia] = fechaBase?.split("-");
 
   // Creamos la fecha base con el año actual
   const base = new Date(`${anioActual}-${mes}-${dia}`);
