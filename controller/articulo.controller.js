@@ -63,6 +63,53 @@ const GetArticulosxEmpresa = async (req = request, res = response) => {
   }
 };
 
+// Obtener todos los Articulos
+const GetArticulosxEmpresaxZona = async (req = request, res = response) => {
+  try {
+    const { id_empresa, id_lugar } = req.params;
+    const articulos = await Articulos.findAll({
+      where: {
+        id_empresa,
+        id_lugar,
+        flag: true,
+      },
+      include: [
+        {
+          model: ImagePT,
+          attributes: ["id", "name_image"],
+          where: { flag: true },
+          required: false,
+        },
+        // {
+        //   model: Parametros,
+        //   as: "parametro_marca",
+        // },
+        {
+          model: Parametros_zonas,
+          as: "parametro_lugar_encuentro",
+          attributes: [
+            ["nombre_zona", "label_param"],
+            ["orden_zona", "orden_param"],
+            ["nivel", "nivel"],
+          ],
+          include: [
+            {
+              model: ImagePT,
+              // where: { flag: true },
+              attributes: ["name_image"],
+            },
+          ],
+        },
+      ],
+    });
+    res.status(200).json({ msg: "Articulos obtenidos", articulos });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ msg: "ERROR EN LA BASE DE DATOS O SERVIDOR (GetArticulos)" });
+  }
+};
+
 // Obtener Articulo por ID
 const GetArticuloxID = async (req = request, res = response) => {
   try {
@@ -186,4 +233,5 @@ module.exports = {
   deleteArticuloxID,
   updateArticuloxID,
   getHistArticulosxEmpresa,
+  GetArticulosxEmpresaxZona,
 };

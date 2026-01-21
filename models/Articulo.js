@@ -63,6 +63,12 @@ const Articulos = db.define("tb_articulos", {
   nivel: {
     type: DataTypes.INTEGER,
   },
+  comentario: {
+    type: DataTypes.STRING(450),
+  },
+  id_estado_requisito: {
+    type: DataTypes.INTEGER,
+  },
   id_empresa: {
     type: DataTypes.INTEGER,
   },
@@ -276,7 +282,7 @@ Articulos.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 
@@ -287,7 +293,7 @@ HisCamArticulos.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 Kardex_Inventario.sync()
@@ -297,7 +303,7 @@ Kardex_Inventario.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 

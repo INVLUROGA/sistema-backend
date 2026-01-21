@@ -606,13 +606,6 @@ const seccionGET = async (req = request, res = response) => {
           url: "/reporte-admin/RecursosHumanoReportes",
         },
         {
-          key: "reporte-utilidad-pgm",
-          label: "Reporte de asistencias",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/reporte-admin/asistenciaReporte",
-        },
-        {
           key: "gest-serv",
           label: "Gestion de servicios",
           isTitle: true,
@@ -697,13 +690,6 @@ const seccionGET = async (req = request, res = response) => {
         //   icon: "uil-calender",
         //   url: "/videos-infraestructura",
         // },
-        {
-          key: "gest-jornada",
-          label: "Gestion de jornadas",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/gest-jornada",
-        },
         {
           key: "adm-audit",
           label: "Auditoria",

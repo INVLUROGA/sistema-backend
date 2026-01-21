@@ -1,23 +1,12 @@
 const express = require("express");
 const morgan = require("morgan");
-// const ZKLib = require("zklib-js");
 const cors = require("cors");
 const { urlArchivos, urlArchivoLogos } = require("./config/constant");
 const { db } = require("./database/sequelizeConnection.js");
-const transporterU = require("./config/nodemailer.js");
-const {
-  obtenerDataSeguimientos,
-} = require("./middlewares/EventosCron/obtenerDataSeguimientos.js");
 const { validarJWT } = require("./middlewares/validarJWT.js");
 const cron = require("node-cron");
 const {
-  EnviarMensajeDeRecordatorioMembresia,
-} = require("./middlewares/tareasCron.js");
-const {
-  insertaDatosTEST,
-  insertarDatosSeguimientoDeClientes,
   obtenerCumpleaniosCliente,
-  enviarMensajesxCitasxHorasFinales,
   alertasUsuario,
   recordatorioReservaCita24hAntes,
   recordatorioReservaCita2hAntes,
@@ -30,6 +19,7 @@ const {
 // Programa una tarea para las 9 AM todos los días
 // const cum = obtenerDataSeguimientos();
 // console.log(cum);
+cron.schedule("0 3 1 * *", async () => {});
 
 cron.schedule("0 15 * * *", () => {
   // insertaDatosTEST();
@@ -77,6 +67,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
   "http://localhost:5175",
+  "https://arrendamiento-tau.vercel.app",
 ];
 //CORS
 app.use(
@@ -89,7 +80,7 @@ app.use(
       }
       return callback(null, true);
     },
-  })
+  }),
 );
 
 app.use(morgan("dev")); // Usa "dev" o cualquier otro formato que prefieras
@@ -182,7 +173,7 @@ app.use("/api/proveedor", validarJWT, require("./routes/proveedor.router.js"));
 app.use(
   "/api/contrato-prov",
   validarJWT,
-  require("./routes/contratoProv.router.js")
+  require("./routes/contratoProv.router.js"),
 );
 app.use("/api/producto", require("./routes/producto.route.js"));
 //TODO: JUNTAR LOS DOS EN UNA RUTA
@@ -191,7 +182,7 @@ app.use("/api/egreso", validarJWT, require("./routes/gastos.router.js"));
 app.use(
   "/api/programaTraining",
 
-  require("./routes/programaTraining.route.js")
+  require("./routes/programaTraining.route.js"),
 );
 //TODO: PARAMETROS TODO TIPO(SEXO, TIPO DOC, NACIONALIDAD, TIPOCLIENTE, REFERENCIA DE CONTACTO, ETC)
 app.use("/api/parametros", require("./routes/parametros.route.js"));
@@ -207,7 +198,7 @@ app.use("/api/servicios", validarJWT, require("./routes/servicios.router.js"));
 app.use("/api/generador-fechas", require("./routes/generadorFechas.router.js"));
 app.use(
   "/api/extension-membresia",
-  require("./routes/extension_mem.router.js")
+  require("./routes/extension_mem.router.js"),
 );
 
 app.use("/api/meta", validarJWT, require("./routes/meta.route.js"));
@@ -220,12 +211,12 @@ app.use("/api/comision", validarJWT, require("./routes/comision.router.js"));
 app.use(
   "/api/inventario",
   validarJWT,
-  require("./routes/inventario.router.js")
+  require("./routes/inventario.router.js"),
 );
 
 app.use(
   "/api/marcacion" /*, validarJWT,*/,
-  require("./routes/marcacion.router.js")
+  require("./routes/marcacion.router.js"),
 );
 //TODO: FORMA PAGO
 app.use("/api/formaPago", validarJWT, require("./routes/formaPago.router.js"));
@@ -234,18 +225,18 @@ app.use("/api/venta", require("./routes/venta.router.js"));
 app.use("/api/lead", validarJWT, require("./routes/lead.router.js"));
 app.use(
   "/api/reserva_monk_fit",
-  require("./routes/reserva_monk_fit.router.js")
+  require("./routes/reserva_monk_fit.router.js"),
 );
 // app.use("/api/pros")
 app.use(
   "/api/serviciospt",
   validarJWT,
-  require("./routes/serviciosPT.router.js")
+  require("./routes/serviciosPT.router.js"),
 );
 app.use(
   "/api/exportar",
   validarJWT,
-  require("./routes/exportarData.router.js")
+  require("./routes/exportarData.router.js"),
 );
 app.use("/api/cita", validarJWT, require("./routes/cita.router.js"));
 app.use("/api/prospecto", validarJWT, require("./routes/prospecto.router.js"));
@@ -256,7 +247,7 @@ app.use("/api/dieta", require("./routes/dieta.router.js"));
 app.use(
   "/api/flujo-caja",
   validarJWT,
-  require("./routes/flujo-caja.router.js")
+  require("./routes/flujo-caja.router.js"),
 );
 app.use("/api/recursosHumanos", require("./routes/recursosHumanos.route.js"));
 app.use("/api/terminologia", require("./routes/terminologia.router.js"));

@@ -411,7 +411,7 @@ const obtenerMovimientosxArticulo = async (req = request, res = response) => {
 
 const getInventarioxKardexxFechasxEmpresa = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   try {
     const { id_empresa } = req.params;
@@ -435,7 +435,7 @@ const getInventarioxKardexxFechasxEmpresa = async (
     res.status(201).json({
       inventario_x_fechas: inventario,
     });
-  } catch (error) { 
+  } catch (error) {
     console.log(error);
   }
 };
@@ -445,7 +445,7 @@ function generarInventario(
   kardexEntrada,
   kardexSalida,
   fechas,
-  transferencias
+  transferencias,
 ) {
   const resultados = [];
   const fechaDesde = new Date("1900-01-01");
@@ -593,7 +593,7 @@ function generarInventario(
 }
 const obtenerHistorialCambiosArticuloxIDARTICULO = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   try {
     const { idArticulo } = req.params;
