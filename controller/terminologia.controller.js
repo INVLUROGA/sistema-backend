@@ -105,7 +105,10 @@ const postterminologiasGastosxEmpresa = async (
   res = response
 ) => {
   try {
-    const termGastos = new ParametroGastos(req.body);
+    const termGastos = new ParametroGastos({
+      ...req.body,
+      tipo: 1573
+    });
     termGastos.save();
     res.status(201).json({
       termGastos,
