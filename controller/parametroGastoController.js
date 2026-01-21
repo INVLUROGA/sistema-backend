@@ -41,7 +41,7 @@ const postRegistrarParametroGasto = async (req = request, res = response) => {
   try {
     console.log(req.body);
 
-    const ParametroGasto = new ParametroGastos(req.body);
+    const ParametroGasto = new ParametroGastos({ ...req.body, tipo: 1573 });
     await ParametroGasto.save();
     res.status(200).json({
       msg: "ok",
