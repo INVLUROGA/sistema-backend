@@ -91,7 +91,7 @@ const estadosClienteMembresiaVar = async (req = request, res = response) => {
     const respuesta = await estadosClienteMembresiaV2(
       tipoPrograma,
       fechaDesde,
-      fechaHasta
+      fechaHasta,
     );
     res.status(200).json({
       ok: true,
@@ -109,7 +109,7 @@ const estadosClienteMembresiaVar = async (req = request, res = response) => {
 async function estadosClienteMembresiaV2(
   tipoPrograma,
   fechaDesdeStr,
-  fechaHastaStr
+  fechaHastaStr,
 ) {
   fechaDesdeStr = new Date(fechaDesdeStr);
   fechaHastaStr = new Date(fechaHastaStr);
@@ -138,7 +138,7 @@ async function estadosClienteMembresiaV2(
                 " ",
                 Sequelize.col("apPaterno_cli"),
                 " ",
-                Sequelize.col("apMaterno_cli")
+                Sequelize.col("apMaterno_cli"),
               ),
               "nombres_apellidos_cli",
             ],
@@ -221,7 +221,7 @@ async function estadosClienteMembresiaV2(
                 " ",
                 Sequelize.col("apPaterno_cli"),
                 " ",
-                Sequelize.col("apMaterno_cli")
+                Sequelize.col("apMaterno_cli"),
               ),
               "nombres_apellidos_cli",
             ],
@@ -267,7 +267,7 @@ async function estadosClienteMembresiaV2(
         Segundafecha_fin_membresia
       ) {
         Segundafecha_fin_membresia = new Date(
-          venta.detalle_ventaMembresia[0].fec_fin_mem
+          venta.detalle_ventaMembresia[0].fec_fin_mem,
         );
       }
 
@@ -278,13 +278,13 @@ async function estadosClienteMembresiaV2(
       if (contadorVentasConTrue == 1 && ContadorVentasGeneral == 1) {
         tipoCliente = "Cliente Nuevo";
         Primerafecha_fin_membresia = new Date(
-          venta.detalle_ventaMembresia[0].fec_fin_mem
+          venta.detalle_ventaMembresia[0].fec_fin_mem,
         );
       }
 
       if (contadorVentasConTrue == 2 || ContadorVentasGeneral == 2) {
         Segundafecha_fin_membresia = new Date(
-          venta.detalle_ventaMembresia[0].fec_fin_mem
+          venta.detalle_ventaMembresia[0].fec_fin_mem,
         );
       }
       if (
@@ -322,7 +322,7 @@ async function estadosClienteMembresiaV2(
   response = ContadoresEstadoClienteInscripcion(
     response,
     fechaDesdeStr,
-    fechaHastaStr
+    fechaHastaStr,
   );
   return response;
 }
@@ -330,7 +330,7 @@ async function estadosClienteMembresiaV2(
 function ContadoresEstadoClienteInscripcion(
   AnalisisGeneral,
   fechaDesde,
-  fechaHasta
+  fechaHasta,
 ) {
   let response = {};
   let clientesNuevos = {};
@@ -401,7 +401,7 @@ const comparativaPorProgramaApi = async (req = request, res = response) => {
     let NroMesAnterior = nroMesActual - 1;
 
     const respuesta1 = await comparativaPorPrograma(
-      new Date(fechaDate.getFullYear(), nroMesActual, 1)
+      new Date(fechaDate.getFullYear(), nroMesActual, 1),
     );
     //const respuesta2  = await comparativaPorPrograma(new Date (fechaDate.getFullYear() , NroMesAnterior , 1));
     //const respuesta3  = await comparativaPorPrograma(fecha);
@@ -470,7 +470,7 @@ async function comparativaPorPrograma(fecha) {
         //resultado[programaTraining.name_pgm] = ( resultado[programaTraining.name_pgm] || 0 ) + 1;
         //programaTraining.name_pgm;
       }
-    })
+    }),
   );
 
   for (programa in resultado) {
@@ -532,7 +532,7 @@ const postVenta = async (req = request, res = response) => {
           uid_firma: uid_firma,
           uid_contrato: uid_contrato,
           ...mem,
-        })
+        }),
       );
 
       await detalleVenta_membresias.bulkCreate(ventasMembresiasConIdVenta);
@@ -551,10 +551,10 @@ const postVenta = async (req = request, res = response) => {
         (transferencia) => ({
           id_venta: req.ventaID,
           ...transferencia,
-        })
+        }),
       );
       await detalleVenta_Transferencia.bulkCreate(
-        ventasTransferenciaConIdVenta
+        ventasTransferenciaConIdVenta,
       );
     }
     if (req.pagosExtraidos && req.pagosExtraidos.length > 0) {
@@ -598,12 +598,12 @@ const obtener_contrato_pdf = async (req = request, res = response) => {
       0,
       dataVenta.dataTarifa.value,
       dataVenta.fecha_inicio,
-      dataVenta.firmaCli
+      dataVenta.firmaCli,
     );
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
-      "attachment; filename=CONTRATO-CLIENTE.pdf"
+      "attachment; filename=CONTRATO-CLIENTE.pdf",
     );
     res.send(Buffer.from(pdfContrato));
   } catch (error) {
@@ -618,7 +618,7 @@ const getPDF_CONTRATO = async (
   id_venta,
   id_tarifa,
   fecha_inicio,
-  firmaCli
+  firmaCli,
 ) => {
   //
   /*
@@ -670,7 +670,7 @@ semanas,
     EdadCliente: `${calcularEdad(data_cliente.fecha_nacimiento)}`,
     DistritoCliente: `${data_Distrito?.distrito}`,
     FechaDeNacimientoCliente: `${dayjs(data_cliente.fecha_nacimiento).format(
-      "DD/MM/YYYY"
+      "DD/MM/YYYY",
     )}`,
     CentroDeTrabajoCliente: `${data_cliente.trabajo_cli}`,
     origenCliente: `${data_origen?.label_param}`,
@@ -685,7 +685,7 @@ semanas,
     fec_inicio: `${dayjs.utc(fecha_inicio).format("DD/MM/YYYY")}`,
     fec_fin: `${dayjs(
       sumarSemanas(fecha_inicio, dataSemanas.semanas_st),
-      "YYYY-MM-DD"
+      "YYYY-MM-DD",
     ).format("DD/MM/YYYY")}`,
     horario: `${dayjs.utc(horario).format("hh:mm A")}`,
     semanas: `${dataSemanas.semanas_st}`,
@@ -739,10 +739,13 @@ const get_VENTAS = async (req = request, res = response) => {
                 " ",
                 Sequelize.col("apPaterno_cli"),
                 " ",
-                Sequelize.col("apMaterno_cli")
+                Sequelize.col("apMaterno_cli"),
               ),
               "nombres_apellidos_cli",
             ],
+            "sexo_cli",
+            "ubigeo_distrito_cli",
+            "ubigeo_distrito_trabajo",
           ],
           include: [
             {
@@ -760,7 +763,7 @@ const get_VENTAS = async (req = request, res = response) => {
                 " ",
                 Sequelize.col("apPaterno_empl"),
                 " ",
-                Sequelize.col("apMaterno_empl")
+                Sequelize.col("apMaterno_empl"),
               ),
               "nombres_apellidos_empl",
             ],
@@ -800,6 +803,11 @@ const get_VENTAS = async (req = request, res = response) => {
           include: [
             {
               model: ProgramaTraining,
+              attributes: ["name_pgm"],
+            },
+            {
+              model: SemanasTraining,
+              attributes: ["semanas_st"],
             },
           ],
         },
@@ -861,7 +869,7 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
                 " ",
                 Sequelize.col("tb_cliente.apPaterno_cli"),
                 " ",
-                Sequelize.col("tb_cliente.apMaterno_cli")
+                Sequelize.col("tb_cliente.apMaterno_cli"),
               ),
               "nombres_apellidos_cli",
             ],
@@ -887,7 +895,7 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
                 " ",
                 Sequelize.col("tb_empleado.apPaterno_empl"),
                 " ",
-                Sequelize.col("tb_empleado.apMaterno_empl")
+                Sequelize.col("tb_empleado.apMaterno_empl"),
               ),
               "nombres_apellidos_empl",
             ],
@@ -922,16 +930,16 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
                   Sequelize.fn(
                     "CONCAT",
                     Sequelize.col(
-                      "detalle_ventaProductos->empleado_producto.nombre_empl"
+                      "detalle_ventaProductos->empleado_producto.nombre_empl",
                     ),
                     " ",
                     Sequelize.col(
-                      "detalle_ventaProductos->empleado_producto.apPaterno_empl"
+                      "detalle_ventaProductos->empleado_producto.apPaterno_empl",
                     ),
                     " ",
                     Sequelize.col(
-                      "detalle_ventaProductos->empleado_producto.apMaterno_empl"
-                    )
+                      "detalle_ventaProductos->empleado_producto.apMaterno_empl",
+                    ),
                   ),
                   "nombres_apellidos_empl",
                 ],
@@ -987,16 +995,16 @@ const get_VENTAS_CIRCUS = async (req = request, res = response) => {
                   Sequelize.fn(
                     "CONCAT",
                     Sequelize.col(
-                      "detalle_ventaservicios->empleado_servicio.nombre_empl"
+                      "detalle_ventaservicios->empleado_servicio.nombre_empl",
                     ),
                     " ",
                     Sequelize.col(
-                      "detalle_ventaservicios->empleado_servicio.apPaterno_empl"
+                      "detalle_ventaservicios->empleado_servicio.apPaterno_empl",
                     ),
                     " ",
                     Sequelize.col(
-                      "detalle_ventaservicios->empleado_servicio.apMaterno_empl"
-                    )
+                      "detalle_ventaservicios->empleado_servicio.apMaterno_empl",
+                    ),
                   ),
                   "nombres_apellidos_empl",
                 ],
@@ -1096,7 +1104,7 @@ const get_VENTA_ID = async (req = request, res = response) => {
                 " ",
                 Sequelize.col("apPaterno_cli"),
                 " ",
-                Sequelize.col("apMaterno_cli")
+                Sequelize.col("apMaterno_cli"),
               ),
               "nombres_apellidos_cli",
             ],
@@ -1112,7 +1120,7 @@ const get_VENTA_ID = async (req = request, res = response) => {
                 " ",
                 Sequelize.col("apPaterno_empl"),
                 " ",
-                Sequelize.col("apMaterno_empl")
+                Sequelize.col("apMaterno_empl"),
               ),
               "nombres_apellidos_empl",
             ],
@@ -1307,7 +1315,7 @@ const getVentasxFecha = async (req = request, res = response) => {
                 " ",
                 Sequelize.col("apPaterno_cli"),
                 " ",
-                Sequelize.col("apMaterno_cli")
+                Sequelize.col("apMaterno_cli"),
               ),
               "nombres_apellidos_cli",
             ],
@@ -1323,7 +1331,7 @@ const getVentasxFecha = async (req = request, res = response) => {
                 " ",
                 Sequelize.col("apPaterno_empl"),
                 " ",
-                Sequelize.col("apMaterno_empl")
+                Sequelize.col("apMaterno_empl"),
               ),
               "nombres_apellidos_empl",
             ],
@@ -1485,11 +1493,11 @@ const mailMembresia = async (req = request, res = response) => {
       id_venta,
       detalle_membresia.id_tarifa,
       detalle_membresia.fechaInicio_programa,
-      firma_base64
+      firma_base64,
     );
 
     const base64_contratoPDF = `data:application/pdf;base64,${Buffer.from(
-      pdfContrato
+      pdfContrato,
     ).toString("base64")}`;
 
     const banner1_Attachment = {
@@ -1536,7 +1544,7 @@ const mailMembresia = async (req = request, res = response) => {
         detalle_membresia.tarifa,
         detalle_membresia.cong,
         detalle_membresia.nutric,
-        `${dataEmpleado.nombre_empl} ${dataEmpleado.apPaterno_empl}`
+        `${dataEmpleado.nombre_empl} ${dataEmpleado.apPaterno_empl}`,
       )}`,
       headers: {
         "List-Unsubscribe": `<mailto:${env.EMAIL_CONTRATOS}?subject=unsubscribe>`,
@@ -1621,7 +1629,7 @@ const postTraspasoMembresia = async (req = request, res = response) => {
 };
 const obtenerVentasMembresiaxEmpresa = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   try {
     const ventas = await Venta.findAll({
@@ -1646,7 +1654,7 @@ const obtenerVentasMembresiaxEmpresa = async (
                 " ",
                 Sequelize.col("apPaterno_cli"),
                 " ",
-                Sequelize.col("apMaterno_cli")
+                Sequelize.col("apMaterno_cli"),
               ),
               "nombres_apellidos_cli",
             ],
@@ -1662,7 +1670,7 @@ const obtenerVentasMembresiaxEmpresa = async (
                 " ",
                 Sequelize.col("apPaterno_empl"),
                 " ",
-                Sequelize.col("apMaterno_empl")
+                Sequelize.col("apMaterno_empl"),
               ),
               "nombres_apellidos_empl",
             ],
@@ -1715,7 +1723,7 @@ const obtenerContratosClientes = async (req = request, res = response) => {
                 " ",
                 Sequelize.col("apPaterno_cli"),
                 " ",
-                Sequelize.col("apMaterno_cli")
+                Sequelize.col("apMaterno_cli"),
               ),
               "nombres_apellidos_cli",
             ],
@@ -1732,7 +1740,7 @@ const obtenerContratosClientes = async (req = request, res = response) => {
                 " ",
                 Sequelize.col("apPaterno_empl"),
                 " ",
-                Sequelize.col("apMaterno_empl")
+                Sequelize.col("apMaterno_empl"),
               ),
               "nombres_apellidos_empl",
             ],
@@ -1846,7 +1854,7 @@ const obtenerClientesxDistritos = async (req = request, res = response) => {
 };
 const obtenerUltimasVentasxComprobantes = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   try {
     const { id_comprobante, id_empresa } = req.params;
@@ -2051,7 +2059,7 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
                     " ",
                     Sequelize.col("apPaterno_cli"),
                     " ",
-                    Sequelize.col("apMaterno_cli")
+                    Sequelize.col("apMaterno_cli"),
                   ),
                   "nombres_apellidos_cli",
                 ],
@@ -2213,7 +2221,7 @@ const getVencimientosPorMes = async (req = request, res = response) => {
       const d = new Date(r.fecha_venta);
       const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
         2,
-        "0"
+        "0",
       )}`;
       mapRenovaciones[k] = (mapRenovaciones[k] || 0) + 1;
     });
@@ -2325,7 +2333,7 @@ const getVencimientosPorMes = async (req = request, res = response) => {
     clientMaxDates.forEach((maxDate) => {
       if (maxDate.getFullYear() === targetYear) {
         const k = `${maxDate.getFullYear()}-${String(
-          maxDate.getMonth() + 1
+          maxDate.getMonth() + 1,
         ).padStart(2, "0")}`;
         mapVencimientos[k] = (mapVencimientos[k] || 0) + 1;
       }
@@ -2483,7 +2491,7 @@ const obtenerComparativoTotal = async (req = request, res = response) => {
 
 const obtenerComparativoResumenClientes = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   const { arrayDate } = req.query;
 
@@ -2654,7 +2662,7 @@ const obtenerComparativoResumenClientes = async (
                     " ",
                     Sequelize.col("apPaterno_cli"),
                     " ",
-                    Sequelize.col("apMaterno_cli")
+                    Sequelize.col("apMaterno_cli"),
                   ),
                   "nombres_apellidos_cli",
                 ],
@@ -3317,7 +3325,7 @@ const obtenerClientesConMembresia = async (req = request, res = response) => {
             " ",
             Sequelize.col("apPaterno_cli"),
             " ",
-            Sequelize.col("apMaterno_cli")
+            Sequelize.col("apMaterno_cli"),
           ),
           "nombres_apellidos_cli",
         ],
@@ -3356,7 +3364,7 @@ const obtenerClientesConMembresia = async (req = request, res = response) => {
 };
 const obtenerTransferenciasResumenxMes = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   const { anio, mes } = req.query;
   // Define mes y año
@@ -3478,7 +3486,7 @@ const obtenerMembresias = async (req = request, res = response) => {
                 " ",
                 Sequelize.col("apPaterno_cli"),
                 " ",
-                Sequelize.col("apMaterno_cli")
+                Sequelize.col("apMaterno_cli"),
               ),
               "nombres_apellidos_cli",
             ],
@@ -3501,7 +3509,7 @@ const obtenerMembresias = async (req = request, res = response) => {
 };
 const obtenerMarcacionesClientexMembresias = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   try {
     const year = 2024;
@@ -3525,7 +3533,7 @@ const obtenerMarcacionesClientexMembresias = async (
                 " ",
                 Sequelize.col("apPaterno_cli"),
                 " ",
-                Sequelize.col("apMaterno_cli")
+                Sequelize.col("apMaterno_cli"),
               ),
               "nombres_apellidos_cli",
             ],
@@ -3804,7 +3812,7 @@ const getComandas = async (req = request, res = response) => {
                 " ",
                 Sequelize.col("tb_cliente.apPaterno_cli"),
                 " ",
-                Sequelize.col("tb_cliente.apMaterno_cli")
+                Sequelize.col("tb_cliente.apMaterno_cli"),
               ),
               "nombres_apellidos_cli",
             ],
@@ -3834,16 +3842,16 @@ const getComandas = async (req = request, res = response) => {
                   Sequelize.fn(
                     "CONCAT",
                     Sequelize.col(
-                      "detalle_ventaProductos->empleado_producto.nombre_empl"
+                      "detalle_ventaProductos->empleado_producto.nombre_empl",
                     ),
                     " ",
                     Sequelize.col(
-                      "detalle_ventaProductos->empleado_producto.apPaterno_empl"
+                      "detalle_ventaProductos->empleado_producto.apPaterno_empl",
                     ),
                     " ",
                     Sequelize.col(
-                      "detalle_ventaProductos->empleado_producto.apMaterno_empl"
-                    )
+                      "detalle_ventaProductos->empleado_producto.apMaterno_empl",
+                    ),
                   ),
                   "nombres_apellidos_empl",
                 ],
@@ -3901,16 +3909,16 @@ const getComandas = async (req = request, res = response) => {
                   Sequelize.fn(
                     "CONCAT",
                     Sequelize.col(
-                      "detalle_ventaservicios->empleado_servicio.nombre_empl"
+                      "detalle_ventaservicios->empleado_servicio.nombre_empl",
                     ),
                     " ",
                     Sequelize.col(
-                      "detalle_ventaservicios->empleado_servicio.apPaterno_empl"
+                      "detalle_ventaservicios->empleado_servicio.apPaterno_empl",
                     ),
                     " ",
                     Sequelize.col(
-                      "detalle_ventaservicios->empleado_servicio.apMaterno_empl"
-                    )
+                      "detalle_ventaservicios->empleado_servicio.apMaterno_empl",
+                    ),
                   ),
                   "nombres_apellidos_empl",
                 ],
@@ -3959,7 +3967,7 @@ const obtenerVentasxIdCli = async (req = request, res = response) => {
                 " ",
                 Sequelize.col("apPaterno_cli"),
                 " ",
-                Sequelize.col("apMaterno_cli")
+                Sequelize.col("apMaterno_cli"),
               ),
               "nombres_apellidos_cli",
             ],
@@ -3980,7 +3988,7 @@ const obtenerVentasxIdCli = async (req = request, res = response) => {
                 " ",
                 Sequelize.col("apPaterno_empl"),
                 " ",
-                Sequelize.col("apMaterno_empl")
+                Sequelize.col("apMaterno_empl"),
               ),
               "nombres_apellidos_empl",
             ],

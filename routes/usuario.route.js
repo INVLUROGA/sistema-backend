@@ -57,77 +57,77 @@ router.put("/pariente/delete/:id", deletePariente);
 router.post(
   "/post-cliente/:id_empresa",
   validarJWT,
-  (req, res, next) => {
-    if (req.params.id_empresa === "599") {
-      // Si es 599, omitir validaciones y continuar
-      return next();
-    }
+  // (req, res, next) => {
+  //   if (req.params.id_empresa === "599") {
+  //     // Si es 599, omitir validaciones y continuar
+  //     return next();
+  //   }
 
-    // Si no es 599, aplicar validaciones manualmente
-    const validations = [
-      check("name_image", "FALTA EL AVATAR DEL CLIENTE").not().isEmpty(),
-      check("nombre_cli", "EL NOMBRE DEL CLIENTE ES OBLIGATORIO")
-        .not()
-        .isEmpty(),
-      check("apPaterno_cli", "EL APELLIDO PATERNO DEL CLIENTE ES OBLIGATORIO")
-        .not()
-        .isEmpty(),
-      check("apMaterno_cli", "EL APELLIDO MATERNO DEL CLIENTE ES OBLIGATORIO")
-        .not()
-        .isEmpty(),
-      check(
-        "fecha_nacimiento",
-        "LA FECHA DE NACIMIENTO DEL CLIENTE ES OBLIGATORIA"
-      )
-        .not()
-        .isEmpty(),
-      check("estCivil_cli", "ELEGIR UN CORRECTO ESTADO CIVIL").not().isEmpty(),
-      check("sexo_cli", "ELEGIR UN CORRECTO GENERO").not().isEmpty(),
-      check("tipoDoc_cli", "ELEGIR UN CORRECTO TIPO DE DOCUMENTO")
-        .not()
-        .isEmpty(),
-      check("numDoc_cli", "EL NUMERO DE DOCUMENTO DEBE SER EL CORRECTO")
-        .not()
-        .isEmpty(),
-      check("nacionalidad_cli", "ELEGIR UNA CORRECTA NACIONALIDAD")
-        .not()
-        .isEmpty(),
-      check("ubigeo_distrito_cli", "ELEGIR UN CORRECTO DISTRITO")
-        .not()
-        .isEmpty(),
-      check("direccion_cli", "COMPLETAR EL CAMPO DIRECCION DEL CLIENTE")
-        .not()
-        .isEmpty(),
-      check("tipoCli_cli", "ELEGIR UN CORRECTO TIPO DE CLIENTE")
-        .not()
-        .isEmpty(),
-      check(
-        "ubigeo_distrito_trabajo",
-        "ELEGIR UN CORRECTO DISTRITO DE TRABAJO DEL CLIENTE"
-      )
-        .not()
-        .isEmpty(),
-      check("trabajo_cli", "COMPLETAR EL CAMPO DE TRABAJO").not().isEmpty(),
-      check("cargo_cli", "COMPLETAR EL CAMPO DE CARGO").not().isEmpty(),
-      check("email_cli", "EL EMAIL DEBE SER CORRECTO").isEmail(),
-      check("tel_cli", "EL TELEFONO DEBE DE SER CORRECTO").not().isEmpty(),
-    ];
+  //   // Si no es 599, aplicar validaciones manualmente
+  //   const validations = [
+  //     check("name_image", "FALTA EL AVATAR DEL CLIENTE").not().isEmpty(),
+  //     check("nombre_cli", "EL NOMBRE DEL CLIENTE ES OBLIGATORIO")
+  //       .not()
+  //       .isEmpty(),
+  //     check("apPaterno_cli", "EL APELLIDO PATERNO DEL CLIENTE ES OBLIGATORIO")
+  //       .not()
+  //       .isEmpty(),
+  //     check("apMaterno_cli", "EL APELLIDO MATERNO DEL CLIENTE ES OBLIGATORIO")
+  //       .not()
+  //       .isEmpty(),
+  //     check(
+  //       "fecha_nacimiento",
+  //       "LA FECHA DE NACIMIENTO DEL CLIENTE ES OBLIGATORIA"
+  //     )
+  //       .not()
+  //       .isEmpty(),
+  //     check("estCivil_cli", "ELEGIR UN CORRECTO ESTADO CIVIL").not().isEmpty(),
+  //     check("sexo_cli", "ELEGIR UN CORRECTO GENERO").not().isEmpty(),
+  //     check("tipoDoc_cli", "ELEGIR UN CORRECTO TIPO DE DOCUMENTO")
+  //       .not()
+  //       .isEmpty(),
+  //     check("numDoc_cli", "EL NUMERO DE DOCUMENTO DEBE SER EL CORRECTO")
+  //       .not()
+  //       .isEmpty(),
+  //     check("nacionalidad_cli", "ELEGIR UNA CORRECTA NACIONALIDAD")
+  //       .not()
+  //       .isEmpty(),
+  //     check("ubigeo_distrito_cli", "ELEGIR UN CORRECTO DISTRITO")
+  //       .not()
+  //       .isEmpty(),
+  //     check("direccion_cli", "COMPLETAR EL CAMPO DIRECCION DEL CLIENTE")
+  //       .not()
+  //       .isEmpty(),
+  //     check("tipoCli_cli", "ELEGIR UN CORRECTO TIPO DE CLIENTE")
+  //       .not()
+  //       .isEmpty(),
+  //     check(
+  //       "ubigeo_distrito_trabajo",
+  //       "ELEGIR UN CORRECTO DISTRITO DE TRABAJO DEL CLIENTE"
+  //     )
+  //       .not()
+  //       .isEmpty(),
+  //     check("trabajo_cli", "COMPLETAR EL CAMPO DE TRABAJO").not().isEmpty(),
+  //     check("cargo_cli", "COMPLETAR EL CAMPO DE CARGO").not().isEmpty(),
+  //     check("email_cli", "EL EMAIL DEBE SER CORRECTO").isEmail(),
+  //     check("tel_cli", "EL TELEFONO DEBE DE SER CORRECTO").not().isEmpty(),
+  //   ];
 
-    // Ejecutar los checks manualmente
-    Promise.all(validations.map((validation) => validation.run(req)))
-      .then(() => validarCampos(req, res, next))
-      .catch(next);
-  },
+  //   // Ejecutar los checks manualmente
+  //   Promise.all(validations.map((validation) => validation.run(req)))
+  //     .then(() => validarCampos(req, res, next))
+  //     .catch(next);
+  // },
   extraerUpload,
   extraerComentarios,
   extraerContactoEmergencia,
-  postUsuarioCliente
+  postUsuarioCliente,
 );
 router.get("/get-marcacions/cliente", obtenerMarcacionsCliente);
 router.get("/get-seguimiento-cliente", insertarDatosSeguimientoDeClientes);
 router.get(
   "/get-ultima-membresia-cliente/:id_cli",
-  obtenerDatosUltimaMembresia
+  obtenerDatosUltimaMembresia,
 );
 router.get("/get-clientes/:id_empresa", getUsuarioClientes);
 router.get("/get-cliente/:uid_cliente", getUsuarioCliente);
@@ -143,12 +143,12 @@ router.post(
   extraerUpload,
   extraerComentarios,
   extraerContactoEmergencia,
-  postUsuarioEmpleado
+  postUsuarioEmpleado,
 );
 router.get("/get-empleados", validarJWT, getUsuarioEmpleados);
 router.post(
   "/post-reporte-planilla-activos",
-  getobtenerPlanillaEmpleadoActivos
+  getobtenerPlanillaEmpleadoActivos,
 );
 router.get("/get-empleado/:uid_empleado", validarJWT, getUsuarioEmpleado);
 router.put("/put-empleado/:uid_empleado", validarJWT, putUsuarioEmpleado);

@@ -32,7 +32,7 @@ const terminologiasPorEntidad = async (req = request, res = response) => {
 
       let parametrosPorEntidadFiltrado = response.parametros.filter(
         (parametoFiltrado) =>
-          parametoFiltrado.entidad_param == parametro.entidad_param
+          parametoFiltrado.entidad_param == parametro.entidad_param,
       );
       if (parametrosPorEntidadFiltrado.length == 0) {
         response.parametros.push(parametroPorEntidad);
@@ -51,7 +51,7 @@ const terminologiasPorEntidad = async (req = request, res = response) => {
       parametroPorEmpresa.parametros.push(parametro);
 
       const parametroGasto = response.parametrosGasto.filter(
-        (parametoFiltrado) => parametoFiltrado.empresa == parametro.id_empresa
+        (parametoFiltrado) => parametoFiltrado.empresa == parametro.id_empresa,
       );
       if (parametroGasto.length == 0) {
         response.parametrosGasto.push(parametroPorEmpresa);
@@ -102,12 +102,12 @@ const terminologiasGastosxEmpresa = async (req = request, res = response) => {
 };
 const postterminologiasGastosxEmpresa = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   try {
     const termGastos = new ParametroGastos({
       ...req.body,
-      tipo: 1573
+      tipo: 1573,
     });
     termGastos.save();
     res.status(201).json({
@@ -119,7 +119,7 @@ const postterminologiasGastosxEmpresa = async (
 };
 const putterminologiasGastosxEmpresa = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   const { id_empresa } = req.params;
   try {
@@ -138,7 +138,7 @@ const putterminologiasGastosxEmpresa = async (
 };
 const deleteterminologiasGastosxEmpresa = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   const { id } = req.params;
   try {
@@ -170,6 +170,116 @@ const comboMesActivoVentas = async (req = request, res = response) => {
     console.log(error);
   }
 };
+// * TODO: RUTAS DE TERMINOLOGIAS
+const obtenerTerminologia2xEmpresaxTipo = async (
+  req = request,
+  res = response,
+) => {
+  try {
+    const { id_empresa, tipo } = req.params;
+    const terminologia2 = await ParametroGastos.findAll({
+      where: { id_empresa, tipo, flag: true },
+    });
+    res.status(201).json({
+      terminologia2,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const postTerminologia2 = async (req = request, res = response) => {
+  try {
+    const { id_empresa, tipo } = req.params;
+    const { formState } = req.body;
+    const terminologia2 = await ParametroGastos.create({
+      ...formState,
+      id_empresa,
+      tipo,
+    });
+    res.status(201).json({
+      terminologia2,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const updateTerminologia2xID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const { formState } = req.body;
+    const terminologia2 = await ParametroGastos.findAll({ where: { id } });
+    await ParametroGastos.update(formState);
+    res.status(201).json({
+      terminologia2,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const deleteTerminologia2xID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const terminologia2 = await ParametroGastos.findAll({ where: { id } });
+    await ParametroGastos.update({ flag: false });
+    res.status(201).json({
+      terminologia2,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// * TERMINOLOGIAS 1
+const obtenerTerminologia1 = async (req = request, res = response) => {
+  try {
+    const terminologia = await Parametros.findAll({
+      where: { flag: true },
+    });
+    res.status(201).json({
+      terminologia,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const postTerminologia1 = async (req = request, res = response) => {
+  try {
+    const { formState } = req.body;
+    const terminologia = await Parametros.create({
+      ...formState,
+    });
+    res.status(201).json({
+      terminologia,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const updateTerminologia1xID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const { formState } = req.body;
+    const terminologia = await Parametros.findAll({ where: { id } });
+    await Parametros.update(formState);
+    res.status(201).json({
+      terminologia,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const deleteTerminologia1xID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const terminologia = await Parametros.findAll({ where: { id } });
+    await Parametros.update({ flag: false });
+    res.status(201).json({
+      terminologia,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
   terminologiasPorEntidad,
   comboMesActivoVentas,
@@ -177,4 +287,14 @@ module.exports = {
   postterminologiasGastosxEmpresa,
   putterminologiasGastosxEmpresa,
   deleteterminologiasGastosxEmpresa,
+  // TERM2
+  obtenerTerminologia2xEmpresaxTipo,
+  postTerminologia2,
+  updateTerminologia2xID,
+  deleteTerminologia2xID,
+  // TERM1
+  obtenerTerminologia1,
+  postTerminologia1,
+  updateTerminologia1xID,
+  deleteTerminologia1xID,
 };

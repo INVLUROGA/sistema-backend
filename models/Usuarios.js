@@ -361,54 +361,8 @@ const carcel = async () => {
     console.error("Error al asignar UUID:", error);
   }
 };
-// carcel();
-
-// const carcel = () => {
-// (async () => {
-//   try {
-
-//     await Cliente.update(
-//       {
-//         uid: uuid.v4()
-//       },
-//       {
-//         where: {
-//           uid: null,
-//         },
-//       }
-//     );
-
-//     console.log(
-//       "Todos los valores null en la columna uid han sido actualizados."
-//     );
-//   } catch (error) {
-//     console.error("Unable to connect to the database:", error);
-//   }
-// })();
-// };
 module.exports = {
   Cliente,
   Empleado,
   Usuario,
-};
-const carcel2 = () => {
-  // const empleadosConUuid = empleados.map((empleado) => ({
-  //   ...empleado,
-  //   uid: uuid.v4(),
-  //   uid_avatar: uuid.v4(),
-  //   horario_empl: "",
-  //   cargo_empl: 0,
-  //   departamento_empl: 0,
-  //   salario_empl: 0.0,
-  //   uid_contactsEmergencia: uuid.v4(),
-  //   uid_comentario: uuid.v4(),
-  //   tipoContrato_empl: 0,
-  // }));
-  // Empleado.bulkCreate(empleadosConUuid)
-  //   .then(() => {
-  //     console.log("empleados successfully");
-  //   })
-  //   .catch((error) => {
-  //     console.error("Error inserting posts:");
-  //   });
 };
