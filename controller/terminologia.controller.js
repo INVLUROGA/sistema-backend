@@ -179,6 +179,31 @@ const obtenerTerminologia2xEmpresaxTipo = async (
     const { id_empresa, tipo } = req.params;
     const terminologia2 = await ParametroGastos.findAll({
       where: { id_empresa, tipo, flag: true },
+      include: [
+        {
+          model: ParametroGrupo,
+          as: "parametro_grupo",
+        },
+      ],
+    });
+    res.status(201).json({
+      terminologia2,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const obtenerTerminologia2xID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const terminologia2 = await ParametroGastos.findOne({
+      where: { id: id },
+      include: [
+        {
+          model: ParametroGrupo,
+          as: "parametro_grupo",
+        },
+      ],
     });
     res.status(201).json({
       terminologia2,
@@ -191,8 +216,9 @@ const postTerminologia2 = async (req = request, res = response) => {
   try {
     const { id_empresa, tipo } = req.params;
     const { formState } = req.body;
+
     const terminologia2 = await ParametroGastos.create({
-      ...formState,
+      ...req.body,
       id_empresa,
       tipo,
     });
@@ -207,8 +233,8 @@ const updateTerminologia2xID = async (req = request, res = response) => {
   try {
     const { id } = req.params;
     const { formState } = req.body;
-    const terminologia2 = await ParametroGastos.findAll({ where: { id } });
-    await ParametroGastos.update(formState);
+    const terminologia2 = await ParametroGastos.findOne({ where: { id } });
+    await terminologia2.update({ ...req.body });
     res.status(201).json({
       terminologia2,
     });
@@ -219,8 +245,8 @@ const updateTerminologia2xID = async (req = request, res = response) => {
 const deleteTerminologia2xID = async (req = request, res = response) => {
   try {
     const { id } = req.params;
-    const terminologia2 = await ParametroGastos.findAll({ where: { id } });
-    await ParametroGastos.update({ flag: false });
+    const terminologia2 = await ParametroGastos.findOne({ where: { id } });
+    await terminologia2.update({ flag: false });
     res.status(201).json({
       terminologia2,
     });
@@ -289,6 +315,7 @@ module.exports = {
   deleteterminologiasGastosxEmpresa,
   // TERM2
   obtenerTerminologia2xEmpresaxTipo,
+  obtenerTerminologia2xID,
   postTerminologia2,
   updateTerminologia2xID,
   deleteTerminologia2xID,

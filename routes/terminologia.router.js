@@ -15,6 +15,7 @@ const {
   postTerminologia1,
   updateTerminologia1xID,
   deleteTerminologia1xID,
+  obtenerTerminologia2xID,
 } = require("../controller/terminologia.controller");
 const router = Router();
 
@@ -34,6 +35,7 @@ router.put(
 router.get("/combo-mes-activo-ventas", comboMesActivoVentas);
 
 // * TODO: RUTAS PARA TERMINOLOGIAS, NUEVAS:
+router.get("/term2/id/:id", obtenerTerminologia2xID);
 router.get("/term2/:id_empresa/:tipo", obtenerTerminologia2xEmpresaxTipo);
 router.post("/term2/:id_empresa/:tipo", postTerminologia2);
 router.put("/term2/id/:id", updateTerminologia2xID);
