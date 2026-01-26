@@ -785,6 +785,12 @@ const get_VENTAS = async (req = request, res = response) => {
             "precio_unitario",
             "tarifa_monto",
           ],
+          include: [
+            {
+              model: Producto,
+              attributes: ["id", "nombre_producto", "id_categoria"],
+            },
+          ],
         },
         {
           model: detalleVenta_membresias,
