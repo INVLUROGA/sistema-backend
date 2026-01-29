@@ -69,7 +69,7 @@ function addBusinessDays(startDate, numberOfDays) {
 const isActiveFlag = (v) => v === 1 || v === true || v === "1" || v === "true";
 const getFinBaseFromSemanas = (m) => {
   const semanas = Number(
-    m?.tb_semana_training?.semanas_st ?? m?.semanas_st ?? 0
+    m?.tb_semana_training?.semanas_st ?? m?.semanas_st ?? 0,
   );
   if (!semanas) return null;
 
@@ -100,14 +100,14 @@ const calcFinEfectivo = (m) => {
     : [];
   const diasHab = ext.reduce(
     (acc, e) => acc + parseInt(e?.dias_habiles ?? 0, 10),
-    0
+    0,
   );
   return diasHab > 0 ? addBusinessDays(base, diasHab) : base;
 };
 
 const obtenerEmpleadosxCargoxDepartamentoxEmpresa = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   try {
     const { id_cargo, id_empresa, id_departamento } = req.params;
@@ -123,7 +123,7 @@ const obtenerEmpleadosxCargoxDepartamentoxEmpresa = async (
         ["id_empl", "value"],
         [
           Sequelize.literal(
-            "CONCAT(nombre_empl, ' ', apPaterno_empl, ' ', apMaterno_empl)"
+            "CONCAT(nombre_empl, ' ', apPaterno_empl, ' ', apMaterno_empl)",
           ),
           "label",
         ],
@@ -137,7 +137,7 @@ const obtenerEmpleadosxCargoxDepartamentoxEmpresa = async (
 
 const obtenerDistritosxDepartamentoxProvincia = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   try {
     const { id_provincia, department_id } = req.params;
@@ -335,7 +335,7 @@ const getParametrosporProveedor = async (req, res) => {
             "CONCAT",
             Sequelize.col("id"),
             " | ",
-            Sequelize.col("razon_social_prov")
+            Sequelize.col("razon_social_prov"),
           ),
           "label",
         ],
@@ -359,7 +359,7 @@ const getParametrosporCliente = async (req, res) => {
         ["id_cli", "value"],
         [
           Sequelize.literal(
-            "CONCAT(numDoc_cli, ' | ', nombre_cli, ' ', apPaterno_cli, ' ', apMaterno_cli)"
+            "CONCAT(numDoc_cli, ' | ', nombre_cli, ' ', apPaterno_cli, ' ', apMaterno_cli)",
           ),
           "label",
         ],
@@ -413,7 +413,7 @@ const getParametrosporClientexEmpresa = async (req, res) => {
         ["id_cli", "value"],
         [
           Sequelize.literal(
-            "CONCAT(numDoc_cli, ' | ', nombre_cli, ' ', apPaterno_cli, ' ', apMaterno_cli)"
+            "CONCAT(numDoc_cli, ' | ', nombre_cli, ' ', apPaterno_cli, ' ', apMaterno_cli)",
           ),
           "label",
         ],
@@ -430,7 +430,7 @@ const getParametrosporClientexEmpresa = async (req, res) => {
 };
 const getParametrosporProductosCategoria = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   try {
     const { categoria } = req.params;
@@ -483,7 +483,7 @@ const getParametrosEmpleadosxDep = async (req = request, res = response) => {
         ["id_empl", "value"],
         [
           Sequelize.literal(
-            "CONCAT(nombre_empl, ' ', apPaterno_empl, ' ', apMaterno_empl)"
+            "CONCAT(nombre_empl, ' ', apPaterno_empl, ' ', apMaterno_empl)",
           ),
           "label",
         ],
@@ -496,7 +496,7 @@ const getParametrosEmpleadosxDep = async (req = request, res = response) => {
 };
 const getParametrosEmpleadosxDepxEmpresa = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   try {
     const { departamento, id_empresa } = req.params;
@@ -561,7 +561,7 @@ const getParametroSemanaPGM = async (req = request, res = response) => {
         ["sesiones", "sesiones"],
         [
           Sequelize.literal(
-            "CONCAT(semanas_st, ' Semanas | ', sesiones, ' Sesiones', ' | ', congelamiento_st, ' dias de congelamientos', ' | ', nutricion_st, ' dias de nutricion')"
+            "CONCAT(semanas_st, ' Semanas | ', sesiones, ' Sesiones', ' | ', congelamiento_st, ' dias de congelamientos', ' | ', nutricion_st, ' dias de nutricion')",
           ),
           "label",
         ],
@@ -581,7 +581,7 @@ const getParametroHorariosPGM = async (req, res) => {
         ["id_horarioPgm", "value"],
         [
           Sequelize.literal(
-            "CONCAT(time_HorarioPgm, ' | ', 'Aforo: ', aforo_HorarioPgm)"
+            "CONCAT(time_HorarioPgm, ' | ', 'Aforo: ', aforo_HorarioPgm)",
           ),
           "label",
         ],
@@ -595,7 +595,7 @@ const getParametroHorariosPGM = async (req, res) => {
           attributes: [
             [
               Sequelize.literal(
-                "CONCAT(nombre_empl, ' ', apPaterno_empl, ' ', apMaterno_empl)"
+                "CONCAT(nombre_empl, ' ', apPaterno_empl, ' ', apMaterno_empl)",
               ),
               "empl_trainer",
             ],
@@ -765,7 +765,7 @@ const getProgramasActivos = async (req = request, res = response) => {
 
 async function getMembresiasLineaDeTiempoEmpresa(
   req = request,
-  res = response
+  res = response,
 ) {
   try {
     const empresa = Number(req.query.empresa);
@@ -877,7 +877,7 @@ async function getMembresiasLineaDeTiempoEmpresa(
     timeline.sort(
       (a, b) =>
         (a.id_cli ?? 0) - (b.id_cli ?? 0) ||
-        a.fechaVenta.localeCompare(b.fechaVenta)
+        a.fechaVenta.localeCompare(b.fechaVenta),
     );
 
     return res.json({ empresa, total: timeline.length, timeline });
@@ -905,7 +905,7 @@ const getVigentesResumenEmpresa = async (req, res) => {
       const now = new Date();
       const year = Number(req.query.year || now.getFullYear());
       const selectedMonth = Number(
-        req.query.selectedMonth || now.getMonth() + 1
+        req.query.selectedMonth || now.getMonth() + 1,
       );
       const lastDay = new Date(year, selectedMonth, 0).getDate();
       const isCurrentMonth =
@@ -917,11 +917,11 @@ const getVigentesResumenEmpresa = async (req, res) => {
 
       const cutDay = Math.max(
         1,
-        Math.min(Number(req.query.cutDay || maxCutAllowed), maxCutAllowed)
+        Math.min(Number(req.query.cutDay || maxCutAllowed), maxCutAllowed),
       );
 
       snapStr = `${year}-${String(selectedMonth).padStart(2, "0")}-${String(
-        cutDay
+        cutDay,
       ).padStart(2, "0")}`;
     }
 
@@ -1113,7 +1113,7 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
       const now = new Date();
       const year = Number(req.query.year || now.getFullYear());
       const selectedMonth = Number(
-        req.query.selectedMonth || now.getMonth() + 1
+        req.query.selectedMonth || now.getMonth() + 1,
       );
       const lastDay = new Date(year, selectedMonth, 0).getDate();
       const isCurrentMonth =
@@ -1124,11 +1124,11 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
         : lastDay;
       const cutDay = Math.max(
         1,
-        Math.min(Number(req.query.cutDay || maxCutAllowed), maxCutAllowed)
+        Math.min(Number(req.query.cutDay || maxCutAllowed), maxCutAllowed),
       );
 
       snapStr = `${year}-${String(selectedMonth).padStart(2, "0")}-${String(
-        cutDay
+        cutDay,
       ).padStart(2, "0")}`;
     }
 
@@ -1297,7 +1297,7 @@ const getRenovacionesPorVencerEmpresa = async (req, res) => {
         : [];
       const diasHab = ext.reduce(
         (acc, e) => acc + parseInt(e?.dias_habiles ?? 0, 10),
-        0
+        0,
       );
 
       const fechaFinCalculada = new Date(base);
@@ -1410,7 +1410,7 @@ const getLogicaEstadoMembresias = async (req, res) => {
                     " ",
                     Sequelize.col("apPaterno_cli"),
                     " ",
-                    Sequelize.col("apMaterno_cli")
+                    Sequelize.col("apMaterno_cli"),
                   ),
                   "nombres_apellidos_cli",
                 ],
@@ -1485,7 +1485,7 @@ const getLogicaEstadoMembresia = async (req = request, res = response) => {
                     " ",
                     Sequelize.col("apPaterno_cli"),
                     " ",
-                    Sequelize.col("apMaterno_cli")
+                    Sequelize.col("apMaterno_cli"),
                   ),
                   "nombres_apellidos_cli",
                 ],
@@ -1530,7 +1530,7 @@ const getLogicaEstadoMembresia = async (req = request, res = response) => {
         }
         const totalDiasHabiles = (itemJSON.tb_extension_membresia || []).reduce(
           (total, ext) => total + parseInt(ext.dias_habiles, 10),
-          0
+          0,
         );
 
         // Calcular la nueva fecha sumando los días hábiles a 'fec_fin_mem'
@@ -1563,7 +1563,7 @@ const getLogicaEstadoMembresia = async (req = request, res = response) => {
 };
 const getParametrosVendedoresVendiendoTodo = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   try {
     const filtroVendedores_ventas = await Venta.findAll({
@@ -1580,7 +1580,7 @@ const getParametrosVendedoresVendiendoTodo = async (
                 " ",
                 Sequelize.col("apPaterno_empl"),
                 " ",
-                Sequelize.col("apMaterno_empl")
+                Sequelize.col("apMaterno_empl"),
               ),
               "nombres_apellidos_empl",
             ],
@@ -1616,7 +1616,7 @@ const getParametrosVendedoresVendiendoTodo = async (
 };
 const getParametrosInversionistasRegistrados = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   try {
     const inversionistas = await Inversionista.findAll({
@@ -1635,7 +1635,7 @@ const getParametrosInversionistasRegistrados = async (
 };
 const getParametrosColaboradoresRegistrados = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   try {
     const colaboradores = await Empleado.findAll({
@@ -1643,7 +1643,7 @@ const getParametrosColaboradoresRegistrados = async (
         ["id_empl", "value"],
         [
           Sequelize.literal(
-            "CONCAT(nombre_empl, ' ', apPaterno_empl, ' ', apMaterno_empl)"
+            "CONCAT(nombre_empl, ' ', apPaterno_empl, ' ', apMaterno_empl)",
           ),
           "label",
         ],
@@ -1730,7 +1730,7 @@ const getCitasServicioxCliente = async (req = request, res = response) => {
       citasDisponibles: calcularCitasDisponibles(
         [...citasAdquiridasxMembresia, ...citasAdquiridasxVentas],
         EventoCita,
-        fecha_param
+        fecha_param,
       ),
     });
   } catch (error) {
@@ -1747,7 +1747,7 @@ const getParametrosVentaFitology = async (req = request, res = response) => {
       attributes: [
         [
           Sequelize.literal(
-            "CONCAT(nombre_servicio, ' | CANTIDAD: ', cantidad_servicio, ' | TARIFA: ', tarifa_servicio)"
+            "CONCAT(nombre_servicio, ' | CANTIDAD: ', cantidad_servicio, ' | TARIFA: ', tarifa_servicio)",
           ),
           "label",
         ],
@@ -1786,7 +1786,7 @@ const postParametros3 = async (req = request, res = response) => {
 const calcularCitasDisponibles = (
   citasAdquiridas,
   citasUsadas,
-  fecha_param
+  fecha_param,
 ) => {
   // Crear un mapa de citas usadas por ID de cita adquirida y filtrarlas por la fecha_param
 
@@ -1895,7 +1895,7 @@ const postRegistrarParametros = async (req = request, res = response) => {
 };
 const getParametrosporENTIDADyGRUPO__PERIODO = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   const { grupo, entidad } = req.params;
   try {
@@ -2006,6 +2006,7 @@ const deleteParametrosGenerales = async (req = request, res = response) => {
   }
 };
 module.exports = {
+  getParametrosxEntidadxGrupo,
   getMembresiasLineaDeTiempoEmpresa,
   deleteParametrosGenerales,
   putParametrosGenerales,

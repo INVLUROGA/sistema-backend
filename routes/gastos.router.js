@@ -9,8 +9,8 @@ const {
   getGastoxGrupo,
   obtenerOrdenCompra,
   getProveedoresGastos_SinRep,
-  obtenerGastosxRangeDate,
   obtenerPagosContratos,
+  obtenerGastosxFechasPago,
 } = require("../controller/gastos.controller");
 const router = Router();
 /**
@@ -19,7 +19,7 @@ const router = Router();
  */
 router.get("/orden-compra/:id_enterp", obtenerOrdenCompra);
 
-router.get("/range-date/:id_empresa", obtenerGastosxRangeDate);
+router.get("/fecha-pago/:id_empresa", obtenerGastosxFechasPago);
 router.post("/post-egreso", postGasto);
 router.get("/get-egresos/:id_enterp", getGastos);
 router.get("/get-egreso/:id", getGasto);

@@ -256,10 +256,25 @@ const deleteTerminologia2xID = async (req = request, res = response) => {
 };
 
 // * TERMINOLOGIAS 1
+
+const obtenerTerminologia1xID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const terminologia = await Parametros.findOne({
+      where: { flag: true, id_param: id },
+    });
+    res.status(201).json({
+      terminologia,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 const obtenerTerminologia1 = async (req = request, res = response) => {
   try {
     const terminologia = await Parametros.findAll({
       where: { flag: true },
+      order: [["id_param", "desc"]],
     });
     res.status(201).json({
       terminologia,
@@ -285,8 +300,10 @@ const updateTerminologia1xID = async (req = request, res = response) => {
   try {
     const { id } = req.params;
     const { formState } = req.body;
-    const terminologia = await Parametros.findAll({ where: { id } });
-    await Parametros.update(formState);
+    console.log(req.body);
+
+    const terminologia = await Parametros.findOne({ where: { id_param: id } });
+    await terminologia.update(req.body);
     res.status(201).json({
       terminologia,
     });
@@ -297,8 +314,8 @@ const updateTerminologia1xID = async (req = request, res = response) => {
 const deleteTerminologia1xID = async (req = request, res = response) => {
   try {
     const { id } = req.params;
-    const terminologia = await Parametros.findAll({ where: { id } });
-    await Parametros.update({ flag: false });
+    const terminologia = await Parametros.findOne({ where: { id_param: id } });
+    await terminologia.update({ flag: false });
     res.status(201).json({
       terminologia,
     });
@@ -324,4 +341,5 @@ module.exports = {
   postTerminologia1,
   updateTerminologia1xID,
   deleteTerminologia1xID,
+  obtenerTerminologia1xID,
 };

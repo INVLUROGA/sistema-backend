@@ -122,6 +122,12 @@ const Gastos = db.define("tb_egresos", {
   id_prov: {
     type: DataTypes.INTEGER,
   },
+  fecha_comprobante: {
+    type: DataTypes.DATE,
+  },
+  fecha_pago: {
+    type: DataTypes.DATE,
+  },
   id_estado_gasto: {
     type: DataTypes.INTEGER,
   },
@@ -186,7 +192,7 @@ const actualizarLongitudDelCampo = async () => {
   try {
     // Altera la estructura de la tabla para cambiar la longitud del campo
     await db.query(
-      "ALTER TABLE tb_GastosFijos ALTER COLUMN sigla_gf nvarchar(20);"
+      "ALTER TABLE tb_GastosFijos ALTER COLUMN sigla_gf nvarchar(20);",
     );
 
     console.log("Se ha actualizado la longitud del campo correctamente.");
@@ -205,7 +211,7 @@ ParametroGrupo.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 ParametroGastos.sync()
@@ -215,7 +221,7 @@ ParametroGastos.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 Gastos.sync()
@@ -225,7 +231,7 @@ Gastos.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 

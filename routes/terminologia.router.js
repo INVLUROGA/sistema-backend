@@ -16,6 +16,7 @@ const {
   updateTerminologia1xID,
   deleteTerminologia1xID,
   obtenerTerminologia2xID,
+  obtenerTerminologia1xID,
 } = require("../controller/terminologia.controller");
 const router = Router();
 
@@ -42,6 +43,7 @@ router.put("/term2/id/:id", updateTerminologia2xID);
 router.put("/term2/delete/id/:id", deleteTerminologia2xID);
 
 router.get("/term1", obtenerTerminologia1);
+router.get("/term1/:id", obtenerTerminologia1xID);
 router.post("/term1", postTerminologia1);
 router.put("/term1/id/:id", updateTerminologia1xID);
 router.put("/term1/delete/id/:id", deleteTerminologia1xID);

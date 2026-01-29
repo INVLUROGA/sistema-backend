@@ -41,7 +41,7 @@ const getGastos = async (req = request, res = response) => {
         [Sequelize.Op.and]: Sequelize.where(
           Sequelize.fn("YEAR", Sequelize.col("fec_comprobante")),
           "<",
-          2030
+          2030,
         ),
         id: {
           [Sequelize.Op.not]: 2548,
@@ -232,7 +232,7 @@ const obtenerOrdenCompra = async (req = request, res = response) => {
         [Sequelize.Op.and]: Sequelize.where(
           Sequelize.fn("YEAR", Sequelize.col("fec_comprobante")),
           "<",
-          2030
+          2030,
         ),
         esCompra: true,
         id: {
@@ -308,7 +308,7 @@ const getGastoxGrupo = async (req = request, res = response) => {
         [Sequelize.Op.and]: Sequelize.where(
           Sequelize.fn("YEAR", Sequelize.col("fec_comprobante")),
           "<",
-          2030
+          2030,
         ),
         id: {
           [Sequelize.Op.not]: 2548,
@@ -373,7 +373,7 @@ const getGastoxGrupo = async (req = request, res = response) => {
     });
   }
 };
-const obtenerGastosxRangeDate = async (req = request, res = response) => {
+const obtenerGastosxFechasPago = async (req = request, res = response) => {
   const { arrayDate } = req.query;
   const { id_empresa } = req.params;
 
@@ -384,8 +384,8 @@ const obtenerGastosxRangeDate = async (req = request, res = response) => {
       where: {
         flag: true,
         // 3. Filtro por fecha_comprobante entre inicio y fin (incluyendo todo el día)
-        fec_pago: {
-          [Op.between]: [`${fechaInicio} 00:00:00`, `${fechaFin} 23:59:59`],
+        fecha_comprobante: {
+          [Op.between]: [fechaInicio, fechaFin],
         },
       },
       order: [["fec_registro", "desc"]],
@@ -529,7 +529,7 @@ module.exports = {
   postGasto,
   getGastos,
   getGastoxGrupo,
-  obtenerGastosxRangeDate,
+  obtenerGastosxFechasPago,
   getGasto,
   obtenerOrdenCompra,
   putGasto,

@@ -65,6 +65,7 @@ const router = Router();
 
 router.put("/params-generales/:id", putParametrosGenerales);
 router.put("/params-generales/delete/:id", deleteParametrosGenerales);
+router.get(`p1/id/:id`, getParametros);
 router.get(`/get-parametros-generales/`, getParametros);
 router.get(
   "/empleados/:id_cargo/:id_departamento/:id_empresa",
