@@ -76,7 +76,7 @@ const getUsuariosClientexID = async (req = request, res = response) => {
             " ",
             Sequelize.col("apPaterno_cli"),
             " ",
-            Sequelize.col("apMaterno_cli")
+            Sequelize.col("apMaterno_cli"),
           ),
           "nombres_apellidos_cli",
         ],
@@ -169,11 +169,11 @@ const postUsuarioCliente = async (req = request, res = response) => {
         cliente.tel_cli,
         `
         🎉 ¡BIENVENIDO/A A CHANGE - THE SLIM STUDIO! 🎉
-        `
+        `,
       );
       await enviarStickerWsp(
         cliente.tel_cli,
-        "https://change-the-slim-studio-sigma.vercel.app/assets/mem_logo-be75730a.png"
+        "https://change-the-slim-studio-sigma.vercel.app/assets/mem_logo-be75730a.png",
       );
       await enviarMensajesWsp(
         cliente.tel_cli,
@@ -193,7 +193,7 @@ Estamos muy contentos que formes parte de la comunidad de CHANGE !! . 💪✨ Es
 ¡Prepárate para CHANGE, EL CAMBIO que mereces!
 
 CHANGE - The Slim Studio
-        `
+        `,
       );
     }
     res.status(200).json({
@@ -221,7 +221,7 @@ const getUsuarioClientes = async (req = request, res = response) => {
             " ",
             Sequelize.col("apMaterno_cli"),
             " | ",
-            Sequelize.col("numDoc_cli")
+            Sequelize.col("numDoc_cli"),
           ),
           "nombres_apellidos_cli",
         ],
@@ -525,7 +525,7 @@ const postUsuarioEmpleado = async (req = request, res = response) => {
     });
     const alertasDeCumpleanios = fechasAnteriores(
       req.body.fecNac_empl,
-      3
+      3,
     ).flatMap((aler, i) =>
       usuariosParaAlerta.map((us) => ({
         id_user: us.id_user,
@@ -534,7 +534,7 @@ const postUsuarioEmpleado = async (req = request, res = response) => {
         mensaje: `CUMPLEAÑOS DE ${empleado.nombre_empl} en ${i} dias`,
         id_estado: 1,
         id_empl_cumple: empleado.id_empl,
-      }))
+      })),
     );
     console.log({
       fa: fechasAnteriores(req.body.fecNac_empl, 2),
@@ -575,7 +575,7 @@ const getUsuarioEmpleados = async (req = request, res = response) => {
             " ",
             Sequelize.col("apPaterno_empl"),
             " ",
-            Sequelize.col("apMaterno_empl")
+            Sequelize.col("apMaterno_empl"),
           ),
           "nombres_apellidos_empl",
         ],
@@ -744,7 +744,7 @@ const getUsuarios = async (req = request, res = response) => {
             "CONCAT",
             Sequelize.col("nombres_user"),
             " ",
-            Sequelize.col("apellidos_user")
+            Sequelize.col("apellidos_user"),
           ),
           "nombres_apellidos_user",
         ],
@@ -861,7 +861,7 @@ const loginUsuario = async (req = request, res = response) => {
       usuario.nombres_user,
       usuario.rol_user,
       ip_user,
-      usuario.id_user
+      usuario.id_user,
     );
     const exp = jwt.decode(token).exp;
     let MODULOS_ITEMS = [];
@@ -994,7 +994,7 @@ const revalidarToken = async (req, res) => {
     user.name,
     user.rol_user,
     ip_user,
-    user.id_user
+    user.id_user,
   );
   let MODULOS_ITEMS = [];
   console.log(user);
@@ -1064,16 +1064,6 @@ const revalidarToken = async (req, res) => {
       },
     ];
   }
-
-  if (user.rol_user === 14) {
-    MODULOS_ITEMS = [
-      {
-        name: "recepcion-mia",
-        path: "/recepcion-mia",
-        key: "mod-recepcion-mia",
-      },
-    ];
-  }
   if (user.rol_user === 3) {
     MODULOS_ITEMS = [
       {
@@ -1092,15 +1082,6 @@ const revalidarToken = async (req, res) => {
       },
     ];
   }
-  if (user.rol_user === 14) {
-    MODULOS_ITEMS = [
-      {
-        name: "recepcion-mia",
-        path: "/recepcion-mia",
-        key: "mod-recepcion-mia",
-      },
-    ];
-  }
   if (user.rol_user === 7) {
     MODULOS_ITEMS = [
       {
@@ -1109,9 +1090,9 @@ const revalidarToken = async (req, res) => {
         key: "mod-marketing",
       },
       {
-        name: "INVENTARIO",
-        path: "/inventario",
-        key: "mod-inventario-proyection",
+        name: "INFORME GERENCIAL",
+        path: "/informe-gerencial",
+        key: "mod-informe-gerencial",
       },
     ];
   }

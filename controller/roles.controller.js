@@ -55,7 +55,7 @@ const obtenermoduloxRole = async (req, res) => {
     const usuario = await Usuario.findOne({ where: { uid: uid } });
     console.log(
       usuario.rol_user,
-      "usuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_user"
+      "usuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_user",
     );
     // Se consulta el rol e incluye la asociación de módulos (alias: modules)
     const role = await Role.findByPk(usuario.rol_user, {
@@ -1404,10 +1404,10 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           //key: "reporte-utilidad-pgm",
-          label: "COMPARATIVO MENSUAL VS MES ACTUAL",
+          label: "INFORME GERENCIAL OFICIAL",
           isTitle: false,
           icon: "uil-calender",
-          url: "/detalle-origen",
+          url: "/informe-gerencia-oficial",
         },
       ];
     }
