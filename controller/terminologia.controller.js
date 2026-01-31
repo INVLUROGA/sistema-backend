@@ -323,6 +323,23 @@ const deleteTerminologia1xID = async (req = request, res = response) => {
     console.log(error);
   }
 };
+const obtenerTerminologia1xEntidadxGrupo = async (
+  req = request,
+  res = response,
+) => {
+  try {
+    const { entidad, grupo } = req.params;
+    const terminologia = await Parametros.findAll({
+      where: { flag: true, entidad_param: entidad, grupo_param: grupo },
+      order: [["id_param", "desc"]],
+    });
+    res.status(201).json({
+      terminologia,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
   terminologiasPorEntidad,
   comboMesActivoVentas,
@@ -342,4 +359,5 @@ module.exports = {
   updateTerminologia1xID,
   deleteTerminologia1xID,
   obtenerTerminologia1xID,
+  obtenerTerminologia1xEntidadxGrupo,
 };

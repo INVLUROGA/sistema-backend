@@ -17,6 +17,7 @@ const {
   deleteTerminologia1xID,
   obtenerTerminologia2xID,
   obtenerTerminologia1xID,
+  obtenerTerminologia1xEntidadxGrupo,
 } = require("../controller/terminologia.controller");
 const router = Router();
 
@@ -42,6 +43,7 @@ router.post("/term2/:id_empresa/:tipo", postTerminologia2);
 router.put("/term2/id/:id", updateTerminologia2xID);
 router.put("/term2/delete/id/:id", deleteTerminologia2xID);
 
+router.get("/term1/:entidad/:grupo", obtenerTerminologia1xEntidadxGrupo);
 router.get("/term1", obtenerTerminologia1);
 router.get("/term1/:id", obtenerTerminologia1xID);
 router.post("/term1", postTerminologia1);

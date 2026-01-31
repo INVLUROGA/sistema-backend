@@ -384,7 +384,7 @@ const obtenerGastosxFechasPago = async (req = request, res = response) => {
       where: {
         flag: true,
         // 3. Filtro por fecha_comprobante entre inicio y fin (incluyendo todo el día)
-        fecha_comprobante: {
+        fecha_pago: {
           [Op.between]: [fechaInicio, fechaFin],
         },
       },
@@ -405,6 +405,7 @@ const obtenerGastosxFechasPago = async (req = request, res = response) => {
         "id_prov",
         "cod_trabajo",
         "id_estado_gasto",
+        "fecha_pago",
       ],
       include: [
         {
