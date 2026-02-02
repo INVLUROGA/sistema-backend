@@ -292,8 +292,32 @@ const obtenerReservasMonkeyFit = async (req = request, res = response) => {
     console.log(error);
   }
 };
+const obtenerReservasMonkeyFitxFecha = async (
+  req = request,
+  res = response,
+) => {
+  try {
+    const { arrayDate } = req.query;
+    const fechaInicio = new Date(arrayDate[0]);
+    const fechaFin = new Date(arrayDate[1]);
+    const reservasMF = await ReservaMonkFit.findAll({
+      where: {
+        flag: true,
+        fechaP: {
+          [Op.between]: [fechaInicio, fechaFin],
+        },
+      },
+    });
+    res.status(201).json({
+      reservasMF,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 // ================== Exports ==================
 module.exports = {
+  obtenerReservasMonkeyFitxFecha,
   obtenerReservasMonkFit,
   listarEstadosCita,
   postReservaMonkFit,
