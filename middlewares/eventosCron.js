@@ -180,6 +180,10 @@ const alertasUsuario = async () => {
         } else if (alerta.tipo_alerta === 1426) { // DIARIO
           nuevaFecha = new Date(fechaOriginal);
           nuevaFecha.setDate(nuevaFecha.getDate() + 1);
+          // Si cae Domingo (0), saltar al Lunes (+1 dia mas)
+          if (nuevaFecha.getDay() === 0) {
+            nuevaFecha.setDate(nuevaFecha.getDate() + 1);
+          }
         } else if (alerta.tipo_alerta === 1427) { // QUINCENAL (15 dias)
           nuevaFecha = new Date(fechaOriginal);
           nuevaFecha.setDate(nuevaFecha.getDate() + 15);
