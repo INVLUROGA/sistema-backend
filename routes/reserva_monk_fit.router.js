@@ -6,6 +6,7 @@ const {
   putReservaMonkFit,
   deleteReservaMonkFit,
   obtenerReservasMonkeyFit,
+  obtenerReservasMonkeyFitxFecha,
 } = require("../controller/reserva_monk_fit.controller.js");
 
 const router = Router();
@@ -17,4 +18,5 @@ router.post("/", postReservaMonkFit);
 router.put("/:id", putReservaMonkFit);
 router.put("/delete/:id", deleteReservaMonkFit);
 router.get("/g", obtenerReservasMonkeyFit);
+router.get('/fecha', obtenerReservasMonkeyFitxFecha)
 module.exports = router;

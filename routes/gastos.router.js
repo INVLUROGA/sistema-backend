@@ -28,6 +28,5 @@ router.put("/delete-egreso/:id", deleteGasto);
 router.get("/get-gasto-x-grupo/:id_enterp", getGastoxGrupo);
 router.get("/get-proveedores-unicos", getProveedoresGastos_SinRep);
 router.get("/obtener-pagos-contratos/:id_enterp", obtenerPagosContratos);
-// router.get('/')
 
 module.exports = router;

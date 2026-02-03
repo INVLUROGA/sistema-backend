@@ -450,6 +450,86 @@ const obtenerGastosxFechasPago = async (req = request, res = response) => {
     console.log(error);
   }
 };
+const obtenerGastosxFechasComprobante = async (
+  req = request,
+  res = response,
+) => {
+  const { arrayDate } = req.query;
+  const { id_empresa } = req.params;
+
+  const fechaInicio = arrayDate[0];
+  const fechaFin = arrayDate[1];
+  try {
+    const gastos = await Gastos.findAll({
+      where: {
+        flag: true,
+        // 3. Filtro por fecha_comprobante entre inicio y fin (incluyendo todo el día)
+        fecha_comprobante: {
+          [Op.between]: [fechaInicio, fechaFin],
+        },
+      },
+      order: [["fec_registro", "desc"]],
+      attributes: [
+        "id",
+        "moneda",
+        "monto",
+        "fec_pago",
+        "id_tipo_comprobante",
+        "n_comprabante",
+        "impuesto_igv",
+        "impuesto_renta",
+        "n_operacion",
+        "fec_registro",
+        "fec_comprobante",
+        "descripcion",
+        "id_prov",
+        "cod_trabajo",
+        "id_estado_gasto",
+        "fecha_pago",
+      ],
+      include: [
+        {
+          model: Proveedor,
+          attributes: ["razon_social_prov"],
+        },
+        {
+          model: ParametroGastos,
+          attributes: ["id_empresa", "nombre_gasto", "grupo", "id_tipoGasto"],
+          where: {
+            id_empresa: id_empresa,
+          },
+          include: [
+            {
+              model: ParametroGrupo,
+              as: "parametro_grupo",
+            },
+          ],
+        },
+        {
+          model: Parametros,
+          attributes: ["id_param", "label_param"],
+          as: "parametro_banco",
+        },
+        {
+          model: Parametros,
+          attributes: ["id_param", "label_param"],
+          as: "parametro_forma_pago",
+        },
+        {
+          model: Parametros,
+          attributes: ["id_param", "label_param"],
+          as: "parametro_comprobante",
+        },
+      ],
+    });
+    res.status(200).json({
+      msg: "success",
+      gastos,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 const obtenerPagosContratos = async (req = request, res = response) => {
   const { id_enterp } = req.params;
   try {
@@ -537,4 +617,5 @@ module.exports = {
   deleteGasto,
   getProveedoresGastos_SinRep,
   obtenerPagosContratos,
+  obtenerGastosxFechasComprobante,
 };
