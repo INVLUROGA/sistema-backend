@@ -19,7 +19,7 @@ const {
 // Programa una tarea para las 9 AM todos los días
 // const cum = obtenerDataSeguimientos();
 // console.log(cum);
-cron.schedule("0 3 1 * *", async () => {});
+cron.schedule("0 3 1 * *", async () => { });
 
 cron.schedule("0 15 * * *", () => {
   // insertaDatosTEST();
@@ -30,8 +30,12 @@ cron.schedule("0 1 * * *", async () => {
   await insertarTC();
 });
 cron.schedule("55 * * * *", () => {
-  alertasUsuario();
   recordatorioReservaCita24hAntes();
+});
+
+// Run alerts every minute to checking for specific times
+cron.schedule("* * * * *", () => {
+  alertasUsuario();
 });
 cron.schedule("30 8 * * *", () => {
   recordatorioReservaCita2hAntes();
@@ -96,8 +100,8 @@ app.use(express.static("public"));
 // });
 
 //Lectura y parseo del body
-app.use(express.json());
-
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(require("./routes/zk.router.js"));
 
 //***********************************************/
@@ -252,7 +256,6 @@ app.use(
 app.use("/api/recursosHumanos", require("./routes/recursosHumanos.route.js"));
 app.use("/api/terminologia", require("./routes/terminologia.router.js"));
 
-app.use("/api/parametroGasto", require("./routes/parametroGasto.router.js"));
 //CIRCUS----
 app.use("/api/circus", require("./routes/routersCircus/servicios.router.js"));
 app.use("/api/canjes", require("./routes/canjes.router.js"));

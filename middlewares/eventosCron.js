@@ -41,7 +41,7 @@ dayjs.extend(isSameOrBefore);
 const { calcularMinutos } = FunctionsHelpers();
 // Opcional: obtener la zona horaria local
 const defaultTz = dayjs.tz.guess();
-const cumpleaniosSocios = async () => {};
+const cumpleaniosSocios = async () => { };
 
 const insertaDatosTEST = async () => {
   try {
@@ -161,7 +161,8 @@ const alertasUsuario = async () => {
         ahora.getFullYear() === fechaAlerta.getFullYear() &&
         ahora.getMonth() === fechaAlerta.getMonth() &&
         ahora.getDate() === fechaAlerta.getDate() &&
-        ahora.getHours() === fechaAlerta.getHours();
+        ahora.getHours() === fechaAlerta.getHours() &&
+        ahora.getMinutes() === fechaAlerta.getMinutes();
 
       if (coincide) {
         const alertaYaFinalizada = await AlertasUsuario.findOne({
@@ -170,10 +171,25 @@ const alertasUsuario = async () => {
 
         await alertaYaFinalizada.update({ id_estado: 0 });
 
-        if (alerta.tipo_alerta === 1425) {
-          const fechaOriginal = new Date(alertaYaFinalizada.fecha);
-          const nuevaFecha = new Date(fechaOriginal);
+        let nuevaFecha = null;
+        const fechaOriginal = new Date(alertaYaFinalizada.fecha);
+
+        if (alerta.tipo_alerta === 1425) { // MENSUAL
+          nuevaFecha = new Date(fechaOriginal);
           nuevaFecha.setMonth(nuevaFecha.getMonth() + 1);
+        } else if (alerta.tipo_alerta === 1426) { // DIARIO
+          nuevaFecha = new Date(fechaOriginal);
+          nuevaFecha.setDate(nuevaFecha.getDate() + 1);
+          // Si cae Domingo (0), saltar al Lunes (+1 dia mas)
+          if (nuevaFecha.getDay() === 0) {
+            nuevaFecha.setDate(nuevaFecha.getDate() + 1);
+          }
+        } else if (alerta.tipo_alerta === 1427) { // QUINCENAL (15 dias)
+          nuevaFecha = new Date(fechaOriginal);
+          nuevaFecha.setDate(nuevaFecha.getDate() + 15);
+        }
+
+        if (nuevaFecha) {
           const alertaNueva = await new AlertasUsuario({
             id_user: alertaYaFinalizada.id_user,
             tipo_alerta: alertaYaFinalizada.tipo_alerta,
@@ -183,6 +199,7 @@ const alertasUsuario = async () => {
           });
           await alertaNueva.save();
         }
+
         await enviarMensajesWsp(
           alerta.auth_user.telefono_user,
           `${alerta.mensaje}`
@@ -767,11 +784,11 @@ function calcularFechasVentas(ventas) {
     // Sumar todos los días hábiles de las extensiones (si existen)
     const totalDiasHabiles =
       membresia.extensionmembresia &&
-      Array.isArray(membresia.extensionmembresia)
+        Array.isArray(membresia.extensionmembresia)
         ? membresia.extensionmembresia.reduce(
-            (sum, ext) => sum + (parseInt(ext.dias_habiles, 10) || 0),
-            0
-          )
+          (sum, ext) => sum + (parseInt(ext.dias_habiles, 10) || 0),
+          0
+        )
         : 0;
 
     // Calcular la fecha de vencimiento sumando el total de días hábiles a la fecha de fin de membresía
