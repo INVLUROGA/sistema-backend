@@ -464,6 +464,13 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: true,
         },
         {
+          key: "reporte-cuentas-balance",
+          label: "reporte Cuentas balance",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/reporte-cuentas-balance",
+        },
+        {
           key: "cuentas-cobrar",
           label: "Cuentas por cobrar",
           isTitle: false,

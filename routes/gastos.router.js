@@ -18,7 +18,6 @@ const router = Router();
  * /api/egreso
  */
 router.get("/orden-compra/:id_enterp", obtenerOrdenCompra);
-
 router.get("/fecha-pago/:id_empresa", obtenerGastosxFechasPago);
 router.post("/post-egreso", postGasto);
 router.get("/get-egresos/:id_enterp", getGastos);
