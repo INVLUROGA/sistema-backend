@@ -1,5 +1,51 @@
 const { request, response } = require("express");
 const { AlertasUsuario } = require("../models/Auditoria");
+const { Op } = require("sequelize");
+
+const confirmarPago = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+
+    const alerta = await AlertasUsuario.findOne({ where: { id } });
+
+    if (!alerta) {
+      return res.status(404).json({ msg: "Alerta no encontrada" });
+    }
+
+    await alerta.update({ id_estado: 3 });
+
+    // 2. Lógica "Confirmación de Pago": Cancelar todas las MENSUALES (1425) futuras del mes
+    const fechaInicioMes = new Date();
+    fechaInicioMes.setDate(1);
+    fechaInicioMes.setHours(0, 0, 0, 0);
+
+    const fechaFinMes = new Date(fechaInicioMes);
+    fechaFinMes.setMonth(fechaFinMes.getMonth() + 1);
+
+    await AlertasUsuario.update(
+      { id_estado: 3 }, // 3 = Cancelado por pago
+      {
+        where: {
+          id_user: alerta.id_user,
+          id_estado: 1, // Solo pendientes
+          flag: true,
+          fecha: {
+            [Op.gte]: fechaInicioMes,
+            [Op.lt]: fechaFinMes
+          },
+          tipo_alerta: { [Op.in]: [1425] } // Solo mensuales
+        }
+      }
+    );
+
+    res.status(200).json({ msg: "Pago confirmado y alertas actualizadas" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      msg: "ERROR EN LA BASE DE DATOS O SERVIDOR (confirmarPago)",
+    });
+  }
+};
 
 // Crear AlertaUsuario
 const PostAlertaUsuario = async (req = request, res = response) => {
@@ -86,4 +132,5 @@ module.exports = {
   deleteAlertaUsuario,
   updateAlertaUsuario,
   updateMensaje,
+  confirmarPago,
 };

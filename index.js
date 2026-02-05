@@ -11,7 +11,9 @@ const {
   recordatorioReservaCita24hAntes,
   recordatorioReservaCita2hAntes,
   obtenerCumpleaniosDeEmpleados,
+  reactivarAlertasMensuales
 } = require("./middlewares/eventosCron.js");
+const { enviarBotonesWsp } = require("./config/whatssap-web.js");
 const {
   obtenerCumpleaniosDelMesSiguiente,
 } = require("./middlewares/EventosCron/obtenerCumpleañosDelMesSiguiente.js");
@@ -19,7 +21,9 @@ const {
 // Programa una tarea para las 9 AM todos los días
 // const cum = obtenerDataSeguimientos();
 // console.log(cum);
-cron.schedule("0 3 1 * *", async () => { });
+cron.schedule("0 3 1 * *", async () => {
+  await reactivarAlertasMensuales();
+});
 
 cron.schedule("0 15 * * *", () => {
   // insertaDatosTEST();
@@ -255,7 +259,7 @@ app.use(
 );
 app.use("/api/recursosHumanos", require("./routes/recursosHumanos.route.js"));
 app.use("/api/terminologia", require("./routes/terminologia.router.js"));
-
+app.use("/api/entrenamiento", require("./routes/entrenamiento.router.js"));
 //CIRCUS----
 app.use("/api/circus", require("./routes/routersCircus/servicios.router.js"));
 app.use("/api/canjes", require("./routes/canjes.router.js"));
