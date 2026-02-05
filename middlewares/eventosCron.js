@@ -20,12 +20,13 @@ const {
   enviarMensajesWsp,
   enviarMapaWsp__CIRCUS,
   enviarMensajesWsp__CIRCUS,
+  enviarBotonesWsp,
 } = require("../config/whatssap-web");
+const dayjs = require("dayjs");
 
 const { Distritos } = require("../models/Distritos");
 const { Seguimiento } = require("../models/Seguimientos");
 
-const dayjs = require("dayjs");
 const utc = require("dayjs/plugin/utc");
 const timezone = require("dayjs/plugin/timezone");
 const isSameOrBefore = require("dayjs/plugin/isSameOrBefore");
@@ -138,7 +139,7 @@ const obtenerUltimaVentaConExtension = (clientes) => {
 
 const alertasUsuario = async () => {
   try {
-    console.log("en alerta usuario");
+    //W console.log("en alerta usuario");
 
     const dataAlertas = await AlertasUsuario.findAll({
       where: { flag: true, id_estado: 1 },
@@ -200,13 +201,29 @@ const alertasUsuario = async () => {
           await alertaNueva.save();
         }
 
-        await enviarMensajesWsp(
-          alerta.auth_user.telefono_user,
-          `${alerta.mensaje}`
-        );
+
+        // Usar botones interactivos SOLO si es alerta MENSUAL (1425)
+        // Se excluye DIARIO (1426) y QUINCENAL (1427) a pedido del usuario.
+        if (alerta.tipo_alerta === 1425) {
+          const buttons = [
+            { id: 'btn_si', label: 'SI' },
+            { id: 'btn_no', label: 'NO' }
+          ];
+          await enviarBotonesWsp(
+            alerta.auth_user.telefono_user,
+            `${alerta.mensaje}\n\n¿Ya realizaste el pago?\nResponde *SI* para confirmar y detener las alertas de este mes.`,
+            buttons
+          );
+        } else {
+          // Envío normal para otros tipos
+          await enviarMensajesWsp(
+            alerta.auth_user.telefono_user,
+            `${alerta.mensaje}`
+          );
+        }
       }
     }
-    console.log("fin de alerta...");
+    //  console.log("fin de alerta...");
   } catch (error) {
     console.log(error);
   }
@@ -646,6 +663,58 @@ const enviarMensajesxCitasxHorasFinales = async () => {
     console.log(error);
   }
 };
+
+const reactivarAlertasMensuales = async () => {
+  try {
+    console.log("REACTIVANDO ALERTAS MENSUALES...");
+    const hoy = new Date(); // Se asume que esto corre el día 1 de cada mes
+
+    // Calcular mes anterior
+    const mesAnterior = new Date(hoy);
+    mesAnterior.setMonth(mesAnterior.getMonth() - 1);
+
+    // Buscar alertas "CANCELADAS POR PAGO" (id_estado = 3) que pertenezcan al mes pasado
+    // Ojo: la fecha de la alerta cancelada es del mes pasado.
+    // Se busca reactivarlas para este mes (generar nueva ocurrencia).
+
+    const alertasCanceladas = await AlertasUsuario.findAll({
+      where: {
+        id_estado: 3, // Cancelado
+        flag: true,
+        fecha: {
+          [Op.gte]: new Date(mesAnterior.getFullYear(), mesAnterior.getMonth(), 1),
+          [Op.lt]: new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+        }
+      }
+    });
+
+    for (const alerta of alertasCanceladas) {
+      // Generar nueva fecha para este mes usando dayjs para manejar overflows (ej: 31 Ene -> 28 Feb)
+      let nuevaFecha = dayjs(alerta.fecha).add(1, 'month').toDate();
+
+      // Caso simple: Alerta MENSUAL (1425).
+      if (alerta.tipo_alerta === 1425) {
+
+        // Crear nueva alerta ACTIVA
+        await AlertasUsuario.create({
+          id_user: alerta.id_user,
+          tipo_alerta: alerta.tipo_alerta,
+          mensaje: alerta.mensaje,
+          fecha: nuevaFecha,
+          id_estado: 1 // ACTIVA
+        });
+
+        // Marcar la vieja como PROCESADA/HISTORICO (0) para que no salga en futuras búsquedas de canceladas
+        await alerta.update({ id_estado: 0 });
+      }
+      // TODO: Lógica para diario/quincenal si aplica. Por ahora solo mensual es crítico.
+    }
+    console.log(`Reactivadas ${alertasCanceladas.length} alertas.`);
+
+  } catch (error) {
+    console.error("Error reactivando alertas:", error);
+  }
+};
 //TODO: FUNCIONES PARA ORGANIZAR DATOS
 function organizarDatos(
   ventas = [],
@@ -840,9 +909,11 @@ module.exports = {
   obtenerCumpleaniosCliente,
   insertaDatosTEST,
   insertarDatosSeguimientoDeClientes,
+  organizarDatos,
   obtenerDataSeguimiento,
   enviarMensajesxCitasxHorasFinales,
   alertasUsuario,
   recordatorioReservaCita24hAntes,
   obtenerCumpleaniosDeEmpleados,
+  reactivarAlertasMensuales,
 };

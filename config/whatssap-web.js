@@ -218,6 +218,33 @@ const enviarTextConImagenWsp = async (numberWsp, image, bodyMsg) => {
   }
 };
 
+const enviarBotonesWsp = async (numberWsp, bodyMsg, buttons) => {
+  const data = qs.stringify({
+    token: "xy1mryu3skys910j",
+    to: numberWsp,
+    body: bodyMsg,
+    buttons: JSON.stringify(buttons)
+  });
+
+  const config = {
+    method: "post",
+    url: "https://api.ultramsg.com/instance102151/messages/chat",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    data: data
+  };
+
+  try {
+    const response = await axios(config);
+    console.log(JSON.stringify(response.data), numberWsp);
+    return { ok: true };
+  } catch (error) {
+    console.error(error.message || error, numberWsp);
+    return { ok: false, msg: error.message || "Error desconocido" };
+  }
+};
+
 module.exports = {
   enviarMapaWsp__CIRCUS,
   enviarMensajesWsp,
@@ -227,6 +254,7 @@ module.exports = {
   enviarMensajesWsp__CIRCUS,
   enviarMensajesWsp__CHANGE,
   enviarDocumentoxWsp,
+  enviarBotonesWsp,
 };
 
 // const qrcode = require("qrcode-terminal");
