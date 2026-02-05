@@ -64,14 +64,14 @@ const enviarMapaWsp__CIRCUS = (to, address, lat, lng) =>
     to,
     address,
     lat,
-    lng
+    lng,
   );
 const enviarMensajesWsp__CIRCUS = (to, body) =>
   enviarMsgWsp(
     process.env.TOKEN_CIRCUS,
     process.env.INSTANCE_ID__CIRCUS,
     to,
-    body
+    body,
   );
 
 const enviarMensajesWsp__CHANGE = (to, body) =>
@@ -79,7 +79,7 @@ const enviarMensajesWsp__CHANGE = (to, body) =>
     process.env.TOKEN_CHANGE,
     process.env.INSTANCE_ID__CHANGE,
     to,
-    body
+    body,
   );
 
 const enviarMensajesWsp = async (numberWsp, bodyMsg) => {
@@ -223,16 +223,15 @@ const enviarBotonesWsp = async (numberWsp, bodyMsg, buttons) => {
     token: "xy1mryu3skys910j",
     to: numberWsp,
     body: bodyMsg,
-    buttons: JSON.stringify(buttons)
   });
 
   const config = {
     method: "post",
     url: "https://api.ultramsg.com/instance102151/messages/chat",
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
+      "Content-Type": "application/x-www-form-urlencoded",
     },
-    data: data
+    data: data,
   };
 
   try {

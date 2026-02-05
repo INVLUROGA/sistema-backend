@@ -286,8 +286,10 @@ const obtenerTerminologia1 = async (req = request, res = response) => {
 const postTerminologia1 = async (req = request, res = response) => {
   try {
     const { formState } = req.body;
+    console.log({ rq: req.body });
+
     const terminologia = await Parametros.create({
-      ...formState,
+      ...req.body,
     });
     res.status(201).json({
       terminologia,
