@@ -259,9 +259,11 @@ app.use(
 );
 app.use("/api/recursosHumanos", require("./routes/recursosHumanos.route.js"));
 app.use("/api/terminologia", require("./routes/terminologia.router.js"));
-app.use("/api/entrenamiento", require("./routes/entrenamiento.router.js"));
+//app.use("/api/entrenamiento", require("./routes/entrenamiento.router.js"));
 //CIRCUS----
 app.use("/api/circus", require("./routes/routersCircus/servicios.router.js"));
+//app.use("/api/entrenamiento", require("./routes/entrenamiento.router.js"));
+
 app.use("/api/canjes", require("./routes/canjes.router.js"));
 app.use("/api/penalidad", require("./routes/penalidad.router.js"));
 //Escuchar peticiones
