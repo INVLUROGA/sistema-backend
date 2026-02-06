@@ -67,44 +67,53 @@ function addBusinessDays(startDate, numberOfDays) {
   return currentDate;
 }
 const isActiveFlag = (v) => v === 1 || v === true || v === "1" || v === "true";
+
+// 1. La función que fuerza el cálculo matemático
 const getFinBaseFromSemanas = (m) => {
-  const semanas = Number(
-    m?.tb_semana_training?.semanas_st ?? m?.semanas_st ?? 0,
-  );
-  if (!semanas) return null;
+  // Ajusta 'tb_semanas_training' si tu alias en el backend es diferente
+  const st = m?.tb_semanas_training || m?.SemanasTraining;
 
-  let inicio =
-    parseDateOnly(m?.fec_inicio_mem) ||
-    (m?.tb_ventum?.fecha_venta ? new Date(m.tb_ventum.fecha_venta) : null);
+  if (!st?.semanas_st) return null;
 
-  if (!inicio || isNaN(inicio)) return null;
+  const semanas = parseInt(st.semanas_st, 10);
+  const inicio = parseDateOnly(m?.fec_inicio_mem);
 
-  inicio.setHours(0, 0, 0, 0);
+  if (!inicio || !semanas) return null;
+
   const fin = new Date(inicio);
-  fin.setDate(fin.getDate() + semanas * 7); // semanas * 7 días
-
+  fin.setDate(fin.getDate() + (semanas * 7)); // Magia: 12 * 7 = 84 días agregados
   return fin;
 };
 
+// 2. Tu función orquestadora (Esta ya la tienes bien)
 const getFinBase = (m) =>
-  getFinBaseFromSemanas(m) ||
-  parseDateOnly(m?.fec_fin_mem) ||
+  getFinBaseFromSemanas(m) ||          // Prioridad 1: Cálculo matemático (Arregla tu error)
+  parseDateOnly(m?.fec_fin_mem) ||     // Prioridad 2: Fecha guardada (Fallback)
   parseDateOnly(m?.fec_fin_mem_oftime) ||
   parseDateOnly(m?.fec_fin_mem_viejo);
-
 const calcFinEfectivo = (m) => {
-  const base = getFinBase(m);
-  if (!base) return null;
-  const ext = Array.isArray(m.tb_extension_membresia)
-    ? m.tb_extension_membresia
-    : [];
-  const diasHab = ext.reduce(
-    (acc, e) => acc + parseInt(e?.dias_habiles ?? 0, 10),
-    0,
-  );
-  return diasHab > 0 ? addBusinessDays(base, diasHab) : base;
-};
 
+  const base = getFinBase(m);
+
+  if (!base) return null;
+
+  const ext = Array.isArray(m.tb_extension_membresia)
+
+    ? m.tb_extension_membresia
+
+    : [];
+
+  const diasHab = ext.reduce(
+
+    (acc, e) => acc + parseInt(e?.dias_habiles ?? 0, 10),
+
+    0,
+
+  );
+
+  return diasHab > 0 ? addBusinessDays(base, diasHab) : base;
+
+};
 const obtenerEmpleadosxCargoxDepartamentoxEmpresa = async (
   req = request,
   res = response,
@@ -194,7 +203,7 @@ const getParametrosporId = async (req = request, res = response) => {
   }
 };
 const getParametrosxEntidadxGrupo = async (req = request, res = response) => {
-  const {} = req.params;
+  const { } = req.params;
   try {
     const parametros = await Parametros.findAll({ where: { flag: true } });
     return res.status(200).json(parametros);
@@ -561,7 +570,7 @@ const getParametroSemanaPGM = async (req = request, res = response) => {
         ["sesiones", "sesiones"],
         [
           Sequelize.literal(
-            "CONCAT(semanas_st, ' Semanas | ', sesiones, ' Sesiones', ' | ', congelamiento_st, ' dias de congelamientos', ' | ', nutricion_st, ' dias de nutricion')",
+            "CONCAT(semanas_st, ' Semanas | ', sesiones, ' Sesiones', ' | ', congelamiento_st, ' dias de congelamientos', ' | ', nutricion_st, ' citas nutricion')",
           ),
           "label",
         ],
