@@ -2197,54 +2197,57 @@ const getVencimientosPorMes = async (req = request, res = response) => {
   const { year, id_empresa, id_st } = req.query;
 
   try {
-    if (!year) {
-      return res
-        .status(400)
-        .json({ ok: false, msg: "El parámetro 'year' es obligatorio." });
-    }
+    if (!year) return res.status(400).json({ ok: false, msg: "Falta year" });
 
     const empresaID = Number(id_empresa) || 598;
     const targetYear = Number(year);
 
-    const renovacionesDB = await Venta.findAll({
-      attributes: ["fecha_venta"],
+    const startWindow = new Date(`${targetYear - 2}-01-01`);
+
+
+    const renovacionesDB = await detalleVenta_membresias.findAll({
+      attributes: ["id"], // Solo necesitamos contar
       where: {
         flag: true,
-        id_empresa: empresaID,
-        id_origen: 691,
-        fecha_venta: {
-          [Op.between]: [
-            new Date(`${targetYear}-01-01T00:00:00`),
-            new Date(`${targetYear}-12-31T23:59:59`),
-          ],
-        },
+        // FILTRO CLAVE: Solo cuenta si pagaron algo (evita traspasos de monto 0)
+        tarifa_monto: { [Op.gt]: 0 },
       },
+      include: [
+        {
+          model: Venta,
+          attributes: ["fecha_venta"],
+          where: {
+            flag: true,
+            id_empresa: empresaID,
+            id_origen: 691, // Solo origen Renovación
+            fecha_venta: {
+              [Op.between]: [
+                new Date(`${targetYear}-01-01T00:00:00`),
+                new Date(`${targetYear}-12-31T23:59:59`),
+              ],
+            },
+          },
+          required: true, // Inner Join
+        },
+      ],
       raw: true,
+      nest: true, // Importante para acceder a tb_ventum.fecha_venta
     });
 
     const mapRenovaciones = {};
-    renovacionesDB.forEach((r) => {
-      const d = new Date(r.fecha_venta);
-      const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
-        2,
-        "0",
-      )}`;
-      mapRenovaciones[k] = (mapRenovaciones[k] || 0) + 1;
+    renovacionesDB.forEach((detalle) => {
+      // Ahora la fecha está dentro del objeto anidado tb_ventum
+      const fecha = detalle.tb_ventum?.fecha_venta;
+      if (fecha) {
+        const d = new Date(fecha);
+        const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        mapRenovaciones[k] = (mapRenovaciones[k] || 0) + 1;
+      }
     });
 
-    const startWindow = new Date(`${targetYear - 2}-01-01`);
 
     const membresiasDB = await detalleVenta_membresias.findAll({
-      attributes: [
-        "id",
-        "id_venta",
-        "fec_inicio_mem",
-        "fec_fin_mem",
-        "fec_fin_mem_oftime",
-        "fec_fin_mem_viejo",
-        "tarifa_monto",
-        "flag",
-      ],
+      attributes: ["fec_fin_mem", "fec_fin_mem_oftime", "fec_fin_mem_viejo", "tarifa_monto"],
       where: {
         flag: true,
         tarifa_monto: { [Op.gt]: 0 },
@@ -2261,119 +2264,69 @@ const getVencimientosPorMes = async (req = request, res = response) => {
           },
           required: true,
         },
-        {
-          model: SemanasTraining,
-          attributes: ["semanas_st"],
-          required: false,
-        },
-        {
-          model: ExtensionMembresia,
-          attributes: ["dias_habiles", "flag"],
-          required: false,
-        },
+        { model: SemanasTraining, attributes: ["semanas_st"] },
+        { model: ExtensionMembresia, attributes: ["dias_habiles", "flag"] },
       ],
     });
 
-    const clientMaxDates = new Map();
+    const mapVencimientos = {};
+    const clientesMaxDate = new Map();
 
     membresiasDB.forEach((mem) => {
-      const fechaVenta = mem.tb_ventum
-        ? new Date(mem.tb_ventum.fecha_venta)
-        : null;
-      let inicio = mem.fec_inicio_mem ? new Date(mem.fec_inicio_mem) : null;
-
-      if (!inicio || isNaN(inicio.getTime())) inicio = fechaVenta;
-      if (!inicio || isNaN(inicio.getTime())) return;
+      const fechaVenta = mem.tb_ventum ? new Date(mem.tb_ventum.fecha_venta) : null;
+      let inicio = mem.fec_inicio_mem ? new Date(mem.fec_inicio_mem) : fechaVenta;
+      if (!inicio) return;
 
       let finBase = null;
       const semanas = mem.tb_semana_training?.semanas_st;
-
       if (semanas) {
-        const diasDuracion = semanas * 7;
         finBase = new Date(inicio);
-        finBase.setDate(finBase.getDate() + diasDuracion);
+        finBase.setDate(finBase.getDate() + (semanas * 7));
       } else {
-        const f1 = mem.fec_fin_mem ? new Date(mem.fec_fin_mem) : null;
-        const f2 = mem.fec_fin_mem_oftime
-          ? new Date(mem.fec_fin_mem_oftime)
-          : null;
-        const f3 = mem.fec_fin_mem_viejo
-          ? new Date(mem.fec_fin_mem_viejo)
-          : null;
-        finBase = f1 || f2 || f3;
+        finBase = mem.fec_fin_mem ? new Date(mem.fec_fin_mem) :
+          (mem.fec_fin_mem_oftime ? new Date(mem.fec_fin_mem_oftime) : null);
       }
+      if (!finBase) return;
 
-      if (!finBase || isNaN(finBase.getTime())) return;
-
+      // Sumar extensiones
       let diasExtension = 0;
-      if (
-        mem.tb_extension_membresia &&
-        Array.isArray(mem.tb_extension_membresia)
-      ) {
+      if (mem.tb_extension_membresia?.length > 0) {
         mem.tb_extension_membresia.forEach((ext) => {
           if (ext.flag && !isNaN(parseInt(ext.dias_habiles))) {
             diasExtension += parseInt(ext.dias_habiles);
           }
         });
       }
-
       const finEfectiva = new Date(finBase);
       finEfectiva.setDate(finEfectiva.getDate() + diasExtension);
 
-      const idCliente = mem.tb_ventum?.id_cli;
-
-      if (idCliente) {
-        if (!clientMaxDates.has(idCliente)) {
-          clientMaxDates.set(idCliente, finEfectiva);
-        } else {
-          const fechaGuardada = clientMaxDates.get(idCliente);
-          if (finEfectiva > fechaGuardada) {
-            clientMaxDates.set(idCliente, finEfectiva);
-          }
-        }
-      }
-    });
-
-    const mapVencimientos = {};
-
-    clientMaxDates.forEach((maxDate) => {
-      if (maxDate.getFullYear() === targetYear) {
-        const k = `${maxDate.getFullYear()}-${String(
-          maxDate.getMonth() + 1,
-        ).padStart(2, "0")}`;
+      // 1. Vencimientos por Mes
+      if (finEfectiva.getFullYear() === targetYear) {
+        const k = `${finEfectiva.getFullYear()}-${String(finEfectiva.getMonth() + 1).padStart(2, "0")}`;
         mapVencimientos[k] = (mapVencimientos[k] || 0) + 1;
       }
+
+      // 2. Cartera Inicial
+      const idCli = mem.tb_ventum.id_cli;
+      if (!clientesMaxDate.has(idCli) || finEfectiva > clientesMaxDate.get(idCli)) {
+        clientesMaxDate.set(idCli, finEfectiva);
+      }
     });
 
-    let acumuladoCartera = 0;
-    const mesesLabels = [
-      "01",
-      "02",
-      "03",
-      "04",
-      "05",
-      "06",
-      "07",
-      "08",
-      "09",
-      "10",
-      "11",
-      "12",
-    ];
-    const mesesNombres = [
-      "ENE",
-      "FEB",
-      "MAR",
-      "ABR",
-      "MAY",
-      "JUN",
-      "JUL",
-      "AGO",
-      "SEPT",
-      "OCT",
-      "NOV",
-      "DIC",
-    ];
+    // 3. CALCULAR SALDO INICIAL
+    let carteraInicial = 0;
+    const inicioDeAno = new Date(`${targetYear}-01-01`);
+
+    clientesMaxDate.forEach((fechaFin) => {
+      if (fechaFin < inicioDeAno) {
+        carteraInicial++;
+      }
+    });
+
+    // 4. ARMAR DATA FINAL
+    let acumuladoCartera = carteraInicial;
+    const mesesLabels = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+    const mesesNombres = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEPT", "OCT", "NOV", "DIC"];
 
     const dataFinal = mesesLabels.map((m, idx) => {
       const mesKey = `${targetYear}-${m}`;
@@ -2381,12 +2334,11 @@ const getVencimientosPorMes = async (req = request, res = response) => {
       const renovaciones = mapRenovaciones[mesKey] || 0;
       const pendiente = vencimientos - renovaciones;
 
-      const porcentaje =
-        vencimientos > 0
-          ? ((renovaciones / vencimientos) * 100).toFixed(1)
-          : "0.0";
+      const porcentaje = vencimientos > 0
+        ? ((renovaciones / vencimientos) * 100).toFixed(1)
+        : "0.0";
 
-      acumuladoCartera += vencimientos - renovaciones;
+      acumuladoCartera += pendiente;
 
       return {
         Mes: mesesNombres[idx],
@@ -2399,14 +2351,11 @@ const getVencimientosPorMes = async (req = request, res = response) => {
       };
     });
 
-    res.status(200).json({
-      ok: true,
-      year: targetYear,
-      data: dataFinal,
-    });
+    res.status(200).json({ ok: true, year: targetYear, cartera_inicial: carteraInicial, data: dataFinal });
+
   } catch (error) {
-    console.error("Error en getVencimientosPorMes:", error);
-    res.status(500).json({ ok: false, msg: "Error al generar reporte." });
+    console.error(error);
+    res.status(500).json({ ok: false, msg: "Error interno" });
   }
 };
 const obtenerComparativoTotal = async (req = request, res = response) => {
@@ -3318,7 +3267,7 @@ const obtenerTransferenciasxFecha = async (req = request, res = response) => {
   }
 };
 
-const obtenerVentasxTipoFactura = async (req = request, res = response) => {};
+const obtenerVentasxTipoFactura = async (req = request, res = response) => { };
 
 const obtenerClientesConMembresia = async (req = request, res = response) => {
   try {

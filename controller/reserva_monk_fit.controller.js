@@ -140,8 +140,33 @@ const obtenerReservasMonkFit = async (req = request, res = response) => {
       attributes: []
     }));
 
+    // --- LOGICA TOTAL MONTO (EXCLUYENDO ESTADOS) ---
+    // 1. Buscamos los IDs de los estados a excluir
+    const estadosExcluidos = await Parametros.findAll({
+      attributes: ["id_param"],
+      where: {
+        entidad_param: "citas",
+        grupo_param: "estados-todos",
+        label_param: {
+          [Op.in]: [
+            "CANCELADA", "PENDIENTE", "NO ASISTIÓ", "NO ASISTIO",
+            "Cancelada", "Pendiente", "No asistio", "No asistió"
+          ]
+        }
+      }
+    });
+    const idsExcluidos = estadosExcluidos.map(e => e.id_param);
+
+    // 2. Clonamos el 'where' original para no afectar el listado
+    const whereSum = { ...where };
+
+    // 3. Agregamos la exclusión si encontramos IDs
+    if (idsExcluidos.length > 0) {
+      whereSum.id_estado_param = { [Op.notIn]: idsExcluidos };
+    }
+
     const totalMonto = await ReservaMonkFit.sum("monto_total", {
-      where,
+      where: whereSum,
       include: includesForSum
     });
 
