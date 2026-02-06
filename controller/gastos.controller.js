@@ -406,6 +406,7 @@ const obtenerGastosxFechasPago = async (req = request, res = response) => {
         "cod_trabajo",
         "id_estado_gasto",
         "fecha_pago",
+        "tcPEN",
       ],
       include: [
         {

@@ -77,6 +77,9 @@ const Gastos = db.define("tb_egresos", {
   monto: {
     type: DataTypes.DECIMAL(10, 2),
   },
+  tcPEN: {
+    type: DataTypes.DECIMAL(10, 2),
+  },
   monto_venta_cliente: {
     type: DataTypes.DECIMAL(10, 2),
   },
