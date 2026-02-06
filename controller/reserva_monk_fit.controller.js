@@ -9,6 +9,7 @@ const normalizeToSqlDate = (v) => {
   let d = v instanceof Date ? v : null;
 
   if (!d) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) s += "T00:00:00";
     if (/^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}(:\d{2})?(\.\d+)?$/.test(s))
       s = s.replace(" ", "T");
     if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(s)) s += ":00";
@@ -18,7 +19,8 @@ const normalizeToSqlDate = (v) => {
   if (!(d instanceof Date) || isNaN(d)) return null;
 
   const pad = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.000`;
+  const padMs = (n) => String(n).padStart(3, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${padMs(d.getMilliseconds())}`;
 };
 
 const parseDateFlexible = (v) => {
@@ -70,50 +72,82 @@ const obtenerReservasMonkFit = async (req = request, res = response) => {
         where.id = Number(search.slice(1)) || 0;
       } else {
         const asNum = Number(search);
+        const searchLike = `%${search}%`;
+        const orConditions = [
+          { codigo_reserva: { [Op.like]: searchLike } },
+          { '$cliente.nombre_cli$': { [Op.like]: searchLike } },
+          { '$cliente.apPaterno_cli$': { [Op.like]: searchLike } },
+          { '$cliente.apMaterno_cli$': { [Op.like]: searchLike } },
+          db.literal(`CONCAT(cliente.nombre_cli, ' ', cliente.apPaterno_cli) LIKE '%${search}%'`)
+        ];
+
         if (!Number.isNaN(asNum)) {
-          where[Op.or] = [
-            { id_cli: asNum },
-            { codigo_reserva: { [Op.like]: `%${search}%` } },
-          ];
-        } else {
-          where.codigo_reserva = { [Op.like]: `%${search}%` };
+          orConditions.push({ id_cli: asNum });
+          orConditions.push({ id: asNum });
         }
+
+        where[Op.or] = orConditions;
       }
     }
 
     if (from || to) {
-      where.fecha = {};
-      if (from) where.fecha[Op.gte] = from;
-      if (to) where.fecha[Op.lte] = to;
+
+      if (from && to) {
+        where[Op.and] = where[Op.and] || [];
+        where[Op.and].push(db.literal(`fecha >= '${normalizeToSqlDate(from)}' AND fecha <= '${normalizeToSqlDate(to)}'`));
+      } else {
+        if (from) {
+          where[Op.and] = where[Op.and] || [];
+          where[Op.and].push(db.literal(`fecha >= '${normalizeToSqlDate(from)}'`));
+        }
+        if (to) {
+          where[Op.and] = where[Op.and] || [];
+          where[Op.and].push(db.literal(`fecha <= '${normalizeToSqlDate(to)}'`));
+        }
+      }
     }
+
+    const includes = [
+      {
+        model: require("../models/Usuarios").Cliente,
+        as: "cliente",
+        attributes: [
+          "id_cli",
+          "nombre_cli",
+          "apPaterno_cli",
+          "apMaterno_cli",
+          "email_cli",
+          "tel_cli",
+        ],
+      },
+      {
+        model: Parametros,
+        as: "estado",
+        attributes: ["id_param", "label_param"],
+      },
+    ];
 
     const result = await ReservaMonkFit.findAndCountAll({
       where,
-      order: [["id", "DESC"]],
+      order: [["fecha", "DESC"]],
       limit,
       offset,
-      include: [
-        {
-          model: require("../models/Usuarios").Cliente,
-          as: "cliente",
-          attributes: [
-            "id_cli",
-            "nombre_cli",
-            "apPaterno_cli",
-            "apMaterno_cli",
-            "email_cli",
-            "tel_cli",
-          ],
-        },
-        {
-          model: Parametros,
-          as: "estado",
-          attributes: ["id_param", "label_param"],
-        },
-      ],
+      include: includes,
     });
 
-    res.json({ count: result.count, rows: result.rows, limit, offset });
+    const includesForSum = includes.map(inc => ({
+      ...inc,
+      attributes: []
+    }));
+
+    const totalMonto = await ReservaMonkFit.sum("monto_total", {
+      where,
+      include: includesForSum
+    });
+
+    res.json({ count: result.count, rows: result.rows, limit, offset, totalMonto: totalMonto || 0 });
+
+
   } catch (error) {
     console.error("LIST reservas error:", error);
     res.status(500).json({ message: "Error al obtener reservas" });
