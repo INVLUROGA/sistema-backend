@@ -153,24 +153,64 @@ const alertasUsuario = async () => {
     const alertasJSON = dataAlertas.map((a) => a.toJSON());
 
     const ahora = new Date();
+    // Set para evitar duplicados en la misma ejecución
+    const processedKeys = new Set();
+
+    const { getBlacklist } = require("../helpers/blacklistManager");
+    const blacklist = getBlacklist();
 
     for (const alerta of alertasJSON) {
+      // EXCLUSIÓN DINÁMICA
+      if (blacklist.includes(alerta.mensaje)) {
+        // console.log("Alerta omitida por blacklist:", alerta.mensaje);
+        continue;
+      }
+
       const fechaAlerta = new Date(alerta.fecha);
 
-      // Comparamos si año, mes, día, hora y minuto son iguales
-      const coincide =
-        ahora.getFullYear() === fechaAlerta.getFullYear() &&
-        ahora.getMonth() === fechaAlerta.getMonth() &&
-        ahora.getDate() === fechaAlerta.getDate() &&
-        ahora.getHours() === fechaAlerta.getHours() &&
-        ahora.getMinutes() === fechaAlerta.getMinutes();
+      let coincide = false;
+
+      if (alerta.tipo_alerta === 1425) {
+        const esMismoDia =
+          ahora.getFullYear() === fechaAlerta.getFullYear() &&
+          ahora.getMonth() === fechaAlerta.getMonth() &&
+          ahora.getDate() === fechaAlerta.getDate();
+
+        const esHoraBatch = ahora.getHours() === 11 || ahora.getHours() === 16;
+
+        if (esMismoDia && esHoraBatch) {
+          coincide = true;
+        }
+      } else {
+        coincide =
+          ahora.getFullYear() === fechaAlerta.getFullYear() &&
+          ahora.getMonth() === fechaAlerta.getMonth() &&
+          ahora.getDate() === fechaAlerta.getDate() &&
+          ahora.getHours() === fechaAlerta.getHours() &&
+          ahora.getMinutes() === fechaAlerta.getMinutes();
+      }
 
       if (coincide) {
+        // Verificar si ya procesamos un mensaje idéntico (misma persona, mismo tipo, mismo mensaje) en esta ejecución
+        const uniqueKey = `${alerta.id_user}|${alerta.tipo_alerta}|${alerta.mensaje}`;
+
+        const isDuplicate = processedKeys.has(uniqueKey);
+
         const alertaYaFinalizada = await AlertasUsuario.findOne({
           where: { id: alerta.id },
         });
 
+        // Siempre marcamos como FINALIZADA (0) para que no se quede estancada
         await alertaYaFinalizada.update({ id_estado: 0 });
+
+        // Si es DUPLICADO, cortamos aquí. No enviamos WhatsApp, no creamos la siguiente alerta.
+        if (isDuplicate) {
+          console.log(`Alerta duplicada detectada y omitida: ${uniqueKey} (ID: ${alerta.id})`);
+          continue;
+        }
+
+        // Si NO es duplicado, lo marcamos como procesado y continuamos con el flujo normal
+        processedKeys.add(uniqueKey);
 
         let nuevaFecha = null;
         const fechaOriginal = new Date(alertaYaFinalizada.fecha);
