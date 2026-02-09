@@ -10,6 +10,10 @@ const {
   obtenerMonedaOrigenYDestino,
   postMonedaOrigenYDestino,
   obtenerTCs,
+  postTC,
+  deleteTCxID,
+  updateTCxID,
+  obtenerTCxID,
 } = require("../controller/tipoCanbio.controller");
 const router = Router();
 /*
@@ -25,11 +29,14 @@ router.post("/actualizar", actualizar);
 
 router.get(
   "/obtener-tipo-cambio/:monedaOrigen/:monedaDestino",
-  obtenerMonedaOrigenYDestino
+  obtenerMonedaOrigenYDestino,
 );
 
 router.get("/", obtenerTCs);
-
+router.get("/id/:id", obtenerTCxID);
+router.post("/", postTC);
+router.put("/delete/:id", deleteTCxID);
+router.put("/id/:id", updateTCxID);
 router.post("/:monedaOrigen/:monedaDestino", postMonedaOrigenYDestino);
 
 module.exports = router;

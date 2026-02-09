@@ -32,10 +32,10 @@ const TipoDeCambio = db.define("tb_tipodecambio", {
     primaryKey: true,
   },
   precio_compra: {
-    type: DataTypes.DECIMAL(10, 2),
+    type: DataTypes.DECIMAL(10, 3),
   },
   precio_venta: {
-    type: DataTypes.DECIMAL(10, 2),
+    type: DataTypes.DECIMAL(10, 3),
   },
   monedaOrigen: {
     type: DataTypes.STRING(5),
