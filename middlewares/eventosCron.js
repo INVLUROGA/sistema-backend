@@ -153,31 +153,80 @@ const alertasUsuario = async () => {
     const alertasJSON = dataAlertas.map((a) => a.toJSON());
 
     const ahora = new Date();
+    // Set para evitar duplicados en la misma ejecución
+    const processedKeys = new Set();
+
+    const { getBlacklist } = require("../helpers/blacklistManager");
+    const blacklist = getBlacklist();
 
     for (const alerta of alertasJSON) {
-      const fechaAlerta = new Date(alerta.fecha);
+      // EXCLUSIÓN DINÁMICA
+      if (blacklist.includes(alerta.mensaje)) {
+        // console.log("Alerta omitida por blacklist:", alerta.mensaje);
+        continue;
+      }
 
-      // Comparamos si año, mes, día, hora y minuto son iguales
-      const coincide =
-        ahora.getFullYear() === fechaAlerta.getFullYear() &&
-        ahora.getMonth() === fechaAlerta.getMonth() &&
-        ahora.getDate() === fechaAlerta.getDate() &&
-        ahora.getHours() === fechaAlerta.getHours() &&
-        ahora.getMinutes() === fechaAlerta.getMinutes();
+      const fechaAlerta = new Date(alerta.fecha);
+      const horaPeru = dayjs().tz("America/Lima").hour(); // Hora actual en Perú (0-23)
+
+      let coincide = false;
+
+      if (alerta.tipo_alerta === 1425) {
+        const esMismoDia =
+          ahora.getFullYear() === fechaAlerta.getFullYear() &&
+          ahora.getMonth() === fechaAlerta.getMonth() &&
+          ahora.getDate() === fechaAlerta.getDate();
+
+        // Verificar si es 11 AM o 4 PM (16:00) en Perú
+        const esHoraBatch = horaPeru === 11 || horaPeru === 16;
+
+        if (esMismoDia && esHoraBatch) {
+          coincide = true;
+        }
+      } else {
+        coincide =
+          ahora.getFullYear() === fechaAlerta.getFullYear() &&
+          ahora.getMonth() === fechaAlerta.getMonth() &&
+          ahora.getDate() === fechaAlerta.getDate() &&
+          ahora.getHours() === fechaAlerta.getHours() &&
+          ahora.getMinutes() === fechaAlerta.getMinutes();
+      }
 
       if (coincide) {
+        // Verificar si ya procesamos un mensaje idéntico (misma persona, mismo tipo, mismo mensaje) en esta ejecución
+        const uniqueKey = `${alerta.id_user}|${alerta.tipo_alerta}|${alerta.mensaje}`;
+
+        const isDuplicate = processedKeys.has(uniqueKey);
+
         const alertaYaFinalizada = await AlertasUsuario.findOne({
           where: { id: alerta.id },
         });
 
+        // Siempre marcamos como FINALIZADA (0) para que no se quede estancada
         await alertaYaFinalizada.update({ id_estado: 0 });
+
+        // Si es DUPLICADO, cortamos aquí. No enviamos WhatsApp, no creamos la siguiente alerta.
+        if (isDuplicate) {
+          console.log(`Alerta duplicada detectada y omitida: ${uniqueKey} (ID: ${alerta.id})`);
+          continue;
+        }
+
+        // Si NO es duplicado, lo marcamos como procesado y continuamos con el flujo normal
+        processedKeys.add(uniqueKey);
 
         let nuevaFecha = null;
         const fechaOriginal = new Date(alertaYaFinalizada.fecha);
 
         if (alerta.tipo_alerta === 1425) { // MENSUAL
-          nuevaFecha = new Date(fechaOriginal);
-          nuevaFecha.setMonth(nuevaFecha.getMonth() + 1);
+          // Forzamos la hora de la nueva fecha para que coincida con el batch actual (11 o 16 de Perú)
+          // Esto corrige el desface de horas en la BD.
+          nuevaFecha = dayjs(fechaOriginal)
+            .add(1, 'month')
+            .tz("America/Lima")
+            .hour(horaPeru) // 11 o 16
+            .minute(0)
+            .second(0)
+            .toDate(); // Convierte a Date objeto (UTC) pero representando la hora correcta en Perú
         } else if (alerta.tipo_alerta === 1426) { // DIARIO
           nuevaFecha = new Date(fechaOriginal);
           nuevaFecha.setDate(nuevaFecha.getDate() + 1);

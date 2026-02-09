@@ -161,6 +161,7 @@ app.use("/api/storage/blob", require("./routes/upload/blob.router.js"));
 
 app.use("/api/tipocambio", require("./routes/tipocambio.route.js"));
 app.use("/api/alerta-usuario", require("./routes/alertaUsuario.route.js"));
+app.use("/api/blacklist", require("./routes/blacklist.route.js"));
 
 //RUTA FILES
 app.use("/api/file", fileServer(urlArchivos));
