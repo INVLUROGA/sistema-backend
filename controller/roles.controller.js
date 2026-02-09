@@ -221,6 +221,13 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           url: "/resumen-ejecutivo",
         },
+        {
+          key: "comparativo-mensual",
+          label: "COMPARATIVO MENSUAL",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/reporte/comparativo-mensual",
+        },
         // {
         //   key: "config",
         //   label: "M.O.F",
@@ -906,6 +913,13 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: false,
           icon: "uil-calender",
           url: "/reporte/gestion-comercial",
+        },
+        {
+          key: "reporte-comparativo-mensual",
+          label: "Comparativo Mensual",
+          isTitle: false,
+          icon: "uil-chart",
+          url: "/reporte/comparativo-mensual",
         },
         {
           key: "canje",
