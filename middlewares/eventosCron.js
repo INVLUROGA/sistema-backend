@@ -167,6 +167,7 @@ const alertasUsuario = async () => {
       }
 
       const fechaAlerta = new Date(alerta.fecha);
+      const horaPeru = dayjs().tz("America/Lima").hour(); // Hora actual en Perú (0-23)
 
       let coincide = false;
 
@@ -176,7 +177,8 @@ const alertasUsuario = async () => {
           ahora.getMonth() === fechaAlerta.getMonth() &&
           ahora.getDate() === fechaAlerta.getDate();
 
-        const esHoraBatch = ahora.getHours() === 11 || ahora.getHours() === 16;
+        // Verificar si es 11 AM o 4 PM (16:00) en Perú
+        const esHoraBatch = horaPeru === 11 || horaPeru === 16;
 
         if (esMismoDia && esHoraBatch) {
           coincide = true;
@@ -216,8 +218,15 @@ const alertasUsuario = async () => {
         const fechaOriginal = new Date(alertaYaFinalizada.fecha);
 
         if (alerta.tipo_alerta === 1425) { // MENSUAL
-          nuevaFecha = new Date(fechaOriginal);
-          nuevaFecha.setMonth(nuevaFecha.getMonth() + 1);
+          // Forzamos la hora de la nueva fecha para que coincida con el batch actual (11 o 16 de Perú)
+          // Esto corrige el desface de horas en la BD.
+          nuevaFecha = dayjs(fechaOriginal)
+            .add(1, 'month')
+            .tz("America/Lima")
+            .hour(horaPeru) // 11 o 16
+            .minute(0)
+            .second(0)
+            .toDate(); // Convierte a Date objeto (UTC) pero representando la hora correcta en Perú
         } else if (alerta.tipo_alerta === 1426) { // DIARIO
           nuevaFecha = new Date(fechaOriginal);
           nuevaFecha.setDate(nuevaFecha.getDate() + 1);
