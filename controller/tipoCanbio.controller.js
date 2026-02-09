@@ -123,7 +123,7 @@ const actualizar = async (req = request, res = response) => {
         where: {
           id: id,
         },
-      }
+      },
     );
 
     tipoCambio = await buscarMethod(id);
@@ -277,19 +277,6 @@ const obtenerMonedaOrigenYDestino = async (req = request, res = response) => {
     });
   }
 };
-const obtenerTCs = async (req = request, res = response) => {
-  try {
-    const tipoCambios = await TipoDeCambio.findAll({ where: { flag: true } });
-    res.status(201).json({
-      tipoCambios,
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      error: `Error en el servidor, en controller de obtenerTipoCambioxFecha, hable con el administrador: ${error}`,
-    });
-  }
-};
 const postMonedaOrigenYDestino = async (req = request, res = response) => {
   try {
     const { monedaOrigen, monedaDestino } = req.params;
@@ -313,7 +300,74 @@ const postMonedaOrigenYDestino = async (req = request, res = response) => {
     });
   }
 };
+const obtenerTCs = async (req = request, res = response) => {
+  try {
+    const tipoCambios = await TipoDeCambio.findAll({
+      where: { flag: true },
+      order: [["id", "desc"]],
+    });
+    res.status(201).json({
+      tipoCambios,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      error: `Error en el servidor, en controller de obtenerTipoCambioxFecha, hable con el administrador: ${error}`,
+    });
+  }
+};
+const postTC = async (req = request, res = response) => {
+  try {
+    const tipoCambios = await TipoDeCambio.create(req.body);
+    res.status(201).json({
+      ok: true,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      error: `Error en el servidor, en controller de obtenerTipoCambioxFecha, hable con el administrador: ${error}`,
+    });
+  }
+};
+const updateTCxID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const dataTC = await TipoDeCambio.findOne({ where: { id } });
+    await dataTC.update(req.body);
+    res.status(201).json({
+      msg: "",
+      ok: true,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const obtenerTCxID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const dataTC = await TipoDeCambio.findOne({ where: { id } });
+    res.status(201).json({
+      dataTC,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const deleteTCxID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const dataTC = await TipoDeCambio.findOne({ where: { id } });
+    await dataTC.update({ flag: false });
+    res.status(201).json({
+      msg: "ok",
+      ok: true,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
+  obtenerTCxID,
   obtenerTipoCambioxFecha,
   obtenerTipoCambiosxFechas,
   obtenerTipoCambio,
@@ -325,4 +379,7 @@ module.exports = {
   obtenerMonedaOrigenYDestino,
   postMonedaOrigenYDestino,
   obtenerTCs,
+  postTC,
+  deleteTCxID,
+  updateTCxID,
 };
