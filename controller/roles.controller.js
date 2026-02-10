@@ -221,13 +221,7 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           url: "/resumen-ejecutivo",
         },
-        {
-          key: "comparativo-mensual",
-          label: "COMPARATIVO MENSUAL",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/reporte/comparativo-mensual",
-        },
+
         // {
         //   key: "config",
         //   label: "M.O.F",
