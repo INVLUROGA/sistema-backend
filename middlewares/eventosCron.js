@@ -202,6 +202,13 @@ const alertasUsuario = async () => {
           where: { id: alerta.id },
         });
 
+        // VALIDACIÓN ANTI-RACE CONDITION
+        // Si otro proceso ya lo cerró (id_estado 0), saltamos.
+        if (!alertaYaFinalizada || alertaYaFinalizada.id_estado === 0) {
+          // console.log(`Alerta ${alerta.id} ya fue procesada por otro hilo/instancia.`);
+          continue;
+        }
+
         // Siempre marcamos como FINALIZADA (0) para que no se quede estancada
         await alertaYaFinalizada.update({ id_estado: 0 });
 
