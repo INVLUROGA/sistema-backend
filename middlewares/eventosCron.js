@@ -139,30 +139,25 @@ const obtenerUltimaVentaConExtension = (clientes) => {
 
 const alertasUsuario = async () => {
   try {
-    //W console.log("en alerta usuario");
+    // console.log("Iniciando alertasUsuario...");
 
     const dataAlertas = await AlertasUsuario.findAll({
       where: { flag: true, id_estado: 1 },
-      include: [
-        {
-          model: Usuario,
-        },
-      ],
+      include: [{ model: Usuario }],
     });
 
     const alertasJSON = dataAlertas.map((a) => a.toJSON());
 
     const ahora = new Date();
-    // Set para evitar duplicados en la misma ejecución
+    // Set para evitar duplicados en la misma ejecución (Memoria RAM)
     const processedKeys = new Set();
 
     const { getBlacklist } = require("../helpers/blacklistManager");
     const blacklist = getBlacklist();
 
     for (const alerta of alertasJSON) {
-      // EXCLUSIÓN DINÁMICA
+      // 1. EXCLUSIÓN DINÁMICA (Blacklist)
       if (blacklist.includes(alerta.mensaje)) {
-        // console.log("Alerta omitida por blacklist:", alerta.mensaje);
         continue;
       }
 
@@ -171,6 +166,7 @@ const alertasUsuario = async () => {
 
       let coincide = false;
 
+      // 2. LÓGICA DE FECHAS
       if (alerta.tipo_alerta === 1425) {
         const esMismoDia =
           ahora.getFullYear() === fechaAlerta.getFullYear() &&
@@ -193,60 +189,83 @@ const alertasUsuario = async () => {
       }
 
       if (coincide) {
-        // Verificar si ya procesamos un mensaje idéntico (misma persona, mismo tipo, mismo mensaje) en esta ejecución
+        // Generar clave única para chequeo en memoria
         const uniqueKey = `${alerta.id_user}|${alerta.tipo_alerta}|${alerta.mensaje}`;
 
-        const isDuplicate = processedKeys.has(uniqueKey);
-
-        const alertaYaFinalizada = await AlertasUsuario.findOne({
-          where: { id: alerta.id },
-        });
-
-        // VALIDACIÓN ANTI-RACE CONDITION
-        // Si otro proceso ya lo cerró (id_estado 0), saltamos.
-        if (!alertaYaFinalizada || alertaYaFinalizada.id_estado === 0) {
-          // console.log(`Alerta ${alerta.id} ya fue procesada por otro hilo/instancia.`);
+        // 3. FILTRO DE MEMORIA (Optimización)
+        // Si ya procesamos esta clave en ESTE bucle, saltamos antes de tocar la BD
+        if (processedKeys.has(uniqueKey)) {
+          console.log(`[MEMORIA] Alerta duplicada detectada en el loop: ${uniqueKey}`);
           continue;
         }
-
-        // Siempre marcamos como FINALIZADA (0) para que no se quede estancada
-        await alertaYaFinalizada.update({ id_estado: 0 });
-
-        // Si es DUPLICADO, cortamos aquí. No enviamos WhatsApp, no creamos la siguiente alerta.
-        if (isDuplicate) {
-          console.log(`Alerta duplicada detectada y omitida: ${uniqueKey} (ID: ${alerta.id})`);
-          continue;
-        }
-
-        // Si NO es duplicado, lo marcamos como procesado y continuamos con el flujo normal
         processedKeys.add(uniqueKey);
 
+
+        const [filasAfectadas] = await AlertasUsuario.update(
+          { id_estado: 0 }, // Lo pasamos a finalizado
+          {
+            where: {
+              id: alerta.id,
+              id_estado: 1, // <--- LA CLAVE: Solo actualiza si AÚN es 1 en la BD real
+            },
+          }
+        );
+
+        if (filasAfectadas === 0) {
+          // console.log(`[RACE CONDITION] Alerta ${alerta.id} ganada por otro proceso.`);
+          continue;
+        }
+
+
+        const alertaYaFinalizada = await AlertasUsuario.findByPk(alerta.id);
+        // ---------------------------------------------------------
+
+
+        const haceUnosMinutos = new Date(Date.now() - 10 * 60 * 1000);
+        const posibleDuplicadoDb = await AlertasUsuario.findOne({
+          where: {
+            id_user: alerta.id_user,
+            tipo_alerta: alerta.tipo_alerta,
+            mensaje: alerta.mensaje,
+            createdAt: {
+              [Op.gte]: haceUnosMinutos,
+            },
+            id_estado: 1 // Solo nos preocupa si ya se creó la pendiente nueva
+          },
+        });
+
+
+        if (posibleDuplicadoDb) {
+        }
+
+        // 6. CÁLCULO DE NUEVA FECHA
         let nuevaFecha = null;
         const fechaOriginal = new Date(alertaYaFinalizada.fecha);
 
-        if (alerta.tipo_alerta === 1425) { // MENSUAL
-          // Forzamos la hora de la nueva fecha para que coincida con el batch actual (11 o 16 de Perú)
-          // Esto corrige el desface de horas en la BD.
+        if (alerta.tipo_alerta === 1425) {
+          // MENSUAL
           nuevaFecha = dayjs(fechaOriginal)
-            .add(1, 'month')
+            .add(1, "month")
             .tz("America/Lima")
-            .hour(horaPeru) // 11 o 16
+            .hour(horaPeru) // Mantiene 11 o 16
             .minute(0)
             .second(0)
-            .toDate(); // Convierte a Date objeto (UTC) pero representando la hora correcta en Perú
-        } else if (alerta.tipo_alerta === 1426) { // DIARIO
+            .toDate();
+        } else if (alerta.tipo_alerta === 1426) {
+          // DIARIO
           nuevaFecha = new Date(fechaOriginal);
           nuevaFecha.setDate(nuevaFecha.getDate() + 1);
-          // Si cae Domingo (0), saltar al Lunes (+1 dia mas)
           if (nuevaFecha.getDay() === 0) {
             nuevaFecha.setDate(nuevaFecha.getDate() + 1);
           }
-        } else if (alerta.tipo_alerta === 1427) { // QUINCENAL (15 dias)
+        } else if (alerta.tipo_alerta === 1427) {
+          // QUINCENAL
           nuevaFecha = new Date(fechaOriginal);
           nuevaFecha.setDate(nuevaFecha.getDate() + 15);
         }
 
-        if (nuevaFecha) {
+        // 7. CREAR LA SIGUIENTE ALERTA
+        if (nuevaFecha && !posibleDuplicadoDb) {
           const alertaNueva = await new AlertasUsuario({
             id_user: alertaYaFinalizada.id_user,
             tipo_alerta: alertaYaFinalizada.tipo_alerta,
@@ -257,13 +276,11 @@ const alertasUsuario = async () => {
           await alertaNueva.save();
         }
 
-
-        // Usar botones interactivos SOLO si es alerta MENSUAL (1425)
-        // Se excluye DIARIO (1426) y QUINCENAL (1427) a pedido del usuario.
+        // 8. ENVIAR WHATSAPP
         if (alerta.tipo_alerta === 1425) {
           const buttons = [
-            { id: 'btn_si', label: 'SI' },
-            { id: 'btn_no', label: 'NO' }
+            { id: "btn_si", label: "SI" },
+            { id: "btn_no", label: "NO" },
           ];
           await enviarBotonesWsp(
             alerta.auth_user.telefono_user,
@@ -271,7 +288,6 @@ const alertasUsuario = async () => {
             buttons
           );
         } else {
-          // Envío normal para otros tipos
           await enviarMensajesWsp(
             alerta.auth_user.telefono_user,
             `${alerta.mensaje}`
@@ -279,7 +295,6 @@ const alertasUsuario = async () => {
         }
       }
     }
-    //  console.log("fin de alerta...");
   } catch (error) {
     console.log(error);
   }
