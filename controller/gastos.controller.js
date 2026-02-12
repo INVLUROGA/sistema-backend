@@ -33,7 +33,7 @@ const postGasto = async (req = request, res = response) => {
   }
 };
 const getGastos = async (req = request, res = response) => {
-  const { id_enterp } = req.params;
+  const { id_empresa } = req.params;
   try {
     const gastos = await Gastos.findAll({
       where: {
@@ -75,7 +75,7 @@ const getGastos = async (req = request, res = response) => {
           model: ParametroGastos,
           attributes: ["id_empresa", "nombre_gasto", "grupo", "id_tipoGasto"],
           where: {
-            id_empresa: id_enterp,
+            id_empresa: id_empresa,
           },
         },
         {
@@ -607,6 +607,46 @@ const obtenerPagosContratos = async (req = request, res = response) => {
     });
   }
 };
+const getgastoxID = async (req = request, res = response) => {
+  const { id } = req.params;
+  try {
+    const gasto = await Gastos.findOne({
+      where: { flag: true, id },
+      attributes: [
+        "id",
+        "id_gasto",
+        "grupo",
+        "moneda",
+        "monto",
+        "id_tipo_comprobante",
+        "n_comprabante",
+        "impuesto_igv",
+        "impuesto_renta",
+        "fec_pago",
+        "fec_comprobante",
+        "id_forma_pago",
+        "id_banco_pago",
+        "n_operacion",
+        "id_rubro",
+        "descripcion",
+        "id_prov",
+        "cod_trabajo",
+        "esCompra",
+        "id_estado_gasto",
+        "monto_venta_cliente",
+        "id_contrato_prov",
+      ],
+    });
+    res.status(200).json({
+      msg: "success",
+      gasto,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: `Error en el servidor, en controller de getGastos, hable con el administrador: ${error}`,
+    });
+  }
+};
 module.exports = {
   postGasto,
   getGastos,
@@ -619,4 +659,5 @@ module.exports = {
   getProveedoresGastos_SinRep,
   obtenerPagosContratos,
   obtenerGastosxFechasComprobante,
+  getgastoxID,
 };

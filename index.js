@@ -17,7 +17,9 @@ const { enviarBotonesWsp } = require("./config/whatssap-web.js");
 const {
   obtenerCumpleaniosDelMesSiguiente,
 } = require("./middlewares/EventosCron/obtenerCumpleañosDelMesSiguiente.js");
-
+const {
+  obtenerDataSeguimientos,
+} = require("./middlewares/EventosCron/obtenerDataSeguimientos.js");
 // Programa una tarea para las 9 AM todos los días
 // const cum = obtenerDataSeguimientos();
 // console.log(cum);
@@ -156,6 +158,10 @@ app.use(userdata64Routes);
 //     },
 //   })
 // );
+
+
+
+
 //BLOBS
 app.use("/api/storage/blob", require("./routes/upload/blob.router.js"));
 

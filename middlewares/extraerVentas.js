@@ -21,7 +21,7 @@ const generarContrato = async (req = request, res = response, next) => {
     dataVenta.detalle_venta_programa[0],
     detalle_cli_modelo,
     datos_pagos,
-    req.ventaID
+    req.ventaID,
   );
 };
 const extraerCredencialesCliente = (req = request, res = response, next) => {
@@ -70,6 +70,7 @@ const extraerVentaMembresia = async (req, res, next) => {
       name_pgm: Pgm.dataPrograma.name_pgm,
       fec_fin_mem: Pgm.fecha_fin,
       fec_inicio_mem: Pgm.fecha_inicio,
+      fecha_inicio: Pgm.fecha_inicio,
     };
   });
   req.ventaProgramas = membresia;
@@ -89,7 +90,7 @@ const extraerVentaTransferenciaMembresia = (req, res, next) => {
         ...transferencia,
         // id_membresia:
       };
-    }
+    },
   );
   req.ventaTransferencia = membresia;
   next();
@@ -182,7 +183,7 @@ const postNewVenta = async (req, res, next) => {
         });
       }
       const detalle_sesion = await detalle_sesionxMembresia(
-        membresia["detalle_ventaMembresia.id"]
+        membresia["detalle_ventaMembresia.id"],
       );
       const nuevaSesion = new SemanasTraining({
         semanas_st: (sesiones / 5).toFixed(0),

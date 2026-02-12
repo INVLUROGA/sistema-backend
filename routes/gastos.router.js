@@ -1,6 +1,7 @@
 const { Router } = require("express");
 
 const {
+  getgastoxID,
   postGasto,
   getGastos,
   getGasto,
@@ -17,10 +18,16 @@ const router = Router();
  * [API Documentation]
  * /api/egreso
  */
+
+router.get("/empresa/:id_empresa", getGastos);
+router.get("/id/:id", getgastoxID);
+router.put("/id/:id", putGasto);
+router.put("/delete/id/:id", deleteGasto);
+
 router.get("/orden-compra/:id_enterp", obtenerOrdenCompra);
 router.get("/fecha-pago/:id_empresa", obtenerGastosxFechasPago);
 router.post("/post-egreso", postGasto);
-router.get("/get-egresos/:id_enterp", getGastos);
+router.get("/get-egresos/:id_empresa", getGastos);
 router.get("/get-egreso/:id", getGasto);
 router.put("/put-egreso/:id", putGasto);
 router.put("/delete-egreso/:id", deleteGasto);

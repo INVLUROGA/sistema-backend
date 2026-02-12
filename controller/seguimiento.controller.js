@@ -3,6 +3,7 @@ const { Seguimiento } = require("../models/Seguimientos");
 const { detalleVenta_membresias, Venta } = require("../models/Venta");
 const { Op } = require("sequelize");
 const { ProgramaTraining } = require("../models/ProgramaTraining");
+const { Cliente } = require("../models/Usuarios");
 
 const getSeguimientos = async (req = request, res = response) => {
   try {
@@ -13,7 +14,12 @@ const getSeguimientos = async (req = request, res = response) => {
           [Op.ne]: null, // 👈 no null
         },
       },
+      order: [["id", "desc"]],
       include: [
+        {
+          model: Cliente,
+          as: "cli",
+        },
         {
           model: detalleVenta_membresias,
           attributes: ["tarifa_monto", "id_pgm", "id", "id_venta"],
@@ -66,7 +72,49 @@ const obtenerSeguimientosxIdCli = async (req = request, res = response) => {
     console.log(error);
   }
 };
+const getSeguimientoxFechaVencimientos = async (
+  req = request,
+  res = response,
+) => {
+  try {
+    const { arrayDate } = req.query;
+    const fecha_inicial = arrayDate[0];
+    const fecha_final = arrayDate[1];
+    const dataSeguimiento = await Seguimiento.findAll({
+      where: {
+        flag: true,
+        fecha_vencimiento: {
+          [Op.between]: [fecha_inicial, fecha_final],
+        },
+      },
+      order: [["id", "desc"]],
+      include: [
+        {
+          model: Cliente,
+          as: "cli",
+        },
+        {
+          model: detalleVenta_membresias,
+          attributes: ["tarifa_monto", "id_pgm", "id", "id_venta"],
+          as: "venta",
+          include: [
+            {
+              model: Venta,
+              attributes: ["id", "id_cli", "id_origen", "fecha_venta"],
+            },
+          ],
+        },
+      ],
+    });
+    res.status(201).json({
+      dataSeguimiento,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
   getSeguimientos,
   obtenerSeguimientosxIdCli,
+  getSeguimientoxFechaVencimientos,
 };

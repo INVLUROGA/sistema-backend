@@ -18,10 +18,12 @@ const {
   obtenerContratoProvxID,
   putContratoProv,
   deleteContratoxID,
+  getProveedoresxEmpresaxTipo
 } = require("../controller/proveedor.controller");
 const { validarJWT } = require("../middlewares/validarJWT");
 const router = Router();
 
+router.get('/empresa/:id_empresa/tipo/:tipo', getProveedoresxEmpresaxTipo)
 router.get("/obtener-proveedores/:tipo", getTBProveedores);
 router.get("/obtener-agentes", getTBAgentes);
 router.get("/obtener-proveedor-uid/:uid_param", getProveedorxUID);

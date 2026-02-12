@@ -17,6 +17,9 @@ const Seguimiento = db.define("tb_seguimiento", {
   id_membresia: {
     type: DataTypes.INTEGER,
   },
+  id_cli: {
+    type: DataTypes.INTEGER,
+  },
   id_cambio: {
     type: DataTypes.INTEGER,
   },
@@ -52,6 +55,11 @@ Seguimiento.hasOne(detalle_cambioPrograma, {
   sourceKey: "id_cambio",
   as: "cambioPgm",
 });
+Seguimiento.hasOne(Cliente, {
+  foreignKey: "id_cli",
+  sourceKey: "id_cli",
+  as: "cli",
+});
 
 Seguimiento.hasOne(ExtensionMembresia, {
   foreignKey: "id",
@@ -65,7 +73,7 @@ Seguimiento.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 

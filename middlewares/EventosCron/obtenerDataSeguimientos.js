@@ -12,17 +12,17 @@ const sumarDias = (fecha, numero, contarFinDeSemana = true) => {
   let diasAgregados = 0;
 
   while (diasAgregados < numero) {
-    result.setDate(result.getDate() + 1);
+    result.setUTCDate(result.getUTCDate() + 1);
 
     if (!contarFinDeSemana) {
-      const dia = result.getDay(); // 0 = domingo, 6 = sábado
+      const dia = result.getUTCDay(); // 0 domingo, 6 sábado
       if (dia === 0 || dia === 6) continue;
     }
 
     diasAgregados++;
   }
 
-  return result;
+  return result; // o result.toISOString()
 };
 const contarDiasIncluyendoInicio = (fechaInicio, fechaFin) => {
   const inicio = new Date(fechaInicio);
@@ -67,7 +67,7 @@ const obtenerDataSeguimientos = async () => {
       ],
     });
     const VentasMembresias = ventasMembresias.map((v) =>
-      v.get({ plain: true })
+      v.get({ plain: true }),
     );
 
     //TRANSFERENCIAS
@@ -100,7 +100,7 @@ const obtenerDataSeguimientos = async () => {
     });
 
     const VentasTransferencias = ventasTransferencias.map((v) =>
-      v.get({ plain: true })
+      v.get({ plain: true }),
     );
 
     // EXTRAER CONGELAMIENTOS, AUMENTO DEPENDIENDO DEL INICIO Y FIN DE LA EXTENSION: AUMENTAR DIAS, LOS DIAS DE CONGELAMIENTOS SE REFLEJAN EN EL INICIO Y FIN DE LA EXTENSION
@@ -160,29 +160,29 @@ const obtenerDataSeguimientos = async () => {
 
       // 🔁 Transferencias asociadas a esta membresía (mantengo tu misma lógica)
       const transferenciasxIdMembresia = VentasTransferencias.filter(
-        (t) => t?.venta_venta?.[0]?.id_membresia === membresia.id_venta
+        (t) => t?.venta_venta?.[0]?.id_membresia === membresia.id_venta,
       );
 
       // 🎁 Extensiones
       const regalosxIdMembresia = dataRegalos.filter(
-        (reg) => reg?.id_venta === membresia.id_venta
+        (reg) => reg?.id_venta === membresia.id_venta,
       );
       const congelamientosxIdMembresia = dataCongelamientos.filter(
-        (cong) => cong?.id_venta === membresia.id_venta
+        (cong) => cong?.id_venta === membresia.id_venta,
       );
       const cantCongelamiento = congelamientosxIdMembresia.reduce(
         (acc, item) => acc + Number(item.dias_habiles || 0),
-        0
+        0,
       );
       const cantRegalos = regalosxIdMembresia.reduce(
         (acc, item) => acc + Number(item.dias_habiles || 0),
-        0
+        0,
       );
 
       const fecha_vencimiento = sumarDias(
         membresia.fecha_inicio,
         cantCongelamiento + cantRegalos + membresia.semanas,
-        false
+        false,
       );
 
       return {
@@ -196,7 +196,7 @@ const obtenerDataSeguimientos = async () => {
         fecha_vencimiento,
         sesiones_pendientes: contarDiasIncluyendoInicio(
           new Date(),
-          fecha_vencimiento
+          fecha_vencimiento,
         ),
         cantCongelamiento,
         cantRegalos,
@@ -204,6 +204,7 @@ const obtenerDataSeguimientos = async () => {
     });
     const dataSeguimiento = ventasMembresiasConTransferencias.map((seg) => {
       return {
+        id_cli: seg.id_cli,
         id_membresia: seg.id_membresia,
         id_cambio: 0,
         id_extension: 0,
