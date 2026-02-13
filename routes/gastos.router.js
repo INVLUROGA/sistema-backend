@@ -18,7 +18,7 @@ const router = Router();
  * [API Documentation]
  * /api/egreso
  */
-
+router.post('/', postGasto)
 router.get("/empresa/:id_empresa", getGastos);
 router.get("/id/:id", getgastoxID);
 router.put("/id/:id", putGasto);

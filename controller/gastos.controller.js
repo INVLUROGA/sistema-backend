@@ -612,29 +612,17 @@ const getgastoxID = async (req = request, res = response) => {
   try {
     const gasto = await Gastos.findOne({
       where: { flag: true, id },
-      attributes: [
-        "id",
-        "id_gasto",
-        "grupo",
-        "moneda",
-        "monto",
-        "id_tipo_comprobante",
-        "n_comprabante",
-        "impuesto_igv",
-        "impuesto_renta",
-        "fec_pago",
-        "fec_comprobante",
-        "id_forma_pago",
-        "id_banco_pago",
-        "n_operacion",
-        "id_rubro",
-        "descripcion",
-        "id_prov",
-        "cod_trabajo",
-        "esCompra",
-        "id_estado_gasto",
-        "monto_venta_cliente",
-        "id_contrato_prov",
+      include: [
+        {
+          model: ParametroGastos,
+          attributes: ["id_empresa", "nombre_gasto", "grupo", "id_tipoGasto"],
+          include: [
+            {
+              model: ParametroGrupo,
+              as: "parametro_grupo",
+            },
+          ],
+        },
       ],
     });
     res.status(200).json({
