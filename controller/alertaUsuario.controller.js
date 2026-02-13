@@ -19,7 +19,7 @@ const confirmarPago = async (req = request, res = response) => {
     // 1. Marcar la alerta actual como PAGADA (3)
     await alerta.update({ id_estado: 3 });
 
-    // 2. Cancelar otras alertas repetidas de este mes (Tu lógica actual)
+    // 2. Cancelar otras alertas repetidas de este mes
     const fechaInicioMes = new Date();
     fechaInicioMes.setDate(1);
     fechaInicioMes.setHours(0, 0, 0, 0);
@@ -34,6 +34,7 @@ const confirmarPago = async (req = request, res = response) => {
           id_user: alerta.id_user,
           id_estado: 1,
           flag: true,
+          mensaje: alerta.mensaje, // <--- ¡CRÍTICO! Solo cancelar recibos del MISMO SERVICIO
           fecha: { [Op.gte]: fechaInicioMes, [Op.lt]: fechaFinMes },
           tipo_alerta: { [Op.in]: [1425] },
           id: { [Op.ne]: id } // Excluir la que ya actualizamos arriba
@@ -41,29 +42,29 @@ const confirmarPago = async (req = request, res = response) => {
       }
     );
 
-    // --- AGREGAR ESTO: CREAR LA ALERTA DEL PRÓXIMO MES ---
-    if (alerta.tipo_alerta === 1425) { // Solo si es mensual
+    // --- 3. CREAR LA ALERTA DEL PRÓXIMO MES ---
+    if (alerta.tipo_alerta === 1425) {
 
-      // Calculamos la fecha basándonos en la fecha ORIGINAL de la alerta, no en "hoy"
-      // para mantener el día de vencimiento (ej: si vence el 15, que el proximo sea el 15)
       const fechaOriginal = new Date(alerta.fecha);
-      const horaPeru = dayjs().tz("America/Lima").hour();
 
-      const nuevaFecha = dayjs(fechaOriginal)
-        .add(1, 'month')
-        .tz("America/Lima")
-        .hour(horaPeru === 0 ? 11 : horaPeru) // Mantener hora lógica o default a 11
-        .minute(0)
-        .second(0)
-        .toDate();
+      // Calculamos la fecha sumando 1 mes exacto, manteniendo la MISMA HORA de la original
+      // Esto evita que las alertas salten de las 13:00 a las 11:00 aleatoriamente
+      const nuevaFecha = dayjs(fechaOriginal).add(1, 'month').toDate();
 
-      // Verificamos si ya existe para no duplicar (Safety Check)
+      // Definimos el inicio y fin de ese NUEVO DÍA para buscar duplicados
+      const inicioDiaNuevo = dayjs(nuevaFecha).startOf('day').toDate();
+      const finDiaNuevo = dayjs(nuevaFecha).endOf('day').toDate();
+
+      // Verificamos si ya existe para no duplicar (Safety Check Blindado)
       const existeProxima = await AlertasUsuario.findOne({
         where: {
           id_user: alerta.id_user,
           tipo_alerta: 1425,
           mensaje: alerta.mensaje,
-          fecha: nuevaFecha
+          // Buscamos si existe CUALQUIER alerta ese día (sin importar la hora exacta)
+          fecha: { [Op.gte]: inicioDiaNuevo, [Op.lte]: finDiaNuevo },
+          // Buscamos en estado 1 (pendiente) o 3 (pagado adelantado)
+          id_estado: { [Op.in]: [1, 3] }
         }
       });
 
@@ -73,13 +74,14 @@ const confirmarPago = async (req = request, res = response) => {
           tipo_alerta: alerta.tipo_alerta,
           mensaje: alerta.mensaje,
           fecha: nuevaFecha,
-          id_estado: 1, // Nace activa para que el Cron la tome el otro mes
+          id_estado: 1, // Nace activa
           flag: true
         });
-        console.log("Alerta del próximo mes creada manualmente tras confirmación de pago.");
+        console.log(`Alerta del próximo mes creada para el usuario ${alerta.id_user}: ${alerta.mensaje}`);
+      } else {
+        console.log(`Se omitió crear alerta. Ya existía una programada para el usuario ${alerta.id_user}.`);
       }
     }
-    // -----------------------------------------------------
 
     res.status(200).json({ msg: "Pago confirmado, alertas limpiadas y próximo vencimiento programado." });
   } catch (error) {

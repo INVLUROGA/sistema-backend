@@ -834,7 +834,7 @@ const get_VENTAS = async (req = request, res = response) => {
         },
       ],
     });
-    console.log({ ventas });
+    //console.log({ ventas });
 
     res.status(200).json({
       ok: true,
