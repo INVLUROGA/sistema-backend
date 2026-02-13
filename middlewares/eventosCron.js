@@ -139,164 +139,115 @@ const obtenerUltimaVentaConExtension = (clientes) => {
 
 const alertasUsuario = async () => {
   try {
-    // console.log("Iniciando alertasUsuario...");
-
     const dataAlertas = await AlertasUsuario.findAll({
-      where: { flag: true, id_estado: 1 },
+      where: { flag: true, id_estado: 1 }, // Solo busca pendientes
       include: [{ model: Usuario }],
     });
 
     const alertasJSON = dataAlertas.map((a) => a.toJSON());
 
-    const ahora = new Date();
-    // Set para evitar duplicados en la misma ejecución (Memoria RAM)
-    const processedKeys = new Set();
+    // Obtenemos hora y minuto actual en Lima
+    const ahora = dayjs().tz("America/Lima");
+    const horaPeru = ahora.hour();
+    const minutoActual = ahora.minute();
 
+    const processedKeys = new Set();
     const { getBlacklist } = require("../helpers/blacklistManager");
     const blacklist = getBlacklist();
 
     for (const alerta of alertasJSON) {
-      // 1. EXCLUSIÓN DINÁMICA (Blacklist)
-      if (blacklist.includes(alerta.mensaje)) {
-        continue;
-      }
+      if (blacklist.includes(alerta.mensaje)) continue;
 
-      const fechaAlerta = new Date(alerta.fecha);
-      const horaPeru = dayjs().tz("America/Lima").hour(); // Hora actual en Perú (0-23)
-
+      const fechaAlerta = dayjs(alerta.fecha).tz("America/Lima");
       let coincide = false;
+      const esAlertaMensual = alerta.tipo_alerta === 1425;
 
-      // 2. LÓGICA DE FECHAS
-      if (alerta.tipo_alerta === 1425) {
-        const esMismoDia =
-          ahora.getFullYear() === fechaAlerta.getFullYear() &&
-          ahora.getMonth() === fechaAlerta.getMonth() &&
-          ahora.getDate() === fechaAlerta.getDate();
+      if (esAlertaMensual) {
+        // 1. Lógica de 3 días de anticipación
+        // Diferencia en días entre la fecha de vencimiento y hoy
+        const diasParaVencer = fechaAlerta.startOf('day').diff(ahora.startOf('day'), 'day');
 
-        // Verificar si es 11 AM o 4 PM (16:00) en Perú
-        const esHoraBatch = horaPeru === 11 || horaPeru === 16;
+        // Entra al rango si faltan 3, 2, 1 días o si es hoy (0 días).
+        // (Opcional: Si quieres seguir cobrando aunque esté vencido, quita el "&& diasParaVencer >= 0")
+        const enRangoDeCobro = diasParaVencer <= 3 && diasParaVencer >= 0;
 
-        if (esMismoDia && esHoraBatch) {
+        // 2. Lógica de las dos ventanas horarias (11 AM y 4 PM)
+        // NOTA: Exigimos minuto === 0 para que envíe una sola vez en esa hora
+        const esHoraBatch = (horaPeru === 11 || horaPeru === 16) && minutoActual === 0;
+
+        if (enRangoDeCobro && esHoraBatch) {
           coincide = true;
         }
+
       } else {
+        // Lógica original para las demás alertas diarias/quincenales (1426, 1427)
         coincide =
-          ahora.getFullYear() === fechaAlerta.getFullYear() &&
-          ahora.getMonth() === fechaAlerta.getMonth() &&
-          ahora.getDate() === fechaAlerta.getDate() &&
-          ahora.getHours() === fechaAlerta.getHours() &&
-          ahora.getMinutes() === fechaAlerta.getMinutes();
+          ahora.year() === fechaAlerta.year() &&
+          ahora.month() === fechaAlerta.month() &&
+          ahora.date() === fechaAlerta.date() &&
+          horaPeru === fechaAlerta.hour() &&
+          minutoActual === fechaAlerta.minute();
       }
 
       if (coincide) {
-        // Generar clave única para chequeo en memoria
-        const uniqueKey = `${alerta.id_user}|${alerta.tipo_alerta}|${alerta.mensaje}`;
+        // Blindaje contra espacios en blanco para evitar falsos duplicados
+        const mensajeLimpio = alerta.mensaje.trim().replace(/\s+/g, ' ');
+        const uniqueKey = `${alerta.id_user}|${alerta.tipo_alerta}|${mensajeLimpio}`;
 
-        // 3. FILTRO DE MEMORIA (Optimización)
-        // Si ya procesamos esta clave en ESTE bucle, saltamos antes de tocar la BD
         if (processedKeys.has(uniqueKey)) {
-          console.log(`[MEMORIA] Alerta duplicada detectada en el loop: ${uniqueKey}`);
+          console.log(`[MEMORIA] Alerta bloqueada en este ciclo (ya enviada): ${uniqueKey}`);
           continue;
         }
         processedKeys.add(uniqueKey);
 
-
-        const [filasAfectadas] = await AlertasUsuario.update(
-          { id_estado: 0 }, // Lo pasamos a finalizado
-          {
-            where: {
-              id: alerta.id,
-              id_estado: 1, // <--- LA CLAVE: Solo actualiza si AÚN es 1 en la BD real
-            },
-          }
-        );
-
-        if (filasAfectadas === 0) {
-          // console.log(`[RACE CONDITION] Alerta ${alerta.id} ganada por otro proceso.`);
-          continue;
-        }
-
-
-        const alertaYaFinalizada = await AlertasUsuario.findByPk(alerta.id);
-        // ---------------------------------------------------------
-
-
-        const haceUnosMinutos = new Date(Date.now() - 10 * 60 * 1000);
-        const posibleDuplicadoDb = await AlertasUsuario.findOne({
-          where: {
-            id_user: alerta.id_user,
-            tipo_alerta: alerta.tipo_alerta,
-            mensaje: alerta.mensaje,
-            createdAt: {
-              [Op.gte]: haceUnosMinutos,
-            },
-            id_estado: 1 // Solo nos preocupa si ya se creó la pendiente nueva
-          },
-        });
-
-
-        if (posibleDuplicadoDb) {
-        }
-
-        // 6. CÁLCULO DE NUEVA FECHA
-        let nuevaFecha = null;
-        const fechaOriginal = new Date(alertaYaFinalizada.fecha);
-
-        if (alerta.tipo_alerta === 1425) {
-          // MENSUAL
-          nuevaFecha = dayjs(fechaOriginal)
-            .add(1, "month")
-            .tz("America/Lima")
-            .hour(horaPeru) // Mantiene 11 o 16
-            .minute(0)
-            .second(0)
-            .toDate();
-        } else if (alerta.tipo_alerta === 1426) {
-          // DIARIO
-          nuevaFecha = new Date(fechaOriginal);
-          nuevaFecha.setDate(nuevaFecha.getDate() + 1);
-          if (nuevaFecha.getDay() === 0) {
-            nuevaFecha.setDate(nuevaFecha.getDate() + 1);
-          }
-        } else if (alerta.tipo_alerta === 1427) {
-          // QUINCENAL
-          nuevaFecha = new Date(fechaOriginal);
-          nuevaFecha.setDate(nuevaFecha.getDate() + 15);
-        }
-
-        // 7. CREAR LA SIGUIENTE ALERTA
-        if (nuevaFecha && !posibleDuplicadoDb) {
-          const alertaNueva = await new AlertasUsuario({
-            id_user: alertaYaFinalizada.id_user,
-            tipo_alerta: alertaYaFinalizada.tipo_alerta,
-            mensaje: alertaYaFinalizada.mensaje,
-            fecha: nuevaFecha,
-            id_estado: 1,
-          });
-          await alertaNueva.save();
-        }
-
-        // 8. ENVIAR WHATSAPP
-        if (alerta.tipo_alerta === 1425) {
+        if (esAlertaMensual) {
+          // --- ALERTA MENSUAL (1425) ---
           const buttons = [
             { id: "btn_si", label: "SI" },
             { id: "btn_no", label: "NO" },
           ];
+
           await enviarBotonesWsp(
             alerta.auth_user.telefono_user,
             `${alerta.mensaje}\n\n¿Ya realizaste el pago?\nResponde *SI* para confirmar y detener las alertas de este mes.`,
             buttons
           );
+
+          console.log(`Mensaje enviado a ${alerta.auth_user.telefono_user} (Hora: ${horaPeru}:00)`);
+
+          // ¡IMPORTANTE! Aquí NO pasamos el estado a 0 ni creamos la del próximo mes.
+          // La alerta se queda en ESTADO 1. Si no presionan "SI", a las 4 PM (o mañana) volverá a entrar aquí.
+
         } else {
-          await enviarMensajesWsp(
-            alerta.auth_user.telefono_user,
-            `${alerta.mensaje}`
-          );
+          // --- OTRAS ALERTAS (1426, 1427) ---
+          // Estas sí se matan de inmediato y se reprograman
+          await AlertasUsuario.update({ id_estado: 0 }, { where: { id: alerta.id, id_estado: 1 } });
+
+          let nuevaFecha = null;
+          if (alerta.tipo_alerta === 1426) {
+            nuevaFecha = fechaAlerta.add(1, 'day');
+            if (nuevaFecha.day() === 0) nuevaFecha = nuevaFecha.add(1, 'day'); // Saltar domingo
+          } else if (alerta.tipo_alerta === 1427) {
+            nuevaFecha = fechaAlerta.add(15, 'day');
+          }
+
+          if (nuevaFecha) {
+            await AlertasUsuario.create({
+              id_user: alerta.id_user,
+              tipo_alerta: alerta.tipo_alerta,
+              mensaje: alerta.mensaje,
+              fecha: nuevaFecha.toDate(),
+              id_estado: 1,
+              flag: true
+            });
+          }
+
+          await enviarMensajesWsp(alerta.auth_user.telefono_user, `${alerta.mensaje}`);
         }
       }
     }
   } catch (error) {
-    console.log(error);
+    console.log("Error en alertasUsuario:", error);
   }
 };
 const recordatorioReservaCita24hAntes = async () => {
