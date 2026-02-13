@@ -1570,6 +1570,177 @@ const getLogicaEstadoMembresia = async (req = request, res = response) => {
     });
   }
 };
+
+
+const getMembresiasCruzadas = async (req, res) => {
+  try {
+    const empresa = Number(req.query.empresa || 598);
+    const year = Number(req.query.year || new Date().getFullYear());
+    const selectedMonth = Number(req.query.selectedMonth || new Date().getMonth() + 1);
+    const initDay = Number(req.query.initDay || 1);
+    const cutDay = Number(req.query.cutDay || new Date(year, selectedMonth, 0).getDate());
+
+    // 1. Armamos las fechas exactas
+    const rangeStart = new Date(year, selectedMonth - 1, initDay);
+    rangeStart.setHours(0, 0, 0, 0);
+
+    const rangeEnd = new Date(year, selectedMonth - 1, cutDay);
+    rangeEnd.setHours(23, 59, 59, 999);
+
+    // Strings limpios para evitar que SQL Server falle con las zonas horarias
+    const startStr = `${year}-${String(selectedMonth).padStart(2, '0')}-${String(initDay).padStart(2, '0')} 00:00:00`;
+    const endStr = `${year}-${String(selectedMonth).padStart(2, '0')}-${String(cutDay).padStart(2, '0')} 23:59:59`;
+
+    // 2. Traemos todas las membresías activas
+    const rows = await detalleVenta_membresias.findAll({
+      // AGREGADO: "id_st" a los atributos
+      attributes: ["id", "fec_inicio_mem", "id_venta", "id_pgm", "id_st", "flag"],
+      where: {
+        flag: true,
+        // Traemos todo lo que inició antes del fin del rango. 
+        // (Quitamos el filtro de BD de fec_fin_mem porque ahora lo calcularemos en JS)
+        fec_inicio_mem: { [Op.lte]: endStr }
+      },
+      include: [
+        {
+          model: Venta,
+          attributes: ["id", "id_empresa", "observacion"],
+          where: { id_empresa: empresa, flag: true },
+          required: true,
+          include: [
+            {
+              model: Cliente,
+              attributes: ["id_cli", "nombre_cli", "apPaterno_cli", "apMaterno_cli"],
+              required: true
+            },
+            {
+              model: Empleado,
+              attributes: ["nombre_empl", "apPaterno_empl"],
+              required: false
+            }
+          ]
+        },
+        {
+          model: ProgramaTraining,
+          attributes: ["name_pgm"],
+          required: false
+        },
+        // AGREGADO: Incluimos la tabla de semanas para poder calcular el fin
+        {
+          model: SemanasTraining,
+          attributes: ["id_st", "semanas_st"],
+          required: false
+        }
+      ]
+    });
+
+    // 3. Agrupamos las membresías por ID de cliente
+    const clientMemberships = {};
+    for (const m of rows) {
+      const cliObj = m.tb_ventum?.tb_cliente;
+      if (!cliObj) continue;
+
+      const idCli = cliObj.id_cli;
+      if (!clientMemberships[idCli]) {
+        clientMemberships[idCli] = [];
+      }
+      clientMemberships[idCli].push(m);
+    }
+
+    // 4. Lógica Matemática de JS para hallar los solapamientos
+    const cruces = [];
+
+    Object.keys(clientMemberships).forEach(idCli => {
+      const mems = clientMemberships[idCli];
+
+      // Ordenamos por fecha de inicio
+      mems.sort((a, b) => new Date(a.fec_inicio_mem) - new Date(b.fec_inicio_mem));
+
+      // Doble bucle para comparar Membresía A con Membresía B
+      for (let i = 0; i < mems.length; i++) {
+        for (let j = i + 1; j < mems.length; j++) {
+          const memA = mems[i];
+          const memB = mems[j];
+
+          if (memA.id_venta === memB.id_venta) continue;
+
+
+          const startA = new Date(memA.fec_inicio_mem);
+          const semanasA = memA.SemanasTraining?.semanas_st || memA.tb_semana_training?.semanas_st || 0;
+          const endA = new Date(startA);
+          // Sumamos (semanas * 7 días)
+          endA.setDate(endA.getDate() + (semanasA * 7));
+          endA.setHours(23, 59, 59, 999);
+
+          const startB = new Date(memB.fec_inicio_mem);
+          const semanasB = memB.SemanasTraining?.semanas_st || memB.tb_semana_training?.semanas_st || 0;
+          const endB = new Date(startB);
+          endB.setDate(endB.getDate() + (semanasB * 7));
+          endB.setHours(23, 59, 59, 999);
+          // ==========================================
+
+          // ¿Se cruzan la A y la B en general?
+          if (startA <= endB && endA >= startB) {
+
+            // Calculamos el periodo exacto del cruce
+            const overlapStart = new Date(Math.max(startA, startB));
+            const overlapEnd = new Date(Math.min(endA, endB));
+
+            // ¿Este cruce ocurre DENTRO del mes que el usuario seleccionó en la UI?
+            if (overlapStart <= rangeEnd && overlapEnd >= rangeStart) {
+
+              const diffTime = overlapEnd - overlapStart;
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+              if (diffDays > 0) {
+                const c = memA.tb_ventum.tb_cliente;
+                const eA = memA.tb_ventum.tb_empleado || {};
+                const eB = memB.tb_ventum.tb_empleado || {};
+
+                cruces.push({
+                  cliente_id: idCli,
+                  nombre_cliente: [c.nombre_cli, c.apPaterno_cli, c.apMaterno_cli].filter(Boolean).join(" "),
+                  id_mem_A: memA.id,
+                  plan_A: memA.tb_ProgramaTraining?.name_pgm || "-",
+                  venta_A: memA.id_venta,
+                  observacion_A: memA.tb_ventum?.observacion || "",
+                  inicio_A: startA.toISOString().slice(0, 10),
+                  fin_A: endA.toISOString().slice(0, 10), // Mostramos la fecha que acabamos de calcular
+                  asesor_A: [eA.nombre_empl, eA.apPaterno_empl].filter(Boolean).join(" ") || "-",
+
+                  id_mem_B: memB.id,
+                  plan_B: memB.tb_ProgramaTraining?.name_pgm || "-",
+                  venta_B: memB.id_venta,
+                  observacion_B: memB.tb_ventum?.observacion || "",
+                  inicio_B: startB.toISOString().slice(0, 10),
+                  fin_B: endB.toISOString().slice(0, 10), // Mostramos la fecha que acabamos de calcular
+                  asesor_B: [eB.nombre_empl, eB.apPaterno_empl].filter(Boolean).join(" ") || "-",
+
+                  dias_solapados: diffDays
+                });
+              }
+            }
+          }
+        }
+      }
+    });
+
+    cruces.sort((a, b) => b.dias_solapados - a.dias_solapados);
+
+    return res.json({
+      intervalo: {
+        inicio: rangeStart.toISOString().slice(0, 10),
+        fin: rangeEnd.toISOString().slice(0, 10)
+      },
+      total_cruces: cruces.length,
+      cruces
+    });
+
+  } catch (error) {
+    console.error("Error en getMembresiasCruzadas:", error);
+    return res.status(500).json({ error: "Error calculando cruces.", detail: error.message });
+  }
+};
 const getParametrosVendedoresVendiendoTodo = async (
   req = request,
   res = response,
@@ -2020,6 +2191,7 @@ module.exports = {
   deleteParametrosGenerales,
   putParametrosGenerales,
   getMembresiasVigentesEmpresa,
+  getMembresiasCruzadas,
   obtenerEmpleadosxCargoxDepartamentoxEmpresa,
   obtenerParametrosGruposGastos,
   getParametrosporClientexEmpresa,

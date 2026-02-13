@@ -9,6 +9,7 @@ const {
   getParametrosEmpleadosxDep,
   getParametrosLogosProgramas,
   getParametroSemanaPGM,
+  getMembresiasCruzadas,
   getParametroHorariosPGM,
   getParametroTarifasSM,
   getParametroMetaxAsesor,
@@ -109,6 +110,10 @@ router.get(
 router.get("/membresias/vigentes/resumen", getVigentesResumenEmpresa);
 router.get("/renovaciones/por-vencer", getRenovacionesPorVencerEmpresa);
 router.get("/membresias/vigentes/lista", getMembresiasVigentesEmpresa);
+router.get(
+  "/renovaciones/por-rango-fechas",
+  getMembresiasCruzadas
+);
 router.get(
   "/get_params/grupo-gasto/:id_tipo_gasto",
   getParametroGrupoxTIPOGASTO
