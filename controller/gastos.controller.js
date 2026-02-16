@@ -12,7 +12,7 @@ const { typesCRUD } = require("../types/types");
 
 const postGasto = async (req = request, res = response) => {
   try {
-    const gasto = new Gastos({ ...req.body, fecha_registro: new Date() });
+    const gasto = new Gastos({ ...req.body, fec_registro: new Date() });
     await gasto.save();
     let formAUDIT = {
       id_user: req.id_user,
