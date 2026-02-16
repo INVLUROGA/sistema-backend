@@ -65,6 +65,8 @@ const getGastos = async (req = request, res = response) => {
         "id_prov",
         "cod_trabajo",
         "id_estado_gasto",
+        "fecha_pago",
+        "fecha_comprobante",
       ],
       include: [
         {
@@ -396,6 +398,7 @@ const obtenerGastosxFechasPago = async (req = request, res = response) => {
         "fec_pago",
         "id_tipo_comprobante",
         "n_comprabante",
+        "fecha_comprobante",
         "impuesto_igv",
         "impuesto_renta",
         "n_operacion",
