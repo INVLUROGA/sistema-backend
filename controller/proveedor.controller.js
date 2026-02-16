@@ -7,6 +7,7 @@ const { Parametros } = require("../models/Parametros");
 const { Gastos } = require("../models/GastosFyV");
 const { ImagePT } = require("../models/Image");
 const { ContratoProv } = require("../models/ContratoProv.model");
+const { Sequelize } = require("sequelize");
 
 /*
 ip_user: '127.0.0.1',
@@ -565,7 +566,15 @@ const getProveedoresxEmpresaxTipo = async (req = request, res = response) => {
       },
       attributes: [
         ["id", "value"],
-        ["razon_social_prov", "label"],
+        [
+          Sequelize.fn(
+            "CONCAT",
+            Sequelize.col("id"),
+            " ",
+            Sequelize.col("razon_social_prov"),
+          ),
+          "label",
+        ],
       ],
     });
     res.status(201).json({
