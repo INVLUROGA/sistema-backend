@@ -12,7 +12,12 @@ const { typesCRUD } = require("../types/types");
 
 const postGasto = async (req = request, res = response) => {
   try {
-    const gasto = new Gastos({ ...req.body, fec_registro: new Date() });
+    const gasto = new Gastos({
+      ...req.body,
+      fec_registro: new Date(),
+      fecha_pago: req.body.fec_pago,
+      fecha_comprobante: req.body.fec_comprobante,
+    });
     await gasto.save();
     let formAUDIT = {
       id_user: req.id_user,
@@ -187,7 +192,11 @@ const putGasto = async (req = request, res = response) => {
   try {
     const { id } = req.params;
     const gasto = await Gastos.findOne({ where: { flag: true, id } });
-    await gasto.update(req.body);
+    await gasto.update({
+      ...req.body,
+      fecha_pago: req.body.fec_pago,
+      fecha_comprobante: req.body.fec_comprobante,
+    });
     let formAUDIT = {
       id_user: req.id_user,
       ip_user: req.ip_user,
