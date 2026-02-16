@@ -1680,7 +1680,7 @@ const getMembresiasCruzadas = async (req, res) => {
           // ==========================================
 
           // ¿Se cruzan la A y la B en general?
-          if (startA <= endB && endA >= startB) {
+          if (startA < endB && endA > startB) {
 
             // Calculamos el periodo exacto del cruce
             const overlapStart = new Date(Math.max(startA, startB));
@@ -1690,9 +1690,9 @@ const getMembresiasCruzadas = async (req, res) => {
             if (overlapStart <= rangeEnd && overlapEnd >= rangeStart) {
 
               const diffTime = overlapEnd - overlapStart;
-              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+              const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-              if (diffDays > 0) {
+              if (diffDays > 1) {
                 const c = memA.tb_ventum.tb_cliente;
                 const eA = memA.tb_ventum.tb_empleado || {};
                 const eB = memB.tb_ventum.tb_empleado || {};
