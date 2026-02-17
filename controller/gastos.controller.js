@@ -15,8 +15,8 @@ const postGasto = async (req = request, res = response) => {
     const gasto = new Gastos({
       ...req.body,
       fec_registro: new Date(),
-      fecha_pago: req.body.fec_pago,
-      fecha_comprobante: req.body.fec_comprobante,
+      fecha_pago: new Date(req.body.fec_pago),
+      fecha_comprobante: new Date(req.body.fec_comprobante),
     });
     await gasto.save();
     let formAUDIT = {
@@ -194,8 +194,8 @@ const putGasto = async (req = request, res = response) => {
     const gasto = await Gastos.findOne({ where: { flag: true, id } });
     await gasto.update({
       ...req.body,
-      fecha_pago: req.body.fec_pago,
-      fecha_comprobante: req.body.fec_comprobante,
+      fecha_pago: new Date(req.body.fec_pago),
+      fecha_comprobante: new Date(req.body.fec_comprobante),
     });
     let formAUDIT = {
       id_user: req.id_user,

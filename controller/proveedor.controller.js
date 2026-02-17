@@ -558,6 +558,7 @@ const postPenalidadesContratoProv = async (req = request, res = response) => {
 const getProveedoresxEmpresaxTipo = async (req = request, res = response) => {
   try {
     const { id_empresa, tipo } = req.params;
+
     const dataProveedores = await Proveedor.findAll({
       where: {
         tipo,
