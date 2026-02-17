@@ -2210,7 +2210,6 @@ const getVencimientosPorMes = async (req = request, res = response) => {
       where: {
         flag: true,
         // FILTRO CLAVE: Solo cuenta si pagaron algo (evita traspasos de monto 0)
-        tarifa_monto: { [Op.gt]: 0 },
       },
       include: [
         {
@@ -2250,7 +2249,6 @@ const getVencimientosPorMes = async (req = request, res = response) => {
       attributes: ["fec_fin_mem", "fec_fin_mem_oftime", "fec_fin_mem_viejo", "tarifa_monto"],
       where: {
         flag: true,
-        tarifa_monto: { [Op.gt]: 0 },
         ...(id_st && { id_st: id_st }),
       },
       include: [
@@ -2334,9 +2332,9 @@ const getVencimientosPorMes = async (req = request, res = response) => {
       const renovaciones = mapRenovaciones[mesKey] || 0;
       const pendiente = vencimientos - renovaciones;
 
-      const porcentaje = vencimientos > 0
-        ? ((renovaciones / vencimientos) * 100).toFixed(1)
-        : "0.0";
+      const porcentaje = vencimientos === 0
+        ? 0
+        : ((renovaciones / vencimientos) * 100).toFixed(1);
 
       acumuladoCartera += pendiente;
 
