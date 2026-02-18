@@ -48,6 +48,7 @@ const {
   getRenovacionesPorVencerEmpresa,
   getLogicaEstadoMembresias,
   deleteParametrosGenerales,
+  getMembresiasVigentesHistorico,
 } = require("../controller/Parametros.controller");
 const { obtener_estado_membresia } = require("../middlewares/logicaSistema");
 const {
@@ -110,6 +111,7 @@ router.get(
 router.get("/membresias/vigentes/resumen", getVigentesResumenEmpresa);
 router.get("/renovaciones/por-vencer", getRenovacionesPorVencerEmpresa);
 router.get("/membresias/vigentes/lista", getMembresiasVigentesEmpresa);
+router.get("/membresias/vigentes/historico", getMembresiasVigentesHistorico);
 router.get(
   "/renovaciones/por-rango-fechas",
   getMembresiasCruzadas

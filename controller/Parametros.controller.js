@@ -906,9 +906,7 @@ const getVigentesResumenEmpresa = async (req, res) => {
     const dias = Number(req.query.dias || 15);
     const incluirMontoCero = String(req.query.incluirMontoCero ?? "0") === "1";
 
-    // ==========================
-    // 1) Calcular snapshot y límite
-    // ==========================
+
     let snapStr = String(req.query.snapshot || "");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(snapStr)) {
       const now = new Date();
@@ -943,19 +941,14 @@ const getVigentesResumenEmpresa = async (req, res) => {
     lim.setHours(0, 0, 0, 0);
     const limTime = lim.getTime();
 
-    // ==========================
-    // 2) Armar where usando Op (filtramos lo obvio en DB)
-    // ==========================
+
     const whereDetalle = {};
 
-    // Si NO se deben incluir montos 0, filtramos ya en la DB
     if (!incluirMontoCero) {
       whereDetalle.tarifa_monto = { [Op.gt]: 0 };
     }
 
-    // ==========================
-    // 3) Traer solo lo necesario desde la BD
-    // ==========================
+
     const rows = await detalleVenta_membresias.findAll({
       attributes: [
         "id",
@@ -987,9 +980,6 @@ const getVigentesResumenEmpresa = async (req, res) => {
       ],
     });
 
-    // ==========================
-    // 4) Recorrer filas y clasificar
-    // ==========================
     let vigentes = 0;
     let venceEnSnapshot = 0;
     let porVencer = 0;
@@ -1005,7 +995,6 @@ const getVigentesResumenEmpresa = async (req, res) => {
       if (!fin) continue;
 
       const inicio = getInicioBase(m);
-      // si la membresía empieza DESPUÉS del snapshot, no está vigente todavía
       if (inicio && inicio > snapshot) continue;
 
       const f = new Date(fin);
@@ -1023,16 +1012,12 @@ const getVigentesResumenEmpresa = async (req, res) => {
         continue;
       }
 
-      // vigente después del snapshot
       vigentes++;
       if (fTime <= limTime) {
         porVencer++;
       }
     }
 
-    // ==========================
-    // 5) Respuesta
-    // ==========================
     return res.json({
       snapshot: snapshot.toISOString().slice(0, 10),
       vigentes,
@@ -1198,6 +1183,207 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
     return res
       .status(500)
       .json({ error: "Error listando vigentes", detail: e.message });
+  }
+};
+
+const getMembresiasVigentesHistorico = async (req, res) => {
+  try {
+    const empresa = Number(req.query.empresa || 598);
+    const year = Number(req.query.year || new Date().getFullYear());
+    const selectedMonth = Number(
+      req.query.selectedMonth || new Date().getMonth() + 1
+    );
+
+    const rows = await detalleVenta_membresias.findAll({
+      attributes: [
+        "id",
+        "tarifa_monto",
+        "fec_inicio_mem",
+        "fec_fin_mem",
+        "fec_fin_mem_oftime",
+        "fec_fin_mem_viejo",
+        "flag",
+        "id_pgm",
+      ],
+      include: [
+        {
+          model: Venta,
+          attributes: ["id", "id_empresa", "fecha_venta"],
+          where: { id_empresa: empresa, flag: true },
+          required: true,
+          include: [
+            {
+              model: Cliente,
+              attributes: [
+                "id_cli",
+                "nombre_cli",
+                "apPaterno_cli",
+                "apMaterno_cli",
+              ],
+              required: false,
+            },
+            {
+              model: Empleado,
+              attributes: ["nombre_empl", "apPaterno_empl", "apMaterno_empl"],
+              required: false,
+            },
+          ],
+        },
+        {
+          model: ProgramaTraining,
+          attributes: [["name_pgm", "plan_name"]],
+          required: false,
+        },
+        {
+          model: ExtensionMembresia,
+          attributes: ["dias_habiles"],
+          required: false,
+        },
+        {
+          model: SemanasTraining,
+          attributes: ["id_st", "semanas_st"],
+          required: false,
+        },
+      ],
+      raw: false,
+    });
+
+    const idsPgm = [...new Set(rows.map((r) => r?.id_pgm).filter(Boolean))];
+    let pgmNameById = {};
+    if (idsPgm.length) {
+      const pgms = await ProgramaTraining.findAll({
+        where: { id_pgm: idsPgm },
+        attributes: ["id_pgm", "name_pgm"],
+        raw: true,
+      });
+      pgmNameById = Object.fromEntries(pgms.map((p) => [p.id_pgm, p.name_pgm]));
+    }
+
+    const MONTH_LABELS = [
+      "ENE",
+      "FEB",
+      "MAR",
+      "ABR",
+      "MAY",
+      "JUN",
+      "JUL",
+      "AGO",
+      "SEP",
+      "OCT",
+      "NOV",
+      "DIC",
+    ];
+    const prevYear = year - 1;
+
+    const lastYearCols = [9, 10, 11, 12].map((m) => ({
+      id: `${prevYear}-${String(m).padStart(2, "0")}`,
+      year: prevYear,
+      month: m,
+      label: `${MONTH_LABELS[m - 1]} ${String(prevYear).slice(-2)}`,
+    }));
+
+    const currentYearCols = Array.from({ length: selectedMonth }, (_, i) => {
+      const m = i + 1;
+      return {
+        id: `${year}-${String(m).padStart(2, "0")}`,
+        year,
+        month: m,
+        label: `${MONTH_LABELS[m - 1]} ${String(year).slice(-2)}`,
+      };
+    });
+
+    const allCols = [...lastYearCols, ...currentYearCols];
+
+    const processedRows = rows
+      .map((m) => {
+        if (!isActiveFlag(m?.flag)) return null;
+        if (!(Number(m?.tarifa_monto ?? 0) > 0)) return null;
+
+        const fin = calcFinEfectivo(m);
+        if (!fin) return null;
+
+        const inicio = getInicioBase(m);
+
+        const clienteName =
+          [
+            m?.tb_ventum?.tb_cliente?.nombre_cli,
+            m?.tb_ventum?.tb_cliente?.apPaterno_cli,
+            m?.tb_ventum?.tb_cliente?.apMaterno_cli,
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .trim() || "SIN NOMBRE";
+
+        const nombreEmpl = m?.tb_ventum?.tb_empleado?.nombre_empl ?? "";
+        const ejecutivo = nombreEmpl.split(" ")[0] || "-";
+
+        const plan =
+          m?.tb_programa_training?.dataValues?.plan_name ||
+          m?.tb_programa_training?.name_pgm ||
+          pgmNameById[m?.id_pgm] ||
+          (m?.id_pgm ? `PGM ${m.id_pgm}` : "-");
+
+        return {
+          original: m,
+          inicio,
+          fin,
+          cliente: clienteName,
+          ejecutivo,
+          plan,
+          monto: Number(m?.tarifa_monto) || 0,
+          id: m.id,
+          id_pgm: m.id_pgm,
+        };
+      })
+      .filter(Boolean);
+
+    const results = [];
+
+    const now = new Date();
+
+    for (const c of allCols) {
+      const lastDayOfMonth = new Date(c.year, c.month, 0).getDate();
+
+      let cutDay = lastDayOfMonth;
+      if (c.year === now.getFullYear() && c.month === now.getMonth() + 1) {
+        cutDay = Math.min(now.getDate(), lastDayOfMonth);
+      }
+
+      const snapshot = new Date(c.year, c.month - 1, cutDay);
+      snapshot.setHours(0, 0, 0, 0);
+
+      const vigentes = [];
+
+      for (const r of processedRows) {
+        if (r.inicio && r.inicio > snapshot) continue;
+        if (r.fin < snapshot) continue;
+
+        const dias_restantes = Math.ceil((r.fin - snapshot) / 86400000);
+
+        vigentes.push({
+          id: r.id,
+          cliente: r.cliente,
+          plan: r.plan,
+          fechaFin: r.fin.toISOString().slice(0, 10),
+          dias_restantes,
+          monto: r.monto,
+          ejecutivo: r.ejecutivo,
+          id_pgm: r.id_pgm,
+        });
+      }
+
+      results.push({
+        colId: c.id,
+        rows: vigentes,
+      });
+    }
+
+    return res.json(results);
+  } catch (e) {
+    console.error("getMembresiasVigentesHistorico", e);
+    return res
+      .status(500)
+      .json({ error: "Error listando historico vigentes", detail: e.message });
   }
 };
 
@@ -2237,4 +2423,5 @@ module.exports = {
   postParametros__PERIODO,
   getServiciosxEmpresa,
   getParametrosporENTIDAD,
+  getMembresiasVigentesHistorico,
 };
