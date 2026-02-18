@@ -1285,26 +1285,17 @@ const getVentasxFecha = async (req = request, res = response) => {
   const { id_empresa } = req.params;
   const fechaInicio = arrayDate[0];
   const fechaFin = arrayDate[1];
-  console.log({
-    fechas: [new Date(fechaInicio), new Date(fechaFin), fechaInicio, fechaFin],
-  });
+
 
   try {
+    // 1. Query principal: Venta + Cliente + Empleado (raw para velocidad)
     const ventas = await Venta.findAll({
       attributes: [
-        "id",
-        "id_cli",
-        "id_empl",
-        "id_tipoFactura",
-        "id_origen",
-        "numero_transac",
-        "fecha_venta",
-        "id_empresa",
+        "id", "id_cli", "id_empl", "id_tipoFactura",
+        "id_origen", "numero_transac", "fecha_venta", "id_empresa",
       ],
       where: {
-        fecha_venta: {
-          [Op.between]: [fechaInicio, fechaFin],
-        },
+        fecha_venta: { [Op.between]: [fechaInicio, fechaFin] },
         flag: true,
         id_empresa: id_empresa,
         id_tipoFactura: { [Op.in]: [699, 700] },
@@ -1314,131 +1305,98 @@ const getVentasxFecha = async (req = request, res = response) => {
         {
           model: Cliente,
           attributes: [
-            [
-              Sequelize.fn(
-                "CONCAT",
-                Sequelize.col("nombre_cli"),
-                " ",
-                Sequelize.col("apPaterno_cli"),
-                " ",
-                Sequelize.col("apMaterno_cli"),
-              ),
-              "nombres_apellidos_cli",
-            ],
+            [Sequelize.fn("CONCAT", Sequelize.col("nombre_cli"), " ", Sequelize.col("apPaterno_cli"), " ", Sequelize.col("apMaterno_cli")), "nombres_apellidos_cli"],
           ],
         },
         {
           model: Empleado,
           attributes: [
-            [
-              Sequelize.fn(
-                "CONCAT",
-                Sequelize.col("nombre_empl"),
-                " ",
-                Sequelize.col("apPaterno_empl"),
-                " ",
-                Sequelize.col("apMaterno_empl"),
-              ),
-              "nombres_apellidos_empl",
-            ],
+            [Sequelize.fn("CONCAT", Sequelize.col("nombre_empl"), " ", Sequelize.col("apPaterno_empl"), " ", Sequelize.col("apMaterno_empl")), "nombres_apellidos_empl"],
           ],
         },
-        {
-          model: detalleVenta_producto,
-          attributes: [
-            "id_venta",
-            "id_producto",
-            "cantidad",
-            "precio_unitario",
-            "tarifa_monto",
-          ],
-          include: [
-            {
-              model: Producto,
-              attributes: ["id", "id_categoria", "nombre_producto"],
-            },
-          ],
-        },
-        {
-          model: detalleVenta_membresias,
-          attributes: [
-            "id_venta",
-            "id_pgm",
-            "id_tarifa",
-            "horario",
-            "id_st",
-            "tarifa_monto",
-          ],
-          include: [
-            {
-              model: ProgramaTraining,
-              attributes: ["name_pgm"],
-            },
-            {
-              model: SemanasTraining,
-              attributes: ["semanas_st"],
-            },
-          ],
-        },
-        {
-          model: detalleVenta_citas,
-          attributes: ["id_venta", "id_servicio", "tarifa_monto"],
-          include: [
-            {
-              model: Servicios,
-              attributes: ["id", "nombre_servicio", "tipo_servicio"],
-            },
-          ],
-        },
-        {
-          model: detalleVenta_pagoVenta,
-          attributes: ["id_venta", "parcial_monto"],
-          include: [
-            {
-              model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_banco",
-            },
-            {
-              model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_forma_pago",
-            },
-            {
-              model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_tipo_tarjeta",
-            },
-            {
-              model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_tarjeta",
-            },
-          ],
-        },
-        // {
-        //   model: detalleventa_servicios,
-        //   attributes: ["cantidad", "tarifa_monto"],
-        //   include: [
-        //     {
-        //       model: ServiciosCircus,
-        //       include: [
-        //         {
-        //           model: Parametros,
-        //         },
-        //       ],
-        //     },
-        //   ],
-        // },
       ],
+      raw: true,
+      nest: true,
     });
-    res.status(200).json({
-      ok: true,
-      ventas,
+
+    if (!ventas.length) return res.status(200).json({ ok: true, ventas: [] });
+
+    const ventaIds = ventas.map((v) => v.id);
+
+    // 2. Queries de detalle en PARALELO filtradas por los IDs ya obtenidos
+    const [productos, membresias, citas, pagos] = await Promise.all([
+      detalleVenta_producto.findAll({
+        attributes: ["id_venta", "id_producto", "cantidad", "precio_unitario", "tarifa_monto"],
+        where: { id_venta: { [Op.in]: ventaIds } },
+        include: [{ model: Producto, attributes: ["id", "id_categoria", "nombre_producto"] }],
+        raw: true,
+        nest: true,
+      }),
+      detalleVenta_membresias.findAll({
+        attributes: ["id_venta", "id_pgm", "id_tarifa", "horario", "id_st", "tarifa_monto"],
+        where: { id_venta: { [Op.in]: ventaIds } },
+        include: [
+          { model: ProgramaTraining, attributes: ["name_pgm"] },
+          { model: SemanasTraining, attributes: ["semanas_st"] },
+        ],
+        raw: true,
+        nest: true,
+      }),
+      detalleVenta_citas.findAll({
+        attributes: ["id_venta", "id_servicio", "tarifa_monto"],
+        where: { id_venta: { [Op.in]: ventaIds } },
+        include: [{ model: Servicios, attributes: ["id", "nombre_servicio", "tipo_servicio"] }],
+        raw: true,
+        nest: true,
+      }),
+      detalleVenta_pagoVenta.findAll({
+        attributes: ["id_venta", "parcial_monto"],
+        where: { id_venta: { [Op.in]: ventaIds } },
+        include: [
+          { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_banco" },
+          { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_forma_pago" },
+          { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_tipo_tarjeta" },
+          { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_tarjeta" },
+        ],
+        raw: true,
+        nest: true,
+      }),
+    ]);
+
+    // 3. Agrupar detalles por id_venta usando Maps
+    const productosMap = new Map();
+    productos.forEach((p) => {
+      if (!productosMap.has(p.id_venta)) productosMap.set(p.id_venta, []);
+      productosMap.get(p.id_venta).push(p);
     });
+    const membresiasMap = new Map();
+    membresias.forEach((m) => {
+      if (!membresiasMap.has(m.id_venta)) membresiasMap.set(m.id_venta, []);
+      membresiasMap.get(m.id_venta).push(m);
+    });
+    const citasMap = new Map();
+    citas.forEach((c) => {
+      if (!citasMap.has(c.id_venta)) citasMap.set(c.id_venta, []);
+      citasMap.get(c.id_venta).push(c);
+    });
+    const pagosMap = new Map();
+    pagos.forEach((p) => {
+      if (!pagosMap.has(p.id_venta)) pagosMap.set(p.id_venta, []);
+      pagosMap.get(p.id_venta).push(p);
+    });
+
+    // 4. Ensamblar respuesta final con la misma forma que antes
+    const ventasConDetalle = ventas.map((v) => ({
+      ...v,
+      detalle_venta_productos: productosMap.get(v.id) || [],
+      detalle_ventaMembresiums: membresiasMap.get(v.id) || [],
+      detalle_venta_cita: citasMap.get(v.id) || [],
+      detalle_venta_pago_ventas: pagosMap.get(v.id) || [],
+    }));
+
+    res.status(200).json({ ok: true, ventas: ventasConDetalle });
   } catch (error) {
     console.log("errorrrr: ", error);
-
     res.status(500).json({
       error: `Error en el servidor, en controller de get_VENTASxFECHA, hable con el administrador: ${error}`,
     });
@@ -1898,88 +1856,101 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
   const fechaInicio = arrayDate[0];
   const fechaFin = arrayDate[1];
   try {
-    const ventasProgramas = await ProgramaTraining.findAll({
-      attributes: ["name_pgm", "id_pgm"],
-      where: { flag: true, estado_pgm: true },
-      distinct: true,
+
+    const detallesRaw = await detalleVenta_membresias.findAll({
+      attributes: [
+        "id_venta",
+        "horario",
+        "tarifa_monto",
+        "id_tarifa",
+        "fec_inicio_mem",
+        "fec_fin_mem",
+        "id_pgm",
+      ],
+      order: [["tarifa_monto", "desc"]],
       include: [
         {
-          model: ImagePT,
-          attributes: ["name_image", "height", "width"],
-        },
-        {
-          model: detalleVenta_membresias,
-          order: [["tarifa_monto", "desc"]],
-          attributes: [
-            "id_venta",
-            "horario",
-            "tarifa_monto",
-            "id_tarifa",
-            "fec_inicio_mem",
-            "fec_fin_mem",
-          ],
+          model: ProgramaTraining,
+          attributes: ["id_pgm", "name_pgm"],
+          where: { flag: true, estado_pgm: true },
           include: [
             {
-              model: TarifaTraining,
-              attributes: [
-                "nombreTarifa_tt",
-                "descripcionTarifa_tt",
-                "tarifaCash_tt",
-                "fecha_inicio",
-                "fecha_fin",
-                "id_tipo_promocion",
-              ],
-              as: "tarifa_venta",
-            },
-            {
-              model: SemanasTraining,
-              attributes: ["sesiones", "semanas_st"],
-            },
-            {
-              model: Venta,
-              attributes: [
-                "id_tipoFactura",
-                "fecha_venta",
-                "id_cli",
-                "id",
-                "id_origen",
-                "observacion",
-              ],
-              where: {
-                fecha_venta: {
-                  [Op.between]: [fechaInicio, fechaFin],
-                },
-                flag: true,
-              },
-              include: [
-                {
-                  model: Cliente,
-                  include: [
-                    {
-                      model: Distritos,
-                      as: "ubigeo_nac",
-                    },
-                    {
-                      model: Distritos,
-                      as: "ubigeo_trabajo",
-                    },
-                  ],
-                },
-                {
-                  model: Empleado,
-                  attributes: [
-                    "nombre_empl",
-                    "apPaterno_empl",
-                    "apMaterno_empl",
-                    "estado_empl",
-                  ],
-                },
-              ],
+              model: ImagePT,
+              attributes: ["name_image", "height", "width"],
             },
           ],
+        },
+        {
+          model: TarifaTraining,
+          attributes: [
+            "nombreTarifa_tt",
+            "descripcionTarifa_tt",
+            "tarifaCash_tt",
+            "fecha_inicio",
+            "fecha_fin",
+            "id_tipo_promocion",
+          ],
+          as: "tarifa_venta",
+        },
+        {
+          model: SemanasTraining,
+          attributes: ["sesiones", "semanas_st"],
+        },
+        {
+          model: Venta,
+          attributes: [
+            "id_tipoFactura",
+            "fecha_venta",
+            "id_cli",
+            "id",
+            "id_origen",
+            "observacion",
+          ],
+          where: {
+            fecha_venta: {
+              [Op.between]: [fechaInicio, fechaFin],
+            },
+            flag: true,
+          },
+          required: true, // INNER JOIN es la clave para filtrar rápido
         },
       ],
     });
+
+
+    const programasMap = new Map();
+
+    for (const d of detallesRaw) {
+      const pgm = d.tb_programa_training;
+      if (!pgm) continue;
+
+      const pgmId = pgm.id_pgm;
+      if (!programasMap.has(pgmId)) {
+        programasMap.set(pgmId, {
+          name_pgm: pgm.name_pgm,
+          id_pgm: pgmId,
+          tb_image: pgm.tb_image || null, // ImagePT viene como objeto/array asociado
+          detalle_ventaMembresium: [],
+        });
+      }
+
+      // Estructura esperada por el frontend dentro de detalle_ventaMembresium
+      const detalleItem = {
+        id_venta: d.id_venta,
+        horario: d.horario,
+        tarifa_monto: d.tarifa_monto,
+        id_tarifa: d.id_tarifa,
+        fec_inicio_mem: d.fec_inicio_mem,
+        fec_fin_mem: d.fec_fin_mem,
+        tarifa_venta: d.tarifa_venta,
+        tb_semana_training: d.tb_semana_training,
+        tb_ventum: d.tb_ventum,
+      };
+
+      programasMap.get(pgmId).detalle_ventaMembresium.push(detalleItem);
+    }
+
+    const ventasProgramas = Array.from(programasMap.values());
 
     const ventasTransferencias = await Venta.findAll({
       order: [["fecha_venta", "DESC"]],
@@ -2052,7 +2023,15 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
         {
           model: Venta,
           attributes: ["id", "fecha_venta", "id_tipoFactura"],
-          where: { id_empresa: 598, flag: true },
+          where: {
+            id_empresa: 598,
+            flag: true,
+            // Ponemos el filtro de fechas aquí también para no traer ventas viejas
+            fecha_venta: {
+              [Op.between]: [new Date(fechaInicio), new Date(fechaFin)],
+            }
+          },
+          required: true,
           include: [
             {
               model: Cliente,
@@ -2077,28 +2056,9 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
                 "tel_cli",
                 "ubigeo_distrito_cli",
               ],
-              include: [
-                {
-                  model: Distritos,
-                  as: "ubigeo_nac",
-                },
-                {
-                  model: Distritos,
-                  as: "ubigeo_trabajo",
-                },
-                {
-                  model: Marcacion,
-                  required: false,
-                  where: {
-                    tiempo_marcacion_new: {
-                      [Op.between]: [
-                        new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
-                        new Date(fechaFin).setUTCHours(23, 59, 59, 999),
-                      ],
-                    },
-                  },
-                },
-              ],
+              // 🔥 BORRAMOS DISTRITOS Y MARCACIONES 🔥
+              // El frontend de "Comparativo Resumen" no necesita saber dónde nació el cliente 
+              // ni a qué hora pasó por el torniquete.
             },
           ],
         },
@@ -2205,66 +2165,63 @@ const getVencimientosPorMes = async (req = request, res = response) => {
     const startWindow = new Date(`${targetYear - 2}-01-01`);
 
 
-    const renovacionesDB = await detalleVenta_membresias.findAll({
-      attributes: ["id"], // Solo necesitamos contar
-      where: {
-        flag: true,
-        // FILTRO CLAVE: Solo cuenta si pagaron algo (evita traspasos de monto 0)
-      },
-      include: [
-        {
-          model: Venta,
-          attributes: ["fecha_venta"],
-          where: {
-            flag: true,
-            id_empresa: empresaID,
-            id_origen: 691, // Solo origen Renovación
-            fecha_venta: {
-              [Op.between]: [
-                new Date(`${targetYear}-01-01T00:00:00`),
-                new Date(`${targetYear}-12-31T23:59:59`),
-              ],
+    const [renovacionesDB, membresiasDB] = await Promise.all([
+      detalleVenta_membresias.findAll({
+        attributes: ["id"],
+        where: { flag: true },
+        include: [
+          {
+            model: Venta,
+            attributes: ["fecha_venta"],
+            where: {
+              flag: true,
+              id_empresa: empresaID,
+              id_origen: 691,
+              fecha_venta: {
+                [Op.between]: [
+                  new Date(`${targetYear}-01-01T00:00:00`),
+                  new Date(`${targetYear}-12-31T23:59:59`),
+                ],
+              },
             },
+            required: true,
           },
-          required: true, // Inner Join
+        ],
+        raw: true,
+        nest: true,
+      }),
+      detalleVenta_membresias.findAll({
+        attributes: ["fec_fin_mem", "fec_fin_mem_oftime", "fec_fin_mem_viejo", "tarifa_monto"],
+        where: {
+          flag: true,
+          ...(id_st && { id_st: id_st }),
         },
-      ],
-      raw: true,
-      nest: true, // Importante para acceder a tb_ventum.fecha_venta
-    });
+        include: [
+          {
+            model: Venta,
+            attributes: ["id", "fecha_venta", "id_cli"],
+            where: {
+              flag: true,
+              id_empresa: empresaID,
+              fecha_venta: { [Op.gte]: startWindow },
+            },
+            required: true,
+          },
+          { model: SemanasTraining, attributes: ["semanas_st"] },
+          { model: ExtensionMembresia, attributes: ["dias_habiles", "flag"] },
+        ],
+        // ⚠️ Sin raw:true porque tb_extension_membresia es hasMany y necesita quedar como array
+      }),
+    ]);
 
     const mapRenovaciones = {};
     renovacionesDB.forEach((detalle) => {
-      // Ahora la fecha está dentro del objeto anidado tb_ventum
       const fecha = detalle.tb_ventum?.fecha_venta;
       if (fecha) {
         const d = new Date(fecha);
         const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
         mapRenovaciones[k] = (mapRenovaciones[k] || 0) + 1;
       }
-    });
-
-
-    const membresiasDB = await detalleVenta_membresias.findAll({
-      attributes: ["fec_fin_mem", "fec_fin_mem_oftime", "fec_fin_mem_viejo", "tarifa_monto"],
-      where: {
-        flag: true,
-        ...(id_st && { id_st: id_st }),
-      },
-      include: [
-        {
-          model: Venta,
-          attributes: ["id", "fecha_venta", "id_cli"],
-          where: {
-            flag: true,
-            id_empresa: empresaID,
-            fecha_venta: { [Op.gte]: startWindow },
-          },
-          required: true,
-        },
-        { model: SemanasTraining, attributes: ["semanas_st"] },
-        { model: ExtensionMembresia, attributes: ["dias_habiles", "flag"] },
-      ],
     });
 
     const mapVencimientos = {};

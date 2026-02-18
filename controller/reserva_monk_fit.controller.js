@@ -49,6 +49,9 @@ const validarEstadoCita = async (id_param) => {
   });
 };
 
+// 🔥 1. Mueve el require de Cliente al inicio del archivo (fuera de la función)
+// const { Cliente } = require("../models/Usuarios"); 
+
 const obtenerReservasMonkFit = async (req = request, res = response) => {
   try {
     const qLimit = parseInt(req.query.limit ?? "10", 10);
@@ -59,7 +62,6 @@ const obtenerReservasMonkFit = async (req = request, res = response) => {
 
     const search = String(req.query.search ?? "").trim();
     const estadoFiltro = req.query.estado ? Number(req.query.estado) : null;
-
     const from = req.query.from ? parseDateFlexible(req.query.from) : null;
     const to = req.query.to ? parseDateFlexible(req.query.to) : null;
     if (to) to.setHours(23, 59, 59, 999);
@@ -67,58 +69,32 @@ const obtenerReservasMonkFit = async (req = request, res = response) => {
     const where = { flag: true };
     if (estadoFiltro) where.id_estado_param = estadoFiltro;
 
+    // --- OPTIMIZACIÓN DE BÚSQUEDA ---
     if (search) {
       if (search.startsWith("#")) {
         where.id = Number(search.slice(1)) || 0;
       } else {
-        const asNum = Number(search);
         const searchLike = `%${search}%`;
-        const orConditions = [
+        where[Op.or] = [
           { codigo_reserva: { [Op.like]: searchLike } },
           { '$cliente.nombre_cli$': { [Op.like]: searchLike } },
-          { '$cliente.apPaterno_cli$': { [Op.like]: searchLike } },
-          { '$cliente.apMaterno_cli$': { [Op.like]: searchLike } },
-          db.literal(`CONCAT(cliente.nombre_cli, ' ', cliente.apPaterno_cli) LIKE '%${search}%'`)
+          { '$cliente.apPaterno_cli$': { [Op.like]: searchLike } }
         ];
-
-        if (!Number.isNaN(asNum)) {
-          orConditions.push({ id_cli: asNum });
-          orConditions.push({ id: asNum });
-        }
-
-        where[Op.or] = orConditions;
       }
     }
 
     if (from || to) {
-
-      if (from && to) {
-        where[Op.and] = where[Op.and] || [];
-        where[Op.and].push(db.literal(`fecha >= '${normalizeToSqlDate(from)}' AND fecha <= '${normalizeToSqlDate(to)}'`));
-      } else {
-        if (from) {
-          where[Op.and] = where[Op.and] || [];
-          where[Op.and].push(db.literal(`fecha >= '${normalizeToSqlDate(from)}'`));
-        }
-        if (to) {
-          where[Op.and] = where[Op.and] || [];
-          where[Op.and].push(db.literal(`fecha <= '${normalizeToSqlDate(to)}'`));
-        }
-      }
+      where.fecha = {};
+      if (from) where.fecha[Op.gte] = from;
+      if (to) where.fecha[Op.lte] = to;
     }
 
+    // 🔥 DIETA DE ATRIBUTOS: Solo lo que el Dashboard realmente usa
     const includes = [
       {
         model: require("../models/Usuarios").Cliente,
         as: "cliente",
-        attributes: [
-          "id_cli",
-          "nombre_cli",
-          "apPaterno_cli",
-          "apMaterno_cli",
-          "email_cli",
-          "tel_cli",
-        ],
+        attributes: ["id_cli", "nombre_cli", "apPaterno_cli"], // Quitamos email y tel
       },
       {
         model: Parametros,
@@ -127,51 +103,32 @@ const obtenerReservasMonkFit = async (req = request, res = response) => {
       },
     ];
 
+    // 🔥 EL CAMBIO MAESTRO: raw y nest para velocidad luz
     const result = await ReservaMonkFit.findAndCountAll({
       where,
       order: [["fecha", "DESC"]],
       limit,
       offset,
       include: includes,
+      raw: true, // No crea instancias de clase pesadas
+      nest: true, // Mantiene los objetos anidados (cliente.nombre_cli)
     });
 
-    const includesForSum = includes.map(inc => ({
-      ...inc,
-      attributes: []
-    }));
-
-    // --- LOGICA TOTAL MONTO (EXCLUYENDO ESTADOS) ---
-    // 1. Buscamos los IDs de los estados a excluir
-    const estadosExcluidos = await Parametros.findAll({
-      attributes: ["id_param"],
-      where: {
-        entidad_param: "citas",
-        grupo_param: "estados-todos",
-        label_param: {
-          [Op.in]: [
-            "CANCELADA", "PENDIENTE", "NO ASISTIÓ", "NO ASISTIO",
-            "Cancelada", "Pendiente", "No asistio", "No asistió"
-          ]
-        }
-      }
-    });
-    const idsExcluidos = estadosExcluidos.map(e => e.id_param);
-
-    // 2. Clonamos el 'where' original para no afectar el listado
-    const whereSum = { ...where };
-
-    // 3. Agregamos la exclusión si encontramos IDs
-    if (idsExcluidos.length > 0) {
-      whereSum.id_estado_param = { [Op.notIn]: idsExcluidos };
-    }
-
+    // --- LÓGICA TOTAL MONTO ---
+    // Si no hay búsqueda, no necesitamos los includes para sumar
     const totalMonto = await ReservaMonkFit.sum("monto_total", {
-      where: whereSum,
-      include: includesForSum
+      where: { ...where },
+      // Solo incluimos si la búsqueda depende del cliente
+      include: search ? includes.map(i => ({ ...i, attributes: [] })) : []
     });
 
-    res.json({ count: result.count, rows: result.rows, limit, offset, totalMonto: totalMonto || 0 });
-
+    res.json({
+      count: result.count,
+      rows: result.rows,
+      limit,
+      offset,
+      totalMonto: totalMonto || 0
+    });
 
   } catch (error) {
     console.error("LIST reservas error:", error);

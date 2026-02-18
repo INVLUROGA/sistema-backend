@@ -1196,38 +1196,20 @@ const getMembresiasVigentesHistorico = async (req, res) => {
 
     const rows = await detalleVenta_membresias.findAll({
       attributes: [
-        "id",
-        "tarifa_monto",
-        "fec_inicio_mem",
-        "fec_fin_mem",
-        "fec_fin_mem_oftime",
-        "fec_fin_mem_viejo",
-        "flag",
-        "id_pgm",
+        "id", "tarifa_monto", "fec_inicio_mem", "fec_fin_mem",
+        "fec_fin_mem_oftime", "fec_fin_mem_viejo", "flag", "id_pgm"
       ],
       include: [
         {
           model: Venta,
           attributes: ["id", "id_empresa", "fecha_venta"],
-          where: { id_empresa: empresa, flag: true },
+          where: {
+            id_empresa: empresa,
+            flag: true,
+            // Usamos new Date() para que SQL Server use bien los índices
+            fecha_venta: { [Op.gte]: new Date("2024-09-01T00:00:00") },
+          },
           required: true,
-          include: [
-            {
-              model: Cliente,
-              attributes: [
-                "id_cli",
-                "nombre_cli",
-                "apPaterno_cli",
-                "apMaterno_cli",
-              ],
-              required: false,
-            },
-            {
-              model: Empleado,
-              attributes: ["nombre_empl", "apPaterno_empl", "apMaterno_empl"],
-              required: false,
-            },
-          ],
         },
         {
           model: ProgramaTraining,
@@ -1294,6 +1276,7 @@ const getMembresiasVigentesHistorico = async (req, res) => {
 
     const allCols = [...lastYearCols, ...currentYearCols];
 
+    // 1. Limpiamos el procesamiento masivo
     const processedRows = rows
       .map((m) => {
         if (!isActiveFlag(m?.flag)) return null;
@@ -1304,19 +1287,6 @@ const getMembresiasVigentesHistorico = async (req, res) => {
 
         const inicio = getInicioBase(m);
 
-        const clienteName =
-          [
-            m?.tb_ventum?.tb_cliente?.nombre_cli,
-            m?.tb_ventum?.tb_cliente?.apPaterno_cli,
-            m?.tb_ventum?.tb_cliente?.apMaterno_cli,
-          ]
-            .filter(Boolean)
-            .join(" ")
-            .trim() || "SIN NOMBRE";
-
-        const nombreEmpl = m?.tb_ventum?.tb_empleado?.nombre_empl ?? "";
-        const ejecutivo = nombreEmpl.split(" ")[0] || "-";
-
         const plan =
           m?.tb_programa_training?.dataValues?.plan_name ||
           m?.tb_programa_training?.name_pgm ||
@@ -1324,23 +1294,18 @@ const getMembresiasVigentesHistorico = async (req, res) => {
           (m?.id_pgm ? `PGM ${m.id_pgm}` : "-");
 
         return {
-          original: m,
           inicio,
           fin,
-          cliente: clienteName,
-          ejecutivo,
           plan,
-          monto: Number(m?.tarifa_monto) || 0,
-          id: m.id,
           id_pgm: m.id_pgm,
         };
       })
       .filter(Boolean);
 
     const results = [];
-
     const now = new Date();
 
+    // 2. Bucle de meses
     for (const c of allCols) {
       const lastDayOfMonth = new Date(c.year, c.month, 0).getDate();
 
@@ -1358,16 +1323,9 @@ const getMembresiasVigentesHistorico = async (req, res) => {
         if (r.inicio && r.inicio > snapshot) continue;
         if (r.fin < snapshot) continue;
 
-        const dias_restantes = Math.ceil((r.fin - snapshot) / 86400000);
-
+        // 🔥 LA DIETA: Mandamos SOLO lo necesario para los conteos del Front
         vigentes.push({
-          id: r.id,
-          cliente: r.cliente,
           plan: r.plan,
-          fechaFin: r.fin.toISOString().slice(0, 10),
-          dias_restantes,
-          monto: r.monto,
-          ejecutivo: r.ejecutivo,
           id_pgm: r.id_pgm,
         });
       }

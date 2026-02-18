@@ -195,7 +195,19 @@ const alertasUsuario = async () => {
           );
         } else {
           // Lógica para 1426/1427 (reprogramación automática)
-          await AlertasUsuario.update({ id_estado: 0 }, { where: { id: alerta.id } });
+          // Marcar TODOS los duplicados del mismo mensaje como procesados (evita que se acumulen)
+          await AlertasUsuario.update(
+            { id_estado: 0 },
+            {
+              where: {
+                id_user: alerta.id_user,
+                tipo_alerta: alerta.tipo_alerta,
+                mensaje: alerta.mensaje,
+                id_estado: 1,
+                flag: true,
+              },
+            }
+          );
 
           let nuevaFecha = null;
           // 1426: DIARIO
