@@ -1288,7 +1288,12 @@ const getVentasxFecha = async (req = request, res = response) => {
 
 
   try {
+    // 0. Revisar si solo necesitamos productos (optimización para reporte histórico)
+    const { mode } = req.query; // 'products_only'
+    const isProductsOnly = mode === 'products_only';
+
     // 1. Query principal: Venta + Cliente + Empleado (raw para velocidad)
+    // Si es products_only, NO hacemos join con Cliente ni Empleado
     const ventas = await Venta.findAll({
       attributes: [
         "id", "id_cli", "id_empl", "id_tipoFactura",
@@ -1301,7 +1306,7 @@ const getVentasxFecha = async (req = request, res = response) => {
         id_tipoFactura: { [Op.in]: [699, 700] },
       },
       order: [["id", "DESC"]],
-      include: [
+      include: isProductsOnly ? [] : [
         {
           model: Cliente,
           attributes: [
@@ -1324,44 +1329,85 @@ const getVentasxFecha = async (req = request, res = response) => {
     const ventaIds = ventas.map((v) => v.id);
 
     // 2. Queries de detalle en PARALELO filtradas por los IDs ya obtenidos
-    const [productos, membresias, citas, pagos] = await Promise.all([
-      detalleVenta_producto.findAll({
-        attributes: ["id_venta", "id_producto", "cantidad", "precio_unitario", "tarifa_monto"],
-        where: { id_venta: { [Op.in]: ventaIds } },
-        include: [{ model: Producto, attributes: ["id", "id_categoria", "nombre_producto"] }],
-        raw: true,
-        nest: true,
-      }),
-      detalleVenta_membresias.findAll({
-        attributes: ["id_venta", "id_pgm", "id_tarifa", "horario", "id_st", "tarifa_monto"],
-        where: { id_venta: { [Op.in]: ventaIds } },
-        include: [
-          { model: ProgramaTraining, attributes: ["name_pgm"] },
-          { model: SemanasTraining, attributes: ["semanas_st"] },
-        ],
-        raw: true,
-        nest: true,
-      }),
-      detalleVenta_citas.findAll({
-        attributes: ["id_venta", "id_servicio", "tarifa_monto"],
-        where: { id_venta: { [Op.in]: ventaIds } },
-        include: [{ model: Servicios, attributes: ["id", "nombre_servicio", "tipo_servicio"] }],
-        raw: true,
-        nest: true,
-      }),
-      detalleVenta_pagoVenta.findAll({
-        attributes: ["id_venta", "parcial_monto"],
-        where: { id_venta: { [Op.in]: ventaIds } },
-        include: [
-          { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_banco" },
-          { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_forma_pago" },
-          { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_tipo_tarjeta" },
-          { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_tarjeta" },
-        ],
-        raw: true,
-        nest: true,
-      }),
-    ]);
+    // Helper para dividir IDs en chunks de 1000 para evitar error SQL (limit 2100 params)
+    const chunkArray = (array, size) => {
+      const chunked = [];
+      for (let i = 0; i < array.length; i += size) {
+        chunked.push(array.slice(i, i + size));
+      }
+      return chunked;
+    };
+    const ventaIdChunks = chunkArray(ventaIds, 1000);
+
+    const promises = [];
+
+    // PRODUCTOS: Siempre necesarios
+    // Ejecutar por cada chunk y aplanar resultados
+    promises.push(
+      Promise.all(ventaIdChunks.map(chunkIds =>
+        detalleVenta_producto.findAll({
+          attributes: ["id_venta", "id_producto", "cantidad", "precio_unitario", "tarifa_monto"],
+          where: { id_venta: { [Op.in]: chunkIds } },
+          include: [{ model: Producto, attributes: ["id", "id_categoria", "nombre_producto"] }],
+          raw: true,
+          nest: true,
+        })
+      )).then(results => results.flat())
+    );
+
+    // OTROS: Solo si NO es products_only
+    if (!isProductsOnly) {
+      promises.push(
+        Promise.all(ventaIdChunks.map(chunkIds =>
+          detalleVenta_membresias.findAll({
+            attributes: ["id_venta", "id_pgm", "id_tarifa", "horario", "id_st", "tarifa_monto"],
+            where: { id_venta: { [Op.in]: chunkIds } },
+            include: [
+              { model: ProgramaTraining, attributes: ["name_pgm"] },
+              { model: SemanasTraining, attributes: ["semanas_st"] },
+            ],
+            raw: true,
+            nest: true,
+          })
+        )).then(results => results.flat())
+      );
+
+      promises.push(
+        Promise.all(ventaIdChunks.map(chunkIds =>
+          detalleVenta_citas.findAll({
+            attributes: ["id_venta", "id_servicio", "tarifa_monto"],
+            where: { id_venta: { [Op.in]: chunkIds } },
+            include: [{ model: Servicios, attributes: ["id", "nombre_servicio", "tipo_servicio"] }],
+            raw: true,
+            nest: true,
+          })
+        )).then(results => results.flat())
+      );
+
+      promises.push(
+        Promise.all(ventaIdChunks.map(chunkIds =>
+          detalleVenta_pagoVenta.findAll({
+            attributes: ["id_venta", "parcial_monto"],
+            where: { id_venta: { [Op.in]: chunkIds } },
+            include: [
+              { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_banco" },
+              { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_forma_pago" },
+              { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_tipo_tarjeta" },
+              { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_tarjeta" },
+            ],
+            raw: true,
+            nest: true,
+          })
+        )).then(results => results.flat())
+      );
+    } else {
+      // Rellenar con promises que resuelven a [] para mantener el orden del array destructuring
+      promises.push(Promise.resolve([]));
+      promises.push(Promise.resolve([]));
+      promises.push(Promise.resolve([]));
+    }
+
+    const [productos, membresias, citas, pagos] = await Promise.all(promises);
 
     // 3. Agrupar detalles por id_venta usando Maps
     const productosMap = new Map();
@@ -1388,10 +1434,10 @@ const getVentasxFecha = async (req = request, res = response) => {
     // 4. Ensamblar respuesta final con la misma forma que antes
     const ventasConDetalle = ventas.map((v) => ({
       ...v,
-      detalle_venta_productos: productosMap.get(v.id) || [],
-      detalle_ventaMembresiums: membresiasMap.get(v.id) || [],
-      detalle_venta_cita: citasMap.get(v.id) || [],
-      detalle_venta_pago_ventas: pagosMap.get(v.id) || [],
+      detalle_ventaProductos: productosMap.get(v.id) || [],
+      detalle_ventaMembresia: membresiasMap.get(v.id) || [],
+      detalle_ventaCitas: citasMap.get(v.id) || [],
+      detalle_ventaPagoVenta: pagosMap.get(v.id) || [],
     }));
 
     res.status(200).json({ ok: true, ventas: ventasConDetalle });
