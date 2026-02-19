@@ -1567,7 +1567,6 @@ const getLogicaEstadoMembresias = async (req, res) => {
                   ),
                   "nombres_apellidos_cli",
                 ],
-                "email_cli",
               ],
             },
           ],
@@ -2329,6 +2328,89 @@ const deleteParametrosGenerales = async (req = request, res = response) => {
     });
   }
 };
+const getSociosConMultiplesContratos = async (req = request, res = response) => {
+  try {
+    const empresa = Number(req.query.empresa || 598);
+    // Sugerencia: Limitar a contratos de los últimos 2 años para no saturar
+    const fechaLimite = new Date();
+    fechaLimite.setFullYear(fechaLimite.getFullYear() - 2);
+
+    const ventas = await Venta.findAll({
+      attributes: ["id", "id_cli", "fecha_venta"],
+      where: {
+        flag: true,
+        id_empresa: empresa,
+        fecha_venta: { [Op.gte]: fechaLimite } // 🔥 Filtro de seguridad
+      },
+      include: [
+        {
+          model: Cliente,
+          as: "tb_cliente", // Revisa si tu alias es este
+          attributes: ["id_cli", "nombre_cli", "apPaterno_cli", "apMaterno_cli", "tel_cli"],
+        },
+        {
+          model: detalleVenta_membresias,
+          attributes: ["id", "fec_inicio_mem", "fec_fin_mem", "tarifa_monto"],
+          where: { flag: true },
+          required: true,
+          include: [
+            {
+              model: ProgramaTraining,
+              attributes: ["name_pgm"],
+            },
+          ],
+        },
+      ],
+      // 🔥 LA LLAVE MAESTRA DEL RENDIMIENTO
+      raw: true,
+      nest: true,
+      order: [["id", "DESC"]],
+    });
+
+    const grouped = {};
+    for (const v of ventas) {
+      const cli = v.tb_cliente;
+      if (!cli) continue;
+      const id = cli.id_cli;
+
+      if (!grouped[id]) {
+        grouped[id] = {
+          id_cli: id,
+          nombre_completo: `${cli.nombre_cli} ${cli.apPaterno_cli} ${cli.apMaterno_cli || ""}`.trim(),
+          telefono: cli.tel_cli || "-",
+          contratos: [],
+        };
+      }
+
+      // Con raw:true/nest:true, las asociaciones vienen como objetos planos
+      const m = v.detalle_venta_membresia || v.detalle_ventaMembresia;
+      if (m) {
+        grouped[id].contratos.push({
+          id_venta: v.id,
+          name_pgm: m.tb_ProgramaTraining?.name_pgm || "-",
+          fec_inicio_mem: m.fec_inicio_mem,
+          fec_fin_mem: m.fec_fin_mem,
+          tarifa_monto: Number(m.tarifa_monto || 0),
+        });
+      }
+    }
+
+    const socios = Object.values(grouped)
+      .filter((s) => s.contratos.length > 1)
+      .map((s) => ({
+        ...s,
+        cantidad_contratos: s.contratos.length,
+      }))
+      .sort((a, b) => b.cantidad_contratos - a.cantidad_contratos);
+
+    res.status(200).json({ total: socios.length, socios });
+
+  } catch (error) {
+    console.error("getSociosConMultiplesContratos:", error);
+    res.status(500).json({ msg: "Error", error: error.message });
+  }
+};
+
 module.exports = {
   getParametrosxEntidadxGrupo,
   getMembresiasLineaDeTiempoEmpresa,
@@ -2382,4 +2464,5 @@ module.exports = {
   getServiciosxEmpresa,
   getParametrosporENTIDAD,
   getMembresiasVigentesHistorico,
+  getSociosConMultiplesContratos,
 };
