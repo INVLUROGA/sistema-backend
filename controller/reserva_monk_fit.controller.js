@@ -60,11 +60,19 @@ const obtenerReservasMonkFit = async (req = request, res = response) => {
     const page = Number.isFinite(qPage) && qPage > 0 ? qPage : 1;
     const offset = (page - 1) * limit;
 
+    const fromRaw = req.query.from || null;
+    const toRaw = req.query.to || null;
+
+    // Build a plain SQL date string that MSSQL can parse (no timezone offset)
+    const fromSql = fromRaw ? normalizeToSqlDate(fromRaw) : null;
+    let toSql = toRaw ? normalizeToSqlDate(toRaw) : null;
+    // Set end-of-day for the "to" date
+    if (toSql) {
+      toSql = toSql.replace(/\d{2}:\d{2}:\d{2}\.\d{3}$/, "23:59:59.999");
+    }
+
     const search = String(req.query.search ?? "").trim();
     const estadoFiltro = req.query.estado ? Number(req.query.estado) : null;
-    const from = req.query.from ? parseDateFlexible(req.query.from) : null;
-    const to = req.query.to ? parseDateFlexible(req.query.to) : null;
-    if (to) to.setHours(23, 59, 59, 999);
 
     const where = { flag: true };
     if (estadoFiltro) where.id_estado_param = estadoFiltro;
@@ -83,10 +91,10 @@ const obtenerReservasMonkFit = async (req = request, res = response) => {
       }
     }
 
-    if (from || to) {
+    if (fromSql || toSql) {
       where.fecha = {};
-      if (from) where.fecha[Op.gte] = from;
-      if (to) where.fecha[Op.lte] = to;
+      if (fromSql) where.fecha[Op.gte] = db.literal(`CONVERT(datetime, '${fromSql}', 121)`);
+      if (toSql) where.fecha[Op.lte] = db.literal(`CONVERT(datetime, '${toSql}', 121)`);
     }
 
     // 🔥 DIETA DE ATRIBUTOS: Solo lo que el Dashboard realmente usa
