@@ -1126,8 +1126,10 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
       ).padStart(2, "0")}`;
     }
 
-    const snapshot = new Date(snapStr);
-    snapshot.setHours(0, 0, 0, 0);
+    // parseDateOnly usa new Date(y, m, d) → siempre midnight local,
+    // igual que calcFinEfectivo, así el cálculo de dias_restantes es consistente.
+    const snapshot = parseDateOnly(snapStr);
+    if (!snapshot) return res.status(400).json({ error: "Snapshot inválido" });
 
     const vigentes = [];
     for (const m of rows) {
@@ -2411,6 +2413,124 @@ const getSociosConMultiplesContratos = async (req = request, res = response) => 
   }
 };
 
+const getSociosInactivos91Dias = async (req = request, res = response) => {
+  try {
+    const empresa = Number(req.query.empresa || 598);
+    const diasInactividad = Number(req.query.dias) || 91;
+
+    // Fecha de corte: HOY - diasInactividad días
+    const fechaCorte = new Date();
+    fechaCorte.setDate(fechaCorte.getDate() - diasInactividad);
+
+    // 1. Obtener todas las ventas con membresías de la empresa
+    const ventas = await Venta.findAll({
+      attributes: ["id", "id_cli"],
+      where: {
+        flag: true,
+        id_empresa: empresa,
+      },
+      include: [
+        {
+          model: Cliente,
+          as: "tb_cliente",
+          attributes: [
+            "id_cli",
+            "nombre_cli",
+            "apPaterno_cli",
+            "apMaterno_cli",
+            "tel_cli",
+            "email_cli",
+          ],
+        },
+        {
+          model: detalleVenta_membresias,
+          attributes: ["id", "fec_fin_mem"],
+          where: { flag: true },
+          required: true,
+          include: [
+            {
+              model: ProgramaTraining,
+              attributes: ["name_pgm"],
+            },
+          ],
+        },
+      ],
+      raw: true,
+      nest: true,
+    });
+
+    // 2. Agrupar por cliente para encontrar su ÚLTIMA fecha de vencimiento
+    const clientesMap = {};
+
+    ventas.forEach((v) => {
+      const cli = v.tb_cliente;
+      if (!cli) return;
+
+      const mem = v.detalle_venta_membresia || v.detalle_ventaMembresia;
+      if (!mem) return;
+
+      const fechaFin = new Date(mem.fec_fin_mem);
+      const idCli = cli.id_cli;
+
+      if (!clientesMap[idCli]) {
+        clientesMap[idCli] = {
+          id_cli: idCli,
+          nombre_completo: `${cli.nombre_cli} ${cli.apPaterno_cli} ${cli.apMaterno_cli || ""
+            }`.trim(),
+          telefono: cli.tel_cli || "-",
+          email: cli.email_cli || "-",
+          ultima_fecha_fin: fechaFin,
+          ultimo_programa:
+            mem.tb_ProgramaTraining?.name_pgm ||
+            mem.tb_programa_training?.name_pgm ||
+            "-",
+        };
+      } else {
+        // Si encontramos una fecha posterior, actualizamos
+        if (fechaFin > clientesMap[idCli].ultima_fecha_fin) {
+          clientesMap[idCli].ultima_fecha_fin = fechaFin;
+          clientesMap[idCli].ultimo_programa =
+            mem.tb_ProgramaTraining?.name_pgm ||
+            mem.tb_programa_training?.name_pgm ||
+            "-";
+        }
+      }
+    });
+
+    // 3. Filtrar clientes cuya ÚLTIMA fecha de fin sea ANTERIOR a la fecha de corte
+    const sociosInactivos = Object.values(clientesMap).filter((c) => {
+      return c.ultima_fecha_fin < fechaCorte;
+    });
+
+    // Ordenar por fecha de vencimiento descendente (los que vencieron hace menos tiempo primero)
+    sociosInactivos.sort((a, b) => b.ultima_fecha_fin - a.ultima_fecha_fin);
+
+    // Formatear fecha para respuesta
+    const hoy = new Date();
+    const respuesta = sociosInactivos.map((s) => {
+      const diffTime = Math.abs(hoy - s.ultima_fecha_fin);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      return {
+        ...s,
+        ultima_fecha_fin: s.ultima_fecha_fin.toISOString().split("T")[0],
+        dias_sin_renovar: diffDays,
+      };
+    });
+
+    res.status(200).json({
+      msg: "ok",
+      total: respuesta.length,
+      fecha_corte: fechaCorte.toISOString().split("T")[0],
+      dias_inactividad: diasInactividad,
+      socios: respuesta,
+    });
+  } catch (error) {
+    console.error("getSociosInactivos91Dias:", error);
+    res.status(500).json({ msg: "Error", error: error.message });
+  }
+};
+
 module.exports = {
   getParametrosxEntidadxGrupo,
   getMembresiasLineaDeTiempoEmpresa,
@@ -2465,4 +2585,5 @@ module.exports = {
   getParametrosporENTIDAD,
   getMembresiasVigentesHistorico,
   getSociosConMultiplesContratos,
+  getSociosInactivos91Dias,
 };

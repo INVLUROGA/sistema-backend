@@ -50,6 +50,7 @@ const {
   deleteParametrosGenerales,
   getMembresiasVigentesHistorico,
   getSociosConMultiplesContratos,
+  getSociosInactivos91Dias,
 } = require("../controller/Parametros.controller");
 const { obtener_estado_membresia } = require("../middlewares/logicaSistema");
 const {
@@ -135,6 +136,7 @@ router.get(
 );
 router.get("/get_params/programas-activos", getProgramasActivos);
 router.get("/socios/multiples-contratos", getSociosConMultiplesContratos);
+router.get("/socios/inactivos-91-dias", getSociosInactivos91Dias);
 router.get("/get_param/param_gasto/:id", getParametroGasto);
 router.get("/get_params/producto/proveedor/:tipo", getParametrosporProveedor);
 router.get("/get_params/clientes", getParametrosporCliente);
