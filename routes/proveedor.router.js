@@ -18,12 +18,20 @@ const {
   obtenerContratoProvxID,
   putContratoProv,
   deleteContratoxID,
-  getProveedoresxEmpresaxTipo
+  getProveedoresxEmpresaxTipo,
+  getProveedoresxEmpresaxTipoxEstado,
+  getProveedorxID,
 } = require("../controller/proveedor.controller");
 const { validarJWT } = require("../middlewares/validarJWT");
 const router = Router();
 
-router.get('/empresa/:id_empresa/tipo/:tipo', getProveedoresxEmpresaxTipo)
+router.post("/", PostProveedores);
+router.get("/id/:id", getProveedorxID);
+router.get(
+  "/empresa/:id_empresa/tipo/:tipo/estado/:estado_prov",
+  getProveedoresxEmpresaxTipoxEstado,
+);
+router.get("/empresa/:id_empresa/tipo/:tipo", getProveedoresxEmpresaxTipo);
 router.get("/obtener-proveedores/:tipo", getTBProveedores);
 router.get("/obtener-agentes", getTBAgentes);
 router.get("/obtener-proveedor-uid/:uid_param", getProveedorxUID);

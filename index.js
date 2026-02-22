@@ -159,9 +159,6 @@ app.use(userdata64Routes);
 //   })
 // );
 
-
-
-
 //BLOBS
 app.use("/api/storage/blob", require("./routes/upload/blob.router.js"));
 
@@ -180,7 +177,7 @@ app.use("/api/fils", require("./routes/file.router.js"));
 // app.use('/api/colaborador', require('./routes/colaborador.router.js'))
 app.use("/api/seguimiento", require("./routes/seguimiento.router.js"));
 app.use("/api/movimiento-articulo", require("./routes/kardex.router.js"));
-app.use("/api/articulo", require("./routes/articulo.router.js"));
+app.use("/api/articulo", validarJWT, require("./routes/articulo.router.js"));
 app.use("/api/cuenta-balance", require("./routes/cuentaBalance.router.js"));
 // //TODO proveedores // sexo, tipoDoc, estadoCivil, etc
 

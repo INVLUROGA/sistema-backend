@@ -18,6 +18,7 @@ const {
   obtenerTerminologia2xID,
   obtenerTerminologia1xID,
   obtenerTerminologia1xEntidadxGrupo,
+  obtenerTerminologia2xEmpresaxTipoxTipoGasto,
 } = require("../controller/terminologia.controller");
 const router = Router();
 
@@ -39,6 +40,10 @@ router.get("/combo-mes-activo-ventas", comboMesActivoVentas);
 // * TODO: RUTAS PARA TERMINOLOGIAS, NUEVAS:
 router.get("/term2/id/:id", obtenerTerminologia2xID);
 router.get("/term2/:id_empresa/:tipo", obtenerTerminologia2xEmpresaxTipo);
+router.get(
+  "/term2/id_empresa/:id_empresa/id_tipogasto/:id_tipoGasto/tipo/:tipo",
+  obtenerTerminologia2xEmpresaxTipoxTipoGasto,
+);
 router.post("/term2/:id_empresa/:tipo", postTerminologia2);
 router.put("/term2/id/:id", updateTerminologia2xID);
 router.put("/term2/delete/id/:id", deleteTerminologia2xID);

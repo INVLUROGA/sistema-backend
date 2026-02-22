@@ -1150,13 +1150,6 @@ const seccionGET = async (req = request, res = response) => {
           url: "/gest-inventario-circus",
         },
         {
-          key: "m-o-f",
-          label: "M.O.F.",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/m-o-f",
-        },
-        {
           key: "resumen-ejecutivo",
           label: "RESUMEN EJECUTIVO",
           isTitle: false,
@@ -1219,13 +1212,6 @@ const seccionGET = async (req = request, res = response) => {
     }
     if (modulo === "mod-recepcion") {
       MENU_ITEMS = [
-        // {
-        //   key: "resumen-ejecutivo",
-        //   label: "RESUMEN EJECUTIVO",
-        //   isTitle: false,
-        //   icon: "uil-calender",
-        //   url: "/resumen-ejecutivo",
-        // },
         {
           key: "manicure",
           label: "Manicure",
@@ -1347,50 +1333,6 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: false,
           icon: "uil-calender",
           url: "/gestion-gastosF-gastosV",
-        },
-      ];
-    }
-    if (modulo === "mod-recepcion-mia") {
-      MENU_ITEMS = [
-        {
-          key: "ventas",
-          label: "Ventas",
-          isTitle: true,
-        },
-        {
-          key: "cliente",
-          label: "CLIENTE",
-          isTitle: true,
-        },
-        {
-          key: "cliente-admClientes",
-          label: "Gestion de CLIENTES",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/gestion-clientes",
-        },
-        {
-          key: "cita",
-          label: "Citas",
-          isTitle: true,
-        },
-        {
-          key: "citas-NUT",
-          label: "RESERVAS",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/crear-citas-nutricion",
-        },
-      ];
-    }
-    if (modulo === "mod-inventario-proyection") {
-      MENU_ITEMS = [
-        {
-          //key: "reporte-utilidad-pgm",
-          label: "PROYECTO CIRCUS",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/gest-inventario-circus",
         },
       ];
     }

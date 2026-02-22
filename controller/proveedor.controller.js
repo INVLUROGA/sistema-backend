@@ -566,6 +566,7 @@ const getProveedoresxEmpresaxTipo = async (req = request, res = response) => {
         flag: true,
       },
       attributes: [
+        ["id_oficio", "id_oficio"],
         ["id", "value"],
         [
           Sequelize.fn(
@@ -586,7 +587,71 @@ const getProveedoresxEmpresaxTipo = async (req = request, res = response) => {
     console.log(error);
   }
 };
+const getProveedoresxEmpresaxTipoxEstado = async (
+  req = request,
+  res = response,
+) => {
+  try {
+    const { tipo, estado_prov, id_empresa } = req.params;
+    const proveedores = await Proveedor.findAll({
+      order: [["id", "desc"]],
+      attributes: [
+        "razon_social_prov",
+        "ruc_prov",
+        "cel_prov",
+        "nombre_contacto",
+        "nombre_vend_prov",
+        ["estado_prov", "estado"],
+        "id",
+        "uid",
+        "id_empresa",
+      ],
+      include: [
+        {
+          model: Parametros,
+          as: "parametro_oficio",
+        },
+        {
+          model: Parametros,
+          as: "parametro_marca",
+        },
+      ],
+      where: {
+        flag: true,
+        estado_prov: estado_prov,
+        id_empresa: id_empresa,
+        tipo: tipo,
+      },
+    });
+
+    res.status(200).json({
+      msg: true,
+      proveedores,
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      ok: false,
+      msg: `Hable con el encargado de sistema ${error}`,
+    });
+  }
+};
+const getProveedorxID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const proveedor = await Proveedor.findOne({ where: { id } });
+    res.status(201).json({
+      msg: "ok",
+      proveedor,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
+  getProveedorxID,
+  getProveedoresxEmpresaxTipoxEstado,
   getProveedoresxEmpresaxTipo,
   putContratoProv,
   getTBProveedores,

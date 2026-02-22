@@ -171,6 +171,28 @@ const comboMesActivoVentas = async (req = request, res = response) => {
   }
 };
 // * TODO: RUTAS DE TERMINOLOGIAS
+const obtenerTerminologia2xEmpresaxTipoxTipoGasto = async (
+  req = request,
+  res = response,
+) => {
+  try {
+    const { id_empresa, tipo, id_tipoGasto } = req.params;
+    const terminologia2 = await ParametroGastos.findAll({
+      where: { id_empresa, tipo, flag: true, id_tipoGasto: id_tipoGasto },
+      include: [
+        {
+          model: ParametroGrupo,
+          as: "parametro_grupo",
+        },
+      ],
+    });
+    res.status(201).json({
+      terminologia2,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 const obtenerTerminologia2xEmpresaxTipo = async (
   req = request,
   res = response,
@@ -355,6 +377,7 @@ module.exports = {
   postTerminologia2,
   updateTerminologia2xID,
   deleteTerminologia2xID,
+  obtenerTerminologia2xEmpresaxTipoxTipoGasto,
   // TERM1
   obtenerTerminologia1,
   postTerminologia1,
