@@ -35,7 +35,7 @@ const HorarioProgramaPT = db.define(
       defaultValue: true,
     },
   },
-  { tableName: "tb_HorarioProgramaPT" }
+  { tableName: "tb_HorarioProgramaPT", indexes: [{ fields: ["id_pgm"] }] }
 );
 Empleado.hasMany(HorarioProgramaPT, {
   foreignKey: "trainer_HorarioPgm",

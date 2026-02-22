@@ -41,7 +41,7 @@ const ImagePT = db.define(
       defaultValue: true,
     },
   },
-  { tableName: "tb_image" }
+  { tableName: "tb_image", indexes: [{ fields: ["uid_location"] }, { fields: ["uid"] }] }
 );
 const Files = db.define("tb_files", {
   id: {

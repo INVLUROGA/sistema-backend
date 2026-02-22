@@ -80,7 +80,7 @@ const SemanasTraining = db.define(
     },
   },
   {
-    tableName: "tb_semana_training",
+    tableName: "tb_semana_training", indexes: [{ fields: ["id_pgm"] }],
   }
 );
 const ProgramaTraining = db.define(

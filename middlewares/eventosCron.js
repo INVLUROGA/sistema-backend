@@ -161,14 +161,11 @@ const alertasUsuario = async () => {
       const esAlertaMensual = alerta.tipo_alerta === 1425;
 
       if (esAlertaMensual) {
-        // --- LÓGICA MENSUAL (1425) ---
-        // Se envía por lotes a las 11:00 AM o 4:00 PM
+
         const esHoraBatch = (horaPeru === 11 || horaPeru === 16) && minutoActual === 0;
         coincide = esMismoDia && esHoraBatch;
       } else {
-        // --- LÓGICA DIARIA (1426) / QUINCENAL (1427) ---
-        // Se envía a la hora EXACTA que dice la base de datos
-        // (Ej: Si dice 12:10, se envía a las 12:10)
+
         coincide =
           esMismoDia &&
           horaPeru === fechaAlerta.hour() &&
@@ -194,37 +191,44 @@ const alertasUsuario = async () => {
             buttons
           );
         } else {
-          // Lógica para 1426/1427 (reprogramación automática)
-          await AlertasUsuario.update({ id_estado: 0 }, { where: { id: alerta.id } });
 
+          await AlertasUsuario.update(
+            { id_estado: 0 },
+            {
+              where: {
+                id_user: alerta.id_user,
+                tipo_alerta: alerta.tipo_alerta,
+                mensaje: alerta.mensaje,
+                fecha: alerta.fecha,
+                id_estado: 1
+              }
+            }
+          );
+
+          // 2. Calculamos la nueva fecha
           let nuevaFecha = null;
-          // 1426: DIARIO
           if (alerta.tipo_alerta === 1426) {
             nuevaFecha = fechaAlerta.add(1, 'day');
-            // Si cae domingo (0), saltamos al lunes
-            if (nuevaFecha.day() === 0) {
-              nuevaFecha = nuevaFecha.add(1, 'day');
-            }
-          }
-          // 1427: QUINCENAL
-          else if (alerta.tipo_alerta === 1427) {
+            if (nuevaFecha.day() === 0) nuevaFecha = nuevaFecha.add(1, 'day'); // Salta domingo
+          } else if (alerta.tipo_alerta === 1427) {
             nuevaFecha = fechaAlerta.add(15, 'day');
           }
 
+          // 3. Creamos UN SOLO registro para el futuro
           if (nuevaFecha) {
             await AlertasUsuario.create({
               id_user: alerta.id_user,
               tipo_alerta: alerta.tipo_alerta,
               mensaje: alerta.mensaje,
-              // Convertimos a Date nativo de JS
               fecha: nuevaFecha.toDate(),
-              id_estado: 1, // Pendiente
+              id_estado: 1,
               flag: true
             });
-            console.log(`Reprogramada alerta ${alerta.tipo_alerta} para: ${nuevaFecha.format()}`);
           }
 
-          await enviarMensajesWsp(alerta.auth_user.telefono_user, `${alerta.mensaje}`);
+          // 4. Enviamos UN SOLO mensaje
+          await enviarMensajesWsp(alerta.auth_user.telefono_user, alerta.mensaje);
+          console.log(`Mensaje enviado y limpiado duplicados: ${alerta.mensaje}`);
         }
       }
     }
