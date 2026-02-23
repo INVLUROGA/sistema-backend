@@ -181,7 +181,7 @@ const alertasUsuario = async () => {
 
         if (alerta.tipo_alerta === 1425) {
           const buttons = [
-            { id: "btn_si", label: "SI" },
+            { id: `btn_si_${alerta.id}`, label: "SI" },
             { id: "btn_no", label: "NO" },
           ];
 
@@ -214,16 +214,30 @@ const alertasUsuario = async () => {
             nuevaFecha = fechaAlerta.add(15, 'day');
           }
 
-          // 3. Creamos UN SOLO registro para el futuro
+          // 3. Creamos UN SOLO registro para el futuro usando findOrCreate para evitar condición de carrera
           if (nuevaFecha) {
-            await AlertasUsuario.create({
-              id_user: alerta.id_user,
-              tipo_alerta: alerta.tipo_alerta,
-              mensaje: alerta.mensaje,
-              fecha: nuevaFecha.toDate(),
-              id_estado: 1,
-              flag: true
+            const [alertaCreada, created] = await AlertasUsuario.findOrCreate({
+              where: {
+                id_user: alerta.id_user,
+                tipo_alerta: alerta.tipo_alerta,
+                mensaje: alerta.mensaje,
+                fecha: nuevaFecha.toDate(),
+                id_estado: 1,
+                flag: true
+              },
+              defaults: {
+                id_user: alerta.id_user,
+                tipo_alerta: alerta.tipo_alerta,
+                mensaje: alerta.mensaje,
+                fecha: nuevaFecha.toDate(),
+                id_estado: 1,
+                flag: true
+              }
             });
+
+            if (!created) {
+              console.log(`[DUPLICADO EVITADO] Otra instancia ya había programado la alerta futura para: ${alerta.mensaje}`);
+            }
           }
 
           // 4. Enviamos UN SOLO mensaje

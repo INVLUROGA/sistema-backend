@@ -1896,11 +1896,14 @@ const agregarFirmaEnContrato = (req, res) => {
   }
 };
 const obtenerComparativoResumen = async (req = request, res = response) => {
-  const { arrayDate } = req.query;
-  console.log({ arrayDate });
+  const dateParams = req.query.arrayDate || req.query['arrayDate[]'];
+  console.log("FECHAS RECIBIDAS (backend):", dateParams);
 
-  const fechaInicio = arrayDate[0];
-  const fechaFin = arrayDate[1];
+  if (!dateParams || dateParams.length < 2) return res.json({ ventasProgramas: [], ventasTransferencias: [], membresias: [] });
+
+  const fechaInicio = new Date(dateParams[0]);
+  const fechaFin = new Date(dateParams[1]);
+
   try {
 
     const detallesRaw = await detalleVenta_membresias.findAll({
@@ -1959,15 +1962,48 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
             flag: true,
           },
           required: true, // INNER JOIN es la clave para filtrar rápido
+          include: [
+            {
+              model: Cliente,
+              include: [
+                {
+                  model: Distritos,
+                  as: "ubigeo_nac",
+                },
+                {
+                  model: Distritos,
+                  as: "ubigeo_trabajo",
+                },
+                {
+                  model: Marcacion,
+                  required: false,
+                  where: {
+                    tiempo_marcacion_new: {
+                      [Op.between]: [
+                        new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
+                        new Date(fechaFin).setUTCHours(23, 59, 59, 999),
+                      ],
+                    },
+                  },
+                },
+              ],
+            },
+            {
+              model: Empleado,
+              attributes: ["id_empl", "nombre_empl", "apPaterno_empl", "apMaterno_empl", "estado_empl"],
+            }
+          ],
         },
       ],
     });
 
 
+    console.log("detallesRaw.length = ", detallesRaw.length);
+
     const programasMap = new Map();
 
     for (const d of detallesRaw) {
-      const pgm = d.tb_programa_training;
+      const pgm = d.tb_ProgramaTraining || d.tb_programa_training;
       if (!pgm) continue;
 
       const pgmId = pgm.id_pgm;
@@ -2003,8 +2039,8 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
       where: {
         fecha_venta: {
           [Op.between]: [
-            new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
-            new Date(fechaFin).setUTCHours(23, 59, 59, 999),
+            fechaInicio,
+            fechaFin,
           ],
         },
         flag: true,
@@ -2047,7 +2083,23 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
                       model: Distritos,
                       as: "ubigeo_trabajo",
                     },
+                    {
+                      model: Marcacion,
+                      required: false,
+                      where: {
+                        tiempo_marcacion_new: {
+                          [Op.between]: [
+                            new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
+                            new Date(fechaFin).setUTCHours(23, 59, 59, 999),
+                          ],
+                        },
+                      },
+                    },
                   ],
+                },
+                {
+                  model: Empleado,
+                  attributes: ["id_empl", "nombre_empl", "apPaterno_empl", "apMaterno_empl", "estado_empl"],
                 },
               ],
             },
@@ -2074,7 +2126,7 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
             flag: true,
             // Ponemos el filtro de fechas aquí también para no traer ventas viejas
             fecha_venta: {
-              [Op.between]: [new Date(fechaInicio), new Date(fechaFin)],
+              [Op.between]: [fechaInicio, fechaFin],
             }
           },
           required: true,
@@ -2101,10 +2153,36 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
                 "email_cli",
                 "tel_cli",
                 "ubigeo_distrito_cli",
+                "sexo_cli",
+                "estCivil_cli",
+                "fecha_nacimiento",
               ],
-              // 🔥 BORRAMOS DISTRITOS Y MARCACIONES 🔥
-              // El frontend de "Comparativo Resumen" no necesita saber dónde nació el cliente 
-              // ni a qué hora pasó por el torniquete.
+              include: [
+                {
+                  model: Distritos,
+                  as: "ubigeo_nac",
+                },
+                {
+                  model: Distritos,
+                  as: "ubigeo_trabajo",
+                },
+                {
+                  model: Marcacion,
+                  required: false,
+                  where: {
+                    tiempo_marcacion_new: {
+                      [Op.between]: [
+                        new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
+                        new Date(fechaFin).setUTCHours(23, 59, 59, 999),
+                      ],
+                    },
+                  },
+                },
+              ],
+            },
+            {
+              model: Empleado,
+              attributes: ["id_empl", "nombre_empl", "apPaterno_empl", "apMaterno_empl", "estado_empl"],
             },
           ],
         },

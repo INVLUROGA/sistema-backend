@@ -227,7 +227,7 @@ const getReporteSeguimiento = async (req, res) => {
         if (
           !currentEntry ||
           new Date(item.fec_fin_mem_new) >
-            new Date(currentEntry.fec_fin_mem_new)
+          new Date(currentEntry.fec_fin_mem_new)
         ) {
           acc[clienteId] = item; // Guardar la membresía más reciente
         }
@@ -436,7 +436,7 @@ const getReporteSeguimientoClientes = async (req, res) => {
         if (
           !currentEntry ||
           new Date(item.fec_fin_mem_new) >
-            new Date(currentEntry.fec_fin_mem_new)
+          new Date(currentEntry.fec_fin_mem_new)
         ) {
           acc[clienteId] = item; // Guardar la membresía más reciente
         }
@@ -481,7 +481,7 @@ const getReporteSeguimientoClientes = async (req, res) => {
   }
 };
 
-const getReporteProgramas = async (req, res) => {};
+const getReporteProgramas = async (req, res) => { };
 const getReporteVentasPrograma_COMPARATIVACONMEJORANO = async (
   req = request,
   res = response
@@ -1600,6 +1600,7 @@ const getReporteDeTotalDeVentas_ClientesVendedores = async (
     });
   }
 };
+
 const getReporteVentas = async (req = request, res = response) => {
   try {
     const rango = getArrayDate(req);
@@ -1637,46 +1638,27 @@ const getReporteVentas = async (req = request, res = response) => {
       },
       order: [["id", "DESC"]],
       include: [
+        // 1. Relaciones 1:1 (Cliente y Empleado se quedan como LEFT JOIN normales)
         {
           model: Cliente,
           attributes: [
             [
               Sequelize.fn(
                 "CONCAT",
-                Sequelize.col("nombre_cli"),
-                " ",
-                Sequelize.col("apPaterno_cli"),
-                " ",
+                Sequelize.col("nombre_cli"), " ",
+                Sequelize.col("apPaterno_cli"), " ",
                 Sequelize.col("apMaterno_cli")
               ),
               "nombres_apellidos_cli",
             ],
-            "estCivil_cli",
-            "sexo_cli",
-            "ubigeo_distrito_cli",
-            "nacionalidad_cli",
-            "tipoCli_cli",
-            "fecNac_cli",
-            "fecha_nacimiento",
-            "createdAt",
+            "estCivil_cli", "sexo_cli", "ubigeo_distrito_cli", "nacionalidad_cli",
+            "tipoCli_cli", "fecNac_cli", "fecha_nacimiento", "createdAt",
           ],
           include: [
             { model: Distritos, attributes: ["distrito"], as: "ubigeo_nac" },
-            {
-              model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_estCivil",
-            },
-            {
-              model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_tipocli",
-            },
-            {
-              model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_sexo",
-            },
+            { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_estCivil" },
+            { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_tipocli" },
+            { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_sexo" },
           ],
         },
         {
@@ -1685,113 +1667,75 @@ const getReporteVentas = async (req = request, res = response) => {
             [
               Sequelize.fn(
                 "CONCAT",
-                Sequelize.col("nombre_empl"),
-                " ",
-                Sequelize.col("apPaterno_empl"),
-                " ",
+                Sequelize.col("nombre_empl"), " ",
+                Sequelize.col("apPaterno_empl"), " ",
                 Sequelize.col("apMaterno_empl")
               ),
               "nombres_apellidos_empl",
             ],
           ],
-          include: [
-            {
-              model: ImagePT, // asumes relación Venta -> Empleado -> ImagePT
-            },
-          ],
+          include: [{ model: ImagePT }],
         },
+
+        // 2. Relaciones 1:N (Detalles). AQUI APLICAMOS "separate: true"
         {
           model: detalleVenta_Transferencia,
           as: "venta_venta",
-          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
+          required: false,
+          separate: true, // <--- OPTIMIZACIÓN CLAVE
           attributes: ["id_venta", "tarifa_monto"],
         },
         {
           model: detalleVenta_producto,
-          attributes: [
-            "id_venta",
-            "id_producto",
-            "cantidad",
-            "precio_unitario",
-            "tarifa_monto",
-          ],
+          separate: true, // <--- OPTIMIZACIÓN CLAVE
+          attributes: ["id_venta", "id_producto", "cantidad", "precio_unitario", "tarifa_monto"],
           include: [
-            {
-              model: Producto,
-              attributes: ["id", "id_categoria"],
-            },
+            { model: Producto, attributes: ["id", "id_categoria"] },
           ],
         },
         {
           model: detalleVenta_membresias,
-          attributes: [
-            "id_venta",
-            "id_pgm",
-            "id_tarifa",
-            "horario",
-            "id_st",
-            "tarifa_monto",
-          ],
+          separate: true, // <--- OPTIMIZACIÓN CLAVE
+          attributes: ["id_venta", "id_pgm", "id_tarifa", "horario", "id_st", "tarifa_monto"],
           include: [
             {
               model: ProgramaTraining,
               attributes: ["name_pgm", "id_pgm"],
-              include: [
-                {
-                  model: ImagePT,
-                  attributes: ["name_image", "width", "height", "id"],
-                },
-              ],
+              include: [{ model: ImagePT, attributes: ["name_image", "width", "height", "id"] }],
             },
-            {
-              model: SemanasTraining,
-              attributes: ["semanas_st", "id_st"],
-            },
+            { model: SemanasTraining, attributes: ["semanas_st", "id_st"] },
           ],
         },
         {
           model: detalleVenta_citas,
+          separate: true, // <--- OPTIMIZACIÓN CLAVE
           attributes: ["id_venta", "id_servicio", "tarifa_monto"],
           include: [
-            {
-              model: Servicios,
-              attributes: ["id", "tipo_servicio"],
-            },
+            { model: Servicios, attributes: ["id", "tipo_servicio"] },
           ],
         },
         {
           model: detalleVenta_pagoVenta,
+          separate: true, // <--- OPTIMIZACIÓN CLAVE
           attributes: ["id_venta", "parcial_monto"],
           include: [
-            {
-              model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_banco",
-            },
-            {
-              model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_forma_pago",
-            },
-            {
-              model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_tipo_tarjeta",
-            },
-            {
-              model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_tarjeta",
-            },
+            { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_banco" },
+            { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_forma_pago" },
+            { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_tipo_tarjeta" },
+            { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_tarjeta" },
           ],
         },
       ],
     });
 
+    // 3. Limpiamos las instancias de Sequelize antes de enviarlas (Acelera JSON.stringify)
+    const reportesLimpios = ventas.map(venta => venta.get({ plain: true }));
+
     return res.status(200).json({
       ok: true,
-      reporte: ventas,
+      reporte: reportesLimpios,
     });
+
   } catch (error) {
     console.log("ERROR getReporteVentas:", error);
     return res.status(500).json({
@@ -1891,7 +1835,7 @@ const getReporteDeMembresiasxFechaxPrograma = async (
   const fechaInicio = rangoDate[0];
   const fechaFin = rangoDate[1];
   try {
-    const {} = await res.status(200).json({
+    const { } = await res.status(200).json({
       ok: true,
       reporte: ventas,
     });
@@ -2117,7 +2061,7 @@ const obtenerReporteSociosxDistritos = async (
     });
   }
 };
-const obtenerTraspaso = async (req = request, res = response) => {};
+const obtenerTraspaso = async (req = request, res = response) => { };
 const obtenerTransferencias = async (req = request, res = response) => {
   try {
     const { id_pgm } = req.params;
@@ -2256,19 +2200,19 @@ const relacionarTransferencias = (transferencias, ventas) => {
             id_cli: transferenciaRelacionada["venta_venta.tb_cliente.id_cli"],
             nombres_apellidos_cli:
               transferenciaRelacionada[
-                "venta_venta.tb_cliente.nombres_apellidos_cli"
+              "venta_venta.tb_cliente.nombres_apellidos_cli"
               ],
             email_cli:
               transferenciaRelacionada["venta_venta.tb_cliente.email_cli"],
             tel_cli: transferenciaRelacionada["venta_venta.tb_cliente.tel_cli"],
             ubigeo_distrito_cli:
               transferenciaRelacionada[
-                "venta_venta.tb_cliente.ubigeo_distrito_cli"
+              "venta_venta.tb_cliente.ubigeo_distrito_cli"
               ],
             tb_distrito: {
               distrito:
                 transferenciaRelacionada[
-                  "venta_venta.tb_cliente.tb_distrito.distrito"
+                "venta_venta.tb_cliente.tb_distrito.distrito"
                 ],
             },
           },

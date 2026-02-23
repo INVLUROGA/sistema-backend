@@ -54,12 +54,6 @@ const validarEstadoCita = async (id_param) => {
 
 const obtenerReservasMonkFit = async (req = request, res = response) => {
   try {
-    const qLimit = parseInt(req.query.limit ?? "10", 10);
-    const qPage = parseInt(req.query.page ?? "1", 10);
-    const limit = Number.isFinite(qLimit) && qLimit > 0 ? qLimit : 10;
-    const page = Number.isFinite(qPage) && qPage > 0 ? qPage : 1;
-    const offset = (page - 1) * limit;
-
     const fromRaw = req.query.from || null;
     const toRaw = req.query.to || null;
 
@@ -115,8 +109,6 @@ const obtenerReservasMonkFit = async (req = request, res = response) => {
     const result = await ReservaMonkFit.findAndCountAll({
       where,
       order: [["fecha", "DESC"]],
-      limit,
-      offset,
       include: includes,
       raw: true, // No crea instancias de clase pesadas
       nest: true, // Mantiene los objetos anidados (cliente.nombre_cli)
@@ -133,8 +125,6 @@ const obtenerReservasMonkFit = async (req = request, res = response) => {
     res.json({
       count: result.count,
       rows: result.rows,
-      limit,
-      offset,
       totalMonto: totalMonto || 0
     });
 
