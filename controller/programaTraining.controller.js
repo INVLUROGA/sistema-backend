@@ -14,6 +14,8 @@ const {
   detalle_sesionxMembresia,
 } = require("../middlewares/Logicamembresias");
 const { detalleVenta_membresias } = require("../models/Venta");
+const NodeCache = require("node-cache");
+const pgmCache = new NodeCache({ stdTTL: 86400 });
 
 const postProgramaTraining = async (req = request, res = response) => {
   const { nombre_pgm, desc_pgm, sigla_pgm, estado_pgm } = req.body;
@@ -28,6 +30,7 @@ const postProgramaTraining = async (req = request, res = response) => {
       estado_pgm,
     });
     await pgm.save();
+    pgmCache.del("pgmTb");
     res.status(200).json(pgm);
   } catch (error) {
     res.status(500).json({
@@ -37,8 +40,10 @@ const postProgramaTraining = async (req = request, res = response) => {
 };
 const getTBProgramaTraining = async (req, res) => {
   try {
-    // console.log("pasa");
-    // await db.sync({ force: true });
+    const cachedData = pgmCache.get("pgmTb");
+    if (cachedData) {
+      return res.status(200).json(cachedData);
+    }
     const pgmTb = await ProgramaTraining.findAll({
       attributes: [
         "id_pgm",
@@ -48,24 +53,31 @@ const getTBProgramaTraining = async (req, res) => {
         "desc_pgm",
         "sigla_pgm",
         "estado_pgm",
-      ], // Ajusta los atributos que deseas seleccionar
+      ],
       where: { flag: true },
       include: [
         {
           model: ImagePT,
           attributes: ["name_image"],
+          // Asumo que es 1:1 o 1:N pequeño, si es 1:1 no necesita separate
         },
         {
           model: HorarioProgramaPT,
           attributes: ["id_horarioPgm", "time_HorarioPgm"],
+          separate: true, // <--- OPTIMIZACIÓN CLAVE (Evita multiplicaciones de filas)
         },
         {
           model: SemanasTraining,
           attributes: ["id_st"],
+          separate: true, // <--- OPTIMIZACIÓN CLAVE (Trae las semanas en consulta rápida paralela)
         },
       ],
     });
-    res.status(200).json(pgmTb);
+
+    // Limpiamos la "basura" del ORM para que JSON.stringify no sufra
+    const programasLimpios = pgmTb.map((pgm) => pgm.get({ plain: true }));
+    pgmCache.set("pgmTb", programasLimpios);
+    res.status(200).json(programasLimpios);
   } catch (error) {
     console.log(error);
     res.status(500).json({
@@ -84,6 +96,7 @@ const putProgramaTraining = async (req = request, res = response) => {
       });
     }
     await pgm.update(req.body);
+    pgmCache.del("pgmTb");
     res.status(200).json(pgm);
   } catch (error) {
     res.status(500).json({
@@ -101,6 +114,7 @@ const deleteProgramaTraining = async (req = request, res = response) => {
       });
     }
     pgm.update({ flag: false });
+    pgmCache.del("pgmTb");
     res.status(200).json({
       msg: "programa eliminado con exito",
     });
@@ -208,7 +222,7 @@ const getHorariosTBPrograma = async (req = request, res = response) => {
     });
   }
 };
-const getHorariosProgramasPTxpgm = async (req = request, res = response) => {};
+const getHorariosProgramasPTxpgm = async (req = request, res = response) => { };
 const putHorarioProgramasPT = async (req = request, res = response) => {
   const { id_hr } = req.params;
   try {
