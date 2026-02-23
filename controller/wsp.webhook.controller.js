@@ -29,9 +29,20 @@ const recibirWebhookWsp = async (req = request, res = response) => {
         console.log("WEBHOOK WSP:", type, from, body);
 
 
-        if (body && body.toUpperCase() === "SI") {
+        // Si el body viene de un botón ID, ej: `btn_si_105` o si simplemente escribió "SI"
+        let cancelAll = false;
+        let specificAlertId = null;
 
+        if (body) {
+            const bodyUpper = body.toUpperCase();
+            if (bodyUpper === "SI") {
+                cancelAll = true;
+            } else if (body.startsWith("btn_si_")) {
+                specificAlertId = parseInt(body.replace("btn_si_", ""), 10);
+            }
+        }
 
+        if (cancelAll || specificAlertId) {
 
             const fechaInicioMes = new Date();
             fechaInicioMes.setDate(1);
@@ -40,13 +51,12 @@ const recibirWebhookWsp = async (req = request, res = response) => {
             const fechaFinMes = new Date(fechaInicioMes);
             fechaFinMes.setMonth(fechaFinMes.getMonth() + 1);
 
-
             const usuario = await require("../models/Usuarios").Usuario.findOne({
                 where: { telefono_user: telefono }
             });
 
             if (usuario) {
-                const alertasPendientes = await AlertasUsuario.findAll({
+                const queryOptions = {
                     where: {
                         id_user: usuario.id,
                         id_estado: 1,
@@ -55,10 +65,16 @@ const recibirWebhookWsp = async (req = request, res = response) => {
                             [Op.gte]: fechaInicioMes,
                             [Op.lt]: fechaFinMes
                         },
-                        // Solo cancelar Mensuales (1425). Diarios (1426) y Quincenales (1427) se ignoran.
                         tipo_alerta: { [Op.in]: [1425] }
                     }
-                });
+                };
+
+                // Si viene el ID específico, lo agregamos al filtro
+                if (specificAlertId) {
+                    queryOptions.where.id = specificAlertId;
+                }
+
+                const alertasPendientes = await AlertasUsuario.findAll(queryOptions);
 
                 if (alertasPendientes.length > 0) {
                     for (const alerta of alertasPendientes) {
