@@ -41,6 +41,9 @@ const CuentaBalance = db.define(
     id_empresa: {
       type: DataTypes.INTEGER,
     },
+    id_prov__: {
+      type: DataTypes.INTEGER,
+    },
     flag: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
@@ -48,11 +51,17 @@ const CuentaBalance = db.define(
   },
   {
     tableName: "tb_cuentaBalance",
-  }
+  },
 );
 
 CuentaBalance.belongsTo(Proveedor, {
   foreignKey: "id_prov",
+  targetKey: "id",
+  // as: "proveedor", // Opcional: alias para la relación
+});
+
+CuentaBalance.belongsTo(Proveedor, {
+  foreignKey: "id_prov__",
   targetKey: "id",
   // as: "proveedor", // Opcional: alias para la relación
 });
@@ -77,7 +86,7 @@ CuentaBalance.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 module.exports = {
