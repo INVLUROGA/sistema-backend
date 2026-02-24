@@ -1285,164 +1285,160 @@ const getVentasxFecha = async (req = request, res = response) => {
   const { id_empresa } = req.params;
   const fechaInicio = arrayDate[0];
   const fechaFin = arrayDate[1];
-
+  console.log({
+    fechas: [new Date(fechaInicio), new Date(fechaFin), fechaInicio, fechaFin],
+  });
 
   try {
-    // 0. Revisar si solo necesitamos productos (optimización para reporte histórico)
-    const { mode } = req.query; // 'products_only'
-    const isProductsOnly = mode === 'products_only';
-
-    // 1. Query principal: Venta + Cliente + Empleado (raw para velocidad)
-    // Si es products_only, NO hacemos join con Cliente ni Empleado
     const ventas = await Venta.findAll({
       attributes: [
-        "id", "id_cli", "id_empl", "id_tipoFactura",
-        "id_origen", "numero_transac", "fecha_venta", "id_empresa",
+        "id",
+        "id_cli",
+        "id_empl",
+        "id_tipoFactura",
+        "id_origen",
+        "numero_transac",
+        "fecha_venta",
+        "id_empresa",
       ],
       where: {
-        fecha_venta: { [Op.between]: [fechaInicio, fechaFin] },
+        fecha_venta: {
+          [Op.between]: [fechaInicio, fechaFin],
+        },
         flag: true,
         id_empresa: id_empresa,
         id_tipoFactura: { [Op.in]: [699, 700] },
       },
       order: [["id", "DESC"]],
-      include: isProductsOnly ? [] : [
+      include: [
         {
           model: Cliente,
           attributes: [
-            [Sequelize.fn("CONCAT", Sequelize.col("nombre_cli"), " ", Sequelize.col("apPaterno_cli"), " ", Sequelize.col("apMaterno_cli")), "nombres_apellidos_cli"],
+            [
+              Sequelize.fn(
+                "CONCAT",
+                Sequelize.col("nombre_cli"),
+                " ",
+                Sequelize.col("apPaterno_cli"),
+                " ",
+                Sequelize.col("apMaterno_cli"),
+              ),
+              "nombres_apellidos_cli",
+            ],
           ],
         },
         {
           model: Empleado,
           attributes: [
-            [Sequelize.fn("CONCAT", Sequelize.col("nombre_empl"), " ", Sequelize.col("apPaterno_empl"), " ", Sequelize.col("apMaterno_empl")), "nombres_apellidos_empl"],
+            [
+              Sequelize.fn(
+                "CONCAT",
+                Sequelize.col("nombre_empl"),
+                " ",
+                Sequelize.col("apPaterno_empl"),
+                " ",
+                Sequelize.col("apMaterno_empl"),
+              ),
+              "nombres_apellidos_empl",
+            ],
           ],
         },
+        {
+          model: detalleVenta_producto,
+          attributes: [
+            "id_venta",
+            "id_producto",
+            "cantidad",
+            "precio_unitario",
+            "tarifa_monto",
+          ],
+          include: [
+            {
+              model: Producto,
+              attributes: ["id", "id_categoria", "nombre_producto"],
+            },
+          ],
+        },
+        {
+          model: detalleVenta_membresias,
+          attributes: [
+            "id_venta",
+            "id_pgm",
+            "id_tarifa",
+            "horario",
+            "id_st",
+            "tarifa_monto",
+          ],
+          include: [
+            {
+              model: ProgramaTraining,
+              attributes: ["name_pgm"],
+            },
+            {
+              model: SemanasTraining,
+              attributes: ["semanas_st"],
+            },
+          ],
+        },
+        {
+          model: detalleVenta_citas,
+          attributes: ["id_venta", "id_servicio", "tarifa_monto"],
+          include: [
+            {
+              model: Servicios,
+              attributes: ["id", "nombre_servicio", "tipo_servicio"],
+            },
+          ],
+        },
+        {
+          model: detalleVenta_pagoVenta,
+          attributes: ["id_venta", "parcial_monto"],
+          include: [
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_banco",
+            },
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_forma_pago",
+            },
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_tipo_tarjeta",
+            },
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_tarjeta",
+            },
+          ],
+        },
+        // {
+        //   model: detalleventa_servicios,
+        //   attributes: ["cantidad", "tarifa_monto"],
+        //   include: [
+        //     {
+        //       model: ServiciosCircus,
+        //       include: [
+        //         {
+        //           model: Parametros,
+        //         },
+        //       ],
+        //     },
+        //   ],
+        // },
       ],
-      raw: true,
-      nest: true,
     });
-
-    if (!ventas.length) return res.status(200).json({ ok: true, ventas: [] });
-
-    const ventaIds = ventas.map((v) => v.id);
-
-    // 2. Queries de detalle en PARALELO filtradas por los IDs ya obtenidos
-    // Helper para dividir IDs en chunks de 1000 para evitar error SQL (limit 2100 params)
-    const chunkArray = (array, size) => {
-      const chunked = [];
-      for (let i = 0; i < array.length; i += size) {
-        chunked.push(array.slice(i, i + size));
-      }
-      return chunked;
-    };
-    const ventaIdChunks = chunkArray(ventaIds, 1000);
-
-    const promises = [];
-
-    // PRODUCTOS: Siempre necesarios
-    // Ejecutar por cada chunk y aplanar resultados
-    promises.push(
-      Promise.all(ventaIdChunks.map(chunkIds =>
-        detalleVenta_producto.findAll({
-          attributes: ["id_venta", "id_producto", "cantidad", "precio_unitario", "tarifa_monto"],
-          where: { id_venta: { [Op.in]: chunkIds } },
-          include: [{ model: Producto, attributes: ["id", "id_categoria", "nombre_producto"] }],
-          raw: true,
-          nest: true,
-        })
-      )).then(results => results.flat())
-    );
-
-    // OTROS: Solo si NO es products_only
-    if (!isProductsOnly) {
-      promises.push(
-        Promise.all(ventaIdChunks.map(chunkIds =>
-          detalleVenta_membresias.findAll({
-            attributes: ["id_venta", "id_pgm", "id_tarifa", "horario", "id_st", "tarifa_monto"],
-            where: { id_venta: { [Op.in]: chunkIds } },
-            include: [
-              { model: ProgramaTraining, attributes: ["name_pgm"] },
-              { model: SemanasTraining, attributes: ["semanas_st"] },
-            ],
-            raw: true,
-            nest: true,
-          })
-        )).then(results => results.flat())
-      );
-
-      promises.push(
-        Promise.all(ventaIdChunks.map(chunkIds =>
-          detalleVenta_citas.findAll({
-            attributes: ["id_venta", "id_servicio", "tarifa_monto"],
-            where: { id_venta: { [Op.in]: chunkIds } },
-            include: [{ model: Servicios, attributes: ["id", "nombre_servicio", "tipo_servicio"] }],
-            raw: true,
-            nest: true,
-          })
-        )).then(results => results.flat())
-      );
-
-      promises.push(
-        Promise.all(ventaIdChunks.map(chunkIds =>
-          detalleVenta_pagoVenta.findAll({
-            attributes: ["id_venta", "parcial_monto"],
-            where: { id_venta: { [Op.in]: chunkIds } },
-            include: [
-              { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_banco" },
-              { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_forma_pago" },
-              { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_tipo_tarjeta" },
-              { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_tarjeta" },
-            ],
-            raw: true,
-            nest: true,
-          })
-        )).then(results => results.flat())
-      );
-    } else {
-      // Rellenar con promises que resuelven a [] para mantener el orden del array destructuring
-      promises.push(Promise.resolve([]));
-      promises.push(Promise.resolve([]));
-      promises.push(Promise.resolve([]));
-    }
-
-    const [productos, membresias, citas, pagos] = await Promise.all(promises);
-
-    // 3. Agrupar detalles por id_venta usando Maps
-    const productosMap = new Map();
-    productos.forEach((p) => {
-      if (!productosMap.has(p.id_venta)) productosMap.set(p.id_venta, []);
-      productosMap.get(p.id_venta).push(p);
+    res.status(200).json({
+      ok: true,
+      ventas,
     });
-    const membresiasMap = new Map();
-    membresias.forEach((m) => {
-      if (!membresiasMap.has(m.id_venta)) membresiasMap.set(m.id_venta, []);
-      membresiasMap.get(m.id_venta).push(m);
-    });
-    const citasMap = new Map();
-    citas.forEach((c) => {
-      if (!citasMap.has(c.id_venta)) citasMap.set(c.id_venta, []);
-      citasMap.get(c.id_venta).push(c);
-    });
-    const pagosMap = new Map();
-    pagos.forEach((p) => {
-      if (!pagosMap.has(p.id_venta)) pagosMap.set(p.id_venta, []);
-      pagosMap.get(p.id_venta).push(p);
-    });
-
-    // 4. Ensamblar respuesta final con la misma forma que antes
-    const ventasConDetalle = ventas.map((v) => ({
-      ...v,
-      detalle_ventaProductos: productosMap.get(v.id) || [],
-      detalle_ventaMembresia: membresiasMap.get(v.id) || [],
-      detalle_ventaCitas: citasMap.get(v.id) || [],
-      detalle_ventaPagoVenta: pagosMap.get(v.id) || [],
-    }));
-
-    res.status(200).json({ ok: true, ventas: ventasConDetalle });
   } catch (error) {
     console.log("errorrrr: ", error);
+
     res.status(500).json({
       error: `Error en el servidor, en controller de get_VENTASxFECHA, hable con el administrador: ${error}`,
     });
@@ -2274,6 +2270,142 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
     });
   } catch (error) {
     console.log(error);
+  }
+};
+
+const obtenerComparativoResumenDashboard = async (req = request, res = response) => {
+  const dateParams = req.query.arrayDate || req.query['arrayDate[]'];
+  // console.log("FECHAS RECIBIDAS (backend - Dashboard):", dateParams);
+
+  if (!dateParams || dateParams.length < 2) return res.json({ ventasProgramas: [], ventasTransferencias: [], membresias: [] });
+
+  const fechaInicio = new Date(dateParams[0]);
+  const fechaFin = new Date(dateParams[1]);
+
+  try {
+    // 1. OBTENEMOS LAS MEMBRESÍAS UNA SOLA VEZ (MÁS RÁPIDO)
+    const membresiasRaw = await detalleVenta_membresias.findAll({
+      attributes: [
+        "id", "id_venta", "horario", "tarifa_monto", "id_tarifa",
+        "fec_inicio_mem", "fec_fin_mem", "id_pgm"
+      ],
+      order: [["id", "DESC"]],
+      include: [
+        {
+          model: Venta,
+          attributes: ["id_tipoFactura", "fecha_venta", "id_cli", "id", "id_origen", "observacion"],
+          where: {
+            id_empresa: 598, // Agregado el filtro de empresa aquí para consistencia
+            fecha_venta: { [Op.between]: [fechaInicio, fechaFin] },
+            flag: true,
+          },
+          required: true,
+        },
+        {
+          model: ProgramaTraining,
+          attributes: ["id_pgm", "name_pgm"],
+          where: { flag: true, estado_pgm: true },
+          include: [{ model: ImagePT, attributes: ["name_image", "height", "width"] }],
+        },
+        {
+          model: TarifaTraining,
+          as: "tarifa_venta",
+          attributes: ["nombreTarifa_tt", "descripcionTarifa_tt", "tarifaCash_tt", "fecha_inicio", "fecha_fin", "id_tipo_promocion"],
+          required: false
+        },
+        {
+          model: SemanasTraining,
+          attributes: ["sesiones", "semanas_st", "id_st"],
+        },
+      ],
+    });
+
+    // 2. AGRUPAMOS EN MEMORIA (Reemplaza a la primera consulta original)
+    const programasMap = new Map();
+
+    for (const d of membresiasRaw) {
+      // Sequelize usa la convención de nombres basada en el modelo
+      const pgm = d.tb_programa_training || d.tb_ProgramaTraining;
+      if (!pgm) continue;
+
+      const pgmId = pgm.id_pgm;
+
+      if (!programasMap.has(pgmId)) {
+        programasMap.set(pgmId, {
+          name_pgm: pgm.name_pgm,
+          id_pgm: pgmId,
+          tb_image: pgm.tb_image || null,
+          detalle_ventaMembresium: [],
+        });
+      }
+
+      // Creamos el item limpio sin duplicar toda la estructura
+      programasMap.get(pgmId).detalle_ventaMembresium.push({
+        id_venta: d.id_venta,
+        horario: d.horario,
+        tarifa_monto: d.tarifa_monto,
+        id_tarifa: d.id_tarifa,
+        fec_inicio_mem: d.fec_inicio_mem,
+        fec_fin_mem: d.fec_fin_mem,
+        tarifa_venta: d.tarifa_venta,
+        tb_semana_training: d.tb_semana_training || d.tb_semanas_training,
+        tb_ventum: d.tb_ventum || d.tb_venta,
+      });
+    }
+
+    const ventasProgramas = Array.from(programasMap.values());
+
+    // 3. OBTENEMOS TRANSFERENCIAS (Se mantiene igual, pero evalúa si necesitas TANTOS includes anidados si es solo para un dashboard)
+    const ventasTransferencias = await Venta.findAll({
+      order: [["fecha_venta", "DESC"]],
+      attributes: ["id", "fecha_venta"], // LIMITE LOS ATRIBUTOS
+      where: {
+        fecha_venta: { [Op.between]: [fechaInicio, fechaFin] },
+        flag: true,
+      },
+      include: [
+        {
+          model: detalleVenta_Transferencia,
+          as: "venta_venta",
+          required: true,
+          attributes: ["id", "id_venta", "id_membresia"], // LIMITAR
+          include: [
+            {
+              model: Venta,
+              as: "venta_transferencia",
+              required: true,
+              attributes: ["id"], // LIMITAR
+              include: [
+                {
+                  model: detalleVenta_membresias,
+                  attributes: ["id", "id_pgm"], // LIMITAR
+                  include: [
+                    {
+                      model: ProgramaTraining,
+                      attributes: ["id_pgm", "name_pgm"],
+                      include: [{ model: ImagePT, attributes: ["name_image"] }],
+                    },
+                    { model: SemanasTraining, attributes: ["semanas_st"] },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    // 4. RESPUESTA
+    // Al usar membresiasRaw para membresias, reutilizamos los datos de la primera consulta.
+    res.status(200).json({
+      ventasProgramas,
+      ventasTransferencias,
+      membresias: membresiasRaw,
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -4127,6 +4259,7 @@ module.exports = {
   obtenerClientesVentas,
   agregarFirmaEnContrato,
   obtenerComparativoResumen,
+  obtenerComparativoResumenDashboard,
   obtenerEstadoResumen,
   obtenerVentasxTipoFactura,
   obtenerVentasDeClientesNuevos,
