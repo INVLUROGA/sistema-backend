@@ -1347,6 +1347,13 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           //key: "reporte-utilidad-pgm",
+          label: "SEGUIMIENTOS",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/seguimiento",
+        },
+        {
+          //key: "reporte-utilidad-pgm",
           label: "DETALLE RENOVACIONES",
           isTitle: false,
           icon: "uil-calender",

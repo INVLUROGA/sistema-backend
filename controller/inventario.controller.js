@@ -136,6 +136,8 @@ const registrarArticulo = async (req = request, res = response) => {
 const actualizarArticulo = async (req = request, res = response) => {
   try {
     const { id } = req.params;
+    console.log({ id, rq: req.body });
+
     const articulo = await Articulos.findByPk(id);
     if (!articulo) {
       return res.status(404).json({
@@ -162,6 +164,7 @@ const actualizarArticulo = async (req = request, res = response) => {
       id_accion: typesCRUD.PUT,
       id_usuario: req.id_user,
       id_articulo: req.body.id,
+      producto: req.body.producto.slice(0, 20),
     });
     res.status(200).json({
       msg: "Articulo actualizado correctament",
@@ -169,6 +172,8 @@ const actualizarArticulo = async (req = request, res = response) => {
       uid_image: articulo.uid_image,
     });
   } catch (error) {
+    console.log({ error });
+
     res.status(501).json({
       msg: "Error en actualizarArticulo",
     });
