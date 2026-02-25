@@ -18,6 +18,8 @@ const { db } = require("../database/sequelizeConnection");
 const dayjs = require("dayjs");
 const { Proveedor } = require("../models/Proveedor");
 const { ParametroGastos, Gastos } = require("../models/GastosFyV");
+const NodeCache = require("node-cache");
+const imgCache = new NodeCache({ stdTTL: 86400 * 30 }); // cache images for 30 days
 const { Parametros } = require("../models/Parametros");
 const { Aporte } = require("../models/Ingresos");
 const { ImagePT } = require("../models/Image");
@@ -1615,7 +1617,7 @@ const getReporteVentas = async (req = request, res = response) => {
     const fechaInicio = rango[0];
     const fechaFin = rango[1];
 
-    console.log("getReporteVentas rango =>", rango);
+    //console.log("getReporteVentas rango =>", rango);
 
     const ventas = await Venta.findAll({
       attributes: [
@@ -1673,8 +1675,8 @@ const getReporteVentas = async (req = request, res = response) => {
               ),
               "nombres_apellidos_empl",
             ],
+            "uid_avatar",
           ],
-          include: [{ model: ImagePT }],
         },
 
         // 2. Relaciones 1:N (Detalles). AQUI APLICAMOS "separate: true"
@@ -1700,8 +1702,7 @@ const getReporteVentas = async (req = request, res = response) => {
           include: [
             {
               model: ProgramaTraining,
-              attributes: ["name_pgm", "id_pgm"],
-              include: [{ model: ImagePT, attributes: ["name_image", "width", "height", "id"] }],
+              attributes: ["name_pgm", "id_pgm", "uid_avatar"],
             },
             { model: SemanasTraining, attributes: ["semanas_st", "id_st"] },
           ],
@@ -1728,8 +1729,47 @@ const getReporteVentas = async (req = request, res = response) => {
       ],
     });
 
-    // 3. Limpiamos las instancias de Sequelize antes de enviarlas (Acelera JSON.stringify)
-    const reportesLimpios = ventas.map(venta => venta.get({ plain: true }));
+    // 3. Obtener o actualizar el caché global de imágenes
+    let imageMap = imgCache.get("global_image_map");
+    if (!imageMap) {
+      const allImages = await ImagePT.findAll({
+        where: { flag: true },
+        attributes: ["name_image", "width", "height", "id", "uid_location"],
+        raw: true,
+      });
+      imageMap = {};
+      allImages.forEach((img) => {
+        if (!imageMap[img.uid_location]) {
+          imageMap[img.uid_location] = [];
+        }
+        imageMap[img.uid_location].push(img);
+      });
+      imgCache.set("global_image_map", imageMap);
+    }
+
+    // 4. Limpiamos las instancias de Sequelize y mapeamos las imágenes manualmente
+    const reportesLimpios = ventas.map((venta) => {
+      const vPlain = venta.get({ plain: true });
+
+      if (vPlain.tb_empleado && vPlain.tb_empleado.uid_avatar) {
+        vPlain.tb_empleado.tb_images = imageMap[vPlain.tb_empleado.uid_avatar] || [];
+      } else if (vPlain.tb_empleado) {
+        vPlain.tb_empleado.tb_images = [];
+      }
+
+      if (vPlain.detalle_ventaMembresium && Array.isArray(vPlain.detalle_ventaMembresium)) {
+        vPlain.detalle_ventaMembresium.forEach((det) => {
+          if (det.tb_ProgramaTraining && det.tb_ProgramaTraining.uid_avatar) {
+            const imgs = imageMap[det.tb_ProgramaTraining.uid_avatar];
+            det.tb_ProgramaTraining.tb_image = imgs && imgs.length > 0 ? imgs[0] : null;
+          } else if (det.tb_ProgramaTraining) {
+            det.tb_ProgramaTraining.tb_image = null;
+          }
+        });
+      }
+
+      return vPlain;
+    });
 
     return res.status(200).json({
       ok: true,
@@ -1741,6 +1781,202 @@ const getReporteVentas = async (req = request, res = response) => {
     return res.status(500).json({
       ok: false,
       error: `Error en el servidor, en controller de get_VENTAS, hable con el administrador: ${error}`,
+    });
+  }
+};
+const reportesCache = new NodeCache({ stdTTL: 600 }); // 10 minutes cache
+
+const getReporteVentasResumen = async (req = request, res = response) => {
+  try {
+    const rango = getArrayDate(req);
+
+    if (!rango || rango.length < 2) {
+      return res.status(400).json({
+        ok: false,
+        msg: "Faltan fechas válidas en arrayDate (debes enviar [inicio, fin])",
+      });
+    }
+
+    const fechaInicio = rango[0];
+    const fechaFin = rango[1];
+
+    const cacheKey = `reporte_ventas_resumen_598_${fechaInicio}_${fechaFin}`;
+    const cachedData = reportesCache.get(cacheKey);
+    if (cachedData) {
+      console.log(`[Cache Hit] ${cacheKey}`);
+      return res.status(200).json(cachedData);
+    }
+    console.log(`[Cache Miss] ${cacheKey} - Processing...`);
+
+    const ventas = await Venta.findAll({
+      attributes: [
+        "id",
+        "id_cli",
+        "id_empl",
+        "id_tipoFactura",
+        "fecha_venta",
+        "id_origen",
+      ],
+      where: {
+        fecha_venta: {
+          [Op.between]: [new Date(fechaInicio), new Date(fechaFin)],
+        },
+        id_empresa: 598,
+        flag: true,
+        id_tipoFactura: {
+          [Op.ne]: 701,
+        },
+      },
+      order: [["id", "DESC"]],
+      include: [
+        {
+          model: Cliente,
+          attributes: [
+            "id_cli",
+            [
+              Sequelize.fn(
+                "CONCAT",
+                Sequelize.col("nombre_cli"),
+                " ",
+                Sequelize.col("apPaterno_cli"),
+                " ",
+                Sequelize.col("apMaterno_cli"),
+              ),
+              "nombres_apellidos_cli",
+            ],
+            "tipoCli_cli",
+          ],
+        },
+        {
+          model: Empleado,
+          attributes: [
+            "id_empl",
+            "uid_avatar",
+            [
+              Sequelize.fn(
+                "CONCAT",
+                Sequelize.col("nombre_empl"),
+                " ",
+                Sequelize.col("apPaterno_empl"),
+                " ",
+                Sequelize.col("apMaterno_empl"),
+              ),
+              "nombres_apellidos_empl",
+            ],
+          ],
+        },
+        {
+          model: detalleVenta_Transferencia,
+          as: "venta_venta",
+          required: false,
+          separate: true,
+          attributes: ["id_venta", "tarifa_monto"],
+        },
+        {
+          model: detalleVenta_producto,
+          separate: true,
+          attributes: [
+            "id_venta",
+            "id_producto",
+            "cantidad",
+            "precio_unitario",
+            "tarifa_monto",
+          ],
+          include: [{ model: Producto, attributes: ["id", "id_categoria"] }],
+        },
+        {
+          model: detalleVenta_membresias,
+          separate: true,
+          attributes: [
+            "id_venta",
+            "id_pgm",
+            "id_tarifa",
+            "horario",
+            "id_st",
+            "tarifa_monto",
+          ],
+          include: [
+            {
+              model: ProgramaTraining,
+              attributes: ["name_pgm", "id_pgm"],
+            },
+            { model: SemanasTraining, attributes: ["semanas_st", "id_st"] },
+          ],
+        },
+        {
+          model: detalleVenta_citas,
+          separate: true,
+          attributes: ["id_venta", "id_servicio", "tarifa_monto"],
+          include: [{ model: Servicios, attributes: ["id", "tipo_servicio"] }],
+        },
+        {
+          model: detalleVenta_pagoVenta,
+          separate: true,
+          attributes: ["id_venta", "parcial_monto"],
+          include: [
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_forma_pago",
+            },
+          ],
+        },
+      ],
+    });
+
+    // 3. Obtener o actualizar el caché global de imágenes
+    let imageMap = imgCache.get("global_image_map");
+    if (!imageMap) {
+      const allImages = await ImagePT.findAll({
+        where: { flag: true },
+        attributes: ["name_image", "width", "height", "id", "uid_location"],
+        raw: true,
+      });
+      imageMap = {};
+      allImages.forEach((img) => {
+        if (!imageMap[img.uid_location]) {
+          imageMap[img.uid_location] = [];
+        }
+        imageMap[img.uid_location].push(img);
+      });
+      imgCache.set("global_image_map", imageMap);
+    }
+
+    const reportesLimpios = ventas.map((venta) => {
+      const vPlain = venta.get({ plain: true });
+
+      // Match the structure expected by the frontend (same as getReporteVentas)
+      if (vPlain.tb_empleado && vPlain.tb_empleado.uid_avatar) {
+        vPlain.tb_empleado.tb_images = imageMap[vPlain.tb_empleado.uid_avatar] || [];
+      } else if (vPlain.tb_empleado) {
+        vPlain.tb_empleado.tb_images = [];
+      }
+
+      return {
+        ...vPlain,
+        // Ensure these exist even if empty
+        detalle_ventaMembresia: vPlain.detalle_ventaMembresia || [],
+        detalle_ventaProductos: vPlain.detalle_ventaProductos || [],
+        detalleVenta_pagoVenta: vPlain.detalleVenta_pagoVenta || [],
+        venta_venta: vPlain.venta_venta || [],
+        tb_cliente: vPlain.tb_cliente,
+        tb_empleado: vPlain.tb_empleado,
+      };
+    });
+
+    const result = {
+      ok: true,
+      reporte: reportesLimpios,
+    };
+
+    reportesCache.set(cacheKey, result);
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.log("ERROR getReporteVentasResumen:", error);
+    return res.status(500).json({
+      ok: false,
+      error: `Error en el servidor: ${error.message}`,
     });
   }
 };
@@ -2173,6 +2409,7 @@ module.exports = {
   getReporteDeUtilidadesTotal,
   getReporteDeTotalDeVentas_ClientesVendedores,
   getReporteVentas,
+  getReporteVentasResumen,
   getReporteFormasDePago,
   obtenerReporteSociosxDistritos,
   getReporteDeMembresiasxFechaxPrograma,
