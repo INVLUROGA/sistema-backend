@@ -770,6 +770,32 @@ const seccionGET = async (req = request, res = response) => {
     if (modulo === "mod-general-ventas") {
       MENU_ITEMS = [
         {
+          key: "cantidad-socios-montos",
+          label: "Cantidad de <br/> socios y montos",
+          isTitle: true,
+        },
+        {
+          key: "socios-montos",
+          label: "Cantidad de Socios",
+          url: "/reporte/socios-montos",
+          isTitle: false,
+          icon: "uil-chart-pie-alt",
+          children: [
+            {
+              key: "r-comparativo-mensual",
+              label: "Comparativo Mensual",
+              url: "/reporte/comparativo-mensual",
+              parentKey: "socios-montos",
+            },
+            {
+              key: "r-renovaciones-mes",
+              label: "Renovaciones por mes",
+              url: "/reporte/renovaciones-por-mes",
+              parentKey: "socios-montos",
+            },
+          ],
+        },
+        {
           key: "gest-comercial",
           label: "Gestion comercial",
           isTitle: true,
@@ -789,11 +815,23 @@ const seccionGET = async (req = request, res = response) => {
           url: "/reporte/gestion-comercial",
         },
         {
-          key: "reporte-comparativo-mensual",
-          label: "Comparativo Mensual",
+          key: "asesores",
+          label: "Asesores",
+          isTitle: true,
+        },
+        {
+          key: "r-ventasAsesor",
+          label: "VENTAS POR ASESOR",
           isTitle: false,
-          icon: "uil-chart",
-          url: "/reporte/comparativo-mensual",
+          icon: "uil-chart-line",
+          url: "/reporte/ventas-asesor",
+        },
+        {
+          key: "r-comisiones",
+          label: "COMISIONES",
+          isTitle: false,
+          icon: "uil-money-bill",
+          url: "/reporte/comisiones",
         },
         {
           key: "ventas",
