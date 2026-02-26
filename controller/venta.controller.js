@@ -4675,6 +4675,7 @@ const obtenerVentasxIdCli = async (req = request, res = response) => {
   }
 };
 module.exports = {
+  getVentasxFechaVenta,
   obtenerVentasxIdCli,
   getComandas,
   postComanda,
