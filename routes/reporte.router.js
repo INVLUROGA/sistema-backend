@@ -11,6 +11,8 @@ const {
   getReporteDeTotalDeVentas_ClientesVendedores,
   getReporteDeUtilidadesTotal,
   getReporteVentas,
+  getReporteVentasResumen,
+  getReporteProductosResumen,
   getReporteFormasDePago,
   getReporteDeMembresiasxFechaxPrograma,
 } = require("../controller/reporte.controller");
@@ -29,6 +31,8 @@ const router = Router();
 //router.get("/reporte-ventas-x-cliente/:id_cli",getReporteSeguimientoClientes);
 router.get("/reporte-ventas-formas-de-pago", getReporteFormasDePago);
 router.get("/reporte-obtener-ventas", getReporteVentas);
+router.get("/reporte-obtener-ventas-resumen", getReporteVentasResumen);
+router.get("/reporte-obtener-productos-resumen/:id_empresa", getReporteProductosResumen);
 router.get("/reporte-seguimiento-membresia/:id_empresa", getReporteSeguimiento);
 router.get(
   "/reporte-seguimiento-clientes/:id_empresa",

@@ -770,6 +770,32 @@ const seccionGET = async (req = request, res = response) => {
     if (modulo === "mod-general-ventas") {
       MENU_ITEMS = [
         {
+          key: "gest-comercial",
+          label: "Gestion comercial",
+          isTitle: true,
+        },
+        {
+          key: "reg-gest-comercial",
+          label: "GESTION COMERCIAL",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-comercial",
+        },
+        {
+          key: "reporte-gest-comercial",
+          label: "REPORTE de GESTION COMERCIAL",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/reporte/gestion-comercial",
+        },
+        {
+          key: "reporte-comparativo-mensual",
+          label: "Comparativo Mensual",
+          isTitle: false,
+          icon: "uil-chart",
+          url: "/reporte/comparativo-mensual",
+        },
+        {
           key: "ventas",
           label: "Ventas",
           isTitle: true,
@@ -888,32 +914,6 @@ const seccionGET = async (req = request, res = response) => {
               parentKey: "reporte-demografico-membresia",
             },
           ],
-        },
-        {
-          key: "gest-comercial",
-          label: "Gestion comercial",
-          isTitle: true,
-        },
-        {
-          key: "reg-gest-comercial",
-          label: "GESTION COMERCIAL",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/gestion-comercial",
-        },
-        {
-          key: "reporte-gest-comercial",
-          label: "REPORTE de GESTION COMERCIAL",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/reporte/gestion-comercial",
-        },
-        {
-          key: "reporte-comparativo-mensual",
-          label: "Comparativo Mensual",
-          isTitle: false,
-          icon: "uil-chart",
-          url: "/reporte/comparativo-mensual",
         },
         {
           key: "canje",

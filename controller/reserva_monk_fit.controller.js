@@ -3,6 +3,9 @@ const { Op } = require("sequelize");
 const { db } = require("../database/sequelizeConnection");
 const ReservaMonkFit = require("../models/ReservaMonkFit");
 const { Parametros } = require("../models/Parametros");
+const NodeCache = require('node-cache');
+const reservasCache = new NodeCache({ stdTTL: 1800 }); // 30 minutes cache
+
 const normalizeToSqlDate = (v) => {
   if (!v) return null;
   let s = v instanceof Date ? null : String(v).trim();
@@ -91,7 +94,7 @@ const obtenerReservasMonkFit = async (req = request, res = response) => {
       if (toSql) where.fecha[Op.lte] = db.literal(`CONVERT(datetime, '${toSql}', 121)`);
     }
 
-    // 🔥 DIETA DE ATRIBUTOS: Solo lo que el Dashboard realmente usa
+    //  DIETA DE ATRIBUTOS: Solo lo que el Dashboard realmente usa
     const includes = [
       {
         model: require("../models/Usuarios").Cliente,
@@ -306,6 +309,64 @@ const obtenerReservasMonkeyFit = async (req = request, res = response) => {
     console.log(error);
   }
 };
+
+const obtenerReservasMonkFitResumen = async (req = request, res = response) => {
+  try {
+    const fromRaw = req.query.from || null;
+    const toRaw = req.query.to || null;
+
+    // Cache key implementation
+    const cacheKey = `resumenMF_${fromRaw || 'all'}_${toRaw || 'all'}`;
+    const cachedData = reservasCache.get(cacheKey);
+
+    if (cachedData) {
+      return res.json({
+        count: cachedData.length,
+        rows: cachedData,
+      });
+    }
+
+    const fromSql = fromRaw ? normalizeToSqlDate(fromRaw) : null;
+    let toSql = toRaw ? normalizeToSqlDate(toRaw) : null;
+    if (toSql) {
+      toSql = toSql.replace(/\d{2}:\d{2}:\d{2}\.\d{3}$/, "23:59:59.999");
+    }
+
+    const where = { flag: true };
+    if (fromSql || toSql) {
+      where.fecha = {};
+      if (fromSql) where.fecha[Op.gte] = db.literal(`CONVERT(datetime, '${fromSql}', 121)`);
+      if (toSql) where.fecha[Op.lte] = db.literal(`CONVERT(datetime, '${toSql}', 121)`);
+    }
+
+    const includes = [
+      {
+        model: Parametros,
+        as: "estado",
+        attributes: ["id_param", "label_param"],
+      },
+    ];
+
+    const result = await ReservaMonkFit.findAll({
+      where,
+      attributes: ["id", "fecha", "monto_total", "id_pgm", "id_estado_param", "flag"],
+      include: includes,
+      raw: true,
+      nest: true,
+    });
+
+    reservasCache.set(cacheKey, result, 1800);
+
+    res.json({
+      count: result.length,
+      rows: result,
+    });
+  } catch (error) {
+    console.error("LIST reservas resumen error:", error);
+    res.status(500).json({ message: "Error al obtener resumen de reservas" });
+  }
+};
+
 const obtenerReservasMonkeyFitxFecha = async (
   req = request,
   res = response,
@@ -338,4 +399,5 @@ module.exports = {
   putReservaMonkFit,
   deleteReservaMonkFit,
   obtenerReservasMonkeyFit,
+  obtenerReservasMonkFitResumen,
 };

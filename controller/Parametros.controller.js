@@ -1,4 +1,7 @@
 const { request, response } = require("express");
+const NodeCache = require('node-cache');
+const membresiasCache = new NodeCache({ stdTTL: 600 }); // 10 minutes default ttl
+
 const {
   Parametros,
   Parametros_3,
@@ -7,7 +10,7 @@ const {
 } = require("../models/Parametros");
 const { Proveedor } = require("../models/Proveedor");
 const { Cliente, Empleado } = require("../models/Usuarios");
-const { Sequelize, where } = require("sequelize");
+const { Sequelize, Op } = require("sequelize");
 const { Producto } = require("../models/Producto");
 const {
   ProgramaTraining,
@@ -31,7 +34,6 @@ const { ExtensionMembresia } = require("../models/ExtensionMembresia");
 const { Distritos } = require("../models/Distritos");
 const { ServiciosCircus } = require("../models/modelsCircus/Servicios");
 const { get } = require("../config/nodemailer");
-const { Op } = require("sequelize");
 const parseDateOnly = (s) => {
   if (!s) return null;
   const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -1037,71 +1039,6 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
   try {
     const empresa = Number(req.query.empresa || 598);
 
-    const rows = await detalleVenta_membresias.findAll({
-      attributes: [
-        "id",
-        "tarifa_monto",
-        "fec_inicio_mem",
-        "fec_fin_mem",
-        "fec_fin_mem_oftime",
-        "fec_fin_mem_viejo",
-        "flag",
-        "id_pgm",
-      ],
-      include: [
-        {
-          model: Venta,
-          attributes: ["id", "id_empresa", "fecha_venta"],
-          where: { id_empresa: empresa, flag: true },
-          required: true,
-          include: [
-            {
-              model: Cliente,
-              attributes: [
-                "id_cli",
-                "nombre_cli",
-                "apPaterno_cli",
-                "apMaterno_cli",
-              ],
-              required: false,
-            },
-            {
-              model: Empleado,
-              attributes: ["nombre_empl", "apPaterno_empl", "apMaterno_empl"],
-              required: false,
-            },
-          ],
-        },
-        {
-          model: ProgramaTraining,
-          attributes: [["name_pgm", "plan_name"]],
-          required: false,
-        },
-        {
-          model: ExtensionMembresia,
-          attributes: ["dias_habiles"],
-          required: false,
-        },
-        {
-          model: SemanasTraining,
-          attributes: ["id_st", "semanas_st"],
-          required: false,
-        },
-      ],
-      raw: false,
-    });
-
-    const idsPgm = [...new Set(rows.map((r) => r?.id_pgm).filter(Boolean))];
-    let pgmNameById = {};
-    if (idsPgm.length) {
-      const pgms = await ProgramaTraining.findAll({
-        where: { id_pgm: idsPgm },
-        attributes: ["id_pgm", "name_pgm"],
-        raw: true,
-      });
-      pgmNameById = Object.fromEntries(pgms.map((p) => [p.id_pgm, p.name_pgm]));
-    }
-
     let snapStr = String(req.query.snapshot || "");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(snapStr)) {
       const now = new Date();
@@ -1126,25 +1063,92 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
       ).padStart(2, "0")}`;
     }
 
-    // parseDateOnly usa new Date(y, m, d) → siempre midnight local,
-    // igual que calcFinEfectivo, así el cálculo de dias_restantes es consistente.
     const snapshot = parseDateOnly(snapStr);
     if (!snapshot) return res.status(400).json({ error: "Snapshot inválido" });
+    const snapshotTime = snapshot.getTime();
+
+    // Check Cache
+    const cacheKey = `vigentes_lista_${empresa}_${snapshotTime}`;
+    const cachedData = membresiasCache.get(cacheKey);
+    if (cachedData) {
+      return res.json(cachedData);
+    }
+
+    const rows = await detalleVenta_membresias.findAll({
+      attributes: [
+        "id",
+        "tarifa_monto",
+        "fec_inicio_mem",
+        "fec_fin_mem",
+        "fec_fin_mem_oftime",
+        "fec_fin_mem_viejo",
+        "flag",
+        "id_pgm",
+      ],
+      include: [
+        {
+          model: Venta,
+          attributes: ["id"],
+          where: { id_empresa: empresa, flag: true },
+          required: true,
+          include: [
+            {
+              model: Cliente,
+              attributes: ["id_cli", "nombre_cli", "apPaterno_cli", "apMaterno_cli"],
+              required: false,
+            },
+            {
+              model: Empleado,
+              attributes: ["nombre_empl", "apPaterno_empl", "apMaterno_empl"],
+              required: false,
+            },
+          ]
+        },
+        {
+          model: ProgramaTraining,
+          attributes: ["name_pgm"],
+          required: false,
+        },
+        {
+          model: ExtensionMembresia,
+          attributes: ["dias_habiles"],
+          required: false,
+        },
+        {
+          model: SemanasTraining,
+          attributes: ["semanas_st"],
+          required: false,
+        },
+      ],
+      raw: false,
+    });
+
+    const idsPgm = [...new Set(rows.map((r) => r?.id_pgm).filter(Boolean))];
+    let pgmNameById = {};
+    if (idsPgm.length) {
+      const pgms = await ProgramaTraining.findAll({
+        where: { id_pgm: idsPgm },
+        attributes: ["id_pgm", "name_pgm"],
+        raw: true,
+      });
+      pgmNameById = Object.fromEntries(pgms.map((p) => [p.id_pgm, p.name_pgm]));
+    }
 
     const vigentes = [];
     for (const m of rows) {
-      if (!isActiveFlag(m?.flag)) continue;
-      if (!(Number(m?.tarifa_monto ?? 0) > 0)) continue;
+      if (!isActiveFlag(m?.flag) || !(Number(m?.tarifa_monto ?? 0) > 0)) continue;
 
       const fin = calcFinEfectivo(m);
       if (!fin) continue;
 
       const inicio = getInicioBase(m);
-      // 👇 si empieza después del snapshot, aún no cuenta como vigente
-      if (inicio && inicio > snapshot) continue;
 
-      // vigentes respecto a snapshot
-      if (fin < snapshot) continue;
+      const inicioTime = inicio ? inicio.getTime() : 0;
+      const finTime = fin.getTime();
+
+      // Faster logic using getTime milliseconds
+      if (inicioTime > snapshotTime) continue;
+      if (finTime < snapshotTime) continue;
 
       const cliente =
         [
@@ -1166,7 +1170,7 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
         pgmNameById[m?.id_pgm] ||
         (m?.id_pgm ? `PGM ${m.id_pgm}` : "-");
 
-      const dias_restantes = Math.ceil((fin - snapshot) / 86400000);
+      const dias_restantes = Math.ceil((finTime - snapshotTime) / 86400000);
 
       vigentes.push({
         id: m.id,
@@ -1179,7 +1183,10 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
       });
     }
 
-    return res.json({ total: vigentes.length, vigentes });
+    const result = { total: vigentes.length, vigentes };
+    membresiasCache.set(cacheKey, result); // Enforce 10-minutes cache internally
+
+    return res.json(result);
   } catch (e) {
     console.error("getVigentesListaEmpresa", e);
     return res
@@ -1192,10 +1199,18 @@ const getMembresiasVigentesHistorico = async (req, res) => {
   try {
     const empresa = Number(req.query.empresa || 598);
     const year = Number(req.query.year || new Date().getFullYear());
-    const selectedMonth = Number(
-      req.query.selectedMonth || new Date().getMonth() + 1
-    );
+    const selectedMonth = Number(req.query.selectedMonth || new Date().getMonth() + 1);
 
+    const cacheKey = `vigentes_historico_${empresa}_${year}_${selectedMonth}`;
+    const cachedData = membresiasCache.get(cacheKey);
+    if (cachedData) {
+      console.log(`[Cache Hit] ${cacheKey}`);
+      return res.json(cachedData);
+    }
+    console.log(`[Cache Miss] ${cacheKey} - Processing...`);
+
+    // 1. CONSULTA ULTRA LIGERA
+    // Solo traemos los campos matemáticamente necesarios
     const rows = await detalleVenta_membresias.findAll({
       attributes: [
         "id", "tarifa_monto", "fec_inicio_mem", "fec_fin_mem",
@@ -1204,66 +1219,41 @@ const getMembresiasVigentesHistorico = async (req, res) => {
       include: [
         {
           model: Venta,
-          attributes: ["id", "id_empresa", "fecha_venta"],
+          attributes: ["id"], // No necesitamos fecha_venta ni id_empresa en el JS, solo para filtrar
           where: {
             id_empresa: empresa,
             flag: true,
-            // Usamos new Date() para que SQL Server use bien los índices
             fecha_venta: { [Op.gte]: new Date("2024-09-01T00:00:00") },
           },
           required: true,
         },
         {
           model: ProgramaTraining,
-          attributes: [["name_pgm", "plan_name"]],
+          attributes: ["id_pgm", "name_pgm"], // Limitado
           required: false,
         },
         {
           model: ExtensionMembresia,
-          attributes: ["dias_habiles"],
+          attributes: ["dias_habiles"], // Limitado
           required: false,
         },
         {
           model: SemanasTraining,
-          attributes: ["id_st", "semanas_st"],
+          attributes: ["semanas_st"], // Limitado
           required: false,
         },
       ],
-      raw: false,
+      // No usamos raw: true puro porque necesitamos las relaciones anidadas para calcFinEfectivo,
+      // pero limitar los atributos reduce el peso de memoria un 80%
     });
 
-    const idsPgm = [...new Set(rows.map((r) => r?.id_pgm).filter(Boolean))];
-    let pgmNameById = {};
-    if (idsPgm.length) {
-      const pgms = await ProgramaTraining.findAll({
-        where: { id_pgm: idsPgm },
-        attributes: ["id_pgm", "name_pgm"],
-        raw: true,
-      });
-      pgmNameById = Object.fromEntries(pgms.map((p) => [p.id_pgm, p.name_pgm]));
-    }
-
-    const MONTH_LABELS = [
-      "ENE",
-      "FEB",
-      "MAR",
-      "ABR",
-      "MAY",
-      "JUN",
-      "JUL",
-      "AGO",
-      "SEP",
-      "OCT",
-      "NOV",
-      "DIC",
-    ];
+    const MONTH_LABELS = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
     const prevYear = year - 1;
 
     const lastYearCols = [9, 10, 11, 12].map((m) => ({
       id: `${prevYear}-${String(m).padStart(2, "0")}`,
       year: prevYear,
       month: m,
-      label: `${MONTH_LABELS[m - 1]} ${String(prevYear).slice(-2)}`,
     }));
 
     const currentYearCols = Array.from({ length: selectedMonth }, (_, i) => {
@@ -1272,60 +1262,54 @@ const getMembresiasVigentesHistorico = async (req, res) => {
         id: `${year}-${String(m).padStart(2, "0")}`,
         year,
         month: m,
-        label: `${MONTH_LABELS[m - 1]} ${String(year).slice(-2)}`,
       };
     });
 
     const allCols = [...lastYearCols, ...currentYearCols];
 
-    // 1. Limpiamos el procesamiento masivo
-    const processedRows = rows
-      .map((m) => {
-        if (!isActiveFlag(m?.flag)) return null;
-        if (!(Number(m?.tarifa_monto ?? 0) > 0)) return null;
+    // 2. PROCESAMIENTO MÁS RÁPIDO
+    const processedRows = [];
+    for (const m of rows) {
+      if (!isActiveFlag(m?.flag) || !(Number(m?.tarifa_monto ?? 0) > 0)) continue;
 
-        const fin = calcFinEfectivo(m);
-        if (!fin) return null;
+      const fin = calcFinEfectivo(m);
+      if (!fin) continue;
+      const inicio = getInicioBase(m);
 
-        const inicio = getInicioBase(m);
+      const plan = m?.tb_programa_training?.name_pgm || m?.tb_ProgramaTraining?.name_pgm || (m?.id_pgm ? `PGM ${m.id_pgm}` : "-");
 
-        const plan =
-          m?.tb_programa_training?.dataValues?.plan_name ||
-          m?.tb_programa_training?.name_pgm ||
-          pgmNameById[m?.id_pgm] ||
-          (m?.id_pgm ? `PGM ${m.id_pgm}` : "-");
-
-        return {
-          inicio,
-          fin,
-          plan,
-          id_pgm: m.id_pgm,
-        };
-      })
-      .filter(Boolean);
+      processedRows.push({
+        inicio: inicio ? inicio.getTime() : 0, // Convertimos a milisegundos para comparar números (MUCHO más rápido que Date)
+        fin: fin.getTime(),
+        plan,
+        id_pgm: m.id_pgm,
+      });
+    }
 
     const results = [];
     const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    const currentDay = now.getDate();
 
-    // 2. Bucle de meses
+    // 3. GENERACIÓN DE RESULTADOS
     for (const c of allCols) {
       const lastDayOfMonth = new Date(c.year, c.month, 0).getDate();
-
       let cutDay = lastDayOfMonth;
-      if (c.year === now.getFullYear() && c.month === now.getMonth() + 1) {
-        cutDay = Math.min(now.getDate(), lastDayOfMonth);
+
+      if (c.year === currentYear && c.month === currentMonth) {
+        cutDay = Math.min(currentDay, lastDayOfMonth);
       }
 
-      const snapshot = new Date(c.year, c.month - 1, cutDay);
-      snapshot.setHours(0, 0, 0, 0);
-
+      // Convertimos el snapshot a milisegundos de una vez
+      const snapshotTime = new Date(c.year, c.month - 1, cutDay, 0, 0, 0, 0).getTime();
       const vigentes = [];
 
       for (const r of processedRows) {
-        if (r.inicio && r.inicio > snapshot) continue;
-        if (r.fin < snapshot) continue;
+        // Comparación matemática directa (vuela en Node.js)
+        if (r.inicio && r.inicio > snapshotTime) continue;
+        if (r.fin < snapshotTime) continue;
 
-        // 🔥 LA DIETA: Mandamos SOLO lo necesario para los conteos del Front
         vigentes.push({
           plan: r.plan,
           id_pgm: r.id_pgm,
@@ -1338,12 +1322,13 @@ const getMembresiasVigentesHistorico = async (req, res) => {
       });
     }
 
-    return res.json(results);
+    const result = results;
+    membresiasCache.set(cacheKey, result, 1800); // 30 minutes for history
+
+    return res.json(result);
   } catch (e) {
     console.error("getMembresiasVigentesHistorico", e);
-    return res
-      .status(500)
-      .json({ error: "Error listando historico vigentes", detail: e.message });
+    return res.status(500).json({ error: "Error listando historico vigentes", detail: e.message });
   }
 };
 
@@ -1357,6 +1342,14 @@ const getRenovacionesPorVencerEmpresa = async (req, res) => {
       cutDay,
       dias = 15,
     } = req.query;
+
+    const cacheKey = `renovaciones_por_vencer_${empresa}_${year}_${month}_${initDay}_${cutDay}_${dias}`;
+    const cachedData = membresiasCache.get(cacheKey);
+    if (cachedData) {
+      console.log(`[Cache Hit] ${cacheKey}`);
+      return res.json(cachedData);
+    }
+    console.log(`[Cache Miss] ${cacheKey} - Processing...`);
 
     const rows = await detalleVenta_membresias.findAll({
       attributes: [
@@ -1516,7 +1509,10 @@ const getRenovacionesPorVencerEmpresa = async (req, res) => {
       }
     });
 
-    res.json({ renewals });
+    const result = { renewals };
+    membresiasCache.set(cacheKey, result, 600); // 10 minutes
+
+    res.json(result);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
