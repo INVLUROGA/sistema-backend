@@ -33,6 +33,7 @@ const isSameOrBefore = require("dayjs/plugin/isSameOrBefore");
 const { Cita, eventoServicio } = require("../models/Cita");
 const obtenerCitasxHorasFinales = require("./EventosCron/obtenerCitasxHorasFinales");
 const { AlertasUsuario } = require("../models/Auditoria");
+const { getBlacklist } = require("../helpers/blacklistManager");
 const { FunctionsHelpers } = require("../helpers/FunctionsHelpers");
 const { messageWSP } = require("../types/types");
 
@@ -150,6 +151,7 @@ const alertasUsuario = async () => {
     const minutoActual = ahora.minute();
 
     const processedKeys = new Set();
+    const blacklist = getBlacklist(); // cargamos una sola vez por ejecución
 
     for (const alerta of alertasJSON) {
       const fechaAlerta = dayjs(alerta.fecha).tz("America/Lima");
@@ -174,12 +176,36 @@ const alertasUsuario = async () => {
 
       if (coincide) {
         const mensajeLimpio = alerta.mensaje.trim().replace(/\s+/g, ' ');
+
+        // 🚫 BLACKLIST: si el mensaje está bloqueado, lo saltamos sin enviar
+        if (blacklist.includes(mensajeLimpio)) {
+          console.log(`[BLACKLIST] Mensaje bloqueado, no se envía: id=${alerta.id}`);
+          continue;
+        }
+
         const uniqueKey = `${alerta.id_user}|${alerta.tipo_alerta}|${mensajeLimpio}`;
 
         if (processedKeys.has(uniqueKey)) continue;
         processedKeys.add(uniqueKey);
 
         if (alerta.tipo_alerta === 1425) {
+          // 🔒 LOCK ATÓMICO: marcar como "en proceso" (id_estado=2) ANTES de enviar.
+          // Si otra instancia ya lo tomó, el UPDATE afecta 0 filas → saltamos.
+          const [filasAfectadas] = await AlertasUsuario.update(
+            { id_estado: 2 },
+            {
+              where: {
+                id: alerta.id,
+                id_estado: 1, // Solo lo toma si sigue en estado 1
+              },
+            }
+          );
+
+          if (filasAfectadas === 0) {
+            console.log(`[DUPLICADO EVITADO 1425] Otra instancia ya procesó la alerta id=${alerta.id}`);
+            continue;
+          }
+
           const buttons = [
             { id: `btn_si_${alerta.id}`, label: "SI" },
             { id: "btn_no", label: "NO" },
@@ -189,6 +215,13 @@ const alertasUsuario = async () => {
             alerta.auth_user.telefono_user,
             `${alerta.mensaje}\n\n¿Ya realizaste el pago?\nResponde *SI* para confirmar y detener las alertas de este mes.`,
             buttons
+          );
+          console.log(`[1425] Mensaje enviado: ${alerta.mensaje}`);
+
+          // Marcar como enviada (id_estado=0) para no reenviar en siguientes ejecuciones del día
+          await AlertasUsuario.update(
+            { id_estado: 0 },
+            { where: { id: alerta.id } }
           );
         } else {
 
