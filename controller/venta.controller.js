@@ -751,8 +751,7 @@ const get_VENTAS = async (req = request, res = response) => {
             "ubigeo_distrito_cli",
             "ubigeo_distrito_trabajo",
             "numDoc_cli",
-            "tel_cli"
-
+            "tel_cli",
           ],
           include: [
             {
@@ -861,7 +860,7 @@ const getVentasDashboard = async (req = request, res = response) => {
   const { fechaInicio, fechaFin } = req.query;
 
   try {
-    const cacheKey = `ventasDash_${id_empresa}_${fechaInicio || 'all'}_${fechaFin || 'all'}`;
+    const cacheKey = `ventasDash_${id_empresa}_${fechaInicio || "all"}_${fechaFin || "all"}`;
     const cachedData = ventasGeneralesCache.get(cacheKey);
 
     if (cachedData) {
@@ -995,7 +994,7 @@ const getVentasDashboard = async (req = request, res = response) => {
       ],
     });
 
-    const ventasMapeadas = ventas.map(v => v.get({ plain: true }));
+    const ventasMapeadas = ventas.map((v) => v.get({ plain: true }));
 
     const responsePayload = {
       ok: true,
@@ -1456,166 +1455,161 @@ const getVentasxFecha = async (req = request, res = response) => {
     // 0. Revisar si solo necesitamos productos (optimización para reporte histórico)
     const { mode } = req.query; // 'products_only'
     const isProductsOnly = mode === "products_only";
-
-    // 1. Query principal: Venta + Cliente + Empleado (raw para velocidad)
-    // Si es products_only, NO hacemos join con Cliente ni Empleado
-  console.log({
-    fechas: [new Date(fechaInicio), new Date(fechaFin), fechaInicio, fechaFin],
-  });
-
-  try {
-    const ventas = await Venta.findAll({
-      attributes: [
-        "id",
-        "id_cli",
-        "id_empl",
-        "id_tipoFactura",
-        "id_origen",
-        "numero_transac",
-        "fecha_venta",
-        "id_empresa",
-      ],
-      where: {
-        fecha_venta: {
-          [Op.between]: [fechaInicio, fechaFin],
+    try {
+      const ventas = await Venta.findAll({
+        attributes: [
+          "id",
+          "id_cli",
+          "id_empl",
+          "id_tipoFactura",
+          "id_origen",
+          "numero_transac",
+          "fecha_venta",
+          "id_empresa",
+        ],
+        where: {
+          fecha_venta: {
+            [Op.between]: [fechaInicio, fechaFin],
+          },
+          flag: true,
+          id_empresa: id_empresa,
+          id_tipoFactura: { [Op.in]: [699, 700] },
         },
-        flag: true,
-        id_empresa: id_empresa,
-        id_tipoFactura: { [Op.in]: [699, 700] },
-      },
-      order: [["id", "DESC"]],
-      include: [
-        {
-          model: Cliente,
-          attributes: [
-            [
-              Sequelize.fn(
-                "CONCAT",
-                Sequelize.col("nombre_cli"),
-                " ",
-                Sequelize.col("apPaterno_cli"),
-                " ",
-                Sequelize.col("apMaterno_cli"),
-              ),
-              "nombres_apellidos_cli",
+        order: [["id", "DESC"]],
+        include: [
+          {
+            model: Cliente,
+            attributes: [
+              [
+                Sequelize.fn(
+                  "CONCAT",
+                  Sequelize.col("nombre_cli"),
+                  " ",
+                  Sequelize.col("apPaterno_cli"),
+                  " ",
+                  Sequelize.col("apMaterno_cli"),
+                ),
+                "nombres_apellidos_cli",
+              ],
             ],
-          ],
-        },
-        {
-          model: Empleado,
-          attributes: [
-            [
-              Sequelize.fn(
-                "CONCAT",
-                Sequelize.col("nombre_empl"),
-                " ",
-                Sequelize.col("apPaterno_empl"),
-                " ",
-                Sequelize.col("apMaterno_empl"),
-              ),
-              "nombres_apellidos_empl",
+          },
+          {
+            model: Empleado,
+            attributes: [
+              [
+                Sequelize.fn(
+                  "CONCAT",
+                  Sequelize.col("nombre_empl"),
+                  " ",
+                  Sequelize.col("apPaterno_empl"),
+                  " ",
+                  Sequelize.col("apMaterno_empl"),
+                ),
+                "nombres_apellidos_empl",
+              ],
             ],
-          ],
-        },
-        {
-          model: detalleVenta_producto,
-          attributes: [
-            "id_venta",
-            "id_producto",
-            "cantidad",
-            "precio_unitario",
-            "tarifa_monto",
-          ],
-          include: [
-            {
-              model: Producto,
-              attributes: ["id", "id_categoria", "nombre_producto"],
-            },
-          ],
-        },
-        {
-          model: detalleVenta_membresias,
-          attributes: [
-            "id_venta",
-            "id_pgm",
-            "id_tarifa",
-            "horario",
-            "id_st",
-            "tarifa_monto",
-          ],
-          include: [
-            {
-              model: ProgramaTraining,
-              attributes: ["name_pgm"],
-            },
-            {
-              model: SemanasTraining,
-              attributes: ["semanas_st"],
-            },
-          ],
-        },
-        {
-          model: detalleVenta_citas,
-          attributes: ["id_venta", "id_servicio", "tarifa_monto"],
-          include: [
-            {
-              model: Servicios,
-              attributes: ["id", "nombre_servicio", "tipo_servicio"],
-            },
-          ],
-        },
-        {
-          model: detalleVenta_pagoVenta,
-          attributes: ["id_venta", "parcial_monto"],
-          include: [
-            {
-              model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_banco",
-            },
-            {
-              model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_forma_pago",
-            },
-            {
-              model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_tipo_tarjeta",
-            },
-            {
-              model: Parametros,
-              attributes: ["id_param", "label_param"],
-              as: "parametro_tarjeta",
-            },
-          ],
-        },
-        // {
-        //   model: detalleventa_servicios,
-        //   attributes: ["cantidad", "tarifa_monto"],
-        //   include: [
-        //     {
-        //       model: ServiciosCircus,
-        //       include: [
-        //         {
-        //           model: Parametros,
-        //         },
-        //       ],
-        //     },
-        //   ],
-        // },
-      ],
-    });
-    res.status(200).json({
-      ok: true,
-      ventas,
-    });
+          },
+          {
+            model: detalleVenta_producto,
+            attributes: [
+              "id_venta",
+              "id_producto",
+              "cantidad",
+              "precio_unitario",
+              "tarifa_monto",
+            ],
+            include: [
+              {
+                model: Producto,
+                attributes: ["id", "id_categoria", "nombre_producto"],
+              },
+            ],
+          },
+          {
+            model: detalleVenta_membresias,
+            attributes: [
+              "id_venta",
+              "id_pgm",
+              "id_tarifa",
+              "horario",
+              "id_st",
+              "tarifa_monto",
+            ],
+            include: [
+              {
+                model: ProgramaTraining,
+                attributes: ["name_pgm"],
+              },
+              {
+                model: SemanasTraining,
+                attributes: ["semanas_st"],
+              },
+            ],
+          },
+          {
+            model: detalleVenta_citas,
+            attributes: ["id_venta", "id_servicio", "tarifa_monto"],
+            include: [
+              {
+                model: Servicios,
+                attributes: ["id", "nombre_servicio", "tipo_servicio"],
+              },
+            ],
+          },
+          {
+            model: detalleVenta_pagoVenta,
+            attributes: ["id_venta", "parcial_monto"],
+            include: [
+              {
+                model: Parametros,
+                attributes: ["id_param", "label_param"],
+                as: "parametro_banco",
+              },
+              {
+                model: Parametros,
+                attributes: ["id_param", "label_param"],
+                as: "parametro_forma_pago",
+              },
+              {
+                model: Parametros,
+                attributes: ["id_param", "label_param"],
+                as: "parametro_tipo_tarjeta",
+              },
+              {
+                model: Parametros,
+                attributes: ["id_param", "label_param"],
+                as: "parametro_tarjeta",
+              },
+            ],
+          },
+          // {
+          //   model: detalleventa_servicios,
+          //   attributes: ["cantidad", "tarifa_monto"],
+          //   include: [
+          //     {
+          //       model: ServiciosCircus,
+          //       include: [
+          //         {
+          //           model: Parametros,
+          //         },
+          //       ],
+          //     },
+          //   ],
+          // },
+        ],
+      });
+      res.status(200).json({
+        ok: true,
+        ventas,
+      });
+    } catch (error) {
+      console.log("errorrrr: ", error);
+      res.status(500).json({
+        error: `Error en el servidor, en controller de get_VENTASxFECHA, hable con el administrador: ${error}`,
+      });
+    }
   } catch (error) {
-    console.log("errorrrr: ", error);
-
-    res.status(500).json({
-      error: `Error en el servidor, en controller de get_VENTASxFECHA, hable con el administrador: ${error}`,
-    });
+    console.log(error);
   }
 };
 const getVentasxFechaVenta = async (req = request, res = response) => {
@@ -2614,11 +2608,19 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
   }
 };
 
-const obtenerComparativoResumenDashboard = async (req = request, res = response) => {
-  const dateParams = req.query.arrayDate || req.query['arrayDate[]'];
+const obtenerComparativoResumenDashboard = async (
+  req = request,
+  res = response,
+) => {
+  const dateParams = req.query.arrayDate || req.query["arrayDate[]"];
   // console.log("FECHAS RECIBIDAS (backend - Dashboard):", dateParams);
 
-  if (!dateParams || dateParams.length < 2) return res.json({ ventasProgramas: [], ventasTransferencias: [], membresias: [] });
+  if (!dateParams || dateParams.length < 2)
+    return res.json({
+      ventasProgramas: [],
+      ventasTransferencias: [],
+      membresias: [],
+    });
 
   const fechaInicio = new Date(dateParams[0]);
   const fechaFin = new Date(dateParams[1]);
@@ -2636,14 +2638,27 @@ const obtenerComparativoResumenDashboard = async (req = request, res = response)
     // 1. OBTENEMOS LAS MEMBRESÍAS UNA SOLA VEZ (MÁS RÁPIDO)
     const membresiasRaw = await detalleVenta_membresias.findAll({
       attributes: [
-        "id", "id_venta", "horario", "tarifa_monto", "id_tarifa",
-        "fec_inicio_mem", "fec_fin_mem", "id_pgm"
+        "id",
+        "id_venta",
+        "horario",
+        "tarifa_monto",
+        "id_tarifa",
+        "fec_inicio_mem",
+        "fec_fin_mem",
+        "id_pgm",
       ],
       order: [["id", "DESC"]],
       include: [
         {
           model: Venta,
-          attributes: ["id_tipoFactura", "fecha_venta", "id_cli", "id", "id_origen", "observacion"],
+          attributes: [
+            "id_tipoFactura",
+            "fecha_venta",
+            "id_cli",
+            "id",
+            "id_origen",
+            "observacion",
+          ],
           where: {
             id_empresa: 598, // Agregado el filtro de empresa aquí para consistencia
             fecha_venta: { [Op.between]: [fechaInicio, fechaFin] },
@@ -2655,13 +2670,22 @@ const obtenerComparativoResumenDashboard = async (req = request, res = response)
           model: ProgramaTraining,
           attributes: ["id_pgm", "name_pgm"],
           where: { flag: true, estado_pgm: true },
-          include: [{ model: ImagePT, attributes: ["name_image", "height", "width"] }],
+          include: [
+            { model: ImagePT, attributes: ["name_image", "height", "width"] },
+          ],
         },
         {
           model: TarifaTraining,
           as: "tarifa_venta",
-          attributes: ["nombreTarifa_tt", "descripcionTarifa_tt", "tarifaCash_tt", "fecha_inicio", "fecha_fin", "id_tipo_promocion"],
-          required: false
+          attributes: [
+            "nombreTarifa_tt",
+            "descripcionTarifa_tt",
+            "tarifaCash_tt",
+            "fecha_inicio",
+            "fecha_fin",
+            "id_tipo_promocion",
+          ],
+          required: false,
         },
         {
           model: SemanasTraining,
@@ -2670,7 +2694,9 @@ const obtenerComparativoResumenDashboard = async (req = request, res = response)
       ],
     });
 
-    const membresiasSerialized = membresiasRaw.map(mem => mem.get({ plain: true }));
+    const membresiasSerialized = membresiasRaw.map((mem) =>
+      mem.get({ plain: true }),
+    );
 
     // 2. AGRUPAMOS EN MEMORIA (Reemplaza a la primera consulta original)
     const programasMap = new Map();
@@ -2747,7 +2773,9 @@ const obtenerComparativoResumenDashboard = async (req = request, res = response)
       ],
     });
 
-    const ventasTransferenciasSerialized = ventasTransferencias.map(v => v.get({ plain: true }));
+    const ventasTransferenciasSerialized = ventasTransferencias.map((v) =>
+      v.get({ plain: true }),
+    );
 
     // 4. RESPUESTA
     // Al usar membresiasRaw para membresias, reutilizamos los datos de la primera consulta.
@@ -2760,7 +2788,6 @@ const obtenerComparativoResumenDashboard = async (req = request, res = response)
     comparativoDashboardCache.set(cacheKey, responsePayload);
 
     res.status(200).json(responsePayload);
-
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: error.message });
@@ -2776,7 +2803,7 @@ const getVencimientosPorMes = async (req = request, res = response) => {
     const empresaID = Number(id_empresa) || 598;
     const targetYear = Number(year);
 
-    const cacheKey = `vencimientos_${empresaID}_${targetYear}_${id_st || 'all'}`;
+    const cacheKey = `vencimientos_${empresaID}_${targetYear}_${id_st || "all"}`;
     const cachedData = vencimientosResumenCache.get(cacheKey);
 
     if (cachedData) {
@@ -2786,7 +2813,6 @@ const getVencimientosPorMes = async (req = request, res = response) => {
     console.log(`[Cache Miss] Vencimientos: ${cacheKey}`);
 
     const startWindow = new Date(`${targetYear - 2}-01-01`);
-
 
     const [renovacionesDB, membresiasDBRaw] = await Promise.all([
       detalleVenta_membresias.findAll({
@@ -2844,7 +2870,7 @@ const getVencimientosPorMes = async (req = request, res = response) => {
 
     // PREVENIR CRASHEO DEL CACHÉ: Serializamos el array de instancias de Sequelize a JSON puro
     // (Node-cache falla intentando clonar objetos de conexión TCP dentro del modelo de Sequelize)
-    const membresiasDB = membresiasDBRaw.map(mem => mem.get({ plain: true }));
+    const membresiasDB = membresiasDBRaw.map((mem) => mem.get({ plain: true }));
 
     const mapRenovaciones = {};
     renovacionesDB.forEach((detalle) => {
@@ -2975,11 +3001,15 @@ const getVencimientosPorMes = async (req = request, res = response) => {
       };
     });
 
-    const responsePayload = { ok: true, year: targetYear, cartera_inicial: carteraInicial, data: dataFinal };
+    const responsePayload = {
+      ok: true,
+      year: targetYear,
+      cartera_inicial: carteraInicial,
+      data: dataFinal,
+    };
     vencimientosResumenCache.set(cacheKey, responsePayload);
 
     res.status(200).json(responsePayload);
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ ok: false, msg: "Error interno" });

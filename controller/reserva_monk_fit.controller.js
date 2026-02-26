@@ -3,7 +3,7 @@ const { Op } = require("sequelize");
 const { db } = require("../database/sequelizeConnection");
 const ReservaMonkFit = require("../models/ReservaMonkFit");
 const { Parametros } = require("../models/Parametros");
-const NodeCache = require('node-cache');
+const NodeCache = require("node-cache");
 const reservasCache = new NodeCache({ stdTTL: 1800 }); // 30 minutes cache
 
 const normalizeToSqlDate = (v) => {
@@ -53,7 +53,7 @@ const validarEstadoCita = async (id_param) => {
 };
 
 // 🔥 1. Mueve el require de Cliente al inicio del archivo (fuera de la función)
-// const { Cliente } = require("../models/Usuarios"); 
+// const { Cliente } = require("../models/Usuarios");
 
 const obtenerReservasMonkFit = async (req = request, res = response) => {
   try {
@@ -82,16 +82,20 @@ const obtenerReservasMonkFit = async (req = request, res = response) => {
         const searchLike = `%${search}%`;
         where[Op.or] = [
           { codigo_reserva: { [Op.like]: searchLike } },
-          { '$cliente.nombre_cli$': { [Op.like]: searchLike } },
-          { '$cliente.apPaterno_cli$': { [Op.like]: searchLike } }
+          { "$cliente.nombre_cli$": { [Op.like]: searchLike } },
+          { "$cliente.apPaterno_cli$": { [Op.like]: searchLike } },
         ];
       }
     }
 
     if (fromSql || toSql) {
       where.fecha = {};
-      if (fromSql) where.fecha[Op.gte] = db.literal(`CONVERT(datetime, '${fromSql}', 121)`);
-      if (toSql) where.fecha[Op.lte] = db.literal(`CONVERT(datetime, '${toSql}', 121)`);
+      if (fromSql)
+        where.fecha[Op.gte] = db.literal(
+          `CONVERT(datetime, '${fromSql}', 121)`,
+        );
+      if (toSql)
+        where.fecha[Op.lte] = db.literal(`CONVERT(datetime, '${toSql}', 121)`);
     }
 
     //  DIETA DE ATRIBUTOS: Solo lo que el Dashboard realmente usa
@@ -122,15 +126,14 @@ const obtenerReservasMonkFit = async (req = request, res = response) => {
     const totalMonto = await ReservaMonkFit.sum("monto_total", {
       where: { ...where },
       // Solo incluimos si la búsqueda depende del cliente
-      include: search ? includes.map(i => ({ ...i, attributes: [] })) : []
+      include: search ? includes.map((i) => ({ ...i, attributes: [] })) : [],
     });
 
     res.json({
       count: result.count,
       rows: result.rows,
-      totalMonto: totalMonto || 0
+      totalMonto: totalMonto || 0,
     });
-
   } catch (error) {
     console.error("LIST reservas error:", error);
     res.status(500).json({ message: "Error al obtener reservas" });
@@ -316,7 +319,7 @@ const obtenerReservasMonkFitResumen = async (req = request, res = response) => {
     const toRaw = req.query.to || null;
 
     // Cache key implementation
-    const cacheKey = `resumenMF_${fromRaw || 'all'}_${toRaw || 'all'}`;
+    const cacheKey = `resumenMF_${fromRaw || "all"}_${toRaw || "all"}`;
     const cachedData = reservasCache.get(cacheKey);
 
     if (cachedData) {
@@ -335,8 +338,12 @@ const obtenerReservasMonkFitResumen = async (req = request, res = response) => {
     const where = { flag: true };
     if (fromSql || toSql) {
       where.fecha = {};
-      if (fromSql) where.fecha[Op.gte] = db.literal(`CONVERT(datetime, '${fromSql}', 121)`);
-      if (toSql) where.fecha[Op.lte] = db.literal(`CONVERT(datetime, '${toSql}', 121)`);
+      if (fromSql)
+        where.fecha[Op.gte] = db.literal(
+          `CONVERT(datetime, '${fromSql}', 121)`,
+        );
+      if (toSql)
+        where.fecha[Op.lte] = db.literal(`CONVERT(datetime, '${toSql}', 121)`);
     }
 
     const includes = [
@@ -349,7 +356,14 @@ const obtenerReservasMonkFitResumen = async (req = request, res = response) => {
 
     const result = await ReservaMonkFit.findAll({
       where,
-      attributes: ["id", "fecha", "monto_total", "id_pgm", "id_estado_param", "flag"],
+      attributes: [
+        "id",
+        "fecha",
+        "monto_total",
+        "id_pgm",
+        "id_estado_param",
+        "flag",
+      ],
       include: includes,
       raw: true,
       nest: true,

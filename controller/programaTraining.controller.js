@@ -222,7 +222,7 @@ const getHorariosTBPrograma = async (req = request, res = response) => {
     });
   }
 };
-const getHorariosProgramasPTxpgm = async (req = request, res = response) => { };
+const getHorariosProgramasPTxpgm = async (req = request, res = response) => {};
 const putHorarioProgramasPT = async (req = request, res = response) => {
   const { id_hr } = req.params;
   try {
@@ -377,7 +377,7 @@ const getTarifasTB = async () => {
 const postSesiones = async (req = request, res = response) => {
   try {
     const membresia = await ultimaMembresiaxCli(
-      Number(req.body.detalle_cli_modelo.id_cli)
+      Number(req.body.detalle_cli_modelo.id_cli),
     );
 
     if (membresia === null) {
@@ -386,7 +386,7 @@ const postSesiones = async (req = request, res = response) => {
       });
     }
     const detalle_sesion = await detalle_sesionxMembresia(
-      membresia["detalle_ventaMembresia.id"]
+      membresia["detalle_ventaMembresia.id"],
     );
 
     const { sesiones, id_pgm } = req.body.dataVenta.detalle_traspaso[0];
