@@ -7,12 +7,14 @@ const {
   deleteReservaMonkFit,
   obtenerReservasMonkeyFit,
   obtenerReservasMonkeyFitxFecha,
+  obtenerReservasMonkFitResumen,
 } = require("../controller/reserva_monk_fit.controller.js");
 
 const router = Router();
 // /reserva_monk_fit
 // === Endpoints ===
 router.get("/", obtenerReservasMonkFit);
+router.get("/resumen", obtenerReservasMonkFitResumen);
 router.get("/estados", listarEstadosCita);
 router.post("/", postReservaMonkFit);
 router.put("/:id", putReservaMonkFit);

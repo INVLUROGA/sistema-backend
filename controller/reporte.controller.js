@@ -1786,6 +1786,75 @@ const getReporteVentas = async (req = request, res = response) => {
 };
 const reportesCache = new NodeCache({ stdTTL: 600 }); // 10 minutes cache
 
+const getReporteProductosResumen = async (req = request, res = response) => {
+  const { arrayDate } = req.query;
+  const { id_empresa } = req.params;
+
+  if (!arrayDate || arrayDate.length !== 2) {
+    return res.status(400).json({ ok: false, msg: "Falta arrayDate con 2 elementos" });
+  }
+
+  const fechaInicio = arrayDate[0];
+  const fechaFin = arrayDate[1];
+  const cacheKey = `productosResumen-${id_empresa}-${fechaInicio}-${fechaFin}`;
+
+  // Check cache
+  const cachedData = reportesCache.get(cacheKey);
+  if (cachedData) {
+    // console.log("[CACHE HIT] getReporteProductosResumen:", cacheKey);
+    return res.status(200).json({ ok: true, ventas: cachedData });
+  }
+
+  try {
+    const ventas = await Venta.findAll({
+      attributes: ["id", "fecha_venta"], // Solo necesitamos id y fecha_venta para ubicar en tiempo
+      where: {
+        fecha_venta: {
+          [Op.between]: [fechaInicio, fechaFin],
+        },
+        flag: true,
+        id_empresa: id_empresa,
+      },
+      include: [
+        {
+          model: detalleVenta_producto,
+          required: true, // ESTO ES CLAVE: Solo devuelve ventas que SÍ tengan detalle_ventaProductos
+          attributes: [
+            "id_venta",
+            "id_producto",
+            "cantidad",
+            "precio_unitario",
+            "tarifa_monto",
+          ],
+          include: [
+            {
+              model: Producto,
+              attributes: ["id", "id_categoria", "nombre_producto"],
+            },
+          ],
+        },
+      ],
+      // No arrastramos Cliente, Empleado, Tarjetas ni Pagos
+    });
+
+    // Serializamos a objetos planos para evitar que node-cache intente clonar los objetos complejos de Sequelize (lo que causa el error TCP clone)
+    const ventasPlanos = ventas.map(v => v.get({ plain: true }));
+
+    // Cache the result for 15 minutes (900 seconds)
+    reportesCache.set(cacheKey, ventasPlanos, 900);
+
+    res.status(200).json({
+      ok: true,
+      ventas: ventasPlanos,
+    });
+  } catch (error) {
+    console.log("Error en getReporteProductosResumen:", error);
+    res.status(500).json({
+      error: `Error en el servidor: ${error.message}`,
+    });
+  }
+};
+
 const getReporteVentasResumen = async (req = request, res = response) => {
   try {
     const rango = getArrayDate(req);
@@ -2398,6 +2467,7 @@ const obtenerTransferencias = async (req = request, res = response) => {
 
 module.exports = {
   obtenerTransferencias,
+  getReporteProductosResumen,
   getReporteSeguimiento,
   getReporteProgramas,
   getReporteVentasPrograma_COMPARATIVACONMEJORANO,
