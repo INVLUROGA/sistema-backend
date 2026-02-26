@@ -746,6 +746,9 @@ const get_VENTAS = async (req = request, res = response) => {
             "sexo_cli",
             "ubigeo_distrito_cli",
             "ubigeo_distrito_trabajo",
+            "numDoc_cli",
+            "tel_cli"
+
           ],
           include: [
             {
@@ -1286,18 +1289,23 @@ const getVentasxFecha = async (req = request, res = response) => {
   const fechaInicio = arrayDate[0];
   const fechaFin = arrayDate[1];
 
-
   try {
     // 0. Revisar si solo necesitamos productos (optimización para reporte histórico)
     const { mode } = req.query; // 'products_only'
-    const isProductsOnly = mode === 'products_only';
+    const isProductsOnly = mode === "products_only";
 
     // 1. Query principal: Venta + Cliente + Empleado (raw para velocidad)
     // Si es products_only, NO hacemos join con Cliente ni Empleado
     const ventas = await Venta.findAll({
       attributes: [
-        "id", "id_cli", "id_empl", "id_tipoFactura",
-        "id_origen", "numero_transac", "fecha_venta", "id_empresa",
+        "id",
+        "id_cli",
+        "id_empl",
+        "id_tipoFactura",
+        "id_origen",
+        "numero_transac",
+        "fecha_venta",
+        "id_empresa",
       ],
       where: {
         fecha_venta: { [Op.between]: [fechaInicio, fechaFin] },
@@ -1306,20 +1314,42 @@ const getVentasxFecha = async (req = request, res = response) => {
         id_tipoFactura: { [Op.in]: [699, 700] },
       },
       order: [["id", "DESC"]],
-      include: isProductsOnly ? [] : [
-        {
-          model: Cliente,
-          attributes: [
-            [Sequelize.fn("CONCAT", Sequelize.col("nombre_cli"), " ", Sequelize.col("apPaterno_cli"), " ", Sequelize.col("apMaterno_cli")), "nombres_apellidos_cli"],
+      include: isProductsOnly
+        ? []
+        : [
+            {
+              model: Cliente,
+              attributes: [
+                [
+                  Sequelize.fn(
+                    "CONCAT",
+                    Sequelize.col("nombre_cli"),
+                    " ",
+                    Sequelize.col("apPaterno_cli"),
+                    " ",
+                    Sequelize.col("apMaterno_cli"),
+                  ),
+                  "nombres_apellidos_cli",
+                ],
+              ],
+            },
+            {
+              model: Empleado,
+              attributes: [
+                [
+                  Sequelize.fn(
+                    "CONCAT",
+                    Sequelize.col("nombre_empl"),
+                    " ",
+                    Sequelize.col("apPaterno_empl"),
+                    " ",
+                    Sequelize.col("apMaterno_empl"),
+                  ),
+                  "nombres_apellidos_empl",
+                ],
+              ],
+            },
           ],
-        },
-        {
-          model: Empleado,
-          attributes: [
-            [Sequelize.fn("CONCAT", Sequelize.col("nombre_empl"), " ", Sequelize.col("apPaterno_empl"), " ", Sequelize.col("apMaterno_empl")), "nombres_apellidos_empl"],
-          ],
-        },
-      ],
       raw: true,
       nest: true,
     });
@@ -1344,61 +1374,108 @@ const getVentasxFecha = async (req = request, res = response) => {
     // PRODUCTOS: Siempre necesarios
     // Ejecutar por cada chunk y aplanar resultados
     promises.push(
-      Promise.all(ventaIdChunks.map(chunkIds =>
-        detalleVenta_producto.findAll({
-          attributes: ["id_venta", "id_producto", "cantidad", "precio_unitario", "tarifa_monto"],
-          where: { id_venta: { [Op.in]: chunkIds } },
-          include: [{ model: Producto, attributes: ["id", "id_categoria", "nombre_producto"] }],
-          raw: true,
-          nest: true,
-        })
-      )).then(results => results.flat())
+      Promise.all(
+        ventaIdChunks.map((chunkIds) =>
+          detalleVenta_producto.findAll({
+            attributes: [
+              "id_venta",
+              "id_producto",
+              "cantidad",
+              "precio_unitario",
+              "tarifa_monto",
+            ],
+            where: { id_venta: { [Op.in]: chunkIds } },
+            include: [
+              {
+                model: Producto,
+                attributes: ["id", "id_categoria", "nombre_producto"],
+              },
+            ],
+            raw: true,
+            nest: true,
+          }),
+        ),
+      ).then((results) => results.flat()),
     );
 
     // OTROS: Solo si NO es products_only
     if (!isProductsOnly) {
       promises.push(
-        Promise.all(ventaIdChunks.map(chunkIds =>
-          detalleVenta_membresias.findAll({
-            attributes: ["id_venta", "id_pgm", "id_tarifa", "horario", "id_st", "tarifa_monto"],
-            where: { id_venta: { [Op.in]: chunkIds } },
-            include: [
-              { model: ProgramaTraining, attributes: ["name_pgm"] },
-              { model: SemanasTraining, attributes: ["semanas_st"] },
-            ],
-            raw: true,
-            nest: true,
-          })
-        )).then(results => results.flat())
+        Promise.all(
+          ventaIdChunks.map((chunkIds) =>
+            detalleVenta_membresias.findAll({
+              attributes: [
+                "id_venta",
+                "id_pgm",
+                "id_tarifa",
+                "horario",
+                "id_st",
+                "tarifa_monto",
+              ],
+              where: { id_venta: { [Op.in]: chunkIds } },
+              include: [
+                { model: ProgramaTraining, attributes: ["name_pgm"] },
+                { model: SemanasTraining, attributes: ["semanas_st"] },
+              ],
+              raw: true,
+              nest: true,
+            }),
+          ),
+        ).then((results) => results.flat()),
       );
 
       promises.push(
-        Promise.all(ventaIdChunks.map(chunkIds =>
-          detalleVenta_citas.findAll({
-            attributes: ["id_venta", "id_servicio", "tarifa_monto"],
-            where: { id_venta: { [Op.in]: chunkIds } },
-            include: [{ model: Servicios, attributes: ["id", "nombre_servicio", "tipo_servicio"] }],
-            raw: true,
-            nest: true,
-          })
-        )).then(results => results.flat())
+        Promise.all(
+          ventaIdChunks.map((chunkIds) =>
+            detalleVenta_citas.findAll({
+              attributes: ["id_venta", "id_servicio", "tarifa_monto"],
+              where: { id_venta: { [Op.in]: chunkIds } },
+              include: [
+                {
+                  model: Servicios,
+                  attributes: ["id", "nombre_servicio", "tipo_servicio"],
+                },
+              ],
+              raw: true,
+              nest: true,
+            }),
+          ),
+        ).then((results) => results.flat()),
       );
 
       promises.push(
-        Promise.all(ventaIdChunks.map(chunkIds =>
-          detalleVenta_pagoVenta.findAll({
-            attributes: ["id_venta", "parcial_monto"],
-            where: { id_venta: { [Op.in]: chunkIds } },
-            include: [
-              { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_banco" },
-              { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_forma_pago" },
-              { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_tipo_tarjeta" },
-              { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_tarjeta" },
-            ],
-            raw: true,
-            nest: true,
-          })
-        )).then(results => results.flat())
+        Promise.all(
+          ventaIdChunks.map((chunkIds) =>
+            detalleVenta_pagoVenta.findAll({
+              attributes: ["id_venta", "parcial_monto"],
+              where: { id_venta: { [Op.in]: chunkIds } },
+              include: [
+                {
+                  model: Parametros,
+                  attributes: ["id_param", "label_param"],
+                  as: "parametro_banco",
+                },
+                {
+                  model: Parametros,
+                  attributes: ["id_param", "label_param"],
+                  as: "parametro_forma_pago",
+                },
+                {
+                  model: Parametros,
+                  attributes: ["id_param", "label_param"],
+                  as: "parametro_tipo_tarjeta",
+                },
+                {
+                  model: Parametros,
+                  attributes: ["id_param", "label_param"],
+                  as: "parametro_tarjeta",
+                },
+              ],
+              raw: true,
+              nest: true,
+            }),
+          ),
+        ).then((results) => results.flat()),
       );
     } else {
       // Rellenar con promises que resuelven a [] para mantener el orden del array destructuring
@@ -1446,6 +1523,155 @@ const getVentasxFecha = async (req = request, res = response) => {
     res.status(500).json({
       error: `Error en el servidor, en controller de get_VENTASxFECHA, hable con el administrador: ${error}`,
     });
+  }
+};
+const getVentasxFechaVenta = async (req = request, res = response) => {
+  try {
+    const { id_empresa } = req.params;
+    const { arrayDate } = req.query;
+
+    const fechaInicio = arrayDate[0];
+    const fechaFin = arrayDate[1];
+    try {
+      const ventas = await Venta.findAll({
+        where: {
+          flag: true,
+          id_empresa: id_empresa,
+          fecha_venta: { [Op.between]: [fechaInicio, fechaFin] },
+        },
+        attributes: [
+          "id",
+          "id_cli",
+          "id_empl",
+          "id_origen",
+          "id_tipoFactura",
+          "numero_transac",
+          "fecha_venta",
+          "status_remove",
+          "observacion",
+        ],
+        order: [["fecha_venta", "DESC"]],
+        include: [
+          {
+            model: Cliente,
+            attributes: [
+              [
+                Sequelize.fn(
+                  "CONCAT",
+                  Sequelize.col("nombre_cli"),
+                  " ",
+                  Sequelize.col("apPaterno_cli"),
+                  " ",
+                  Sequelize.col("apMaterno_cli"),
+                ),
+                "nombres_apellidos_cli",
+              ],
+              "sexo_cli",
+              "ubigeo_distrito_cli",
+              "ubigeo_distrito_trabajo",
+            ],
+            include: [
+              {
+                model: ImagePT,
+              },
+            ],
+          },
+          {
+            model: Empleado,
+            attributes: [
+              [
+                Sequelize.fn(
+                  "CONCAT",
+                  Sequelize.col("nombre_empl"),
+                  " ",
+                  Sequelize.col("apPaterno_empl"),
+                  " ",
+                  Sequelize.col("apMaterno_empl"),
+                ),
+                "nombres_apellidos_empl",
+              ],
+            ],
+          },
+          {
+            model: detalleVenta_Transferencia,
+            as: "venta_venta",
+            required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
+            attributes: ["id_venta", "tarifa_monto"],
+          },
+          {
+            model: detalleVenta_producto,
+            required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
+            attributes: [
+              "id_venta",
+              "id_producto",
+              "cantidad",
+              "precio_unitario",
+              "tarifa_monto",
+            ],
+            include: [
+              {
+                model: Producto,
+                attributes: ["id", "nombre_producto", "id_categoria"],
+              },
+            ],
+          },
+          {
+            model: detalleVenta_membresias,
+            required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
+            attributes: [
+              "id",
+              "id_venta",
+              "id_pgm",
+              "id_tarifa",
+              "horario",
+              "id_st",
+              "tarifa_monto",
+              "fecha_inicio",
+              "id_membresia_anterior",
+            ],
+            include: [
+              {
+                model: ProgramaTraining,
+                attributes: ["name_pgm"],
+              },
+              {
+                model: SemanasTraining,
+                attributes: ["semanas_st"],
+              },
+            ],
+          },
+          {
+            model: detalleVenta_citas,
+            required: false,
+            attributes: ["id_venta", "id_servicio", "tarifa_monto"],
+          },
+          {
+            model: detalleVenta_pagoVenta,
+            attributes: ["id_venta", "parcial_monto"],
+            include: [
+              {
+                model: Parametros,
+                as: "parametro_forma_pago",
+              },
+            ],
+          },
+        ],
+      });
+      //console.log({ ventas });
+
+      res.status(200).json({
+        ok: true,
+        ventas,
+      });
+    } catch (error) {
+      console.log(error);
+
+      res.status(500).json({
+        error: `Error en el servidor, en controller de get_VENTAS, hable con el administrador: ${error}`,
+      });
+    }
+  } catch (error) {
+    console.log(error);
   }
 };
 
@@ -1896,16 +2122,20 @@ const agregarFirmaEnContrato = (req, res) => {
   }
 };
 const obtenerComparativoResumen = async (req = request, res = response) => {
-  const dateParams = req.query.arrayDate || req.query['arrayDate[]'];
+  const dateParams = req.query.arrayDate || req.query["arrayDate[]"];
   console.log("FECHAS RECIBIDAS (backend):", dateParams);
 
-  if (!dateParams || dateParams.length < 2) return res.json({ ventasProgramas: [], ventasTransferencias: [], membresias: [] });
+  if (!dateParams || dateParams.length < 2)
+    return res.json({
+      ventasProgramas: [],
+      ventasTransferencias: [],
+      membresias: [],
+    });
 
   const fechaInicio = new Date(dateParams[0]);
   const fechaFin = new Date(dateParams[1]);
 
   try {
-
     const detallesRaw = await detalleVenta_membresias.findAll({
       attributes: [
         "id_venta",
@@ -1990,13 +2220,18 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
             },
             {
               model: Empleado,
-              attributes: ["id_empl", "nombre_empl", "apPaterno_empl", "apMaterno_empl", "estado_empl"],
-            }
+              attributes: [
+                "id_empl",
+                "nombre_empl",
+                "apPaterno_empl",
+                "apMaterno_empl",
+                "estado_empl",
+              ],
+            },
           ],
         },
       ],
     });
-
 
     console.log("detallesRaw.length = ", detallesRaw.length);
 
@@ -2038,10 +2273,7 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
       order: [["fecha_venta", "DESC"]],
       where: {
         fecha_venta: {
-          [Op.between]: [
-            fechaInicio,
-            fechaFin,
-          ],
+          [Op.between]: [fechaInicio, fechaFin],
         },
         flag: true,
       },
@@ -2099,7 +2331,13 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
                 },
                 {
                   model: Empleado,
-                  attributes: ["id_empl", "nombre_empl", "apPaterno_empl", "apMaterno_empl", "estado_empl"],
+                  attributes: [
+                    "id_empl",
+                    "nombre_empl",
+                    "apPaterno_empl",
+                    "apMaterno_empl",
+                    "estado_empl",
+                  ],
                 },
               ],
             },
@@ -2127,7 +2365,7 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
             // Ponemos el filtro de fechas aquí también para no traer ventas viejas
             fecha_venta: {
               [Op.between]: [fechaInicio, fechaFin],
-            }
+            },
           },
           required: true,
           include: [
@@ -2182,7 +2420,13 @@ const obtenerComparativoResumen = async (req = request, res = response) => {
             },
             {
               model: Empleado,
-              attributes: ["id_empl", "nombre_empl", "apPaterno_empl", "apMaterno_empl", "estado_empl"],
+              attributes: [
+                "id_empl",
+                "nombre_empl",
+                "apPaterno_empl",
+                "apMaterno_empl",
+                "estado_empl",
+              ],
             },
           ],
         },
@@ -2288,7 +2532,6 @@ const getVencimientosPorMes = async (req = request, res = response) => {
 
     const startWindow = new Date(`${targetYear - 2}-01-01`);
 
-
     const [renovacionesDB, membresiasDB] = await Promise.all([
       detalleVenta_membresias.findAll({
         attributes: ["id"],
@@ -2315,7 +2558,12 @@ const getVencimientosPorMes = async (req = request, res = response) => {
         nest: true,
       }),
       detalleVenta_membresias.findAll({
-        attributes: ["fec_fin_mem", "fec_fin_mem_oftime", "fec_fin_mem_viejo", "tarifa_monto"],
+        attributes: [
+          "fec_fin_mem",
+          "fec_fin_mem_oftime",
+          "fec_fin_mem_viejo",
+          "tarifa_monto",
+        ],
         where: {
           flag: true,
           ...(id_st && { id_st: id_st }),
@@ -2352,18 +2600,25 @@ const getVencimientosPorMes = async (req = request, res = response) => {
     const clientesMaxDate = new Map();
 
     membresiasDB.forEach((mem) => {
-      const fechaVenta = mem.tb_ventum ? new Date(mem.tb_ventum.fecha_venta) : null;
-      let inicio = mem.fec_inicio_mem ? new Date(mem.fec_inicio_mem) : fechaVenta;
+      const fechaVenta = mem.tb_ventum
+        ? new Date(mem.tb_ventum.fecha_venta)
+        : null;
+      let inicio = mem.fec_inicio_mem
+        ? new Date(mem.fec_inicio_mem)
+        : fechaVenta;
       if (!inicio) return;
 
       let finBase = null;
       const semanas = mem.tb_semana_training?.semanas_st;
       if (semanas) {
         finBase = new Date(inicio);
-        finBase.setDate(finBase.getDate() + (semanas * 7));
+        finBase.setDate(finBase.getDate() + semanas * 7);
       } else {
-        finBase = mem.fec_fin_mem ? new Date(mem.fec_fin_mem) :
-          (mem.fec_fin_mem_oftime ? new Date(mem.fec_fin_mem_oftime) : null);
+        finBase = mem.fec_fin_mem
+          ? new Date(mem.fec_fin_mem)
+          : mem.fec_fin_mem_oftime
+            ? new Date(mem.fec_fin_mem_oftime)
+            : null;
       }
       if (!finBase) return;
 
@@ -2387,7 +2642,10 @@ const getVencimientosPorMes = async (req = request, res = response) => {
 
       // 2. Cartera Inicial
       const idCli = mem.tb_ventum.id_cli;
-      if (!clientesMaxDate.has(idCli) || finEfectiva > clientesMaxDate.get(idCli)) {
+      if (
+        !clientesMaxDate.has(idCli) ||
+        finEfectiva > clientesMaxDate.get(idCli)
+      ) {
         clientesMaxDate.set(idCli, finEfectiva);
       }
     });
@@ -2404,8 +2662,34 @@ const getVencimientosPorMes = async (req = request, res = response) => {
 
     // 4. ARMAR DATA FINAL
     let acumuladoCartera = carteraInicial;
-    const mesesLabels = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
-    const mesesNombres = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEPT", "OCT", "NOV", "DIC"];
+    const mesesLabels = [
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06",
+      "07",
+      "08",
+      "09",
+      "10",
+      "11",
+      "12",
+    ];
+    const mesesNombres = [
+      "ENE",
+      "FEB",
+      "MAR",
+      "ABR",
+      "MAY",
+      "JUN",
+      "JUL",
+      "AGO",
+      "SEPT",
+      "OCT",
+      "NOV",
+      "DIC",
+    ];
 
     const dataFinal = mesesLabels.map((m, idx) => {
       const mesKey = `${targetYear}-${m}`;
@@ -2413,9 +2697,10 @@ const getVencimientosPorMes = async (req = request, res = response) => {
       const renovaciones = mapRenovaciones[mesKey] || 0;
       const pendiente = vencimientos - renovaciones;
 
-      const porcentaje = vencimientos === 0
-        ? 0
-        : ((renovaciones / vencimientos) * 100).toFixed(1);
+      const porcentaje =
+        vencimientos === 0
+          ? 0
+          : ((renovaciones / vencimientos) * 100).toFixed(1);
 
       acumuladoCartera += pendiente;
 
@@ -2430,8 +2715,12 @@ const getVencimientosPorMes = async (req = request, res = response) => {
       };
     });
 
-    res.status(200).json({ ok: true, year: targetYear, cartera_inicial: carteraInicial, data: dataFinal });
-
+    res.status(200).json({
+      ok: true,
+      year: targetYear,
+      cartera_inicial: carteraInicial,
+      data: dataFinal,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ ok: false, msg: "Error interno" });
@@ -3346,7 +3635,7 @@ const obtenerTransferenciasxFecha = async (req = request, res = response) => {
   }
 };
 
-const obtenerVentasxTipoFactura = async (req = request, res = response) => { };
+const obtenerVentasxTipoFactura = async (req = request, res = response) => {};
 
 const obtenerClientesConMembresia = async (req = request, res = response) => {
   try {
@@ -4139,4 +4428,5 @@ module.exports = {
   buscarCajasxFecha,
   updateDetalleProducto,
   updateDetalleServicio,
+  getVentasxFechaVenta
 };

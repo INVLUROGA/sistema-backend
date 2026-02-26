@@ -56,6 +56,7 @@ const {
   updateDetalleServicio,
   getVencimientosPorMes,
   obtenerVentasxIdCli,
+  getVentasxFechaVenta,
 } = require("../controller/venta.controller");
 
 const {
@@ -76,10 +77,11 @@ router.get("/comanda/:id_empresa", getComandas);
 router.post("/comanda/:id_empresa", postComanda);
 router.post("/servicios/:id_venta", validarComandaPagada, postVentaServicios);
 router.get("/get-ventas-x-fecha/:id_empresa", getVentasxFecha);
+router.get("/fecha-venta/id_empresa/:id_empresa", getVentasxFechaVenta);
 router.post("/productos/:id_venta", validarComandaPagada, postVentaProductos);
 router.get(
   "/obtener-ventas-x-comprobante/:id_comprobante/:id_empresa",
-  obtenerUltimasVentasxComprobantes
+  obtenerUltimasVentasxComprobantes,
 );
 router.post("/caja-apertura/:id_enterprice", postCajaApertura);
 router.get("/buscar-cajas", buscarCajasxFecha);
@@ -95,14 +97,14 @@ router.post(
   extraerCitas,
   extraerPagos,
   postNewVenta,
-  postVenta
+  postVenta,
 );
 router.put("/put-venta/:id", putVentaxId);
 router.post("/cambio-programa", postCambioPrograma);
 router.get("/cliente-ventas", obtenerClientesVentas);
 router.get(
   "/get-ventas-membresia-x-empresa/:id_empresa",
-  obtenerVentasMembresiaxEmpresa
+  obtenerVentasMembresiaxEmpresa,
 );
 router.post("/post-venta/agregar-firma-en-contrato", agregarFirmaEnContrato);
 // router.post("/send-email/:id_venta", mailMembresia);
@@ -121,21 +123,21 @@ router.post("/estado-membresia", estadosClienteMembresiaVar);
 
 router.get(
   "/obtener-contratos-clientes/:id_enterprice",
-  obtenerContratosClientes
+  obtenerContratosClientes,
 );
 router.get("/comparativaPorProgramaApi/:fecha", comparativaPorProgramaApi);
 
 router.get(
   "/reporte/reporte-ventas-x-programa/:id_pgm",
-  obtenerReporteSociosxDistritos
+  obtenerReporteSociosxDistritos,
 );
 router.get(
   "/reporte/obtener-comparativo-resumen-x-mes-anio",
-  obtenerComparativoResumenxMES
+  obtenerComparativoResumenxMES,
 );
 router.get(
   "/reporte/obtener-transferencias-resumen-x-mes-anio",
-  obtenerTransferenciasResumenxMes
+  obtenerTransferenciasResumenxMes,
 );
 router.get("/reporte/obtener-transferencias/:id_pgm", obtenerTransferencias);
 router.get("/reporte/obtener-comparativo-resumen", obtenerComparativoResumen);
@@ -143,15 +145,15 @@ router.get("/reporte/obtener-comparativo", obtenerComparativoTotal);
 
 router.get(
   "/reporte/obtener-ventas-x-tipo-factura/:idtipofactura",
-  obtenerComparativoResumen
+  obtenerComparativoResumen,
 );
 router.get(
   "/reporte/obtener-estado-cliente-resumen/:id_origen",
-  obtenerEstadoResumen
+  obtenerEstadoResumen,
 );
 router.get(
   "/reporte/obtener-nuevos-clientes-resumen",
-  obtenerVentasDeClientesNuevos
+  obtenerVentasDeClientesNuevos,
 );
 router.get("/ventas-transferencias", obtenerTransferenciasxFecha);
 router.get("/clientes-membresias", obtenerClientesConMembresia);
@@ -160,11 +162,11 @@ router.get("/obtener-membresias-x-cli/:id_cli", obtenerMembresiasxUIDcliente);
 
 router.get(
   "/membresias/cliente/marcaciones/:id_enterprice",
-  obtenerMarcacionesClientexMembresias
+  obtenerMarcacionesClientexMembresias,
 );
 router.get(
   "/reporte/obtenerMembresiasxFecha/:id_enterprice",
-  obtenerMembresiasxFecha
+  obtenerMembresiasxFecha,
 );
 
 router.get("/vencimientos-mes", getVencimientosPorMes);
