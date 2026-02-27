@@ -970,7 +970,8 @@ const getVigentesResumenEmpresa = async (req, res) => {
         },
         {
           model: Venta,
-          attributes: ["id", "id_empresa"],
+          // fecha_venta es necesaria como fallback para getInicioBase cuando fec_inicio_mem es null
+          attributes: ["id", "id_empresa", "fecha_venta"],
           where: { id_empresa: empresa, flag: true },
           required: true,
         },
@@ -997,7 +998,9 @@ const getVigentesResumenEmpresa = async (req, res) => {
       if (!fin) continue;
 
       const inicio = getInicioBase(m);
-      if (inicio && inicio > snapshot) continue;
+      // Si no hay fecha de inicio, no podemos saber si la membresía estaba vigente → saltar
+      if (!inicio) continue;
+      if (inicio > snapshot) continue;
 
       const f = new Date(fin);
       f.setHours(0, 0, 0, 0);
@@ -1088,7 +1091,8 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
       include: [
         {
           model: Venta,
-          attributes: ["id"],
+          // fecha_venta necesaria como fallback en getInicioBase cuando fec_inicio_mem es null
+          attributes: ["id", "fecha_venta"],
           where: { id_empresa: empresa, flag: true },
           required: true,
           include: [
@@ -1142,11 +1146,12 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
       if (!fin) continue;
 
       const inicio = getInicioBase(m);
+      // Sin fecha de inicio no podemos saber el estado en snapshots pasados → saltar
+      if (!inicio) continue;
 
-      const inicioTime = inicio ? inicio.getTime() : 0;
+      const inicioTime = inicio.getTime();
       const finTime = fin.getTime();
 
-      // Faster logic using getTime milliseconds
       if (inicioTime > snapshotTime) continue;
       if (finTime < snapshotTime) continue;
 
@@ -1201,7 +1206,13 @@ const getMembresiasVigentesHistorico = async (req, res) => {
     const year = Number(req.query.year || new Date().getFullYear());
     const selectedMonth = Number(req.query.selectedMonth || new Date().getMonth() + 1);
 
-    const cacheKey = `vigentes_historico_${empresa}_${year}_${selectedMonth}`;
+    // Mes y día de corte seleccionados por el usuario en el frontend.
+    // cutMonth indica PARA QUÉ MES aplica el corte (puede ser distinto de selectedMonth,
+    // ya que el frontend siempre envía selectedMonth=12 para obtener todas las columnas).
+    const clientCutDay = req.query.cutDay ? Number(req.query.cutDay) : null;
+    const clientCutMonth = req.query.cutMonth ? Number(req.query.cutMonth) : selectedMonth;
+
+    const cacheKey = `vigentes_historico_${empresa}_${year}_${selectedMonth}_${clientCutMonth}_${clientCutDay ?? "last"}`;
     const cachedData = membresiasCache.get(cacheKey);
     if (cachedData) {
       console.log(`[Cache Hit] ${cacheKey}`);
@@ -1219,7 +1230,8 @@ const getMembresiasVigentesHistorico = async (req, res) => {
       include: [
         {
           model: Venta,
-          attributes: ["id"], // No necesitamos fecha_venta ni id_empresa en el JS, solo para filtrar
+          // Necesitamos fecha_venta como fallback de inicio cuando fec_inicio_mem es null
+          attributes: ["id", "fecha_venta"],
           where: {
             id_empresa: empresa,
             flag: true,
@@ -1247,7 +1259,7 @@ const getMembresiasVigentesHistorico = async (req, res) => {
       // pero limitar los atributos reduce el peso de memoria un 80%
     });
 
-    const MONTH_LABELS = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+
     const prevYear = year - 1;
 
     const lastYearCols = [9, 10, 11, 12].map((m) => ({
@@ -1274,12 +1286,18 @@ const getMembresiasVigentesHistorico = async (req, res) => {
 
       const fin = calcFinEfectivo(m);
       if (!fin) continue;
+
+      // getInicioBase usa fec_inicio_mem y como fallback tb_ventum.fecha_venta.
+      // Ahora que traemos fecha_venta en la query, el fallback funciona correctamente.
+      // Si aun así no hay fecha de inicio, SALTAR la membresía — no podemos saber
+      // si estaba vigente en un snapshot pasado, y omitirla es más correcto que contarla siempre.
       const inicio = getInicioBase(m);
+      if (!inicio) continue;
 
       const plan = m?.tb_programa_training?.name_pgm || m?.tb_ProgramaTraining?.name_pgm || (m?.id_pgm ? `PGM ${m.id_pgm}` : "-");
 
       processedRows.push({
-        inicio: inicio ? inicio.getTime() : 0, // Convertimos a milisegundos para comparar números (MUCHO más rápido que Date)
+        inicio: inicio.getTime(), // Siempre es un timestamp válido ahora
         fin: fin.getTime(),
         plan,
         id_pgm: m.id_pgm,
@@ -1297,17 +1315,28 @@ const getMembresiasVigentesHistorico = async (req, res) => {
       const lastDayOfMonth = new Date(c.year, c.month, 0).getDate();
       let cutDay = lastDayOfMonth;
 
-      if (c.year === currentYear && c.month === currentMonth) {
+      if (c.year === year && c.month === clientCutMonth) {
+        // Mes de corte seleccionado: respetar el cutDay enviado por el frontend.
+        // Esto evita contar membresías cuya fecha_inicio sea posterior al día de corte.
+        if (clientCutDay) {
+          cutDay = Math.min(clientCutDay, lastDayOfMonth);
+        } else if (c.year === currentYear && c.month === currentMonth) {
+          // Si no se envió cutDay y es el mes actual del servidor, usar el día de hoy
+          cutDay = Math.min(currentDay, lastDayOfMonth);
+        }
+      } else if (c.year === currentYear && c.month === currentMonth) {
+        // Para el mes actual real del servidor (sin cutDay explícito), usar el día de hoy
         cutDay = Math.min(currentDay, lastDayOfMonth);
       }
+      // Para todos los demás meses pasados: usar el último día del mes (correcto)
 
       // Convertimos el snapshot a milisegundos de una vez
       const snapshotTime = new Date(c.year, c.month - 1, cutDay, 0, 0, 0, 0).getTime();
       const vigentes = [];
 
       for (const r of processedRows) {
-        // Comparación matemática directa (vuela en Node.js)
-        if (r.inicio && r.inicio > snapshotTime) continue;
+        // r.inicio es siempre un timestamp válido (nunca 0) gracias al fix del procesamiento
+        if (r.inicio > snapshotTime) continue;
         if (r.fin < snapshotTime) continue;
 
         vigentes.push({
