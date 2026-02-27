@@ -798,6 +798,12 @@ const seccionGET = async (req = request, res = response) => {
               label: "Inscripciones por mes",
               url: "/reporte/vigentes-historico",
               parentKey: "socios-montos",
+            },
+            {
+              key: "r-comparativo-mensual",
+              label: "Comparativo Mensual Ventas",
+              url: "/reporte/comparativo-mensual-ventas",
+              parentKey: "socios-montos",
             }
           ],
         },
