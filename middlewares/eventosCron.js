@@ -151,7 +151,8 @@ const alertasUsuario = async () => {
     const minutoActual = ahora.minute();
 
     const processedKeys = new Set();
-    const blacklist = getBlacklist(); // cargamos una sola vez por ejecución
+    const rawBlacklist = getBlacklist();
+    const blacklist = rawBlacklist.map(m => m.trim().replace(/\s+/g, ' ')); // normalizar al cargar
 
     for (const alerta of alertasJSON) {
       const fechaAlerta = dayjs(alerta.fecha).tz("America/Lima");

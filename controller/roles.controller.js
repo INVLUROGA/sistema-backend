@@ -793,6 +793,12 @@ const seccionGET = async (req = request, res = response) => {
               url: "/reporte/renovaciones-por-mes",
               parentKey: "socios-montos",
             },
+            {
+              key: "r-vigentes-historico",
+              label: "Inscripciones por mes",
+              url: "/reporte/vigentes-historico",
+              parentKey: "socios-montos",
+            }
           ],
         },
         {
