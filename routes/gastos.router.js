@@ -12,6 +12,7 @@ const {
   getProveedoresGastos_SinRep,
   obtenerPagosContratos,
   obtenerGastosxFechasPago,
+  obtenerGastosxFechasComprobante,
 } = require("../controller/gastos.controller");
 const router = Router();
 /**
@@ -26,7 +27,7 @@ router.put("/delete/id/:id", deleteGasto);
 
 router.get("/orden-compra/:id_enterp", obtenerOrdenCompra);
 router.get("/fecha-pago/:id_empresa", obtenerGastosxFechasPago);
-router.get("/fecha-comprobante/:id_empresa", obtenerGastosxFechasPago);
+router.get("/fecha-comprobante/:id_empresa", obtenerGastosxFechasComprobante);
 router.post("/post-egreso", postGasto);
 router.get("/get-egresos/:id_empresa", getGastos);
 router.get("/get-egreso/:id", getGasto);

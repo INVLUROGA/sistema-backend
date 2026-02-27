@@ -499,6 +499,7 @@ const obtenerGastosxFechasComprobante = async (
         "cod_trabajo",
         "id_estado_gasto",
         "fecha_pago",
+        "fecha_comprobante",
       ],
       include: [
         {
