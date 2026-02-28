@@ -804,6 +804,12 @@ const seccionGET = async (req = request, res = response) => {
               label: "Comparativo Mensual Ventas",
               url: "/reporte/comparativo-mensual-ventas",
               parentKey: "socios-montos",
+            },
+            {
+              key: "r-comparativo-mensual",
+              label: "Ventas Comparativos por asesor",
+              url: "/reporte/comparativo-ventas",
+              parentKey: "socios-montos",
             }
           ],
         },
