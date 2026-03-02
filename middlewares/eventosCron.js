@@ -729,13 +729,14 @@ const reactivarAlertasMensuales = async () => {
     const mesAnterior = new Date(hoy);
     mesAnterior.setMonth(mesAnterior.getMonth() - 1);
 
-    // Buscar alertas "CANCELADAS POR PAGO" (id_estado = 3) que pertenezcan al mes pasado
-    // Ojo: la fecha de la alerta cancelada es del mes pasado.
-    // Se busca reactivarlas para este mes (generar nueva ocurrencia).
+    // Cargamos la blacklist para no recrear alertas que el usuario haya bloqueado
+    const rawBlacklist = getBlacklist();
+    const blacklist = rawBlacklist.map(m => m.trim().replace(/\\s+/g, ' '));
 
     const alertasCanceladas = await AlertasUsuario.findAll({
       where: {
-        id_estado: 3, // Cancelado
+        tipo_alerta: 1425,
+        id_estado: { [Op.in]: [0, 1, 3] },
         flag: true,
         fecha: {
           [Op.gte]: new Date(mesAnterior.getFullYear(), mesAnterior.getMonth(), 1),
@@ -745,23 +746,47 @@ const reactivarAlertasMensuales = async () => {
     });
 
     for (const alerta of alertasCanceladas) {
+      const mensajeLimpio = alerta.mensaje.trim().replace(/\\s+/g, ' ');
+      if (blacklist.includes(mensajeLimpio)) {
+        // Ignorar mensajes bloqueados
+        continue;
+      }
+
       // Generar nueva fecha para este mes usando dayjs para manejar overflows (ej: 31 Ene -> 28 Feb)
       let nuevaFecha = dayjs(alerta.fecha).add(1, 'month').toDate();
 
       // Caso simple: Alerta MENSUAL (1425).
       if (alerta.tipo_alerta === 1425) {
 
-        // Crear nueva alerta ACTIVA
-        await AlertasUsuario.create({
-          id_user: alerta.id_user,
-          tipo_alerta: alerta.tipo_alerta,
-          mensaje: alerta.mensaje,
-          fecha: nuevaFecha,
-          id_estado: 1 // ACTIVA
+        // Verificar si ya existe para no duplicar en caso de múltiples ejecuciones
+        const existe = await AlertasUsuario.findOne({
+          where: {
+            id_user: alerta.id_user,
+            tipo_alerta: 1425,
+            mensaje: alerta.mensaje,
+            fecha: {
+              [Op.gte]: new Date(hoy.getFullYear(), hoy.getMonth(), 1),
+              [Op.lt]: new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1)
+            }
+          }
         });
 
-        // Marcar la vieja como PROCESADA/HISTORICO (0) para que no salga en futuras búsquedas de canceladas
-        await alerta.update({ id_estado: 0 });
+        if (!existe) {
+          // Crear nueva alerta ACTIVA
+          await AlertasUsuario.create({
+            id_user: alerta.id_user,
+            tipo_alerta: alerta.tipo_alerta,
+            mensaje: alerta.mensaje,
+            fecha: nuevaFecha,
+            id_estado: 1 // ACTIVA
+          });
+        }
+
+        // Si la vieja era estado 3 (pagada), la pasamos a 0 (procesada) para limpieza.
+        // Si era 0 o 1, la dejamos igual, es histórico.
+        if (alerta.id_estado === 3) {
+          await alerta.update({ id_estado: 0 });
+        }
       }
       // TODO: Lógica para diario/quincenal si aplica. Por ahora solo mensual es crítico.
     }

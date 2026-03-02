@@ -1750,16 +1750,20 @@ const getMembresiasCruzadas = async (req, res) => {
     const initDay = Number(req.query.initDay || 1);
     const cutDay = Number(req.query.cutDay || new Date(year, selectedMonth, 0).getDate());
 
+    // Validar que cutDay no exceda los días reales del mes para evitar error SQL (ej. 31 Febrero -> Error 242)
+    const lastDayOfMonth = new Date(year, selectedMonth, 0).getDate();
+    const safeCutDay = Math.min(cutDay, lastDayOfMonth);
+
     // 1. Armamos las fechas exactas
     const rangeStart = new Date(year, selectedMonth - 1, initDay);
     rangeStart.setHours(0, 0, 0, 0);
 
-    const rangeEnd = new Date(year, selectedMonth - 1, cutDay);
+    const rangeEnd = new Date(year, selectedMonth - 1, safeCutDay);
     rangeEnd.setHours(23, 59, 59, 999);
 
     // Strings limpios para evitar que SQL Server falle con las zonas horarias
     const startStr = `${year}-${String(selectedMonth).padStart(2, '0')}-${String(initDay).padStart(2, '0')} 00:00:00`;
-    const endStr = `${year}-${String(selectedMonth).padStart(2, '0')}-${String(cutDay).padStart(2, '0')} 23:59:59`;
+    const endStr = `${year}-${String(selectedMonth).padStart(2, '0')}-${String(safeCutDay).padStart(2, '0')} 23:59:59`;
 
     // 2. Traemos todas las membresías activas
     const rows = await detalleVenta_membresias.findAll({

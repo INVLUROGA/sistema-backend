@@ -11,7 +11,7 @@ const {
   recordatorioReservaCita24hAntes,
   recordatorioReservaCita2hAntes,
   obtenerCumpleaniosDeEmpleados,
-  // reactivarAlertasMensuales
+  reactivarAlertasMensuales
 } = require("./middlewares/eventosCron.js");
 const { enviarBotonesWsp } = require("./config/whatssap-web.js");
 const {
@@ -23,9 +23,10 @@ const {
 // Programa una tarea para las 9 AM todos los días
 // const cum = obtenerDataSeguimientos();
 // console.log(cum);
-// cron.schedule("0 3 1 * *", async () => {
-//   await reactivarAlertasMensuales();
-// });
+cron.schedule("0 3 1 * *", async () => {
+  await reactivarAlertasMensuales();
+});
+
 
 cron.schedule("0 15 * * *", () => {
   // insertaDatosTEST();
