@@ -782,7 +782,7 @@ const seccionGET = async (req = request, res = response) => {
             {
               key: "r-renovaciones-mes",
               label: "COMPARATIVO por ASESOR",
-              url: "/reporte/ranking-por-asesor",
+              url: "/reporte/comparativo-por-asesor",
               parentKey: "socios-montos",
             },
             /* {
