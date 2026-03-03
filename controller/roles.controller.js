@@ -755,7 +755,7 @@ const seccionGET = async (req = request, res = response) => {
       MENU_ITEMS = [
         {
           key: "cantidad-socios-montos",
-          label: "Resumen general",
+          label: "RESUMEN GENERAL",
           isTitle: true,
         },
         {
@@ -766,44 +766,78 @@ const seccionGET = async (req = request, res = response) => {
           url: "/resumen-ejecutivo",
         },
         {
-          key: "r-comparativo-mensual",
+          key: "resumen-comparativo",
+          label: "RESUMEN COMPARATIVO",
+          isTitle: false,
           icon: "uil-calender",
-          label: "Comparativo Mensual Ventas",
           url: "/reporte/comparativo-mensual",
-          parentKey: "socios-montos",
+        },
+        {
+          key: "socios-montos",
+          label: "Comparativos por <br/> asesor",
+          url: "/reporte/socios-montos",
+          isTitle: false,
+          icon: "uil-chart-pie-alt",
+          children: [
+            {
+              key: "r-renovaciones-mes",
+              label: "COMPARATIVO por ASESOR",
+              url: "/reporte/ranking-por-asesor",
+              parentKey: "socios-montos",
+            },
+            {
+              key: "r-vigentes-historico",
+              label: "Inscripciones por mes",
+              url: "/reporte/vigentes-historico",
+              parentKey: "socios-montos",
+            },
+            {
+              key: "r-comparativo-ventas-asesor",
+              label: "Ventas Comparativos por asesor",
+              url: "/reporte/comparativo-ventas",
+              parentKey: "socios-montos",
+            },
+            /* {
+               key: "r-ventas-promocion",
+               label: "Ventas realizadas segun promoción de marketing",
+               url: "/reporte/ventas-promocion-marketing",
+               parentKey: "socios-montos",
+             }*/
+          ],
+
+        },
+
+        {
+          key: "r-grafico-ventas-diarias",
+          label: "Gráfico Lineal Ventas Diarias",
+          url: "/reporte/grafico-lineal-ventas-diarias",
+          isTitle: false,
+          icon: "uil-chart-pie-alt",
+        },
+
+        {
+          key: "gest-comercial",
+          label: "Gestion comercial",
+          isTitle: true,
+        },
+        {
+          key: "reg-gest-comercial",
+          label: "GESTION COMERCIAL",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-comercial",
+        },
+        {
+          key: "reporte-gest-comercial",
+          label: "REPORTE de GESTION COMERCIAL",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/reporte/gestion-comercial",
         },
         {
           key: "asesores",
           label: "Asesores",
           isTitle: true,
-        },
-        {
-          key: "r-comparativo-mensual",
-          icon: "uil-calender",
-          label: "Ventas Comparativos por asesor",
-          url: "/reporte/comparativo-ventas",
-          parentKey: "socios-montos",
-        },
-        /*  {
-            key: "r-comparativo-mensual",
-            icon: "uil-calender",
-            label: "Comparativo Mensual",
-            url: "/reporte/comparativo-mensual-ventas",
-            parentKey: "socios-montos",
-          },*/
-        {
-          key: "r-renovaciones-mes",
-          icon: "uil-calender",
-          label: "Renovaciones por mes",
-          url: "/reporte/renovaciones-por-mes",
-          parentKey: "socios-montos",
-        },
-        {
-          key: "r-vigentes-historico",
-          icon: "uil-calender",
-          label: "Inscripciones por mes",
-          url: "/reporte/vigentes-historico",
-          parentKey: "socios-montos",
         },
         {
           key: "r-ventasAsesor",
@@ -846,7 +880,7 @@ const seccionGET = async (req = request, res = response) => {
           url: "/gestion-ventas",
         },
         {
-          key: "gestion-ventas",
+          key: "gestion-ventas-transferencias",
           label: "ventas de transferencias",
           isTitle: false,
           icon: "uil-calender",
@@ -874,14 +908,14 @@ const seccionGET = async (req = request, res = response) => {
           url: "/gestion-cambio-procedencia",
         },
         {
-          key: "ventas-seguimiento",
+          key: "ventas-seguimiento-reporte",
           label: "reporte de seguimiento",
           isTitle: false,
           icon: "uil-calender",
           url: "/reporte/reporte-seguimiento",
         },
         {
-          key: "ventas-seguimiento",
+          key: "ventas-seguimiento-mes",
           label: "Seguimiento por mes",
           isTitle: false,
           icon: "uil-calender",
@@ -902,6 +936,18 @@ const seccionGET = async (req = request, res = response) => {
               parentKey: "reportes-total",
             },
             {
+              key: "r-ventasPrograma",
+              label: "Ventas por programas",
+              url: "/reporte/reporte-programa",
+              parentKey: "reporte-programa",
+            },
+            {
+              key: "r-ventasMetas",
+              label: "Ventas por metas",
+              url: "/reporte/reporte-metas",
+              parentKey: "reporte-meta",
+            },
+            {
               key: "r-resumenComparativo",
               label: "RESUMEN PARA MARKETING",
               url: "/reporte/resumen-comparativo",
@@ -920,7 +966,7 @@ const seccionGET = async (req = request, res = response) => {
               parentKey: "reporte-demografico",
             },
             {
-              key: "r-reporte-demografico",
+              key: "r-reporte-demografico-membresia",
               label: "reporte demografico por membresia",
               url: "/reporte/reporte-demografico-membresia",
               parentKey: "reporte-demografico-membresia",
@@ -928,8 +974,27 @@ const seccionGET = async (req = request, res = response) => {
           ],
         },
         {
+          key: "canje",
+          label: "CANJES",
+          isTitle: true,
+        },
+        {
+          key: "canje-gestion",
+          label: "Gestion de canjes",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-canjes",
+        },
+        {
+          key: "canje-reporte",
+          label: "REPORTE DE CANJE",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/reporte-canje",
+        },
+        {
           key: "cliente",
-          label: "Socios",
+          label: "Socio",
           isTitle: true,
         },
         {
@@ -940,7 +1005,7 @@ const seccionGET = async (req = request, res = response) => {
           url: "/gestion-clientes",
         },
         {
-          key: "cliente-admClientes",
+          key: "cliente-admMembresias",
           label: "Membresias de socios",
           isTitle: false,
           icon: "uil-calender",
@@ -954,12 +1019,19 @@ const seccionGET = async (req = request, res = response) => {
           url: "/contrato-clientes",
         },
         {
+          key: "cliente-prospecto",
+          label: "Prospectos",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-prospecto",
+        },
+        {
           key: "cita",
-          label: "Nutricion y tratamiento",
+          label: "Citas",
           isTitle: true,
         },
         {
-          key: "citas-NUT",
+          key: "citas-NUT-x-asesor",
           label: "Citas por nutricionista",
           isTitle: false,
           icon: "uil-calender",
@@ -988,29 +1060,27 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           key: "cong-reg",
-          label: "Congelamientos, regalos y canje",
+          label: "Congelamiento y Regalo",
           isTitle: true,
         },
         {
-          key: "canje-gestion",
-          label: "Gestion de canjes",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/gestion-canjes",
-        },
-        {
-          key: "canje-reporte",
-          label: "REPORTE DE CANJE",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/reporte-canje",
-        },
-        {
           key: "congreg",
-          label: "Congelamientos y regalos",
+          label: "Congelamiento y regalos",
           isTitle: false,
           icon: "uil-calender",
           url: "/extension-membresia",
+        },
+        {
+          key: "Metas",
+          label: "Metas y bonos",
+          isTitle: true,
+        },
+        {
+          key: "meta",
+          label: "Metas y bonos",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/metas",
         },
       ];
     }

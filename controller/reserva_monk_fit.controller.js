@@ -380,7 +380,6 @@ const obtenerReservasMonkFitResumen = async (req = request, res = response) => {
     res.status(500).json({ message: "Error al obtener resumen de reservas" });
   }
 };
-
 const obtenerReservasMonkeyFitxFecha = async (
   req = request,
   res = response,
