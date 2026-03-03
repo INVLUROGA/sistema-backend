@@ -11,7 +11,7 @@ const {
   recordatorioReservaCita24hAntes,
   recordatorioReservaCita2hAntes,
   obtenerCumpleaniosDeEmpleados,
-  reactivarAlertasMensuales
+  reactivarAlertasMensuales,
 } = require("./middlewares/eventosCron.js");
 const { enviarBotonesWsp } = require("./config/whatssap-web.js");
 const {
@@ -27,14 +27,13 @@ cron.schedule("0 3 1 * *", async () => {
   await reactivarAlertasMensuales();
 });
 
-
 cron.schedule("0 15 * * *", () => {
   // insertaDatosTEST();
   obtenerCumpleaniosCliente();
   obtenerCumpleaniosDeEmpleados();
 });
 cron.schedule("0 1 * * *", async () => {
-  await insertarTC();
+  // await insertarTC();
 });
 cron.schedule("55 * * * *", () => {
   recordatorioReservaCita24hAntes();
@@ -200,7 +199,7 @@ app.use(
 app.use("/api/parametros", require("./routes/parametros.route.js"));
 app.use("/api/jornada", require("./routes/jornada.route.js"));
 //TODO: USUARIOS(CLIENTES, COLABORADORES, USUARIOS LOGEADOS)
-app.use('/api/empleado', require('./routes/empleado.route.js'))
+app.use("/api/empleado", require("./routes/empleado.route.js"));
 app.use("/api/usuario", require("./routes/usuario.route.js"));
 app.use("/api/apireniec", require("./routes/api.reniec.route.js"));
 app.use("/api/cambio-programa", require("./routes/cambioPrograma.route.js"));
