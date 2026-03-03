@@ -774,7 +774,7 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           key: "socios-montos",
-          label: "Comparativos de <br/> Ventas y socios",
+          label: "Comparativos por <br/> Asesor",
           url: "/reporte/socios-montos",
           isTitle: false,
           icon: "uil-chart-pie-alt",
@@ -785,18 +785,18 @@ const seccionGET = async (req = request, res = response) => {
               url: "/reporte/ranking-por-asesor",
               parentKey: "socios-montos",
             },
-            {
-              key: "r-vigentes-historico",
-              label: "Inscripciones por mes",
-              url: "/reporte/vigentes-historico",
-              parentKey: "socios-montos",
-            },
-            {
-              key: "r-comparativo-ventas-asesor",
-              label: "Ventas Comparativos por asesor",
-              url: "/reporte/comparativo-ventas",
-              parentKey: "socios-montos",
-            },
+            /* {
+               key: "r-vigentes-historico",
+               label: "Inscripciones por mes",
+               url: "/reporte/vigentes-historico",
+               parentKey: "socios-montos",
+             },
+             {
+               key: "r-comparativo-ventas-asesor",
+               label: "Ventas Comparativos por asesor",
+               url: "/reporte/comparativo-ventas",
+               parentKey: "socios-montos",
+             },*/
             /* {
                key: "r-ventas-promocion",
                label: "Ventas realizadas segun promoción de marketing",
