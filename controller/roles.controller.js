@@ -769,7 +769,7 @@ const seccionGET = async (req = request, res = response) => {
           key: "r-comparativo-mensual",
           icon: "uil-calender",
           label: "Comparativo Mensual Ventas",
-          url: "/reporte/comparativo-mensual-ventas",
+          url: "/reporte/comparativo-mensual",
           parentKey: "socios-montos",
         },
         {
@@ -784,13 +784,13 @@ const seccionGET = async (req = request, res = response) => {
           url: "/reporte/comparativo-ventas",
           parentKey: "socios-montos",
         },
-        {
-          key: "r-comparativo-mensual",
-          icon: "uil-calender",
-          label: "Comparativo Mensual",
-          url: "/reporte/comparativo-mensual",
-          parentKey: "socios-montos",
-        },
+        /*  {
+            key: "r-comparativo-mensual",
+            icon: "uil-calender",
+            label: "Comparativo Mensual",
+            url: "/reporte/comparativo-mensual-ventas",
+            parentKey: "socios-montos",
+          },*/
         {
           key: "r-renovaciones-mes",
           icon: "uil-calender",
