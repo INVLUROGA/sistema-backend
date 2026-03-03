@@ -53,6 +53,57 @@ const ProspectoLead = db.define(
   },
   { tableName: "tb_prospectoLeads" },
 );
+const HistorialProspectoLead = db.define(
+  "historial_prospectoLeads",
+  {
+    id_hh: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    id: {
+      type: DataTypes.INTEGER,
+    },
+    fecha_registro: {
+      type: DataTypes.DATE,
+    },
+    uid_comentario: {
+      type: DataTypes.STRING,
+    },
+    id_empl: {
+      type: DataTypes.INTEGER,
+    },
+    nombres: {
+      type: DataTypes.STRING,
+    },
+    apellidos: {
+      type: DataTypes.STRING,
+    },
+    celular: {
+      type: DataTypes.STRING,
+    },
+    ubigeo_distrito_residencia: {
+      type: DataTypes.STRING,
+    },
+    id_canal: {
+      type: DataTypes.INTEGER,
+    },
+    id_medio_comunicacion: {
+      type: DataTypes.INTEGER,
+    },
+    id_pgm: {
+      type: DataTypes.INTEGER,
+    },
+    id_estado: {
+      type: DataTypes.INTEGER,
+    },
+    flag: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    },
+  },
+  { tableName: "tb_prospectoLeads" },
+);
 ProspectoLead.hasOne(Distritos, {
   foreignKey: "ubigeo",
   sourceKey: "ubigeo_distrito_residencia",
