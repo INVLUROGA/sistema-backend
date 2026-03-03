@@ -793,6 +793,24 @@ const seccionGET = async (req = request, res = response) => {
               url: "/reporte/renovaciones-por-mes",
               parentKey: "socios-montos",
             },
+            {
+              key: "r-vigentes-historico",
+              label: "Inscripciones por mes",
+              url: "/reporte/vigentes-historico",
+              parentKey: "socios-montos",
+            },
+            {
+              key: "r-comparativo-mensual",
+              label: "Comparativo Mensual Ventas",
+              url: "/reporte/comparativo-mensual-ventas",
+              parentKey: "socios-montos",
+            },
+            {
+              key: "r-comparativo-mensual",
+              label: "Ventas Comparativos por asesor",
+              url: "/reporte/comparativo-ventas",
+              parentKey: "socios-montos",
+            }
           ],
         },
         {

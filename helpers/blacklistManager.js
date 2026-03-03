@@ -21,8 +21,9 @@ const getBlacklist = () => {
 const addToBlacklist = (message) => {
     try {
         const list = getBlacklist();
-        if (!list.includes(message)) {
-            list.push(message);
+        const normalizedMessage = message.trim().replace(/\s+/g, ' ');
+        if (!list.includes(normalizedMessage)) {
+            list.push(normalizedMessage);
             fs.writeFileSync(BLACKLIST_PATH, JSON.stringify(list, null, 2));
         }
         return list;
