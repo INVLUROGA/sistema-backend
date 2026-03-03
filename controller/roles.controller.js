@@ -807,13 +807,13 @@ const seccionGET = async (req = request, res = response) => {
 
         },
 
-        {
-          key: "r-grafico-ventas-diarias",
-          label: "Gráfico Lineal Ventas Diarias",
-          url: "/reporte/grafico-lineal-ventas-diarias",
-          isTitle: false,
-          icon: "uil-chart-pie-alt",
-        },
+        /* {
+           key: "r-grafico-ventas-diarias",
+           label: "Gráfico Lineal Ventas Diarias",
+           url: "/reporte/grafico-lineal-ventas-diarias",
+           isTitle: false,
+           icon: "uil-chart-pie-alt",
+         },*/
 
         {
           key: "gest-comercial",
