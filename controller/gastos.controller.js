@@ -472,13 +472,16 @@ const obtenerGastosxFechasComprobante = async (
 
   const fechaInicio = arrayDate[0];
   const fechaFin = arrayDate[1];
+  console.log({ arrayDate });
+
   try {
     const gastos = await Gastos.findAll({
       where: {
         flag: true,
         // 3. Filtro por fecha_comprobante entre inicio y fin (incluyendo todo el día)
         fecha_comprobante: {
-          [Op.between]: [fechaInicio, fechaFin],
+          [Op.gte]: fechaInicio,
+          [Op.lte]: fechaFin,
         },
       },
       order: [["fec_registro", "desc"]],

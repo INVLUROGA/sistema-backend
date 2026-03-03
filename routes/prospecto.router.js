@@ -24,10 +24,10 @@ router.get("/get-prospecto/:id", getProspectoPorID);
 router.put("/put-prospecto/:id", putProspecto);
 router.put("/put-prospecto/:id", deleteProspecto);
 
-router.post("/lead/post-prospecto-lead", postProspectoLead);
-router.get("/lead/get-prospecto-lead", getProspectosLead);
-router.get("/lead/get-prospecto-lead/:id", getProspectoLeadPorID);
-router.put("/lead/put-prospecto-lead/:id", putProspectoLead);
-router.put("/lead/delete-prospecto-lead/:id", deleteProspectoLead);
+router.post("/lead/", postProspectoLead);
+router.get("/lead/", getProspectosLead);
+router.get("/lead/id/:id", getProspectoLeadPorID);
+router.put("/lead/id/:id", putProspectoLead);
+router.put("/lead/delete/id/:id", deleteProspectoLead);
 
 module.exports = router;

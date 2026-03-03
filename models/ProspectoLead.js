@@ -13,68 +13,55 @@ const ProspectoLead = db.define(
       autoIncrement: true,
       primaryKey: true,
     },
+    fecha_registro: {
+      type: DataTypes.DATE,
+    },
     uid_comentario: {
-      type: DataTypes.STRING,
-    },
-    nombres: {
-      type: DataTypes.STRING,
-    },
-    apellido_materno: {
-      type: DataTypes.STRING,
-    },
-    apellido_paterno: {
-      type: DataTypes.STRING,
-    },
-    celular: {
       type: DataTypes.STRING,
     },
     id_empl: {
       type: DataTypes.INTEGER,
     },
+    nombres: {
+      type: DataTypes.STRING,
+    },
+    apellidos: {
+      type: DataTypes.STRING,
+    },
+    celular: {
+      type: DataTypes.STRING,
+    },
+    ubigeo_distrito_residencia: {
+      type: DataTypes.STRING,
+    },
     id_canal: {
       type: DataTypes.INTEGER,
     },
-    id_campania: {
+    id_medio_comunicacion: {
       type: DataTypes.INTEGER,
     },
-    ubigeo_distrito: {
-      type: DataTypes.STRING,
-    },
-    plan_lead: {
-      type: DataTypes.DECIMAL(10, 2),
-    },
-    fecha_cita: {
-      type: DataTypes.STRING(12),
-    },
-    fecha_registro: {
-      type: DataTypes.STRING(12),
-    },
-    ultimo_dia_seguimiento: {
-      type: DataTypes.STRING(12),
-    },
-    id_estado_lead: {
+    id_pgm: {
       type: DataTypes.INTEGER,
     },
-    estado: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
+    id_estado: {
+      type: DataTypes.INTEGER,
     },
     flag: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
     },
   },
-  { tableName: "tb_prospectoLeads" }
+  { tableName: "tb_prospectoLeads" },
 );
 ProspectoLead.hasOne(Distritos, {
   foreignKey: "ubigeo",
-  sourceKey: "ubigeo_distrito",
+  sourceKey: "ubigeo_distrito_residencia",
   as: "lead_distrito",
 });
 ProspectoLead.hasOne(Parametros, {
   foreignKey: "id_param",
-  sourceKey: "id_estado_lead",
-  as: "parametro_estado_lead",
+  sourceKey: "id_estado",
+  as: "parametro_estado",
 });
 ProspectoLead.hasOne(Parametros, {
   foreignKey: "id_param",
@@ -82,17 +69,16 @@ ProspectoLead.hasOne(Parametros, {
   as: "parametro_canal",
 });
 
-ProspectoLead.hasOne(Parametros, {
-  foreignKey: "id_param",
-  sourceKey: "id_campania",
-  as: "parametro_campania",
-});
 ProspectoLead.hasOne(Empleado, {
   foreignKey: "id_empl",
   sourceKey: "id_empl",
   as: "empleado",
 });
-
+ProspectoLead.hasOne(Parametros, {
+  foreignKey: "id_param",
+  sourceKey: "id_medio_comunicacion",
+  as: "parametro_medio_comunicacion",
+});
 ProspectoLead.hasMany(Comentario, {
   foreignKey: "uid_location",
   sourceKey: "uid_comentario",
@@ -128,7 +114,7 @@ ProspectoLead.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos: ProspectoLead",
-      error
+      error,
     );
   });
 

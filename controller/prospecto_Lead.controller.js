@@ -13,6 +13,7 @@ const postProspectoLead = async (req = request, res = response) => {
     const prospecto = new ProspectoLead({
       ...req.body,
       uid_comentario: uid,
+      fecha_registro: new Date(),
     });
     await prospecto.save();
     res.status(200).json(prospecto);
@@ -39,7 +40,7 @@ const getProspectosLead = async (req = request, res = response) => {
                 " ",
                 Sequelize.col("apPaterno_empl"),
                 " ",
-                Sequelize.col("apMaterno_empl")
+                Sequelize.col("apMaterno_empl"),
               ),
               "nombres_apellidos_empl",
             ],
@@ -48,15 +49,15 @@ const getProspectosLead = async (req = request, res = response) => {
         },
         {
           model: Parametros,
+          as: "parametro_estado",
+        },
+        {
+          model: Parametros,
           as: "parametro_canal",
         },
         {
           model: Parametros,
-          as: "parametro_campania",
-        },
-        {
-          model: Parametros,
-          as: "parametro_estado_lead",
+          as: "parametro_medio_comunicacion",
         },
         {
           model: Distritos,
@@ -120,7 +121,7 @@ const putProspectoLead = async (req = request, res = response) => {
       });
     }
 
-    prospectoLead.update(req.body);
+    await prospectoLead.update(req.body);
     res.status(200).json({
       prospectoLead,
     });
@@ -142,7 +143,7 @@ const deleteProspectoLead = async (req = request, res = response) => {
         msg: `No existe un prospectoLead con el id "${id}"`,
       });
     }
-    prospectoLead.update({ flag: false });
+    await prospectoLead.update({ flag: false });
     res.status(200).json({
       prospectoLead,
     });

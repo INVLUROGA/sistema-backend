@@ -57,13 +57,13 @@ const CuentaBalance = db.define(
 CuentaBalance.belongsTo(Proveedor, {
   foreignKey: "id_prov",
   targetKey: "id",
-  // as: "proveedor", // Opcional: alias para la relación
+  as: "proveedor_empresa", // Opcional: alias para la relación
 });
 
 CuentaBalance.belongsTo(Proveedor, {
   foreignKey: "id_prov__",
   targetKey: "id",
-  // as: "proveedor", // Opcional: alias para la relación
+  as: "proveedor", // Opcional: alias para la relación
 });
 
 CuentaBalance.hasOne(Parametros, {

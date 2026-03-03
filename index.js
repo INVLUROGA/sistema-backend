@@ -180,7 +180,6 @@ app.use("/api/movimiento-articulo", require("./routes/kardex.router.js"));
 app.use("/api/articulo", validarJWT, require("./routes/articulo.router.js"));
 app.use("/api/cuenta-balance", require("./routes/cuentaBalance.router.js"));
 // //TODO proveedores // sexo, tipoDoc, estadoCivil, etc
-
 app.use("/api/proveedor", validarJWT, require("./routes/proveedor.router.js"));
 app.use(
   "/api/contrato-prov",
@@ -200,6 +199,7 @@ app.use(
 app.use("/api/parametros", require("./routes/parametros.route.js"));
 app.use("/api/jornada", require("./routes/jornada.route.js"));
 //TODO: USUARIOS(CLIENTES, COLABORADORES, USUARIOS LOGEADOS)
+app.use('/api/empleado', require('./routes/empleado.route.js'))
 app.use("/api/usuario", require("./routes/usuario.route.js"));
 app.use("/api/apireniec", require("./routes/api.reniec.route.js"));
 app.use("/api/cambio-programa", require("./routes/cambioPrograma.route.js"));

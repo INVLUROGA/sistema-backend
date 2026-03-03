@@ -24,7 +24,7 @@ const PostCuentaBalance = async (req = request, res = response) => {
 // Obtener todos los CuentaBalances
 const GetCuentaBalancesxIDEmpresaxTipo = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   try {
     const { id_empresa, tipo } = req.params;
@@ -42,6 +42,7 @@ const GetCuentaBalancesxIDEmpresaxTipo = async (
         },
         {
           model: Proveedor,
+          as: "proveedor_empresa",
         },
       ],
     });
@@ -55,7 +56,7 @@ const GetCuentaBalancesxIDEmpresaxTipo = async (
 
 const GetCuentaBalancesxIDEmpresaxTipoxFecComprobante = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   try {
     const { id_empresa, tipo } = req.params;
@@ -79,6 +80,7 @@ const GetCuentaBalancesxIDEmpresaxTipoxFecComprobante = async (
         },
         {
           model: Proveedor,
+          as: "proveedor_empresa",
         },
       ],
     });
