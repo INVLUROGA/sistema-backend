@@ -774,7 +774,7 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           key: "socios-montos",
-          label: "Comparativos por <br/> asesor",
+          label: "Comparativos de <br/> Ventas y socios",
           url: "/reporte/socios-montos",
           isTitle: false,
           icon: "uil-chart-pie-alt",
