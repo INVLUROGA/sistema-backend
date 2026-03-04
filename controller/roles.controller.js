@@ -202,6 +202,35 @@ const seccionGET = async (req = request, res = response) => {
     if (modulo === "mod-adm") {
       MENU_ITEMS = [
         {
+          key: "movimiento",
+          label: "Ingresos y Egresos",
+          url: "/movimiento",
+          icon: "uil-calender",
+          children: [
+            {
+              key: "gestion-compra",
+              label: "Registro de compra",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/orden-compra",
+            },
+            {
+              key: "gestion-egresos",
+              label: "Egresos",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-egresos",
+            },
+            {
+              key: "gestion-ingresos",
+              label: "Ingresos",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-ingresos",
+            },
+          ],
+        },
+        {
           key: "inventario",
           label: "INVENTARIO",
           url: "/inventario",
@@ -212,7 +241,7 @@ const seccionGET = async (req = request, res = response) => {
               label: "GESTION DE INVENTARIO",
               isTitle: false,
               icon: "uil-calender",
-              url: "/gest-inventario",
+              url: "/gestion-inventario",
             },
             {
               //key: "reporte-utilidad-pgm",
@@ -272,13 +301,6 @@ const seccionGET = async (req = request, res = response) => {
               parentKey: "reporte-fc",
             },
             {
-              key: "pt-reservas",
-              label: "Reservas MonkFit",
-              isTitle: false,
-              icon: "uil-calender",
-              url: "/gestion-monkfit",
-            },
-            {
               key: "reporte-gerencial",
               label: "Gerencial",
               isTitle: false,
@@ -294,40 +316,12 @@ const seccionGET = async (req = request, res = response) => {
             },
           ],
         },
-        {
-          key: "movimiento",
-          label: "Ingresos y Egresos",
-          url: "/movimiento",
-          icon: "uil-calender",
-          children: [
-            {
-              key: "gestion-compra",
-              label: "Registro de compra",
-              isTitle: false,
-              icon: "uil-calender",
-              url: "/orden-compra",
-            },
-            {
-              key: "gestion-egresos",
-              label: "Egresos",
-              isTitle: false,
-              icon: "uil-calender",
-              url: "/gestion-egresos",
-            },
-            {
-              key: "gestion-ingresos",
-              label: "Ingresos",
-              isTitle: false,
-              icon: "uil-calender",
-              url: "/gestion-ingresos",
-            },
-          ],
-        },
 
         {
           key: "cuentas-balances",
           label: "Cuentas Balances",
           icon: "uil-calender",
+          url: "/cuentas-balances",
           children: [
             {
               key: "reporte-cuentas-balance",
@@ -431,52 +425,9 @@ const seccionGET = async (req = request, res = response) => {
           ],
         },
         {
-          key: "planilla",
-          label: "RECURSOS HUMANOS",
-          icon: "uil-calender",
-          url: "/planilla",
-          children: [
-            {
-              key: "colaboradores-cv",
-              label: "CVS",
-              isTitle: false,
-              icon: "uil-calender",
-              url: "/colaboradores-cv",
-            },
-            {
-              key: "colaboradores-dni",
-              label: "DNI",
-              isTitle: false,
-              icon: "uil-calender",
-              url: "/colaboradores-dni",
-            },
-            {
-              key: "colaboradores-admColaboradores",
-              label: "Colaboradores Activos",
-              isTitle: false,
-              icon: "uil-calender",
-              url: "/gestion-empleados-activo",
-            },
-            {
-              key: "colaboradores-admColaboradores",
-              label: "Colaboradores Inactivo",
-              isTitle: false,
-              icon: "uil-calender",
-              url: "/gestion-empleados-inactivo",
-            },
-
-            {
-              label: "Reportes Por Planilla",
-              isTitle: false,
-              icon: "uil-calender",
-              url: "/reporte-admin/RecursosHumanoReportes",
-            },
-          ],
-        },
-        {
           key: "gest-serv",
           label: "Gestion de servicios",
-          url: "/gest-servicios",
+          url: "/gestion-servicios",
           icon: "uil-calender",
           children: [
             {
@@ -494,11 +445,11 @@ const seccionGET = async (req = request, res = response) => {
               url: "/gestion-productos",
             },
             {
-              key: "serv-fito",
-              label: "Fitology",
+              key: "serv-tratamientos-esteticos",
+              label: "Tratamientos Esteticos",
               isTitle: false,
               icon: "uil-calender",
-              url: "/serv-fitology",
+              url: "/tratamientos-esteticos",
             },
             {
               key: "serv-nutri",
@@ -592,6 +543,55 @@ const seccionGET = async (req = request, res = response) => {
     }
     if (modulo === "mod-rrhh") {
       MENU_ITEMS = [
+        {
+          key: "planilla",
+          label: "RECURSOS HUMANOS",
+          icon: "uil-calender",
+          url: "/planilla",
+          children: [
+            {
+              key: "colaboradores-cv",
+              label: "CVS",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/colaboradores-cv",
+            },
+            {
+              key: "colaboradores-dni",
+              label: "DNI",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/colaboradores-dni",
+            },
+            {
+              key: "colaboradores-admColaboradores",
+              label: "Colaboradores Activos",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-empleados-activo",
+            },
+            {
+              key: "colaboradores-admColaboradores",
+              label: "Colaboradores Inactivo",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-empleados-inactivo",
+            },
+
+            {
+              label: "Reportes Por Planilla",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/reporte-admin/RecursosHumanoReportes",
+            },
+          ],
+        },
+        {
+          key: "colaboradores",
+          label: "COLABORADORES",
+          icon: "uil-calender",
+          url: "/colaboradores",
+        },
         {
           //key: "reporte-utilidad-pgm",
           label: "GESTION DE FERIADOS",
