@@ -202,9 +202,10 @@ const seccionGET = async (req = request, res = response) => {
     if (modulo === "mod-adm") {
       MENU_ITEMS = [
         {
-          key: "config",
+          key: "inventario",
           label: "INVENTARIO",
-          isTitle: true,
+          url: "/inventario",
+          icon: "uil-calender",
           children: [
             {
               //key: "reporte-utilidad-pgm",
@@ -260,7 +261,8 @@ const seccionGET = async (req = request, res = response) => {
         {
           key: "reporte-admin",
           label: "Reportes",
-          isTitle: false,
+          url: "/reportes-admin",
+          icon: "uil-calender",
           children: [
             {
               key: "reporte-flujo-caja",
@@ -269,88 +271,92 @@ const seccionGET = async (req = request, res = response) => {
               url: "/reporte-admin/flujo-caja",
               parentKey: "reporte-fc",
             },
+            {
+              key: "pt-reservas",
+              label: "Reservas MonkFit",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-monkfit",
+            },
+            {
+              key: "reporte-gerencial",
+              label: "Gerencial",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/reporte-admin/reporte-gerencial",
+            },
+            {
+              key: "gestion-lead",
+              label: "gestion de lead",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/reporte-admin/gestion-lead",
+            },
           ],
         },
         {
-          key: "pt-reservas",
-          label: "Reservas MonkFit",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/gestion-monkfit",
-        },
-        {
-          key: "reporte-gerencial",
-          label: "Gerencial",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/reporte-admin/reporte-gerencial",
-        },
-        {
-          key: "gestion-lead",
-          label: "gestion de lead",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/reporte-admin/gestion-lead",
-        },
-        {
-          key: "gf-gv",
+          key: "movimiento",
           label: "Ingresos y Egresos",
-          isTitle: true,
-          children: [],
+          url: "/movimiento",
+          icon: "uil-calender",
+          children: [
+            {
+              key: "gestion-compra",
+              label: "Registro de compra",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/orden-compra",
+            },
+            {
+              key: "gestion-egresos",
+              label: "Egresos",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-egresos",
+            },
+            {
+              key: "gestion-ingresos",
+              label: "Ingresos",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-ingresos",
+            },
+          ],
         },
 
         {
-          key: "gestion-compra",
-          label: "Registro de compra",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/orden-compra",
-        },
-        {
-          key: "gestion-egresos",
-          label: "Egresos",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/gestion-egresos",
-        },
-        {
-          key: "gestion-ingresos",
-          label: "Ingresos",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/gestion-ingresos",
-        },
-        {
           key: "cuentas-balances",
           label: "Cuentas Balances",
-          isTitle: false,
-          children: [],
-        },
-        {
-          key: "reporte-cuentas-balance",
-          label: "reporte Cuentas balance",
-          isTitle: false,
           icon: "uil-calender",
-          url: "/reporte-cuentas-balance",
+          children: [
+            {
+              key: "reporte-cuentas-balance",
+              label: "reporte Cuentas balance",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/reporte-cuentas-balance",
+            },
+            {
+              key: "cuentas-cobrar",
+              label: "Cuentas por cobrar",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/cuentas-cobrar",
+            },
+            {
+              key: "cuentas-pagar",
+              label: "Cuentas por pagar",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/cuentas-pagar",
+            },
+          ],
         },
         {
-          key: "cuentas-cobrar",
-          label: "Cuentas por cobrar",
-          isTitle: false,
+          key: "prov",
+          label: "Proveedores",
           icon: "uil-calender",
-          url: "/cuentas-cobrar",
-        },
-        {
-          key: "cuentas-pagar",
-          label: "Cuentas por pagar",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/cuentas-pagar",
-        },
-        {
-          key: "per-ing",
-          label: "PERSONAS INGRESANTES",
-          isTitle: false,
+          url: "/prov",
           children: [
             {
               key: "gestion-ingresantes-activo",
@@ -359,13 +365,6 @@ const seccionGET = async (req = request, res = response) => {
               icon: "uil-calender",
               url: "/gestion-ingresantes-activo",
             },
-          ],
-        },
-        {
-          key: "prov",
-          label: "Proveedores",
-          isTitle: false,
-          children: [
             {
               key: "gest-prov",
               label: "Proveedores activos",
@@ -434,7 +433,8 @@ const seccionGET = async (req = request, res = response) => {
         {
           key: "planilla",
           label: "RECURSOS HUMANOS",
-          isTitle: false,
+          icon: "uil-calender",
+          url: "/planilla",
           children: [
             {
               key: "colaboradores-cv",
@@ -476,7 +476,8 @@ const seccionGET = async (req = request, res = response) => {
         {
           key: "gest-serv",
           label: "Gestion de servicios",
-          isTitle: false,
+          url: "/gest-servicios",
+          icon: "uil-calender",
           children: [
             {
               key: "gestion-pgms",
@@ -509,9 +510,10 @@ const seccionGET = async (req = request, res = response) => {
           ],
         },
         {
-          key: "planilla",
+          key: "otros",
           label: "Otros",
-          isTitle: false,
+          url: "/otros",
+          icon: "uil-calender",
           children: [
             {
               key: "adm-gestionDct",
@@ -531,8 +533,9 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           key: "config",
-          label: "Configuracion",
-          isTitle: false,
+          label: "Configuración",
+          url: "/config",
+          icon: "uil-calender",
           children: [
             {
               key: "gestion-alerta-usuario",
@@ -842,7 +845,7 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           key: "cita",
-          label: "Nutricion y tratamiento",
+          label: "Citas",
           url: "/citas",
           icon: "uil-home-alt",
           children: [
@@ -864,7 +867,7 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           key: "cong-reg",
-          label: "Congelamientos, regalos y canje",
+          label: "gestión CAMBIOS",
           icon: "uil-home-alt",
           children: [
             {
