@@ -124,78 +124,103 @@ const seccionGET = async (req = request, res = response) => {
         {
           key: "ventas",
           label: "Ventas",
-          isTitle: true,
-        },
-        {
-          key: "ventas-nuevaVenta",
-          label: "Nueva venta",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/nueva-venta",
-        },
-        {
-          key: "canjes-nuevoCanje",
-          label: "Nuevo Canje",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/nueva-venta",
-        },
-        {
-          key: "ventas-seguimiento",
-          label: "Seguimiento",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/seguimiento",
+          url: "/ventas",
+          icon: "uil-home-alt",
+          children: [
+            {
+              key: "ventas-nuevaVenta",
+              label: "Nueva venta",
+              icon: "uil-calender",
+              url: "/nueva-venta",
+              parentKey: "ventas-nueva-venta",
+            },
+            {
+              key: "gestion-ventas",
+              label: "Ventas",
+              icon: "uil-calender",
+              url: "/gestion-ventas",
+              parentKey: "ventas-gestion-ventas",
+            },
+            {
+              key: "ventas-seguimiento",
+              label: "Seguimiento",
+              icon: "uil-calender",
+              url: "/seguimiento",
+              parentKey: "ventas-seguimiento",
+            },
+          ],
         },
         {
           key: "cliente",
-          label: "SOCIOS",
-          isTitle: true,
-        },
-        {
-          key: "cliente-contratos",
-          label: "Contratos de socios",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/contrato-clientes",
-        },
-        {
-          key: "cliente-admClientes",
-          label: "Gestion de socios",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/gestion-clientes",
+          label: "Socios",
+          url: "/socio",
+          icon: "uil-home-alt",
+          children: [
+            {
+              key: "cliente-gestion-socios",
+              label: "Gestion de socios",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-clientes",
+            },
+            {
+              key: "cliente-contratos",
+              label: "Contratos de socios",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/contrato-clientes",
+            },
+          ],
         },
         {
           key: "cita",
-          label: "Nutricion y tratamientos",
-          isTitle: true,
-        },
-        {
-          key: "citas-nutricional",
-          label: "Citas nutricionista",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/crear-citas-nutricion",
-        },
-        {
-          key: "citas-fitology",
-          label: "Citas Tratamientos esteticos",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/crear-citas-fitology",
+          label: "Citas",
+          url: "/citas",
+          icon: "uil-home-alt",
+          children: [
+            {
+              key: "citas-NUT",
+              label: "Citas nutricionista",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/crear-citas-nutricion",
+            },
+            {
+              key: "hist-citas-NUT",
+              label: "Historial de citas nutricionista",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/history-citas-nutricion",
+            },
+          ],
         },
         {
           key: "cong-reg",
-          label: "Congelamiento y Regalo",
-          isTitle: true,
-        },
-        {
-          key: "congreg",
-          label: "Congelamiento y regalos",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/extension-membresia",
+          label: "gestión CAMBIOS",
+          icon: "uil-home-alt",
+          children: [
+            {
+              key: "canje-gestion",
+              label: "Gestion de canjes",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-canjes",
+            },
+            {
+              key: "canje-reporte",
+              label: "REPORTE DE CANJE",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/reporte-canje",
+            },
+            {
+              key: "congreg",
+              label: "Congelamientos y regalos",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/extension-membresia",
+            },
+          ],
         },
       ];
     }
@@ -544,10 +569,10 @@ const seccionGET = async (req = request, res = response) => {
     if (modulo === "mod-rrhh") {
       MENU_ITEMS = [
         {
-          key: "planilla",
-          label: "RECURSOS HUMANOS",
+          key: "colaboradores",
+          label: "COLABORADORES",
           icon: "uil-calender",
-          url: "/planilla",
+          url: "/colaborador",
           children: [
             {
               key: "colaboradores-cv",
@@ -577,20 +602,7 @@ const seccionGET = async (req = request, res = response) => {
               icon: "uil-calender",
               url: "/gestion-empleados-inactivo",
             },
-
-            {
-              label: "Reportes Por Planilla",
-              isTitle: false,
-              icon: "uil-calender",
-              url: "/reporte-admin/RecursosHumanoReportes",
-            },
           ],
-        },
-        {
-          key: "colaboradores",
-          label: "COLABORADORES",
-          icon: "uil-calender",
-          url: "/colaboradores",
         },
         {
           //key: "reporte-utilidad-pgm",
@@ -767,7 +779,6 @@ const seccionGET = async (req = request, res = response) => {
             },
           ],
         },
-
         {
           key: "reportes",
           label: "Reportes",
