@@ -13,7 +13,6 @@ const {
   obtenerCumpleaniosDeEmpleados,
   reactivarAlertasMensuales,
   alertaResumenVentasDiario,
-  alertaResumenVentasProyectado,
 } = require("./middlewares/eventosCron.js");
 const { enviarBotonesWsp } = require("./config/whatssap-web.js");
 const {
