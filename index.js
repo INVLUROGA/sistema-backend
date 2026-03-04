@@ -12,6 +12,7 @@ const {
   recordatorioReservaCita2hAntes,
   obtenerCumpleaniosDeEmpleados,
   reactivarAlertasMensuales,
+  alertaResumenVentasDiario,
 } = require("./middlewares/eventosCron.js");
 const { enviarBotonesWsp } = require("./config/whatssap-web.js");
 const {
@@ -48,6 +49,11 @@ cron.schedule("30 8 * * *", () => {
 });
 cron.schedule("59 23 * * *", () => {
   recordatorioReservaCita2hAntes();
+});
+
+// Resumen diario de ventas → 6:00 AM hora Lima (UTC-5 = 11:00 AM UTC)
+cron.schedule("0 11 * * *", async () => {
+  await alertaResumenVentasDiario();
 });
 const fileServer = express.static;
 require("dotenv").config();
