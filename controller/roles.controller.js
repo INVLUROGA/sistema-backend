@@ -688,6 +688,20 @@ const seccionGET = async (req = request, res = response) => {
               parentKey: "socios-montos",
             },
             {
+              key: "r-vigentes-historico",
+              icon: "uil-calender",
+              label: "Inscripciones por mes",
+              url: "/reporte/vigentes-historico",
+              parentKey: "socios-montos",
+            },
+            {
+              key: "r-ranking-asesor-diaria",
+              icon: "uil-calender",
+              label: "RANKING DIARIO",
+              url: "/reporte/ranking-asesor-diaria",
+              parentKey: "socios-montos",
+            },
+            {
               key: "r-comisiones",
               label: "COMISIONES",
               isTitle: false,
