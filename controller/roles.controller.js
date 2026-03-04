@@ -804,28 +804,9 @@ const seccionGET = async (req = request, res = response) => {
           ],
         },
         {
-          key: "canje",
-          label: "CANJES",
-          isTitle: true,
-        },
-        {
-          key: "canje-gestion",
-          label: "Gestion de canjes",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/gestion-canjes",
-        },
-        {
-          key: "canje-reporte",
-          label: "REPORTE DE CANJE",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/reporte-canje",
-        },
-        {
           key: "cliente",
           label: "Socios",
-          isTitle: false,
+          url: "/socio",
           children: [
             {
               key: "cliente-gestion-socios",
@@ -848,14 +829,14 @@ const seccionGET = async (req = request, res = response) => {
               icon: "uil-calender",
               url: "/contrato-clientes",
             },
+            {
+              key: "cliente-prospecto",
+              label: "Prospectos",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-prospecto",
+            },
           ],
-        },
-        {
-          key: "cliente-prospecto",
-          label: "Prospectos",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/gestion-prospecto",
         },
         {
           key: "cita",
