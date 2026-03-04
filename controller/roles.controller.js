@@ -638,7 +638,8 @@ const seccionGET = async (req = request, res = response) => {
         {
           key: "cantidad-socios-montos",
           label: "Resumen general",
-          isTitle: false,
+          icon: "uil-home-alt",
+          url: "/resumen-general",
           children: [
             {
               key: "r-comparativo-mensual",
@@ -673,7 +674,7 @@ const seccionGET = async (req = request, res = response) => {
         {
           key: "asesores",
           label: "Asesores",
-          isTitle: false,
+          icon: "uil-home-alt",
           url: "/reportes-asesores",
           children: [
             {
@@ -807,6 +808,7 @@ const seccionGET = async (req = request, res = response) => {
           key: "cliente",
           label: "Socios",
           url: "/socio",
+          icon: "uil-home-alt",
           children: [
             {
               key: "cliente-gestion-socios",
@@ -841,7 +843,8 @@ const seccionGET = async (req = request, res = response) => {
         {
           key: "cita",
           label: "Nutricion y tratamiento",
-          isTitle: false,
+          url: "/citas",
+          icon: "uil-home-alt",
           children: [
             {
               key: "citas-NUT",
@@ -862,7 +865,7 @@ const seccionGET = async (req = request, res = response) => {
         {
           key: "cong-reg",
           label: "Congelamientos, regalos y canje",
-          isTitle: false,
+          icon: "uil-home-alt",
           children: [
             {
               key: "canje-gestion",
