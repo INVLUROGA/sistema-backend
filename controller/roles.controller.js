@@ -681,24 +681,10 @@ const seccionGET = async (req = request, res = response) => {
           url: "/reportes-asesores",
           children: [
             {
-              key: "r-comparativo-mensual",
-              icon: "uil-calender",
-              label: "Ventas Comparativos por asesor",
-              url: "/reporte/comparativo-ventas",
-              parentKey: "socios-montos",
-            },
-            {
               key: "r-renovaciones-mes",
               icon: "uil-calender",
-              label: "Renovaciones por mes",
-              url: "/reporte/renovaciones-por-mes",
-              parentKey: "socios-montos",
-            },
-            {
-              key: "r-vigentes-historico",
-              icon: "uil-calender",
-              label: "Inscripciones por mes",
-              url: "/reporte/vigentes-historico",
+              label: "COMPARATIVO por ASESOR",
+              url: "/reporte/ranking-por-asesor",
               parentKey: "socios-montos",
             },
             {
