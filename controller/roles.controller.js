@@ -670,11 +670,11 @@ const seccionGET = async (req = request, res = response) => {
             },
           ],
         },
-
         {
           key: "asesores",
           label: "Asesores",
           isTitle: false,
+          url: "/reportes-asesores",
           children: [
             {
               key: "r-comparativo-mensual",
@@ -709,60 +709,59 @@ const seccionGET = async (req = request, res = response) => {
         {
           key: "ventas",
           label: "Ventas",
-          url: "/reporte-vvv",
+          url: "/ventas",
           icon: "uil-home-alt",
-          isTitle: false,
-          children: [],
-        },
-
-        {
-          key: "ventas-nuevaVenta",
-          label: "Nueva venta",
-          icon: "uil-calender",
-          url: "/nueva-venta",
-          parentKey: "ventas-nueva-venta",
-        },
-        {
-          key: "pt-reservas",
-          label: "Reservas MonkFit",
-          icon: "uil-calender",
-          url: "/gestion-monkfit",
-          parentKey: "ventas-pt-reservas",
-        },
-        {
-          key: "gestion-ventas",
-          label: "Ventas",
-          icon: "uil-calender",
-          url: "/gestion-ventas",
-          parentKey: "ventas-gestion-ventas",
-        },
-        {
-          key: "gestion-ventas",
-          label: "ventas de transferencias",
-          icon: "uil-calender",
-          url: "/ventas-transferencias",
-          parentKey: "ventas-transferencias",
-        },
-        {
-          key: "ventas-seguimiento",
-          label: "Seguimiento",
-          icon: "uil-calender",
-          url: "/seguimiento",
-          parentKey: "ventas-seguimiento",
-        },
-        {
-          key: "ventas-seguimiento",
-          label: "reporte de seguimiento",
-          icon: "uil-calender",
-          url: "/reporte/reporte-seguimiento",
-          parentKey: "ventas-ventas-seguimiento",
-        },
-        {
-          key: "ventas-seguimiento",
-          label: "Seguimiento por mes",
-          icon: "uil-calender",
-          url: "/reporte/seguimiento-x-mes",
-          parentKey: "ventas-seguimiento-x-mes",
+          children: [
+            {
+              key: "ventas-nuevaVenta",
+              label: "Nueva venta",
+              icon: "uil-calender",
+              url: "/nueva-venta",
+              parentKey: "ventas-nueva-venta",
+            },
+            {
+              key: "ventas-reservasmf",
+              label: "Reservas MonkFit",
+              icon: "uil-calender",
+              url: "/gestion-monkfit",
+              parentKey: "ventas-reservasmf",
+            },
+            {
+              key: "gestion-ventas",
+              label: "Ventas",
+              icon: "uil-calender",
+              url: "/gestion-ventas",
+              parentKey: "ventas-gestion-ventas",
+            },
+            {
+              key: "gestion-ventas-transferencias",
+              label: "ventas de transferencias",
+              icon: "uil-calender",
+              url: "/ventas-transferencias",
+              parentKey: "ventas-transferencias",
+            },
+            {
+              key: "ventas-seguimiento",
+              label: "Seguimiento",
+              icon: "uil-calender",
+              url: "/seguimiento",
+              parentKey: "ventas-seguimiento",
+            },
+            {
+              key: "ventas-seguimiento",
+              label: "reporte de seguimiento",
+              icon: "uil-calender",
+              url: "/reporte/reporte-seguimiento",
+              parentKey: "ventas-ventas-seguimiento",
+            },
+            {
+              key: "ventas-seguimiento",
+              label: "Seguimiento por mes",
+              icon: "uil-calender",
+              url: "/reporte/seguimiento-x-mes",
+              parentKey: "ventas-seguimiento-x-mes",
+            },
+          ],
         },
 
         {
@@ -829,14 +828,14 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: false,
           children: [
             {
-              key: "cliente-admClientes",
+              key: "cliente-gestion-socios",
               label: "Gestion de socios",
               isTitle: false,
               icon: "uil-calender",
               url: "/gestion-clientes",
             },
             {
-              key: "cliente-admClientes",
+              key: "cliente-membresia-socios",
               label: "Membresias de socios",
               isTitle: false,
               icon: "uil-calender",
@@ -1078,125 +1077,6 @@ const seccionGET = async (req = request, res = response) => {
           isTitle: false,
           icon: "uil-calender",
           url: "/configuracion-terminos",
-        },
-      ];
-    }
-    if (modulo === "mod-recepcion") {
-      MENU_ITEMS = [
-        {
-          key: "manicure",
-          label: "Manicure",
-          isTitle: true,
-        },
-        {
-          key: "ventas-nuevaManicure",
-          label: "Nueva venta manicure",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/nueva-venta-manicure",
-        },
-        {
-          key: "ventas",
-          label: "Ventas",
-          isTitle: true,
-        },
-        {
-          key: "ventas-nuevaVenta",
-          label: "Nueva venta",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/nueva-venta",
-        },
-        {
-          key: "detalle-comprobantes",
-          label: "DETALLE DE COMPROBANTES",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/detalle-comprobantes",
-        },
-        {
-          key: "gestion-ventas",
-          label: "COMPROBANTES DE VENTAS POR DIA Y HORA",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/gestion-ventas",
-        },
-        {
-          key: "resumen-comparativo",
-          label: "Resumen Marketing",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/resumen-comparativo",
-        },
-        {
-          key: "resumen-venta-x-dia-calendario",
-          label: "resumen ventas por dia calendario",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/resumen-venta-x-dia-calendario",
-        },
-        {
-          key: "acumulado-anual-x-dia-calendario",
-          label: "Acumulado anual por dia calendario",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/acumulado-anual-x-dia-calendario",
-        },
-        {
-          key: "comprobantes-rango-fecha",
-          label: "COMPROBANTES RANGO DE FECHA",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/comprobantes-rango-fecha",
-        },
-        {
-          key: "comandas",
-          label: "comandas",
-          isTitle: true,
-        },
-        {
-          key: "gestion-comandas",
-          label: "COMANDAS",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/gestion-comandas",
-        },
-        {
-          key: "cliente",
-          label: "CLIENTES",
-          isTitle: true,
-        },
-        {
-          key: "cliente-admClientes",
-          label: "Gestion de CLIENTES",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/gestion-clientes",
-        },
-        {
-          key: "cita",
-          label: "Nutricion y tratamientos",
-          isTitle: true,
-        },
-        {
-          key: "citas-NUT",
-          label: "RESERVAS",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/crear-citas-nutricion",
-        },
-
-        {
-          key: "gest-gastos",
-          label: "gastos",
-          isTitle: true,
-        },
-        {
-          key: "gestion-gfgv",
-          label: "Egresos",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/gestion-gastosF-gastosV",
         },
       ];
     }
