@@ -985,6 +985,152 @@ function calcularFechasVentas(ventas) {
     };
   });
 }
+
+const getQuotaParaMes = (monthIndex, year) => {
+  const y = Number(year);
+  const m = Number(monthIndex);
+  if (y === 2026 && m === 1) return 100000;
+  if (y >= 2026) return 110000;
+  if (y === 2025) {
+    if (m <= 6) return 60000;
+    if (m === 7) return 70000;
+    if (m === 8) return 75000;
+    if (m === 9) return 85000;
+    if (m >= 10) return 90000;
+  }
+  return 50000;
+};
+const alertaResumenVentasDiario = async () => {
+  try {
+    console.log("[alertaResumenVentasDiario] Iniciando...");
+    const ahora = dayjs().tz("America/Lima");
+    const year = ahora.year();
+    const month = ahora.month();
+    const diaHoy = ahora.date();
+    const diaProyectado = diaHoy + 3;
+
+    const NOMBRES_MESES = [
+      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ];
+
+    // ── 1. VENTAS DEL MES ACTUAL (día 1 → hoy) ──────────────────────────────
+    const fechaInicioMes = ahora.startOf("month").toDate();
+    const fechaHoyObj = ahora.endOf("day").toDate();
+
+    const detalleMesActual = await detalleVenta_membresias.findAll({
+      attributes: ["tarifa_monto"],
+      include: [{
+        model: Venta,
+        attributes: ["fecha_venta"],
+        where: {
+          id_empresa: 598,
+          flag: true,
+          fecha_venta: { [Op.between]: [fechaInicioMes, fechaHoyObj] }
+        },
+        required: true
+      }]
+    });
+
+    const totalMesActual = detalleMesActual.reduce(
+      (s, d) => s + Number(d.tarifa_monto || 0), 0
+    );
+
+    // ── 2. HISTÓRICO: General para extraer los dos Top 3 desde Septiembre 2024 ──
+    const inicioHistorico = dayjs("2024-09-01").tz("America/Lima").startOf("day").toDate();
+    const finHistorico = ahora.subtract(1, "month").endOf("month").toDate();
+
+    const detalleHistorico = await detalleVenta_membresias.findAll({
+      attributes: ["tarifa_monto"],
+      include: [{
+        model: Venta,
+        attributes: ["fecha_venta"],
+        where: {
+          id_empresa: 598,
+          flag: true,
+          fecha_venta: { [Op.between]: [inicioHistorico, finHistorico] }
+        },
+        required: true
+      }]
+    });
+
+    // Separamos en dos mapas: uno hasta diaHoy y otro hasta diaProyectado
+    const mapaHistoricoHoy = new Map();
+    const mapaHistoricoProy = new Map();
+
+    for (const d of detalleHistorico) {
+      const fv = d.tb_ventum?.fecha_venta || d.tb_venta?.fecha_venta;
+      if (!fv) continue;
+      const fdayjs = dayjs(fv).tz("America/Lima");
+      const diaVenta = fdayjs.date();
+
+      const key = `${fdayjs.year()}-${fdayjs.month()}`;
+      const label = `${NOMBRES_MESES[fdayjs.month()]} ${fdayjs.year()}`;
+      const monto = Number(d.tarifa_monto || 0);
+
+      // Para el Top 3 del día de hoy
+      if (diaVenta <= diaHoy) {
+        if (!mapaHistoricoHoy.has(key)) mapaHistoricoHoy.set(key, { total: 0, label });
+        mapaHistoricoHoy.get(key).total += monto;
+      }
+
+      // Para el Top 3 proyectado (+3 días)
+      if (diaVenta <= diaProyectado) {
+        if (!mapaHistoricoProy.has(key)) mapaHistoricoProy.set(key, { total: 0, label });
+        mapaHistoricoProy.get(key).total += monto;
+      }
+    }
+
+    const top3Hoy = [...mapaHistoricoHoy.values()]
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 3);
+
+    const top3Proy = [...mapaHistoricoProy.values()]
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 3);
+
+    const meta = getQuotaParaMes(month, year);
+    const pctMeta = meta > 0 ? ((totalMesActual / meta) * 100).toFixed(1) : "—";
+    const fmt = (n) => `S/ ${Number(n || 0).toLocaleString("es-PE", { minimumFractionDigits: 0 })}`;
+
+    const renderTop3 = (top3Array) => {
+      const lineas = top3Array.map((m) =>
+        `   - ${m.label}: ${fmt(m.total)}`
+      ).join("\n");
+      // Siempre añadimos el Mes Actual como la última posición
+      return lineas ? `${lineas}\n   - ${NOMBRES_MESES[month]}: ${fmt(totalMesActual)}` : `   - ${NOMBRES_MESES[month]}: ${fmt(totalMesActual)}`;
+    };
+
+    const diaStr = String(diaHoy).padStart(2, "0");
+    const diaProyStr = String(diaProyectado).padStart(2, "0");
+
+    const mensaje =
+      `📊 *RESUMEN DIARIO DE VENTAS - CHANGE - The Slim Studio*\n\n` +
+      ` *Meta (${NOMBRES_MESES[month]}):* ${fmt(meta)} → *${pctMeta}%* alcanzado\n\n\n` +
+      ` Del *01* al *${diaStr}* de ${NOMBRES_MESES[month]} ${year}\n\n` +
+      `${renderTop3(top3Hoy)}\n\n\n` +
+      ` Del *01* al *${diaProyStr}* de ${NOMBRES_MESES[month]} ${year}\n\n` +
+      `${renderTop3(top3Proy)}`;
+
+    const userIds = [35, 31, 22, 8];
+
+    for (const id_user of userIds) {
+      await AlertasUsuario.create({
+        id_user,
+        tipo_alerta: 1428,
+        mensaje: mensaje,
+        fecha: ahora.toDate(),
+        id_estado: 1,
+        flag: true
+      });
+      console.log(`[alertaResumenVentasDiario] ✅ Alerta registrada para user ${id_user} en tb_alertaUsuarios.`);
+    }
+
+  } catch (error) {
+    console.error("[alertaResumenVentasDiario] ❌ Error:", error.message || error);
+  }
+};
+
 module.exports = {
   recordatorioReservaCita2hAntes,
   obtenerCumpleaniosCliente,
@@ -997,4 +1143,5 @@ module.exports = {
   recordatorioReservaCita24hAntes,
   obtenerCumpleaniosDeEmpleados,
   reactivarAlertasMensuales,
+  alertaResumenVentasDiario,
 };
