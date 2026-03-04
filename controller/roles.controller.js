@@ -663,6 +663,13 @@ const seccionGET = async (req = request, res = response) => {
               url: "/resumen-ejecutivo",
             },
             {
+              key: "r-renovaciones-mes",
+              icon: "uil-calender",
+              label: "COMPARATIVO por ASESOR",
+              url: "/reporte/ranking-por-asesor",
+              parentKey: "socios-montos",
+            },
+            {
               key: "r-comparativo-mensual",
               icon: "uil-calender",
               label: "Comparativo Mensual Ventas",
