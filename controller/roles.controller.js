@@ -88,34 +88,47 @@ const seccionGET = async (req = request, res = response) => {
       MENU_ITEMS = [
         {
           key: "cita",
-          label: "Nutricion y tratamientos",
-          isTitle: true,
-        },
-        {
-          key: "citas-NUT",
-          label: "Citas nutricionista",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/crear-citas-nutricion",
-        },
-        {
-          key: "hist-citas-NUT",
-          label: "Historial de citas nutricionista",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/history-citas-nutricion",
+          label: "Citas",
+          url: "/citas",
+          icon: "uil-home-alt",
+          children: [
+            {
+              key: "citas-NUT",
+              label: "Citas nutricionista",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/crear-citas-nutricion",
+            },
+            {
+              key: "hist-citas-NUT",
+              label: "Historial de citas nutricionista",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/history-citas-nutricion",
+            },
+          ],
         },
         {
           key: "cliente",
-          label: "SOCIOS",
-          isTitle: true,
-        },
-        {
-          key: "cliente-admClientes",
-          label: "Gestion de socios",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/gestion-clientes",
+          label: "Socios",
+          url: "/socio",
+          icon: "uil-home-alt",
+          children: [
+            {
+              key: "cliente-gestion-socios",
+              label: "Gestion de socios",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-clientes",
+            },
+            {
+              key: "cliente-contratos",
+              label: "Contratos de socios",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/contrato-clientes",
+            },
+          ],
         },
       ];
     }
