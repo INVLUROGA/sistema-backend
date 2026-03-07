@@ -164,11 +164,15 @@ const alertasUsuario = async () => {
         const esHoraBatch = (horaPeru === 11 || horaPeru === 16) && minutoActual === 0;
         coincide = esMismoDia && esHoraBatch;
       } else {
-
-        coincide =
-          esMismoDia &&
-          horaPeru === fechaAlerta.hour() &&
-          minutoActual === fechaAlerta.minute();
+        // Para el resumen de ventas (1428), insistir si ya pasó la hora pero sigue siendo el mismo día
+        if (alerta.tipo_alerta === 1428) {
+          coincide = esMismoDia && (ahora.isAfter(fechaAlerta) || ahora.isSame(fechaAlerta, 'minute'));
+        } else {
+          coincide =
+            esMismoDia &&
+            horaPeru === fechaAlerta.hour() &&
+            minutoActual === fechaAlerta.minute();
+        }
       }
 
       if (coincide) {
@@ -197,15 +201,11 @@ const alertasUsuario = async () => {
             continue;
           }
 
-          const buttons = [
-            { id: `btn_si_${alerta.id}`, label: "SI" },
-            { id: "btn_no", label: "NO" },
-          ];
 
           await enviarMensajesWsp(
             alerta.auth_user.telefono_user,
-            `${alerta.mensaje}\n\n¿Ya realizaste el pago?\nResponde *SI* para confirmar y detener las alertas de este mes.`,
-            buttons
+            `${alerta.mensaje}\n\n¿Ya realizaste el pago?\nResponde *SI* para confirmar y detener las alertas de este mes.`
+
           );
           console.log(`[1425] Mensaje enviado: ${alerta.mensaje}`);
 
@@ -1102,7 +1102,7 @@ const alertaResumenVentasDiario = async () => {
       `${textoRangoProy}\n\n` +
       `${renderTop3(top3Proy)}`;
 
-    const userIds = [35, 31, 22, 8];
+    const userIds = [35, 31, 22, 8, 23, 7];
 
     for (const id_user of userIds) {
       await AlertasUsuario.create({
