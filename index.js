@@ -14,7 +14,6 @@ const {
   reactivarAlertasMensuales,
   alertaResumenVentasDiario,
 } = require("./middlewares/eventosCron.js");
-const { enviarBotonesWsp } = require("./config/whatssap-web.js");
 const {
   obtenerCumpleaniosDelMesSiguiente,
 } = require("./middlewares/EventosCron/obtenerCumpleañosDelMesSiguiente.js");

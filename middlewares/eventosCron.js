@@ -20,7 +20,6 @@ const {
   enviarMensajesWsp,
   enviarMapaWsp__CIRCUS,
   enviarMensajesWsp__CIRCUS,
-  enviarBotonesWsp,
 } = require("../config/whatssap-web");
 const dayjs = require("dayjs");
 
@@ -203,7 +202,7 @@ const alertasUsuario = async () => {
             { id: "btn_no", label: "NO" },
           ];
 
-          await enviarBotonesWsp(
+          await enviarMensajesWsp(
             alerta.auth_user.telefono_user,
             `${alerta.mensaje}\n\n¿Ya realizaste el pago?\nResponde *SI* para confirmar y detener las alertas de este mes.`,
             buttons
