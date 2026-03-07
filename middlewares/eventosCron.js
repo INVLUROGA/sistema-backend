@@ -33,7 +33,6 @@ const isSameOrBefore = require("dayjs/plugin/isSameOrBefore");
 const { Cita, eventoServicio } = require("../models/Cita");
 const obtenerCitasxHorasFinales = require("./EventosCron/obtenerCitasxHorasFinales");
 const { AlertasUsuario } = require("../models/Auditoria");
-const { getBlacklist } = require("../helpers/blacklistManager");
 const { FunctionsHelpers } = require("../helpers/FunctionsHelpers");
 const { messageWSP } = require("../types/types");
 
@@ -151,8 +150,6 @@ const alertasUsuario = async () => {
     const minutoActual = ahora.minute();
 
     const processedKeys = new Set();
-    const rawBlacklist = getBlacklist();
-    const blacklist = rawBlacklist.map(m => m.trim().replace(/\s+/g, ' ')); // normalizar al cargar
 
     for (const alerta of alertasJSON) {
       const fechaAlerta = dayjs(alerta.fecha).tz("America/Lima");
@@ -177,12 +174,6 @@ const alertasUsuario = async () => {
 
       if (coincide) {
         const mensajeLimpio = alerta.mensaje.trim().replace(/\s+/g, ' ');
-
-        // 🚫 BLACKLIST: si el mensaje está bloqueado, lo saltamos sin enviar
-        if (blacklist.includes(mensajeLimpio)) {
-          console.log(`[BLACKLIST] Mensaje bloqueado, no se envía: id=${alerta.id}`);
-          continue;
-        }
 
         const uniqueKey = `${alerta.id_user}|${alerta.tipo_alerta}|${mensajeLimpio}`;
 
@@ -729,10 +720,6 @@ const reactivarAlertasMensuales = async () => {
     const mesAnterior = new Date(hoy);
     mesAnterior.setMonth(mesAnterior.getMonth() - 1);
 
-    // Cargamos la blacklist para no recrear alertas que el usuario haya bloqueado
-    const rawBlacklist = getBlacklist();
-    const blacklist = rawBlacklist.map(m => m.trim().replace(/\\s+/g, ' '));
-
     const alertasCanceladas = await AlertasUsuario.findAll({
       where: {
         tipo_alerta: 1425,
@@ -746,11 +733,7 @@ const reactivarAlertasMensuales = async () => {
     });
 
     for (const alerta of alertasCanceladas) {
-      const mensajeLimpio = alerta.mensaje.trim().replace(/\\s+/g, ' ');
-      if (blacklist.includes(mensajeLimpio)) {
-        // Ignorar mensajes bloqueados
-        continue;
-      }
+      const mensajeLimpio = alerta.mensaje.trim().replace(/\s+/g, ' ');
 
       // Generar nueva fecha para este mes usando dayjs para manejar overflows (ej: 31 Ene -> 28 Feb)
       let nuevaFecha = dayjs(alerta.fecha).add(1, 'month').toDate();
@@ -1007,7 +990,9 @@ const alertaResumenVentasDiario = async () => {
     const year = ahora.year();
     const month = ahora.month();
     const diaHoy = ahora.date();
-    const diaProyectado = diaHoy + 3;
+    const fechaProyectada = ahora.add(3, "day");
+    // Usamos un "tope" para la comparación histórica: si se pasa del mes, es 31
+    const diaTopeProyectado = diaHoy + 3;
 
     const NOMBRES_MESES = [
       "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -1075,7 +1060,7 @@ const alertaResumenVentasDiario = async () => {
       }
 
       // Para el Top 3 proyectado (+3 días)
-      if (diaVenta <= diaProyectado) {
+      if (diaVenta <= diaTopeProyectado) {
         if (!mapaHistoricoProy.has(key)) mapaHistoricoProy.set(key, { total: 0, label });
         mapaHistoricoProy.get(key).total += monto;
       }
@@ -1102,14 +1087,20 @@ const alertaResumenVentasDiario = async () => {
     };
 
     const diaStr = String(diaHoy).padStart(2, "0");
-    const diaProyStr = String(diaProyectado).padStart(2, "0");
+    const diaProyStr = String(fechaProyectada.date()).padStart(2, "0");
+    const mesProyNombre = NOMBRES_MESES[fechaProyectada.month()];
+
+    // Si la proyección cae en el mismo mes
+    const textoRangoProy = (fechaProyectada.month() === month)
+      ? ` Del *01* al *${diaProyStr}* de ${NOMBRES_MESES[month]} ${year}`
+      : ` Del *01 de ${NOMBRES_MESES[month]}* al *${diaProyStr} de ${mesProyNombre}* ${year}`;
 
     const mensaje =
       `📊 *RESUMEN DIARIO DE VENTAS - CHANGE - The Slim Studio*\n\n` +
       ` *Meta (${NOMBRES_MESES[month]}):* ${fmt(meta)} → *${pctMeta}%* alcanzado\n\n\n` +
       ` Del *01* al *${diaStr}* de ${NOMBRES_MESES[month]} ${year}\n\n` +
       `${renderTop3(top3Hoy)}\n\n\n` +
-      ` Del *01* al *${diaProyStr}* de ${NOMBRES_MESES[month]} ${year}\n\n` +
+      `${textoRangoProy}\n\n` +
       `${renderTop3(top3Proy)}`;
 
     const userIds = [35, 31, 22, 8];

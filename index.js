@@ -170,7 +170,6 @@ app.use("/api/storage/blob", require("./routes/upload/blob.router.js"));
 
 app.use("/api/tipocambio", require("./routes/tipocambio.route.js"));
 app.use("/api/alerta-usuario", require("./routes/alertaUsuario.route.js"));
-app.use("/api/blacklist", require("./routes/blacklist.route.js"));
 
 //RUTA FILES
 app.use("/api/file", fileServer(urlArchivos));
@@ -272,7 +271,6 @@ app.use("/api/terminologia", require("./routes/terminologia.router.js"));
 //app.use("/api/entrenamiento", require("./routes/entrenamiento.router.js"));
 //CIRCUS----
 app.use("/api/circus", require("./routes/routersCircus/servicios.router.js"));
-//app.use("/api/entrenamiento", require("./routes/entrenamiento.router.js"));
 
 app.use("/api/canjes", require("./routes/canjes.router.js"));
 app.use("/api/penalidad", require("./routes/penalidad.router.js"));
