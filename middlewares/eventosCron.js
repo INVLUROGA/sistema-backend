@@ -22,6 +22,9 @@ const {
   enviarMensajesWsp__CIRCUS,
 } = require("../config/whatssap-web");
 const dayjs = require("dayjs");
+require('dayjs/locale/es');
+dayjs.locale('es');
+
 
 const { Distritos } = require("../models/Distritos");
 const { Seguimiento } = require("../models/Seguimientos");
@@ -183,7 +186,7 @@ const alertasUsuario = async () => {
         if (processedKeys.has(uniqueKey)) continue;
         processedKeys.add(uniqueKey);
 
-        if (alerta.tipo_alerta === 1425) {
+        if (alerta.tipo_alerta === 1425 || alerta.tipo_alerta === 1428) {
           // 🔒 LOCK ATÓMICO: marcar como "en proceso" (id_estado=2) ANTES de enviar.
           // Si otra instancia ya lo tomó, el UPDATE afecta 0 filas → saltamos.
           const [filasAfectadas] = await AlertasUsuario.update(
@@ -197,17 +200,20 @@ const alertasUsuario = async () => {
           );
 
           if (filasAfectadas === 0) {
-            console.log(`[DUPLICADO EVITADO 1425] Otra instancia ya procesó la alerta id=${alerta.id}`);
+            console.log(`[DUPLICADO EVITADO ${alerta.tipo_alerta}] Otra instancia ya procesó la alerta id=${alerta.id}`);
             continue;
           }
 
+          if (alerta.tipo_alerta === 1425) {
+            await enviarMensajesWsp(
+              alerta.auth_user.telefono_user,
+              `${alerta.mensaje}\n\n¿Ya realizaste el pago?\nResponde *SI* para confirmar y detener las alertas de este mes.`
+            );
+          } else {
+            await enviarMensajesWsp(alerta.auth_user.telefono_user, alerta.mensaje);
+          }
 
-          await enviarMensajesWsp(
-            alerta.auth_user.telefono_user,
-            `${alerta.mensaje}\n\n¿Ya realizaste el pago?\nResponde *SI* para confirmar y detener las alertas de este mes.`
-
-          );
-          console.log(`[1425] Mensaje enviado: ${alerta.mensaje}`);
+          console.log(`[${alerta.tipo_alerta}] Mensaje enviado: ${alerta.mensaje.substring(0, 50)}...`);
 
           // Marcar como enviada (id_estado=0) para no reenviar en siguientes ejecuciones del día
           await AlertasUsuario.update(
@@ -215,19 +221,24 @@ const alertasUsuario = async () => {
             { where: { id: alerta.id } }
           );
         } else {
+          // Bloqueo para otros tipos de alertas (1426, 1427)
+          const [filasAfectadas] = await AlertasUsuario.update(
+            { id_estado: 2 },
+            {
+              where: {
+                id: alerta.id,
+                id_estado: 1,
+              },
+            }
+          );
+
+          if (filasAfectadas === 0) continue;
 
           await AlertasUsuario.update(
             { id_estado: 0 },
-            {
-              where: {
-                id_user: alerta.id_user,
-                tipo_alerta: alerta.tipo_alerta,
-                mensaje: alerta.mensaje,
-                fecha: alerta.fecha,
-                id_estado: 1
-              }
-            }
+            { where: { id: alerta.id } }
           );
+
 
           // 2. Calculamos la nueva fecha
           let nuevaFecha = null;
@@ -994,9 +1005,10 @@ const alertaResumenVentasDiario = async () => {
     const diaTopeProyectado = diaHoy + 3;
 
     const NOMBRES_MESES = [
-      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+      "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
+      "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
     ];
+
 
     // ── 1. VENTAS DEL MES ACTUAL (día 1 → hoy) ──────────────────────────────
     const fechaInicioMes = ahora.startOf("month").toDate();
@@ -1079,25 +1091,35 @@ const alertaResumenVentasDiario = async () => {
 
     const renderTop3 = (top3Array) => {
       const lineas = top3Array.map((m) =>
-        `   - ${m.label}: ${fmt(m.total)}`
+        `  - ${m.label}: ${fmt(m.total)}`
       ).join("\n");
-      // Siempre añadimos el Mes Actual como la última posición
-      return lineas ? `${lineas}\n   - ${NOMBRES_MESES[month]}: ${fmt(totalMesActual)}` : `   - ${NOMBRES_MESES[month]}: ${fmt(totalMesActual)}`;
+
+      const mesActualLabel = `${NOMBRES_MESES[month]}`;
+      return lineas ? `${lineas}\n  - ${mesActualLabel}: ${fmt(totalMesActual)}` : `  - ${mesActualLabel}: ${fmt(totalMesActual)}`;
     };
+
+    // 1. Extraemos y convertimos los días a MAYÚSCULAS
+    const nombreDiaInicioMes = ahora.startOf("month").format("dddd").toUpperCase();
+    const nombreDiaHoy = ahora.format("dddd").toUpperCase();
+    const nombreDiaProy = fechaProyectada.format("dddd").toUpperCase();
 
     const diaStr = String(diaHoy).padStart(2, "0");
     const diaProyStr = String(fechaProyectada.date()).padStart(2, "0");
     const mesProyNombre = NOMBRES_MESES[fechaProyectada.month()];
 
-    // Si la proyección cae en el mismo mes
-    const textoRangoProy = (fechaProyectada.month() === month)
-      ? ` Del *01* al *${diaProyStr}* de ${NOMBRES_MESES[month]} ${year}`
-      : ` Del *01 de ${NOMBRES_MESES[month]}* al *${diaProyStr} de ${mesProyNombre}* ${year}`;
+    // 2. Armamos los textos incluyendo el nombre del día
+    const textoRangoHoy = `Del ${nombreDiaInicioMes} 01 al ${nombreDiaHoy} ${diaStr} de ${NOMBRES_MESES[month]} ${year}`;
 
+    const textoRangoProy = (fechaProyectada.month() === month)
+      ? `Del ${nombreDiaInicioMes} 01 al ${nombreDiaProy} ${diaProyStr} de ${NOMBRES_MESES[month]} ${year}`
+      : `Del ${nombreDiaInicioMes} 01 de ${NOMBRES_MESES[month]} al ${nombreDiaProy} ${diaProyStr} de ${mesProyNombre} ${year}`;
+
+    // 3. Mensaje final
     const mensaje =
       `📊 *RESUMEN DIARIO DE VENTAS - CHANGE - The Slim Studio*\n\n` +
-      ` *Meta (${NOMBRES_MESES[month]}):* ${fmt(meta)} → *${pctMeta}%* alcanzado\n\n\n` +
-      ` Del *01* al *${diaStr}* de ${NOMBRES_MESES[month]} ${year}\n\n` +
+      `*META (${NOMBRES_MESES[month]}):* ${fmt(meta)}\n\n` +
+      `ALCANCE A LA FECHA *${pctMeta}%*\n\n\n` +
+      `${textoRangoHoy}\n\n` +
       `${renderTop3(top3Hoy)}\n\n\n` +
       `${textoRangoProy}\n\n` +
       `${renderTop3(top3Proy)}`;
@@ -1120,7 +1142,6 @@ const alertaResumenVentasDiario = async () => {
     console.error("[alertaResumenVentasDiario] ❌ Error:", error.message || error);
   }
 };
-
 module.exports = {
   recordatorioReservaCita2hAntes,
   obtenerCumpleaniosCliente,

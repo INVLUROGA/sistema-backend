@@ -50,10 +50,17 @@ cron.schedule("59 23 * * *", () => {
   recordatorioReservaCita2hAntes();
 });
 
-// Resumen diario de ventas → 6:00 AM hora Lima (UTC-5 = 11:00 AM UTC)
-cron.schedule("0 11 * * *", async () => {
-  await alertaResumenVentasDiario();
-});
+// Resumen diario de ventas → 6:00 AM hora Lima
+cron.schedule(
+  "0 6 * * *",
+  async () => {
+    await alertaResumenVentasDiario();
+  },
+  {
+    scheduled: true,
+    timezone: "America/Lima",
+  }
+);
 const fileServer = express.static;
 require("dotenv").config();
 const env = process.env;
