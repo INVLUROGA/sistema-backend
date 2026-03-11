@@ -14,6 +14,13 @@ const {
   reactivarAlertasMensuales,
   alertaResumenVentasDiario,
 } = require("./middlewares/eventosCron.js");
+const { enviarBotonesWsp } = require("./config/whatssap-web.js");
+const {
+  obtenerCumpleaniosDelMesSiguiente,
+} = require("./middlewares/EventosCron/obtenerCumpleañosDelMesSiguiente.js");
+const {
+  obtenerDataSeguimientos,
+} = require("./middlewares/EventosCron/obtenerDataSeguimientos.js");
 // Programa una tarea para las 9 AM todos los días
 cron.schedule("0 3 1 * *", () => {
   reactivarAlertasMensuales();
@@ -41,9 +48,9 @@ cron.schedule("59 23 * * *", () => {
   recordatorioReservaCita2hAntes();
 });
 
-cron.schedule("* * * * *", () => {
-  // alertaResumenVentasDiario();
-  // enviarResumenVentasDiario();
+// Resumen diario de ventas → 6:00 AM hora Lima (UTC-5 = 11:00 AM UTC)
+cron.schedule("0 11 * * *", async () => {
+  await alertaResumenVentasDiario();
 });
 const fileServer = express.static;
 require("dotenv").config();
@@ -163,7 +170,6 @@ app.use("/api/storage/blob", require("./routes/upload/blob.router.js"));
 
 app.use("/api/tipocambio", require("./routes/tipocambio.route.js"));
 app.use("/api/alerta-usuario", require("./routes/alertaUsuario.route.js"));
-app.use("/api/blacklist", require("./routes/blacklist.route.js"));
 
 //RUTA FILES
 app.use("/api/file", fileServer(urlArchivos));
@@ -270,7 +276,6 @@ app.use("/api/terminologia", require("./routes/terminologia.router.js"));
 //app.use("/api/entrenamiento", require("./routes/entrenamiento.router.js"));
 //CIRCUS----
 app.use("/api/circus", require("./routes/routersCircus/servicios.router.js"));
-//app.use("/api/entrenamiento", require("./routes/entrenamiento.router.js"));
 
 app.use("/api/canjes", require("./routes/canjes.router.js"));
 app.use("/api/penalidad", require("./routes/penalidad.router.js"));

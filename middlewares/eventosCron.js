@@ -20,9 +20,11 @@ const {
   enviarMensajesWsp,
   enviarMapaWsp__CIRCUS,
   enviarMensajesWsp__CIRCUS,
-  enviarBotonesWsp,
 } = require("../config/whatssap-web");
 const dayjs = require("dayjs");
+require('dayjs/locale/es');
+dayjs.locale('es');
+
 
 const { Distritos } = require("../models/Distritos");
 const { Seguimiento } = require("../models/Seguimientos");
@@ -33,7 +35,6 @@ const isSameOrBefore = require("dayjs/plugin/isSameOrBefore");
 const { Cita, eventoServicio } = require("../models/Cita");
 const obtenerCitasxHorasFinales = require("./EventosCron/obtenerCitasxHorasFinales");
 const { AlertasUsuario } = require("../models/Auditoria");
-const { getBlacklist } = require("../helpers/blacklistManager");
 const { FunctionsHelpers } = require("../helpers/FunctionsHelpers");
 const { messageWSP } = require("../types/types");
 
@@ -152,7 +153,7 @@ const alertasUsuario = async () => {
 
     const processedKeys = new Set();
     const rawBlacklist = getBlacklist();
-    const blacklist = rawBlacklist.map((m) => m.trim().replace(/\s+/g, " ")); // normalizar al cargar
+    const blacklist = rawBlacklist.map(m => m.trim().replace(/\s+/g, ' ')); // normalizar al cargar
 
     for (const alerta of alertasJSON) {
       const fechaAlerta = dayjs(alerta.fecha).tz("America/Lima");
@@ -168,6 +169,7 @@ const alertasUsuario = async () => {
           (horaPeru === 11 || horaPeru === 16) && minutoActual === 0;
         coincide = esMismoDia && esHoraBatch;
       } else {
+
         coincide =
           esMismoDia &&
           horaPeru === fechaAlerta.hour() &&
@@ -175,13 +177,11 @@ const alertasUsuario = async () => {
       }
 
       if (coincide) {
-        const mensajeLimpio = alerta.mensaje.trim().replace(/\s+/g, " ");
+        const mensajeLimpio = alerta.mensaje.trim().replace(/\s+/g, ' ');
 
         // 🚫 BLACKLIST: si el mensaje está bloqueado, lo saltamos sin enviar
         if (blacklist.includes(mensajeLimpio)) {
-          console.log(
-            `[BLACKLIST] Mensaje bloqueado, no se envía: id=${alerta.id}`,
-          );
+          console.log(`[BLACKLIST] Mensaje bloqueado, no se envía: id=${alerta.id}`);
           continue;
         }
 
@@ -190,7 +190,7 @@ const alertasUsuario = async () => {
         if (processedKeys.has(uniqueKey)) continue;
         processedKeys.add(uniqueKey);
 
-        if (alerta.tipo_alerta === 1425) {
+        if (alerta.tipo_alerta === 1425 || alerta.tipo_alerta === 1428) {
           // 🔒 LOCK ATÓMICO: marcar como "en proceso" (id_estado=2) ANTES de enviar.
           // Si otra instancia ya lo tomó, el UPDATE afecta 0 filas → saltamos.
           const [filasAfectadas] = await AlertasUsuario.update(
@@ -204,9 +204,7 @@ const alertasUsuario = async () => {
           );
 
           if (filasAfectadas === 0) {
-            console.log(
-              `[DUPLICADO EVITADO 1425] Otra instancia ya procesó la alerta id=${alerta.id}`,
-            );
+            console.log(`[DUPLICADO EVITADO 1425] Otra instancia ya procesó la alerta id=${alerta.id}`);
             continue;
           }
 
@@ -218,7 +216,7 @@ const alertasUsuario = async () => {
           await enviarBotonesWsp(
             alerta.auth_user.telefono_user,
             `${alerta.mensaje}\n\n¿Ya realizaste el pago?\nResponde *SI* para confirmar y detener las alertas de este mes.`,
-            buttons,
+            buttons
           );
           console.log(`[1425] Mensaje enviado: ${alerta.mensaje}`);
 
@@ -228,6 +226,7 @@ const alertasUsuario = async () => {
             { where: { id: alerta.id } },
           );
         } else {
+
           await AlertasUsuario.update(
             { id_estado: 0 },
             {
@@ -236,10 +235,11 @@ const alertasUsuario = async () => {
                 tipo_alerta: alerta.tipo_alerta,
                 mensaje: alerta.mensaje,
                 fecha: alerta.fecha,
-                id_estado: 1,
-              },
-            },
+                id_estado: 1
+              }
+            }
           );
+
 
           // 2. Calculamos la nueva fecha
           let nuevaFecha = null;
@@ -740,7 +740,7 @@ const reactivarAlertasMensuales = async () => {
 
     // Cargamos la blacklist para no recrear alertas que el usuario haya bloqueado
     const rawBlacklist = getBlacklist();
-    const blacklist = rawBlacklist.map((m) => m.trim().replace(/\\s+/g, " "));
+    const blacklist = rawBlacklist.map(m => m.trim().replace(/\\s+/g, ' '));
 
     const alertasCanceladas = await AlertasUsuario.findAll({
       where: {
@@ -759,7 +759,7 @@ const reactivarAlertasMensuales = async () => {
     });
 
     for (const alerta of alertasCanceladas) {
-      const mensajeLimpio = alerta.mensaje.trim().replace(/\\s+/g, " ");
+      const mensajeLimpio = alerta.mensaje.trim().replace(/\\s+/g, ' ');
       if (blacklist.includes(mensajeLimpio)) {
         // Ignorar mensajes bloqueados
         continue;
@@ -1086,22 +1086,15 @@ const alertaResumenVentasDiario = async () => {
     const year = ahora.year();
     const month = ahora.month();
     const diaHoy = ahora.date();
-    const diaProyectado = diaHoy + 3;
+    const fechaProyectada = ahora.add(3, "day");
+    // Usamos un "tope" para la comparación histórica: si se pasa del mes, es 31
+    const diaTopeProyectado = diaHoy + 3;
 
     const NOMBRES_MESES = [
-      "ENERO",
-      "FEBRERO",
-      "MARZO",
-      "ABRIL",
-      "MAYO",
-      "JUNIO",
-      "JULIO",
-      "AGOSTO",
-      "SEPTIEMBRE",
-      "OCTUBRE",
-      "NOVIEMBRE",
-      "DICIEMBRE",
+      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
     ];
+
 
     // ── 1. VENTAS DEL MES ACTUAL (día 1 → hoy) ──────────────────────────────
     const fechaInicioMes = ahora.startOf("month").toDate();
@@ -1179,13 +1172,7 @@ const alertaResumenVentasDiario = async () => {
 
       // Para el Top 3 proyectado (+3 días)
       if (diaVenta <= diaProyectado) {
-        if (!mapaHistoricoProy.has(key))
-          mapaHistoricoProy.set(key, {
-            total: 0,
-            label,
-            month: fdayjs.month(),
-            year: fdayjs.year(),
-          });
+        if (!mapaHistoricoProy.has(key)) mapaHistoricoProy.set(key, { total: 0, label });
         mapaHistoricoProy.get(key).total += monto;
       }
     }
@@ -1206,39 +1193,34 @@ const alertaResumenVentasDiario = async () => {
       `S/ ${Number(n || 0).toLocaleString("es-PE", { minimumFractionDigits: 0 })}`;
 
     const renderTop3 = (top3Array) => {
-      const lineas = top3Array
-        .map((m) => {
-          const metaMes = getQuotaParaMes(m.month + 1, m.year)?.meta || 0;
-          const pct = metaMes ? ((m.total / metaMes) * 100).toFixed(1) : "—";
-
-          return `   - ${m.label}: ${fmt(m.total)} - ${pct}%`;
-        })
-        .join("\n");
-
-      const pctActual = meta ? ((totalMesActual / meta) * 100).toFixed(1) : "—";
-
-      return lineas
-        ? `${lineas}\n   - *${NOMBRES_MESES[month]}: ${fmt(totalMesActual)} - ${pctActual}%*`
-        : `   - *${NOMBRES_MESES[month]}: ${fmt(totalMesActual)} - ${pctActual}%*`;
+      const lineas = top3Array.map((m) =>
+        `   - ${m.label}: ${fmt(m.total)}`
+      ).join("\n");
+      // Siempre añadimos el Mes Actual como la última posición
+      return lineas ? `${lineas}\n   - ${NOMBRES_MESES[month]}: ${fmt(totalMesActual)}` : `   - ${NOMBRES_MESES[month]}: ${fmt(totalMesActual)}`;
     };
-    // 1. Extraemos y convertimos los días a MAYÚSCULAS
-    const nombreDiaInicioMes = ahora
-      .startOf("month")
-      .format("dddd")
-      .toUpperCase();
-    const diaStr = String(diaHoy).padStart(2, "0");
-    const diaProyStr = String(diaProyectado).padStart(2, "0");
 
+    const diaStr = String(diaHoy).padStart(2, "0");
+    const diaProyStr = String(fechaProyectada.date()).padStart(2, "0");
+    const mesProyNombre = NOMBRES_MESES[fechaProyectada.month()];
+
+    // 2. Armamos los textos incluyendo el nombre del día
+    const textoRangoHoy = `Del ${nombreDiaInicioMes} 01 al ${nombreDiaHoy} ${diaStr} de ${NOMBRES_MESES[month]} ${year}`;
+
+    const textoRangoProy = (fechaProyectada.month() === month)
+      ? `Del ${nombreDiaInicioMes} 01 al ${nombreDiaProy} ${diaProyStr} de ${NOMBRES_MESES[month]} ${year}`
+      : `Del ${nombreDiaInicioMes} 01 de ${NOMBRES_MESES[month]} al ${nombreDiaProy} ${diaProyStr} de ${mesProyNombre} ${year}`;
+
+    // 3. Mensaje final
     const mensaje =
       `📊 *RESUMEN DIARIO DE VENTAS - CHANGE - The Slim Studio*\n\n` +
-      ` *META (${NOMBRES_MESES[month]}):* S/ 100,000 \n\n` +
-      ` PORCENTAJE ALCANCE CUOTA *${pctMeta}%* \n\n\n` +
-      ` *${nombreDiaInicioMes} 01 al ${diaStr} de ${NOMBRES_MESES[month]}* \n\n` +
+      ` *Meta (${NOMBRES_MESES[month]}):* ${fmt(meta)} → *${pctMeta}%* alcanzado\n\n\n` +
+      ` Del *01* al *${diaStr}* de ${NOMBRES_MESES[month]} ${year}\n\n` +
       `${renderTop3(top3Hoy)}\n\n\n` +
-      ` ${nombreDiaInicioMes} 01 al ${diaProyStr} de ${NOMBRES_MESES[month]} \n\n` +
+      ` Del *01* al *${diaProyStr}* de ${NOMBRES_MESES[month]} ${year}\n\n` +
       `${renderTop3(top3Proy)}`;
 
-    const userIds = [35, 7];
+    const userIds = [35, 31, 22, 8];
 
     for (const id_user of userIds) {
       await AlertasUsuario.create({
@@ -1262,7 +1244,6 @@ const alertaResumenVentasDiario = async () => {
     );
   }
 };
-
 module.exports = {
   recordatorioReservaCita2hAntes,
   obtenerCumpleaniosCliente,

@@ -30,19 +30,20 @@ const recibirWebhookWsp = async (req = request, res = response) => {
 
 
         // Si el body viene de un botón ID, ej: `btn_si_105` o si simplemente escribió "SI"
-        let cancelAll = false;
+        let esRespuestaSi = false;
         let specificAlertId = null;
 
         if (body) {
-            const bodyUpper = body.toUpperCase();
+            const bodyUpper = body.trim().toUpperCase();
             if (bodyUpper === "SI") {
-                cancelAll = true;
+                esRespuestaSi = true;
             } else if (body.startsWith("btn_si_")) {
                 specificAlertId = parseInt(body.replace("btn_si_", ""), 10);
+                esRespuestaSi = true;
             }
         }
 
-        if (cancelAll || specificAlertId) {
+        if (esRespuestaSi) {
 
             const fechaInicioMes = new Date();
             fechaInicioMes.setDate(1);
@@ -59,14 +60,15 @@ const recibirWebhookWsp = async (req = request, res = response) => {
                 const queryOptions = {
                     where: {
                         id_user: usuario.id,
-                        id_estado: 1,
+                        id_estado: { [Op.in]: [0, 1] }, // 0: enviado, 1: pendiente
                         flag: true,
                         fecha: {
                             [Op.gte]: fechaInicioMes,
                             [Op.lt]: fechaFinMes
                         },
-                        tipo_alerta: { [Op.in]: [1425] }
-                    }
+                        tipo_alerta: { [Op.in]: [1425, 1426, 1427] }
+                    },
+                    order: [['updatedAt', 'DESC']] // Obtenemos la última alerta modificada/enviada
                 };
 
                 // Si viene el ID específico, lo agregamos al filtro
@@ -74,15 +76,13 @@ const recibirWebhookWsp = async (req = request, res = response) => {
                     queryOptions.where.id = specificAlertId;
                 }
 
-                const alertasPendientes = await AlertasUsuario.findAll(queryOptions);
+                const alertaAConfirmar = await AlertasUsuario.findOne(queryOptions);
 
-                if (alertasPendientes.length > 0) {
-                    for (const alerta of alertasPendientes) {
-                        await alerta.update({ id_estado: 3 }); // 3 = Cancelado por pago
-                    }
+                if (alertaAConfirmar) {
+                    await alertaAConfirmar.update({ id_estado: 3 }); // 3 = Cancelado por pago
 
-                    await enviarMensajesWsp(from, "✅ ¡Gracias! Hemos registrado tu confirmación. Las alertas de este mes se han detenido.");
-                    console.log(`Alertas canceladas para usuario ${usuario.id} (${telefono})`);
+                    await enviarMensajesWsp(from, "✅ ¡Gracias! Hemos registrado tu confirmación. Las alertas sobre este pago se han detenido por este mes.");
+                    console.log(`Alerta ${alertaAConfirmar.id} cancelada para usuario ${usuario.id} (${telefono})`);
                 }
             }
         }
