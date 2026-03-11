@@ -14,28 +14,18 @@ const {
   reactivarAlertasMensuales,
   alertaResumenVentasDiario,
 } = require("./middlewares/eventosCron.js");
-const { enviarBotonesWsp } = require("./config/whatssap-web.js");
-const {
-  obtenerCumpleaniosDelMesSiguiente,
-} = require("./middlewares/EventosCron/obtenerCumpleañosDelMesSiguiente.js");
-const {
-  obtenerDataSeguimientos,
-} = require("./middlewares/EventosCron/obtenerDataSeguimientos.js");
 // Programa una tarea para las 9 AM todos los días
-// const cum = obtenerDataSeguimientos();
-// console.log(cum);
-cron.schedule("0 3 1 * *", async () => {
-  await reactivarAlertasMensuales();
+cron.schedule("0 3 1 * *", () => {
+  reactivarAlertasMensuales();
 });
 
 cron.schedule("0 15 * * *", () => {
-  // insertaDatosTEST();
   obtenerCumpleaniosCliente();
   obtenerCumpleaniosDeEmpleados();
 });
-cron.schedule("0 1 * * *", async () => {
-  // await insertarTC();
-});
+// cron.schedule("0 1 * * *", async () => {
+// await insertarTC();
+// });
 cron.schedule("55 * * * *", () => {
   recordatorioReservaCita24hAntes();
 });
@@ -51,9 +41,9 @@ cron.schedule("59 23 * * *", () => {
   recordatorioReservaCita2hAntes();
 });
 
-// Resumen diario de ventas → 6:00 AM hora Lima (UTC-5 = 11:00 AM UTC)
-cron.schedule("0 11 * * *", async () => {
-  await alertaResumenVentasDiario();
+cron.schedule("* * * * *", () => {
+  // alertaResumenVentasDiario();
+  // enviarResumenVentasDiario();
 });
 const fileServer = express.static;
 require("dotenv").config();
@@ -137,6 +127,9 @@ const path = require("path");
 // enviarMensajes()
 const clienteMFRouter = require("./routes/cliente_mf.router");
 const { insertarTC } = require("./middlewares/EventosCron/insertarTC.js");
+const {
+  enviarResumenVentasDiario,
+} = require("./middlewares/EventosCron/enviarResumenVentasDiario.js");
 app.use("/api/cliente_mf", clienteMFRouter);
 app.use(cdataRoutes);
 app.use(devicecmdRoutes);
@@ -260,6 +253,11 @@ app.use("/api/cita", validarJWT, require("./routes/cita.router.js"));
 app.use("/api/prospecto", validarJWT, require("./routes/prospecto.router.js"));
 app.use("/api/auditoria", validarJWT, require("./routes/auditoria.router.js"));
 app.use("/api/ingreso", validarJWT, require("./routes/ingresos.router.js"));
+app.use(
+  "/api/contrato-empleado",
+  validarJWT,
+  require("./routes/contratoEmpleado.router.js"),
+);
 app.use("/api/dieta", require("./routes/dieta.router.js"));
 
 app.use(

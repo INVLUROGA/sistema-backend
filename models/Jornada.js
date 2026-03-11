@@ -95,11 +95,36 @@ const contrato_empleado = db.define("tb_contrato_empleado", {
     defaultValue: true,
   },
 });
-
-contrato_empleado.hasMany(DiasLaborables, {
+const JornadaSemanal = db.define("jornada_semanal", {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  id_contrato: {
+    type: DataTypes.INTEGER,
+  },
+  id_estabilidad: {
+    type: DataTypes.INTEGER,
+  },
+  id_dia: {
+    type: DataTypes.INTEGER,
+  },
+  hora_inicio: {
+    type: DataTypes.DATE,
+  },
+  hora_fin: {
+    type: DataTypes.DATE,
+  },
+  flag: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+});
+contrato_empleado.hasMany(JornadaSemanal, {
   foreignKey: "id_contrato",
   sourceKey: "id",
-  as: "contrato_empl",
+  as: "contrato_semana",
 });
 
 Empleado.hasMany(contrato_empleado, {
@@ -261,7 +286,7 @@ DiasLaborables.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 
@@ -274,10 +299,21 @@ contrato_empleado
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 
+// Sincroniza el modelo con la base de datos (crea la tabla si no existe)
+JornadaSemanal.sync()
+  .then(() => {
+    console.log("La tabla JornadaSemanal ha sido creada o ya existe.");
+  })
+  .catch((error) => {
+    console.error(
+      "Error al sincronizar el modelo con la base de datos:",
+      error,
+    );
+  });
 // Sincroniza el modelo con la base de datos (crea la tabla si no existe)
 HorariosEspecialesEnDia.sync()
   .then(() => {
@@ -286,7 +322,7 @@ HorariosEspecialesEnDia.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 
@@ -298,7 +334,7 @@ Jornada.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 
@@ -310,7 +346,7 @@ jornadaPlanilla
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 
@@ -322,11 +358,12 @@ HorasEspeciales.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 
 module.exports = {
+  JornadaSemanal,
   Jornada,
   jornadaPlanilla,
   HorasEspeciales,

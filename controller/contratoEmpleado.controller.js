@@ -1,0 +1,82 @@
+const { response, request } = require("express");
+const { contrato_empleado, JornadaSemanal } = require("../models/Jornada");
+
+const obtenerContratosxEmpleado = async (req = request, res = response) => {
+  try {
+    const { id_empl } = req.params;
+    const contratos = await contrato_empleado.findAll({
+      where: { id_empl, flag: true },
+      include: [
+        {
+          model: JornadaSemanal,
+          as: "contrato_semana",
+        },
+      ],
+    });
+    res.status(201).json({
+      contratos,
+      ok: true,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const postContratos = async (req = request, res = response) => {
+  try {
+    const { id_empl } = req.params;
+    const contratos = await contrato_empleado.create({ ...req.body, id_empl });
+    res.status(201).json({
+      contratos,
+      ok: true,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const putContratosxID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const { formState } = req.body;
+    const contrato = await contrato_empleado.findOne({ where: { id } });
+    await contrato.update(req.body);
+    res.status(201).json({
+      contrato,
+      ok: true,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const deleteContratosxID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const contrato = await contrato_empleado.findOne({ where: { id } });
+    await contrato.update({ flag: false });
+    res.status(201).json({
+      contrato,
+      ok: true,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const obtenerContratoxID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const contrato = await contrato_empleado.findOne({ where: { id } });
+    res.status(201).json({
+      contrato,
+      ok: true,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+module.exports = {
+  obtenerContratosxEmpleado,
+  postContratos,
+  putContratosxID,
+  deleteContratosxID,
+  obtenerContratoxID,
+};

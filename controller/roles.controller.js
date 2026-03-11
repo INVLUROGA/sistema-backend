@@ -647,7 +647,7 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           //key: "reporte-utilidad-pgm",
-          label: "Tardanzas justificadas",
+          label: "Gestion de tardanzas",
           isTitle: false,
           icon: "uil-calender",
           url: "/gestion-tardanzas",

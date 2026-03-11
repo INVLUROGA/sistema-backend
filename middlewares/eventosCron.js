@@ -43,7 +43,7 @@ dayjs.extend(isSameOrBefore);
 const { calcularMinutos } = FunctionsHelpers();
 // Opcional: obtener la zona horaria local
 const defaultTz = dayjs.tz.guess();
-const cumpleaniosSocios = async () => { };
+const cumpleaniosSocios = async () => {};
 
 const insertaDatosTEST = async () => {
   try {
@@ -55,7 +55,7 @@ const insertaDatosTEST = async () => {
 };
 const insertarDatosSeguimientoDeClientes = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   try {
     //1. Hallar la ultima membresia del usuario
@@ -109,7 +109,7 @@ const obtenerUltimaVentaConExtension = (clientes) => {
   return clientes.map((cliente) => {
     // Ordenar ventas por fecha descendente para obtener la más reciente
     const ultimaVenta = cliente.tb_venta.sort(
-      (a, b) => new Date(b.fecha_venta) - new Date(a.fecha_venta)
+      (a, b) => new Date(b.fecha_venta) - new Date(a.fecha_venta),
     )[0];
 
     // Obtener la membresía asociada a esa venta
@@ -117,7 +117,7 @@ const obtenerUltimaVentaConExtension = (clientes) => {
 
     // Encontrar la extensión con el "extension_fin" más largo
     const extensionMasLarga = membresia.tb_extension_membresia.sort(
-      (a, b) => new Date(b.extension_fin) - new Date(a.extension_fin)
+      (a, b) => new Date(b.extension_fin) - new Date(a.extension_fin),
     )[0];
 
     return {
@@ -152,23 +152,22 @@ const alertasUsuario = async () => {
 
     const processedKeys = new Set();
     const rawBlacklist = getBlacklist();
-    const blacklist = rawBlacklist.map(m => m.trim().replace(/\s+/g, ' ')); // normalizar al cargar
+    const blacklist = rawBlacklist.map((m) => m.trim().replace(/\s+/g, " ")); // normalizar al cargar
 
     for (const alerta of alertasJSON) {
       const fechaAlerta = dayjs(alerta.fecha).tz("America/Lima");
 
       // 1. Validar que sea el mismo día (común para todos)
-      const esMismoDia = ahora.isSame(fechaAlerta, 'day');
+      const esMismoDia = ahora.isSame(fechaAlerta, "day");
 
       let coincide = false;
       const esAlertaMensual = alerta.tipo_alerta === 1425;
 
       if (esAlertaMensual) {
-
-        const esHoraBatch = (horaPeru === 11 || horaPeru === 16) && minutoActual === 0;
+        const esHoraBatch =
+          (horaPeru === 11 || horaPeru === 16) && minutoActual === 0;
         coincide = esMismoDia && esHoraBatch;
       } else {
-
         coincide =
           esMismoDia &&
           horaPeru === fechaAlerta.hour() &&
@@ -176,11 +175,13 @@ const alertasUsuario = async () => {
       }
 
       if (coincide) {
-        const mensajeLimpio = alerta.mensaje.trim().replace(/\s+/g, ' ');
+        const mensajeLimpio = alerta.mensaje.trim().replace(/\s+/g, " ");
 
         // 🚫 BLACKLIST: si el mensaje está bloqueado, lo saltamos sin enviar
         if (blacklist.includes(mensajeLimpio)) {
-          console.log(`[BLACKLIST] Mensaje bloqueado, no se envía: id=${alerta.id}`);
+          console.log(
+            `[BLACKLIST] Mensaje bloqueado, no se envía: id=${alerta.id}`,
+          );
           continue;
         }
 
@@ -199,11 +200,13 @@ const alertasUsuario = async () => {
                 id: alerta.id,
                 id_estado: 1, // Solo lo toma si sigue en estado 1
               },
-            }
+            },
           );
 
           if (filasAfectadas === 0) {
-            console.log(`[DUPLICADO EVITADO 1425] Otra instancia ya procesó la alerta id=${alerta.id}`);
+            console.log(
+              `[DUPLICADO EVITADO 1425] Otra instancia ya procesó la alerta id=${alerta.id}`,
+            );
             continue;
           }
 
@@ -215,17 +218,16 @@ const alertasUsuario = async () => {
           await enviarBotonesWsp(
             alerta.auth_user.telefono_user,
             `${alerta.mensaje}\n\n¿Ya realizaste el pago?\nResponde *SI* para confirmar y detener las alertas de este mes.`,
-            buttons
+            buttons,
           );
           console.log(`[1425] Mensaje enviado: ${alerta.mensaje}`);
 
           // Marcar como enviada (id_estado=0) para no reenviar en siguientes ejecuciones del día
           await AlertasUsuario.update(
             { id_estado: 0 },
-            { where: { id: alerta.id } }
+            { where: { id: alerta.id } },
           );
         } else {
-
           await AlertasUsuario.update(
             { id_estado: 0 },
             {
@@ -234,18 +236,18 @@ const alertasUsuario = async () => {
                 tipo_alerta: alerta.tipo_alerta,
                 mensaje: alerta.mensaje,
                 fecha: alerta.fecha,
-                id_estado: 1
-              }
-            }
+                id_estado: 1,
+              },
+            },
           );
 
           // 2. Calculamos la nueva fecha
           let nuevaFecha = null;
           if (alerta.tipo_alerta === 1426) {
-            nuevaFecha = fechaAlerta.add(1, 'day');
-            if (nuevaFecha.day() === 0) nuevaFecha = nuevaFecha.add(1, 'day'); // Salta domingo
+            nuevaFecha = fechaAlerta.add(1, "day");
+            if (nuevaFecha.day() === 0) nuevaFecha = nuevaFecha.add(1, "day"); // Salta domingo
           } else if (alerta.tipo_alerta === 1427) {
-            nuevaFecha = fechaAlerta.add(15, 'day');
+            nuevaFecha = fechaAlerta.add(15, "day");
           }
 
           // 3. Creamos UN SOLO registro para el futuro usando findOrCreate para evitar condición de carrera
@@ -257,7 +259,7 @@ const alertasUsuario = async () => {
                 mensaje: alerta.mensaje,
                 fecha: nuevaFecha.toDate(),
                 id_estado: 1,
-                flag: true
+                flag: true,
               },
               defaults: {
                 id_user: alerta.id_user,
@@ -265,18 +267,25 @@ const alertasUsuario = async () => {
                 mensaje: alerta.mensaje,
                 fecha: nuevaFecha.toDate(),
                 id_estado: 1,
-                flag: true
-              }
+                flag: true,
+              },
             });
 
             if (!created) {
-              console.log(`[DUPLICADO EVITADO] Otra instancia ya había programado la alerta futura para: ${alerta.mensaje}`);
+              console.log(
+                `[DUPLICADO EVITADO] Otra instancia ya había programado la alerta futura para: ${alerta.mensaje}`,
+              );
             }
           }
 
           // 4. Enviamos UN SOLO mensaje
-          await enviarMensajesWsp(alerta.auth_user.telefono_user, alerta.mensaje);
-          console.log(`Mensaje enviado y limpiado duplicados: ${alerta.mensaje}`);
+          await enviarMensajesWsp(
+            alerta.auth_user.telefono_user,
+            alerta.mensaje,
+          );
+          console.log(
+            `Mensaje enviado y limpiado duplicados: ${alerta.mensaje}`,
+          );
         }
       }
     }
@@ -303,25 +312,25 @@ const recordatorioReservaCita24hAntes = async () => {
     };
 
     const citasFiltradas = citas.filter(
-      (cita) => obtenerHora(cita.fecha_inicio) === obtenerHora(en24h)
+      (cita) => obtenerHora(cita.fecha_inicio) === obtenerHora(en24h),
     );
     for (const cita of citasFiltradas) {
       const fecha_inicio = dayjs(cita.fecha_inicio).format(
-        "dddd DD [de] MMMM [a las] hh:mm A"
+        "dddd DD [de] MMMM [a las] hh:mm A",
       );
       await enviarMensajesWsp__CIRCUS(
         cita.tb_cliente.tel_cli,
         messageWSP.mensaje24hAntesDeLaReserva(
           cita.tb_empleado,
           cita.tb_cliente,
-          fecha_inicio
-        )
+          fecha_inicio,
+        ),
       );
       await enviarMapaWsp__CIRCUS(
         cita.tb_cliente.tel_cli,
         "CIRCUS SALON",
         -12.133150008241682,
-        -77.02314616701953
+        -77.02314616701953,
       );
     }
   } catch (error) {
@@ -351,19 +360,19 @@ const recordatorioReservaCita2hAntes = async () => {
       );
     };
     const citasFiltradas = citas.filter((cita) =>
-      mismaFechaYHoraSinMinutos(cita.fecha_inicio, en24h)
+      mismaFechaYHoraSinMinutos(cita.fecha_inicio, en24h),
     );
     for (const cita of citasFiltradas) {
       const fecha_inicio = dayjs(cita.fecha_inicio).format(
-        "dddd DD [de] MMMM [a las] hh:mm A"
+        "dddd DD [de] MMMM [a las] hh:mm A",
       );
       await enviarMensajesWsp__CIRCUS(
         cita.tb_cliente.tel_cli,
         messageWSP.mensaje2hAntesDeLaReserva(
           cita.tb_empleado,
           cita.tb_cliente,
-          fecha_inicio
-        )
+          fecha_inicio,
+        ),
       );
     }
   } catch (error) {
@@ -398,11 +407,11 @@ const obtenerCumpleaniosCliente = async () => {
             [Sequelize.Op.and]: [
               Sequelize.where(
                 Sequelize.fn("MONTH", Sequelize.col("fecha_nacimiento")),
-                mesActual
+                mesActual,
               ),
               Sequelize.where(
                 Sequelize.fn("DAY", Sequelize.col("fecha_nacimiento")),
-                diaActual
+                diaActual,
               ),
             ],
           },
@@ -450,14 +459,14 @@ Recuerda que estamos aquí para seguir cambiando tu vida. ¡Que tengas un día l
 ¡Disfruta al máximo tu día! 
 CHANGE - The Slim Studio
         
-        `
+        `,
       );
     });
     enviarMensajesWsp(
       933102718,
       `
             OBTENIENDO LOS CUMPLEANIOS.... ${cumpleanerosUnicos.length}
-            `
+            `,
     );
     return cumpleaneros;
   } catch (error) {
@@ -487,7 +496,7 @@ const obtenerCumpleaniosDeEmpleados = async () => {
             " ",
             col("apPaterno_empl"),
             " ",
-            col("apMaterno_empl")
+            col("apMaterno_empl"),
           ),
           "nombres_completos",
         ],
@@ -525,13 +534,13 @@ const obtenerCumpleaniosDeEmpleados = async () => {
 
         ¡Que tengas un día lleno de salud y energía! ✨
         CHANGE - The Slim Studio
-    `
+    `,
       );
     });
 
     enviarMensajesWsp(
       933102718,
-      `OBTENIENDO LOS CUMPLEAÑOS DE EMPLEADOS.... ${cumpleanerosUnicos.length}`
+      `OBTENIENDO LOS CUMPLEAÑOS DE EMPLEADOS.... ${cumpleanerosUnicos.length}`,
     );
 
     return cumpleanerosUnicos;
@@ -564,7 +573,7 @@ const obtenerDataSeguimiento = async () => {
                 " ",
                 Sequelize.col("apPaterno_cli"),
                 " ",
-                Sequelize.col("apMaterno_cli")
+                Sequelize.col("apMaterno_cli"),
               ),
               "nombres_apellidos_cli",
             ],
@@ -613,7 +622,7 @@ const obtenerDataSeguimiento = async () => {
       detalle_membresia,
       cambioPrograma,
       detalle_transferencia,
-      membresia_extensiones
+      membresia_extensiones,
     );
     // console.dir(ventasOrganizadas, { depth: null });
 
@@ -712,7 +721,7 @@ const enviarMensajesxCitasxHorasFinales = async () => {
     const data = await obtenerCitasxHorasFinales(
       "2min",
       new Date("1995-12-17T17:57:00"),
-      citasConfirmadas
+      citasConfirmadas,
     );
     console.log(data);
   } catch (error) {
@@ -731,7 +740,7 @@ const reactivarAlertasMensuales = async () => {
 
     // Cargamos la blacklist para no recrear alertas que el usuario haya bloqueado
     const rawBlacklist = getBlacklist();
-    const blacklist = rawBlacklist.map(m => m.trim().replace(/\\s+/g, ' '));
+    const blacklist = rawBlacklist.map((m) => m.trim().replace(/\\s+/g, " "));
 
     const alertasCanceladas = await AlertasUsuario.findAll({
       where: {
@@ -739,25 +748,28 @@ const reactivarAlertasMensuales = async () => {
         id_estado: { [Op.in]: [0, 1, 3] },
         flag: true,
         fecha: {
-          [Op.gte]: new Date(mesAnterior.getFullYear(), mesAnterior.getMonth(), 1),
-          [Op.lt]: new Date(hoy.getFullYear(), hoy.getMonth(), 1)
-        }
-      }
+          [Op.gte]: new Date(
+            mesAnterior.getFullYear(),
+            mesAnterior.getMonth(),
+            1,
+          ),
+          [Op.lt]: new Date(hoy.getFullYear(), hoy.getMonth(), 1),
+        },
+      },
     });
 
     for (const alerta of alertasCanceladas) {
-      const mensajeLimpio = alerta.mensaje.trim().replace(/\\s+/g, ' ');
+      const mensajeLimpio = alerta.mensaje.trim().replace(/\\s+/g, " ");
       if (blacklist.includes(mensajeLimpio)) {
         // Ignorar mensajes bloqueados
         continue;
       }
 
       // Generar nueva fecha para este mes usando dayjs para manejar overflows (ej: 31 Ene -> 28 Feb)
-      let nuevaFecha = dayjs(alerta.fecha).add(1, 'month').toDate();
+      let nuevaFecha = dayjs(alerta.fecha).add(1, "month").toDate();
 
       // Caso simple: Alerta MENSUAL (1425).
       if (alerta.tipo_alerta === 1425) {
-
         // Verificar si ya existe para no duplicar en caso de múltiples ejecuciones
         const existe = await AlertasUsuario.findOne({
           where: {
@@ -766,9 +778,9 @@ const reactivarAlertasMensuales = async () => {
             mensaje: alerta.mensaje,
             fecha: {
               [Op.gte]: new Date(hoy.getFullYear(), hoy.getMonth(), 1),
-              [Op.lt]: new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1)
-            }
-          }
+              [Op.lt]: new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1),
+            },
+          },
         });
 
         if (!existe) {
@@ -778,7 +790,7 @@ const reactivarAlertasMensuales = async () => {
             tipo_alerta: alerta.tipo_alerta,
             mensaje: alerta.mensaje,
             fecha: nuevaFecha,
-            id_estado: 1 // ACTIVA
+            id_estado: 1, // ACTIVA
           });
         }
 
@@ -791,7 +803,6 @@ const reactivarAlertasMensuales = async () => {
       // TODO: Lógica para diario/quincenal si aplica. Por ahora solo mensual es crítico.
     }
     console.log(`Reactivadas ${alertasCanceladas.length} alertas.`);
-
   } catch (error) {
     console.error("Error reactivando alertas:", error);
   }
@@ -802,7 +813,7 @@ function organizarDatos(
   detalle_membresia = [],
   cambioPrograma = [],
   detalle_transferencia = [],
-  membresia_extensiones = []
+  membresia_extensiones = [],
 ) {
   try {
     // Crear un mapa de membresías asociadas a ventas
@@ -813,7 +824,7 @@ function organizarDatos(
 
     // Filtrar ventas que tienen membresía asociada
     const ventasConMembresia = ventas.filter(
-      (venta) => membresiasPorVenta[venta.id]
+      (venta) => membresiasPorVenta[venta.id],
     );
 
     // Obtener solo la última venta por cliente
@@ -826,17 +837,17 @@ function organizarDatos(
       return {
         ...venta,
         detalle_transferencia: detalle_transferencia.filter(
-          (dt) => dt.id_membresia === venta.id
+          (dt) => dt.id_membresia === venta.id,
         ),
         detalle_membresia: detalle_membresia
           .map((membresia) => {
             return {
               ...membresia,
               extensionmembresia: membresia_extensiones.filter(
-                (ext) => ext.id_venta === membresia.id_venta
+                (ext) => ext.id_venta === membresia.id_venta,
               ),
               cambioPrograma: cambioPrograma.filter(
-                (cp) => cp.id_venta === membresia.id_venta
+                (cp) => cp.id_venta === membresia.id_venta,
               ),
             };
           })
@@ -934,17 +945,17 @@ function calcularFechasVentas(ventas) {
     // Sumar todos los días hábiles de las extensiones (si existen)
     const totalDiasHabiles =
       membresia.extensionmembresia &&
-        Array.isArray(membresia.extensionmembresia)
+      Array.isArray(membresia.extensionmembresia)
         ? membresia.extensionmembresia.reduce(
-          (sum, ext) => sum + (parseInt(ext.dias_habiles, 10) || 0),
-          0
-        )
+            (sum, ext) => sum + (parseInt(ext.dias_habiles, 10) || 0),
+            0,
+          )
         : 0;
 
     // Calcular la fecha de vencimiento sumando el total de días hábiles a la fecha de fin de membresía
     const { fecha: fechaVencimiento, diasCon } = addBusinessDays(
       fechaFinMem,
-      totalDiasHabiles
+      totalDiasHabiles,
     );
 
     // Calcular la diferencia en días hábiles de forma inclusiva (se cuentan endpoints si son hábiles)
@@ -987,18 +998,86 @@ function calcularFechasVentas(ventas) {
 }
 
 const getQuotaParaMes = (monthIndex, year) => {
-  const y = Number(year);
-  const m = Number(monthIndex);
-  if (y === 2026 && m === 1) return 100000;
-  if (y >= 2026) return 110000;
-  if (y === 2025) {
-    if (m <= 6) return 60000;
-    if (m === 7) return 70000;
-    if (m === 8) return 75000;
-    if (m === 9) return 85000;
-    if (m >= 10) return 90000;
+  const y = year;
+  const m = monthIndex;
+  switch (`${m}-${y}`) {
+    case "3-2026":
+      return {
+        meta: 100000,
+      };
+    case "2-2026":
+      return {
+        meta: 100000,
+      };
+    case "1-2026":
+      return {
+        meta: 110000,
+      };
+    case "12-2025":
+      return {
+        meta: 90000,
+      };
+
+    case "11-2025":
+      return {
+        meta: 90000,
+      };
+
+    case "10-2025":
+      return {
+        meta: 85000,
+      };
+
+    case "9-2025":
+      return {
+        meta: 75000,
+      };
+
+    case "8-2025":
+      return {
+        meta: 70000,
+      };
+
+    case "7-2025":
+      return {
+        meta: 60000,
+      };
+
+    case "6-2025":
+      return {
+        meta: 60000,
+      };
+
+    case "5-2025":
+      return {
+        meta: 60000,
+      };
+
+    case "4-2025":
+      return {
+        meta: 60000,
+      };
+
+    case "3-2025":
+      return {
+        meta: 60000,
+      };
+
+    case "2-2025":
+      return {
+        meta: 60000,
+      };
+
+    case "1-2025":
+      return {
+        meta: 60000,
+      };
+
+    default:
+      return {
+        meta: 10000,
+      };
   }
-  return 50000;
 };
 const alertaResumenVentasDiario = async () => {
   try {
@@ -1010,8 +1089,18 @@ const alertaResumenVentasDiario = async () => {
     const diaProyectado = diaHoy + 3;
 
     const NOMBRES_MESES = [
-      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+      "ENERO",
+      "FEBRERO",
+      "MARZO",
+      "ABRIL",
+      "MAYO",
+      "JUNIO",
+      "JULIO",
+      "AGOSTO",
+      "SEPTIEMBRE",
+      "OCTUBRE",
+      "NOVIEMBRE",
+      "DICIEMBRE",
     ];
 
     // ── 1. VENTAS DEL MES ACTUAL (día 1 → hoy) ──────────────────────────────
@@ -1020,38 +1109,46 @@ const alertaResumenVentasDiario = async () => {
 
     const detalleMesActual = await detalleVenta_membresias.findAll({
       attributes: ["tarifa_monto"],
-      include: [{
-        model: Venta,
-        attributes: ["fecha_venta"],
-        where: {
-          id_empresa: 598,
-          flag: true,
-          fecha_venta: { [Op.between]: [fechaInicioMes, fechaHoyObj] }
+      include: [
+        {
+          model: Venta,
+          attributes: ["fecha_venta"],
+          where: {
+            id_empresa: 598,
+            flag: true,
+            fecha_venta: { [Op.between]: [fechaInicioMes, fechaHoyObj] },
+          },
+          required: true,
         },
-        required: true
-      }]
+      ],
     });
 
     const totalMesActual = detalleMesActual.reduce(
-      (s, d) => s + Number(d.tarifa_monto || 0), 0
+      (s, d) => s + Number(d.tarifa_monto || 0),
+      0,
     );
 
     // ── 2. HISTÓRICO: General para extraer los dos Top 3 desde Septiembre 2024 ──
-    const inicioHistorico = dayjs("2024-09-01").tz("America/Lima").startOf("day").toDate();
+    const inicioHistorico = dayjs("2024-09-01")
+      .tz("America/Lima")
+      .startOf("day")
+      .toDate();
     const finHistorico = ahora.subtract(1, "month").endOf("month").toDate();
 
     const detalleHistorico = await detalleVenta_membresias.findAll({
       attributes: ["tarifa_monto"],
-      include: [{
-        model: Venta,
-        attributes: ["fecha_venta"],
-        where: {
-          id_empresa: 598,
-          flag: true,
-          fecha_venta: { [Op.between]: [inicioHistorico, finHistorico] }
+      include: [
+        {
+          model: Venta,
+          attributes: ["fecha_venta"],
+          where: {
+            id_empresa: 598,
+            flag: true,
+            fecha_venta: { [Op.between]: [inicioHistorico, finHistorico] },
+          },
+          required: true,
         },
-        required: true
-      }]
+      ],
     });
 
     // Separamos en dos mapas: uno hasta diaHoy y otro hasta diaProyectado
@@ -1070,13 +1167,25 @@ const alertaResumenVentasDiario = async () => {
 
       // Para el Top 3 del día de hoy
       if (diaVenta <= diaHoy) {
-        if (!mapaHistoricoHoy.has(key)) mapaHistoricoHoy.set(key, { total: 0, label });
+        if (!mapaHistoricoHoy.has(key))
+          mapaHistoricoHoy.set(key, {
+            total: 0,
+            label,
+            month: fdayjs.month(),
+            year: fdayjs.year(),
+          });
         mapaHistoricoHoy.get(key).total += monto;
       }
 
       // Para el Top 3 proyectado (+3 días)
       if (diaVenta <= diaProyectado) {
-        if (!mapaHistoricoProy.has(key)) mapaHistoricoProy.set(key, { total: 0, label });
+        if (!mapaHistoricoProy.has(key))
+          mapaHistoricoProy.set(key, {
+            total: 0,
+            label,
+            month: fdayjs.month(),
+            year: fdayjs.year(),
+          });
         mapaHistoricoProy.get(key).total += monto;
       }
     }
@@ -1089,30 +1198,47 @@ const alertaResumenVentasDiario = async () => {
       .sort((a, b) => b.total - a.total)
       .slice(0, 3);
 
-    const meta = getQuotaParaMes(month, year);
+    const meta = getQuotaParaMes(month + 1, year)?.meta || 0;
+    console.log({ meta }, month + 1, year);
+
     const pctMeta = meta > 0 ? ((totalMesActual / meta) * 100).toFixed(1) : "—";
-    const fmt = (n) => `S/ ${Number(n || 0).toLocaleString("es-PE", { minimumFractionDigits: 0 })}`;
+    const fmt = (n) =>
+      `S/ ${Number(n || 0).toLocaleString("es-PE", { minimumFractionDigits: 0 })}`;
 
     const renderTop3 = (top3Array) => {
-      const lineas = top3Array.map((m) =>
-        `   - ${m.label}: ${fmt(m.total)}`
-      ).join("\n");
-      // Siempre añadimos el Mes Actual como la última posición
-      return lineas ? `${lineas}\n   - ${NOMBRES_MESES[month]}: ${fmt(totalMesActual)}` : `   - ${NOMBRES_MESES[month]}: ${fmt(totalMesActual)}`;
-    };
+      const lineas = top3Array
+        .map((m) => {
+          const metaMes = getQuotaParaMes(m.month + 1, m.year)?.meta || 0;
+          const pct = metaMes ? ((m.total / metaMes) * 100).toFixed(1) : "—";
 
+          return `   - ${m.label}: ${fmt(m.total)} - ${pct}%`;
+        })
+        .join("\n");
+
+      const pctActual = meta ? ((totalMesActual / meta) * 100).toFixed(1) : "—";
+
+      return lineas
+        ? `${lineas}\n   - *${NOMBRES_MESES[month]}: ${fmt(totalMesActual)} - ${pctActual}%*`
+        : `   - *${NOMBRES_MESES[month]}: ${fmt(totalMesActual)} - ${pctActual}%*`;
+    };
+    // 1. Extraemos y convertimos los días a MAYÚSCULAS
+    const nombreDiaInicioMes = ahora
+      .startOf("month")
+      .format("dddd")
+      .toUpperCase();
     const diaStr = String(diaHoy).padStart(2, "0");
     const diaProyStr = String(diaProyectado).padStart(2, "0");
 
     const mensaje =
       `📊 *RESUMEN DIARIO DE VENTAS - CHANGE - The Slim Studio*\n\n` +
-      ` *Meta (${NOMBRES_MESES[month]}):* ${fmt(meta)} → *${pctMeta}%* alcanzado\n\n\n` +
-      ` Del *01* al *${diaStr}* de ${NOMBRES_MESES[month]} ${year}\n\n` +
+      ` *META (${NOMBRES_MESES[month]}):* S/ 100,000 \n\n` +
+      ` PORCENTAJE ALCANCE CUOTA *${pctMeta}%* \n\n\n` +
+      ` *${nombreDiaInicioMes} 01 al ${diaStr} de ${NOMBRES_MESES[month]}* \n\n` +
       `${renderTop3(top3Hoy)}\n\n\n` +
-      ` Del *01* al *${diaProyStr}* de ${NOMBRES_MESES[month]} ${year}\n\n` +
+      ` ${nombreDiaInicioMes} 01 al ${diaProyStr} de ${NOMBRES_MESES[month]} \n\n` +
       `${renderTop3(top3Proy)}`;
 
-    const userIds = [35, 31, 22, 8];
+    const userIds = [35, 7];
 
     for (const id_user of userIds) {
       await AlertasUsuario.create({
@@ -1121,13 +1247,19 @@ const alertaResumenVentasDiario = async () => {
         mensaje: mensaje,
         fecha: ahora.toDate(),
         id_estado: 1,
-        flag: true
+        flag: true,
       });
-      console.log(`[alertaResumenVentasDiario] ✅ Alerta registrada para user ${id_user} en tb_alertaUsuarios.`);
+      console.log(
+        `[alertaResumenVentasDiario] ✅ Alerta registrada para user ${id_user} en tb_alertaUsuarios.`,
+      );
     }
-
   } catch (error) {
-    console.error("[alertaResumenVentasDiario] ❌ Error:", error.message || error);
+    console.log({ error });
+
+    console.error(
+      "[alertaResumenVentasDiario] ❌ Error:",
+      error.message || error,
+    );
   }
 };
 

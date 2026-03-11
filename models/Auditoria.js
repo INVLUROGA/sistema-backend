@@ -75,7 +75,7 @@ const AlertasUsuario = db.define("tb_alertaUsuario", {
     type: DataTypes.INTEGER,
   },
   mensaje: {
-    type: DataTypes.STRING(450),
+    type: DataTypes.STRING(950),
   },
   fecha: {
     type: DataTypes.DATE,
@@ -102,7 +102,7 @@ Auditoria.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 
@@ -113,7 +113,7 @@ AuditoriaNew.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 
@@ -124,7 +124,7 @@ AlertasUsuario.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 
