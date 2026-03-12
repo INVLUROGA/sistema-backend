@@ -1,6 +1,6 @@
 const { Op } = require("sequelize");
 const { Venta, detalleVenta_membresias } = require("../../models/Venta");
-const { AlertasUsuario } = require("../../models/Auditoria");
+const { enviarWspUsuario } = require("../../helpers/enviarWspUsuario");
 function obtenerMesesHasta(fechaInicio = "2024-09") {
   const [anioFin, mesFin] = fechaInicio.split("-").map(Number);
 
@@ -107,8 +107,7 @@ const getQuotaParaMes = (monthIndex, year) => {
 };
 const enviarResumenVentasDiario = async () => {
   const hoy = new Date();
-  hoy.setDate(hoy.getDate() - 1);
-  hoy.setHours(23, 59, 59, 0);
+  const hora = hoy.getHours();
   const fechaHoyMas3Dias = new Date(hoy);
   fechaHoyMas3Dias.setDate(hoy.getDate() + 3);
   const DiaHoy = hoy.getDate();
@@ -213,21 +212,8 @@ ${renderTop3(mesesActualesxDiaInicioYDiaActual)}
 ${renderTop3(mesesActualesxDiaInicioYDiaActualmas3Dias)}
 *${mesActual.nombreMes} ${mesActual.anio}: ${mesActual.montoCorte.toLocaleString("es-PE")} / ${((mesActual.montoCorte / getQuotaParaMes(MesHoy, anioHoy).meta) * 100).toFixed(2)}%*
 (% contra la venta total mes)`;
-  const userIds = [35, 7, 31];
 
-  for (const id_user of userIds) {
-    await AlertasUsuario.create({
-      id_user,
-      tipo_alerta: 1428,
-      mensaje: mensaje,
-      fecha: new Date(),
-      id_estado: 1,
-      flag: true,
-    });
-    console.log(
-      `[alertaResumenVentasDiario] ✅ Alerta registrada para user ${id_user} en tb_alertaUsuarios.`,
-    );
-  }
+  await enviarWspUsuario(mensaje, new Date());
   return true;
 };
 

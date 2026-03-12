@@ -35,11 +35,6 @@ const {
 } = require("../middlewares/extraerComentarios");
 const { validarJWT } = require("../middlewares/validarJWT");
 const {
-  insertarDatosSeguimientoDeClientes,
-} = require("../middlewares/eventosCron");
-const { check } = require("express-validator");
-const { validarCampos } = require("../middlewares/validarCampos");
-const {
   getobtenerPlanillaEmpleadoActivos,
 } = require("../controller/recursosHumano");
 const router = Router();
@@ -124,7 +119,6 @@ router.post(
   postUsuarioCliente,
 );
 router.get("/get-marcacions/cliente", obtenerMarcacionsCliente);
-router.get("/get-seguimiento-cliente", insertarDatosSeguimientoDeClientes);
 router.get(
   "/get-ultima-membresia-cliente/:id_cli",
   obtenerDatosUltimaMembresia,

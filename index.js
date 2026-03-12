@@ -12,15 +12,30 @@ const {
   recordatorioReservaCita2hAntes,
   obtenerCumpleaniosDeEmpleados,
   reactivarAlertasMensuales,
-  alertaResumenVentasDiario,
 } = require("./middlewares/eventosCron.js");
-const { enviarBotonesWsp } = require("./config/whatssap-web.js");
+
+//***********************************************/
+//***********DISPOSITIVOS ZKTECO*****************/
+//***********************************************/
+
+// Importa y usa las rutas
+const cdataRoutes = require("./routes/ZkTeco/iclock/cdataRoutes");
+const devicecmdRoutes = require("./routes/ZkTeco/iclock/devicecmdRoutes");
+const getrequestRoutes = require("./routes/ZkTeco/iclock/getrequestRoutes");
+const pingRoutes = require("./routes/ZkTeco/iclock/pingRoutes");
+const registryRoutes = require("./routes/ZkTeco/iclock/registryRoutes");
+
+const cmdqueueRoutes = require("./routes/ZkTeco/bd/cmdqueueRoutes");
+const transactionRoutes = require("./routes/ZkTeco/bd/transactionRoutes");
+const deviceRoutes = require("./routes/ZkTeco/bd/deviceRoutes");
+const userRoutes = require("./routes/ZkTeco/bd/userRoutes");
+const syncRoutes = require("./routes/ZkTeco/bd/syncRoutes");
+const userdata64Routes = require("./routes/ZkTeco/bd/userdata64Routes");
+// enviarMensajes()
+const clienteMFRouter = require("./routes/cliente_mf.router");
 const {
-  obtenerCumpleaniosDelMesSiguiente,
-} = require("./middlewares/EventosCron/obtenerCumpleañosDelMesSiguiente.js");
-const {
-  obtenerDataSeguimientos,
-} = require("./middlewares/EventosCron/obtenerDataSeguimientos.js");
+  enviarResumenVentasDiario,
+} = require("./middlewares/EventosCron/enviarResumenVentasDiario.js");
 // Programa una tarea para las 9 AM todos los días
 cron.schedule("0 3 1 * *", () => {
   reactivarAlertasMensuales();
@@ -30,9 +45,6 @@ cron.schedule("0 15 * * *", () => {
   obtenerCumpleaniosCliente();
   obtenerCumpleaniosDeEmpleados();
 });
-// cron.schedule("0 1 * * *", async () => {
-// await insertarTC();
-// });
 cron.schedule("55 * * * *", () => {
   recordatorioReservaCita24hAntes();
 });
@@ -49,8 +61,16 @@ cron.schedule("59 23 * * *", () => {
 });
 
 // Resumen diario de ventas → 6:00 AM hora Lima (UTC-5 = 11:00 AM UTC)
-cron.schedule("0 11 * * *", async () => {
-  await alertaResumenVentasDiario();
+cron.schedule("0 11 * * *", () => {
+  // enviarResumenVentasDiario();
+});
+// Resumen diario de ventas → 6:00 AM hora Lima (UTC-5 = 11:00 AM UTC)
+cron.schedule("0 1 * * *", () => {
+  // enviarResumenVentasDiario();
+});
+// Resumen diario de ventas → 6:00 AM hora Lima (UTC-5 = 11:00 AM UTC)
+cron.schedule("58 10 * * *", () => {
+  // enviarResumenVentasDiario();
 });
 const fileServer = express.static;
 require("dotenv").config();
@@ -99,44 +119,11 @@ app.use(
 app.use(morgan("dev")); // Usa "dev" o cualquier otro formato que prefieras
 //Directorio publico
 app.use(express.static("public"));
-// app.use((req, res, next) => {
-//   res.header("Access-Control-Allow-Origin", "*");
-//   res.header(
-//     "Access-Control-Allow-Headers",
-//     "Origin, X-Requested-With, Content-Type, Accept"
-//   );
-//   next();
-// });
-
 //Lectura y parseo del body
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(require("./routes/zk.router.js"));
 
-//***********************************************/
-//***********DISPOSITIVOS ZKTECO*****************/
-//***********************************************/
-
-// Importa y usa las rutas
-const cdataRoutes = require("./routes/ZkTeco/iclock/cdataRoutes");
-const devicecmdRoutes = require("./routes/ZkTeco/iclock/devicecmdRoutes");
-const getrequestRoutes = require("./routes/ZkTeco/iclock/getrequestRoutes");
-const pingRoutes = require("./routes/ZkTeco/iclock/pingRoutes");
-const registryRoutes = require("./routes/ZkTeco/iclock/registryRoutes");
-
-const cmdqueueRoutes = require("./routes/ZkTeco/bd/cmdqueueRoutes");
-const transactionRoutes = require("./routes/ZkTeco/bd/transactionRoutes");
-const deviceRoutes = require("./routes/ZkTeco/bd/deviceRoutes");
-const userRoutes = require("./routes/ZkTeco/bd/userRoutes");
-const syncRoutes = require("./routes/ZkTeco/bd/syncRoutes");
-const userdata64Routes = require("./routes/ZkTeco/bd/userdata64Routes");
-const path = require("path");
-// enviarMensajes()
-const clienteMFRouter = require("./routes/cliente_mf.router");
-const { insertarTC } = require("./middlewares/EventosCron/insertarTC.js");
-const {
-  enviarResumenVentasDiario,
-} = require("./middlewares/EventosCron/enviarResumenVentasDiario.js");
 app.use("/api/cliente_mf", clienteMFRouter);
 app.use(cdataRoutes);
 app.use(devicecmdRoutes);
@@ -150,21 +137,6 @@ app.use(deviceRoutes);
 app.use(userRoutes);
 app.use(syncRoutes);
 app.use(userdata64Routes);
-
-// Servir archivos estáticos desde /public
-// app.use(
-//   express.static(path.join(__dirname, "public"), {
-//     setHeaders: (res, filePath) => {
-//       // Forzar el Content-Type correcto si es mp4
-//       if (path.extname(filePath).toLowerCase() === ".mp4") {
-//         res.setHeader("Content-Type", mime.getType("mp4") || "video/mp4");
-//         // (Opcional) cache largo
-//         res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-//       }
-//     },
-//   })
-// );
-
 //BLOBS
 app.use("/api/storage/blob", require("./routes/upload/blob.router.js"));
 
@@ -184,7 +156,6 @@ app.use("/api/seguimiento", require("./routes/seguimiento.router.js"));
 app.use("/api/movimiento-articulo", require("./routes/kardex.router.js"));
 app.use("/api/articulo", validarJWT, require("./routes/articulo.router.js"));
 app.use("/api/cuenta-balance", require("./routes/cuentaBalance.router.js"));
-// //TODO proveedores // sexo, tipoDoc, estadoCivil, etc
 app.use("/api/proveedor", validarJWT, require("./routes/proveedor.router.js"));
 app.use(
   "/api/contrato-prov",
@@ -192,27 +163,17 @@ app.use(
   require("./routes/contratoProv.router.js"),
 );
 app.use("/api/producto", require("./routes/producto.route.js"));
-//TODO: JUNTAR LOS DOS EN UNA RUTA
 app.use("/api/egreso", validarJWT, require("./routes/gastos.router.js"));
-//TODO: programas
-app.use(
-  "/api/programaTraining",
-
-  require("./routes/programaTraining.route.js"),
-);
-//TODO: PARAMETROS TODO TIPO(SEXO, TIPO DOC, NACIONALIDAD, TIPOCLIENTE, REFERENCIA DE CONTACTO, ETC)
+app.use("/api/programaTraining", require("./routes/programaTraining.route.js"));
 app.use("/api/parametros", require("./routes/parametros.route.js"));
 app.use("/api/jornada", require("./routes/jornada.route.js"));
-//TODO: USUARIOS(CLIENTES, COLABORADORES, USUARIOS LOGEADOS)
 app.use("/api/empleado", require("./routes/empleado.route.js"));
 app.use("/api/usuario", require("./routes/usuario.route.js"));
-app.use("/api/apireniec", require("./routes/api.reniec.route.js"));
 app.use("/api/cambio-programa", require("./routes/cambioPrograma.route.js"));
 app.use("/api/msg-masivos", require("./routes/msgMasivos.route.js"));
 app.use("/api/wsp", require("./routes/wsp.route.js"));
 
 app.use("/api/servicios", validarJWT, require("./routes/servicios.router.js"));
-app.use("/api/generador-fechas", require("./routes/generadorFechas.router.js"));
 app.use(
   "/api/extension-membresia",
   require("./routes/extension_mem.router.js"),
@@ -220,23 +181,16 @@ app.use(
 
 app.use("/api/meta", validarJWT, require("./routes/meta.route.js"));
 app.use("/api/impuestos", validarJWT, require("./routes/impuestos.router.js"));
-//TODO upload // imgs
-app.use("/api", require("./routes/upload/upload.routes.js"));
-
 app.use("/api/reporte", require("./routes/reporte.router.js"));
-app.use("/api/comision", validarJWT, require("./routes/comision.router.js"));
 app.use(
   "/api/inventario",
   validarJWT,
   require("./routes/inventario.router.js"),
 );
-
 app.use(
   "/api/marcacion" /*, validarJWT,*/,
   require("./routes/marcacion.router.js"),
 );
-//TODO: FORMA PAGO
-app.use("/api/formaPago", validarJWT, require("./routes/formaPago.router.js"));
 app.use("/api/rol", validarJWT, require("./routes/roles.router.js"));
 app.use("/api/venta", require("./routes/venta.router.js"));
 app.use("/api/lead", validarJWT, require("./routes/lead.router.js"));
@@ -244,16 +198,10 @@ app.use(
   "/api/reserva_monk_fit",
   require("./routes/reserva_monk_fit.router.js"),
 );
-// app.use("/api/pros")
 app.use(
   "/api/serviciospt",
   validarJWT,
   require("./routes/serviciosPT.router.js"),
-);
-app.use(
-  "/api/exportar",
-  validarJWT,
-  require("./routes/exportarData.router.js"),
 );
 app.use("/api/cita", validarJWT, require("./routes/cita.router.js"));
 app.use("/api/prospecto", validarJWT, require("./routes/prospecto.router.js"));
@@ -265,12 +213,6 @@ app.use(
   require("./routes/contratoEmpleado.router.js"),
 );
 app.use("/api/dieta", require("./routes/dieta.router.js"));
-
-app.use(
-  "/api/flujo-caja",
-  validarJWT,
-  require("./routes/flujo-caja.router.js"),
-);
 app.use("/api/recursosHumanos", require("./routes/recursosHumanos.route.js"));
 app.use("/api/terminologia", require("./routes/terminologia.router.js"));
 //app.use("/api/entrenamiento", require("./routes/entrenamiento.router.js"));
