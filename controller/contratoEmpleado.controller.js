@@ -73,10 +73,26 @@ const obtenerContratoxID = async (req = request, res = response) => {
     console.log(error);
   }
 };
+const postSemanasxContrato = async (req = request, res = response) => {
+  try {
+    const { id_contrato } = req.params;
+    console.log(req.body);
+
+    const semanas = await JornadaSemanal.bulkCreate(req.body);
+    res.status(201).json({
+      id_contrato,
+      ok: true,
+      msg: "aquiiii",
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
   obtenerContratosxEmpleado,
   postContratos,
   putContratosxID,
   deleteContratosxID,
   obtenerContratoxID,
+  postSemanasxContrato,
 };

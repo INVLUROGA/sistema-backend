@@ -979,7 +979,7 @@ const seccionGET = async (req = request, res = response) => {
           label: "gestion de lead",
           isTitle: false,
           icon: "uil-calender",
-          url: "/reporte-admin/gestion-lead",
+          url: "/gestion-lead",
         },
         {
           key: "cliente-admClientes",

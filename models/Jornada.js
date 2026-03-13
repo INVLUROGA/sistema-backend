@@ -90,12 +90,16 @@ const contrato_empleado = db.define("tb_contrato_empleado", {
   observacion: {
     type: DataTypes.STRING(260),
   },
+  estado: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
 });
-const JornadaSemanal = db.define("jornada_semanal", {
+const JornadaSemanal = db.define("rrhh_jornada_semanal", {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -111,10 +115,14 @@ const JornadaSemanal = db.define("jornada_semanal", {
     type: DataTypes.INTEGER,
   },
   hora_inicio: {
-    type: DataTypes.DATE,
+    type: DataTypes.TIME,
   },
   hora_fin: {
-    type: DataTypes.DATE,
+    type: DataTypes.TIME,
+  },
+  estado: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
   },
   flag: {
     type: DataTypes.BOOLEAN,
