@@ -577,6 +577,50 @@ const seccionGET = async (req = request, res = response) => {
             },
           ],
         },
+        {
+          key: "entrenamiento",
+          label: "Entrenamientos",
+          icon: "uil-dumbbell",
+          url: "/entrenamiento",
+          children: [
+            {
+              key: "gestion-entrenamientos",
+              label: "Gestión de Entrenamientos",
+              isTitle: false,
+              icon: "uil-dumbbell",
+              url: "/gestion-entrenamientos",
+            },
+            {
+              key: "historial-entrenamientos",
+              label: "Historial de Entrenamientos",
+              isTitle: false,
+              icon: "uil-clock-eight",
+              url: "/historial-entrenamientos",
+            },
+          ],
+        },
+        {
+          key: "otros",
+          label: "Otros",
+          url: "/otros",
+          icon: "uil-calender",
+          children: [
+            {
+              key: "adm-gestionDct",
+              label: "Impuestos",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-descuentos",
+            },
+            {
+              key: "adm-gestionComisional",
+              label: "Comisiones",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-comisional",
+            },
+          ],
+        },
       ];
     }
     if (modulo === "mod-rrhh") {
