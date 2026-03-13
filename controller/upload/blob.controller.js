@@ -6,8 +6,11 @@ const uid = require("uuid");
 const uploadBlob = async (req = request, res = response) => {
   try {
     // const { container } = req.body;
-    const { container } = req.query;
-    console.log({ filesito: req.file });
+    let { container } = req.query;
+    if (!container || container === 'undefined') {
+      container = 'imagenes-generales';
+    }
+    console.log({ filesito: req.file, container });
 
     const { originalname, buffer } = req.file;
     const { uid_location } = req.params;
@@ -16,7 +19,14 @@ const uploadBlob = async (req = request, res = response) => {
     // console.log(extname(originalname), originalname.split(extname(originalname))[0]);
     const name_image = `${name}-${Date.now()}${extension}`;
     const containerClient = blobService.getContainerClient(container);
-    await containerClient.getBlockBlobClient(name_image).uploadData(buffer);
+
+    // Ensure container exists
+    await containerClient.createIfNotExists({
+      access: 'blob' // Allow public read access for individual blobs
+    });
+
+    const blockBlobClient = containerClient.getBlockBlobClient(name_image);
+    await blockBlobClient.uploadData(buffer);
 
     const img = new ImagePT({
       uid_location: uid_location,
@@ -30,6 +40,7 @@ const uploadBlob = async (req = request, res = response) => {
     res.status(200).json({
       msg: "success",
       img,
+      url: blockBlobClient.url
     });
   } catch (error) {
     console.log(error);
@@ -103,7 +114,7 @@ const viewFile = async (req = request, res = response) => {
     );
     // Pipe del stream hacia la respuesta
     downloadResponse.readableStreamBody.pipe(res);
-  } catch (error) {}
+  } catch (error) { }
 };
 module.exports = {
   getImagesxUID,
