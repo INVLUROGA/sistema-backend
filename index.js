@@ -62,16 +62,16 @@ cron.schedule("59 23 * * *", () => {
 
 // Resumen diario de ventas → 6:00 AM hora Lima (UTC-5 = 11:00 AM UTC)
 cron.schedule("0 11 * * *", () => {
-  // enviarResumenVentasDiario();
+  enviarResumenVentasDiario();
 });
 // Resumen diario de ventas → 6:00 AM hora Lima (UTC-5 = 11:00 AM UTC)
 cron.schedule("0 1 * * *", () => {
-  // enviarResumenVentasDiario();
+  enviarResumenVentasDiario();
 });
 // Resumen diario de ventas → 6:00 AM hora Lima (UTC-5 = 11:00 AM UTC)
-cron.schedule("58 10 * * *", () => {
-  // enviarResumenVentasDiario();
-});
+// cron.schedule("9 6 * * *", () => {
+//   enviarResumenVentasDiario();
+// });
 const fileServer = express.static;
 require("dotenv").config();
 const env = process.env;

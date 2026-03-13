@@ -212,8 +212,12 @@ ${renderTop3(mesesActualesxDiaInicioYDiaActual)}
 ${renderTop3(mesesActualesxDiaInicioYDiaActualmas3Dias)}
 *${mesActual.nombreMes} ${mesActual.anio}: ${mesActual.montoCorte.toLocaleString("es-PE")} / ${((mesActual.montoCorte / getQuotaParaMes(MesHoy, anioHoy).meta) * 100).toFixed(2)}%*
 (% contra la venta total mes)`;
-
-  await enviarWspUsuario(mensaje, new Date());
+  const idsUsers = [30, 18, 8, 5, 22, 31];
+  await enviarWspUsuario(
+    mensaje,
+    new Date().setMinutes(new Date().getMinutes() + 1),
+    idsUsers,
+  );
   return true;
 };
 
