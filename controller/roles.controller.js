@@ -648,6 +648,13 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           //key: "reporte-utilidad-pgm",
+          label: "PLANILLA",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/reporte-planilla",
+        },
+        {
+          //key: "reporte-utilidad-pgm",
           label: "Horarios",
           isTitle: false,
           icon: "uil-calender",

@@ -1,5 +1,7 @@
 const { response, request } = require("express");
 const { contrato_empleado, JornadaSemanal } = require("../models/Jornada");
+const { Parametros } = require("../models/Parametros");
+const { Empleado } = require("../models/Usuarios");
 
 const obtenerContratosxEmpleado = async (req = request, res = response) => {
   try {
@@ -88,6 +90,46 @@ const postSemanasxContrato = async (req = request, res = response) => {
     console.log(error);
   }
 };
+const obtenerSemanasxContrato = async (req = request, res = response) => {
+  try {
+    const { id_empresa } = req.params;
+    const empleados = await Empleado.findAll({
+      where: {
+        estado_empl: true,
+        flag: true,
+        id_empresa,
+      },
+      include: [
+        {
+          model: contrato_empleado,
+          as: "_empl",
+          where: {
+            estado: true,
+            flag: true,
+          },
+          include: [
+            {
+              model: JornadaSemanal,
+              as: "contrato_semana",
+              where: {
+                estado: true,
+                flag: true,
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    res.status(201).json({
+      msg: "",
+      ok: true,
+      empleados,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
   obtenerContratosxEmpleado,
   postContratos,
@@ -95,4 +137,5 @@ module.exports = {
   deleteContratosxID,
   obtenerContratoxID,
   postSemanasxContrato,
+  obtenerSemanasxContrato,
 };

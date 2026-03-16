@@ -129,6 +129,11 @@ const JornadaSemanal = db.define("rrhh_jornada_semanal", {
     defaultValue: true,
   },
 });
+JornadaSemanal.hasOne(Parametros, {
+  sourceKey: "id_dia",
+  foreignKey: "id_param",
+  as: "dia",
+});
 contrato_empleado.hasMany(JornadaSemanal, {
   foreignKey: "id_contrato",
   sourceKey: "id",
