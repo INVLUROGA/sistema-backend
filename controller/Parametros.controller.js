@@ -572,7 +572,7 @@ const getParametroSemanaPGM = async (req = request, res = response) => {
         ["sesiones", "sesiones"],
         [
           Sequelize.literal(
-            "CONCAT(semanas_st, ' Semanas | ', sesiones, ' Sesiones', ' | ', congelamiento_st, ' dias de congelamientos', ' | ', nutricion_st, ' citas nutricion')",
+            "CONCAT('SEMANAS ', semanas_st, ' | SESIONES ', sesiones, ' | CONGELAMIENTO ', congelamiento_st, ' DIAS | NUTRICION ', nutricion_st, ' CITAS')"
           ),
           "label",
         ],
