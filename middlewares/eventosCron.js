@@ -362,7 +362,7 @@ const obtenerCumpleaniosDeEmpleados = async () => {
         "sexo_empl",
       ],
     });
-
+    console.log("aqui es empl", empleados, diaActual, mesActual);
     const seen = new Set();
     const cumpleanerosUnicos = [];
 
@@ -372,7 +372,9 @@ const obtenerCumpleaniosDeEmpleados = async () => {
         seen.add(tel);
         cumpleanerosUnicos.push({
           nombres_cli: e.get("nombres_completos"),
-          fecha_nacimiento: e.fecha_nacimiento,
+          fecha_nacimiento: new Date(e.fecha_nacimiento).setHours(
+            new Date().getHours() + 5,
+          ),
           email_cli: e.email_empl,
           tel_cli: tel,
           sexo_cli: e.sexo_empl,
@@ -470,6 +472,19 @@ const reactivarAlertasMensuales = async () => {
     console.log(`Reactivadas ${alertasCanceladas.length} alertas.`);
   } catch (error) {
     console.error("Error reactivando alertas:", error);
+  }
+};
+
+const alertaUsuarioUnica = async () => {
+  try {
+    const dia = new Date().getDate();
+    const mes = new Date().getMonth() + 1;
+    const anio = new Date().getFullYear();
+    const alertaUsuario = await AlertasUsuario.findAll({
+      
+    });
+  } catch (error) {
+    console.log(error);
   }
 };
 

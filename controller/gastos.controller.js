@@ -427,7 +427,13 @@ const obtenerGastosxFechasPago = async (req = request, res = response) => {
         },
         {
           model: ParametroGastos,
-          attributes: ["id_empresa", "nombre_gasto", "grupo", "id_tipoGasto"],
+          attributes: [
+            "id_empresa",
+            "nombre_gasto",
+            "orden",
+            "grupo",
+            "id_tipoGasto",
+          ],
           where: {
             id_empresa: id_empresa,
           },
@@ -511,7 +517,13 @@ const obtenerGastosxFechasComprobante = async (
         },
         {
           model: ParametroGastos,
-          attributes: ["id_empresa", "nombre_gasto", "grupo", "id_tipoGasto"],
+          attributes: [
+            "id_empresa",
+            "nombre_gasto",
+            "grupo",
+            "orden",
+            "id_tipoGasto",
+          ],
           where: {
             id_empresa: id_empresa,
           },

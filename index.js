@@ -42,7 +42,7 @@ cron.schedule("0 3 1 * *", () => {
 });
 
 cron.schedule("0 15 * * *", () => {
-  obtenerCumpleaniosCliente();
+  // obtenerCumpleaniosCliente();
   obtenerCumpleaniosDeEmpleados();
 });
 cron.schedule("55 * * * *", () => {

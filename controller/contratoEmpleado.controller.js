@@ -111,6 +111,13 @@ const obtenerSemanasxContrato = async (req = request, res = response) => {
             {
               model: JornadaSemanal,
               as: "contrato_semana",
+              attributes: [
+                "id_estabilidad",
+                "id_dia",
+                "hora_inicio",
+                "hora_fin",
+                "estado",
+              ],
               where: {
                 estado: true,
                 flag: true,
@@ -130,6 +137,13 @@ const obtenerSemanasxContrato = async (req = request, res = response) => {
     console.log(error);
   }
 };
+const obtenerEmpleadosConContratos = async (req = request, res = response) => {
+  try {
+    const { id_empresa } = req.params;
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
   obtenerContratosxEmpleado,
   postContratos,
@@ -138,4 +152,5 @@ module.exports = {
   obtenerContratoxID,
   postSemanasxContrato,
   obtenerSemanasxContrato,
+  obtenerEmpleadosConContratos,
 };
