@@ -40,6 +40,8 @@ router.get("/obtener-proveedor/:id", getProveedor);
 router.put("/remove-proveedor/:id", deleteProveedor);
 router.put("/update-proveedor/:id", updateProveedor);
 
+router.get('')
+
 router.get("/obtener-contratos/:id_prov", getContratosxProv);
 router.get("/obtener-contrato/:id", getContratoxID);
 router.get("/obtener-gastos/:cod_trabajo/:tipo_moneda", getGastosxCodProv);

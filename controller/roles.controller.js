@@ -433,27 +433,6 @@ const seccionGET = async (req = request, res = response) => {
               url: "/deudas-proveedores",
             },
             {
-              key: "gest-prov-compromiso-pago",
-              label: "compromiso de pago",
-              isTitle: false,
-              icon: "uil-calender",
-              url: "/compromiso-pago",
-            },
-            {
-              key: "gest-prov",
-              label: "FORMATO DE DECLARACIÓN JURADA PROVEEDOR",
-              isTitle: false,
-              icon: "uil-calender",
-              url: "/declaracion-jurada",
-            },
-            {
-              key: "gest-prov",
-              label: "MODELO DE CONTRATO",
-              isTitle: false,
-              icon: "uil-calender",
-              url: "/modelo-contrato",
-            },
-            {
               key: "trab-prov",
               label: "gastos ",
               isTitle: false,
@@ -765,6 +744,28 @@ const seccionGET = async (req = request, res = response) => {
           ],
         },
         {
+          key: "monkey fit",
+          label: "Monkey fit",
+          url: "/monkey-fit",
+          icon: "uil-home-alt",
+          children: [
+            {
+              key: "ventas-reservasmf",
+              label: "Reservas MonkFit",
+              icon: "uil-calender",
+              url: "/gestion-monkfit",
+              parentKey: "ventas-reservasmf",
+            },
+            {
+              key: "clientes-monkeyFit",
+              label: "Reporte de cliente",
+              icon: "uil-calender",
+              url: "/clientes-monkeyFit",
+              parentKey: "clientes-monkeyFit",
+            },
+          ],
+        },
+        {
           key: "ventas",
           label: "Ventas",
           url: "/ventas",
@@ -776,13 +777,6 @@ const seccionGET = async (req = request, res = response) => {
               icon: "uil-calender",
               url: "/nueva-venta",
               parentKey: "ventas-nueva-venta",
-            },
-            {
-              key: "ventas-reservasmf",
-              label: "Reservas MonkFit",
-              icon: "uil-calender",
-              url: "/gestion-monkfit",
-              parentKey: "ventas-reservasmf",
             },
             {
               key: "gestion-ventas",

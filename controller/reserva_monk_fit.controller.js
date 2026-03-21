@@ -4,6 +4,7 @@ const { db } = require("../database/sequelizeConnection");
 const ReservaMonkFit = require("../models/ReservaMonkFit");
 const { Parametros } = require("../models/Parametros");
 const NodeCache = require("node-cache");
+const { Cliente } = require("../models/Usuarios");
 const reservasCache = new NodeCache({ stdTTL: 1800 }); // 30 minutes cache
 
 const normalizeToSqlDate = (v) => {
@@ -304,6 +305,13 @@ const obtenerReservasMonkeyFit = async (req = request, res = response) => {
   try {
     const reservasMF = await ReservaMonkFit.findAll({
       where: { flag: true },
+      include: [
+        {
+          model: Cliente,
+          as: "cliente",
+          attributes: ["nombre_cli", "apPaterno_cli"],
+        },
+      ],
     });
     res.status(201).json({
       reservasMF,
