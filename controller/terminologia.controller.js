@@ -323,8 +323,6 @@ const postTerminologia1 = async (req = request, res = response) => {
 const updateTerminologia1xID = async (req = request, res = response) => {
   try {
     const { id } = req.params;
-    const { formState } = req.body;
-    console.log(req.body);
 
     const terminologia = await Parametros.findOne({ where: { id_param: id } });
     await terminologia.update(req.body);
@@ -364,7 +362,73 @@ const obtenerTerminologia1xEntidadxGrupo = async (
     console.log(error);
   }
 };
+const obtenerTerminologiasGrupos = async (req = request, res = response) => {
+  try {
+    const { id_empresa } = req.params;
+    const dataGrupo = await ParametroGrupo.findAll({
+      where: { id_empresa: id_empresa, flag: true },
+      order: [["id", "desc"]],
+    });
+    res.status(201).json({
+      dataGrupo,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const postTerminologiasGrupos = async (req = request, res = response) => {
+  try {
+    await ParametroGrupo.create({ ...req.body });
+    res.status(201).json({
+      msg: "ok",
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const updateTerminologiasGruposxID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const Termgrupo = await ParametroGrupo.findOne({ where: { id } });
+    await Termgrupo.update(req.body);
+    res.status(201).json({
+      Termgrupo,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const deleteTerminologiasGruposxID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const Termgrupo = await ParametroGrupo.findOne({ where: { id } });
+    await Termgrupo.update({ flag: false });
+    res.status(201).json({
+      Termgrupo,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const obtenerTerminologiasGruposxID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const Termgrupo = await ParametroGrupo.findOne({ where: { id } });
+    res.status(201).json({
+      Termgrupo,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
+  // TERM GRUPOS
+  postTerminologiasGrupos,
+  obtenerTerminologiasGrupos,
+  updateTerminologiasGruposxID,
+  obtenerTerminologiasGruposxID,
+  deleteTerminologiasGruposxID,
+  //
   terminologiasPorEntidad,
   comboMesActivoVentas,
   terminologiasGastosxEmpresa,
