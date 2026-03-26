@@ -1,5 +1,5 @@
 const { request, response } = require("express");
-const { AlertasUsuario } = require("../models/Auditoria");
+const { AlertasUsuario, TerminologiaAlerta } = require("../models/Auditoria");
 const { Op } = require("sequelize");
 const dayjs = require("dayjs"); // Asegúrate de tener dayjs importado
 const utc = require("dayjs/plugin/utc");
@@ -37,23 +37,22 @@ const confirmarPago = async (req = request, res = response) => {
           mensaje: alerta.mensaje, // <--- ¡CRÍTICO! Solo cancelar recibos del MISMO SERVICIO
           fecha: { [Op.gte]: fechaInicioMes, [Op.lt]: fechaFinMes },
           tipo_alerta: { [Op.in]: [1425] },
-          id: { [Op.ne]: id } // Excluir la que ya actualizamos arriba
-        }
-      }
+          id: { [Op.ne]: id }, // Excluir la que ya actualizamos arriba
+        },
+      },
     );
 
     // --- 3. CREAR LA ALERTA DEL PRÓXIMO MES ---
     if (alerta.tipo_alerta === 1425) {
-
       const fechaOriginal = new Date(alerta.fecha);
 
       // Calculamos la fecha sumando 1 mes exacto, manteniendo la MISMA HORA de la original
       // Esto evita que las alertas salten de las 13:00 a las 11:00 aleatoriamente
-      const nuevaFecha = dayjs(fechaOriginal).add(1, 'month').toDate();
+      const nuevaFecha = dayjs(fechaOriginal).add(1, "month").toDate();
 
       // Definimos el inicio y fin de ese NUEVO DÍA para buscar duplicados
-      const inicioDiaNuevo = dayjs(nuevaFecha).startOf('day').toDate();
-      const finDiaNuevo = dayjs(nuevaFecha).endOf('day').toDate();
+      const inicioDiaNuevo = dayjs(nuevaFecha).startOf("day").toDate();
+      const finDiaNuevo = dayjs(nuevaFecha).endOf("day").toDate();
 
       // Verificamos si ya existe para no duplicar (Safety Check Blindado)
       const existeProxima = await AlertasUsuario.findOne({
@@ -64,8 +63,8 @@ const confirmarPago = async (req = request, res = response) => {
           // Buscamos si existe CUALQUIER alerta ese día (sin importar la hora exacta)
           fecha: { [Op.gte]: inicioDiaNuevo, [Op.lte]: finDiaNuevo },
           // Buscamos en estado 1 (pendiente) o 3 (pagado adelantado)
-          id_estado: { [Op.in]: [1, 3] }
-        }
+          id_estado: { [Op.in]: [1, 3] },
+        },
       });
 
       if (!existeProxima) {
@@ -75,15 +74,21 @@ const confirmarPago = async (req = request, res = response) => {
           mensaje: alerta.mensaje,
           fecha: nuevaFecha,
           id_estado: 1, // Nace activa
-          flag: true
+          flag: true,
         });
-        console.log(`Alerta del próximo mes creada para el usuario ${alerta.id_user}: ${alerta.mensaje}`);
+        console.log(
+          `Alerta del próximo mes creada para el usuario ${alerta.id_user}: ${alerta.mensaje}`,
+        );
       } else {
-        console.log(`Se omitió crear alerta. Ya existía una programada para el usuario ${alerta.id_user}.`);
+        console.log(
+          `Se omitió crear alerta. Ya existía una programada para el usuario ${alerta.id_user}.`,
+        );
       }
     }
 
-    res.status(200).json({ msg: "Pago confirmado, alertas limpiadas y próximo vencimiento programado." });
+    res.status(200).json({
+      msg: "Pago confirmado, alertas limpiadas y próximo vencimiento programado.",
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ msg: "ERROR EN LA BASE DE DATOS O SERVIDOR" });
@@ -97,6 +102,7 @@ const PostAlertaUsuario = async (req = request, res = response) => {
     await alertaUsuario.save();
     res.status(201).json({ msg: "AlertaUsuario creado correctamente" });
   } catch (error) {
+    console.log(error);
     res.status(500).json({
       msg: "ERROR EN LA BASE DE DATOS O SERVIDOR (PostAlertaUsuario)",
     });
@@ -168,7 +174,23 @@ const updateMensaje = async (req = request, res = response) => {
     });
   }
 };
+const obtenerTiposDeAlerta = async (req = request, res = response) => {
+  try {
+    const tiposDeAlerta = await TerminologiaAlerta.findAll({
+      where: { flag: true },
+      attributes: [
+        ["nombre_tipo_alerta", "label"],
+        ["id", "value"],
+      ],
+    });
+    res.status(201).json({ tiposDeAlerta });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 module.exports = {
+  obtenerTiposDeAlerta,
   PostAlertaUsuario,
   GetAlertaUsuarios,
   GetAlertaUsuario,

@@ -78,17 +78,17 @@ const TerminologiaAlerta = db.define("terminologia_alerta", {
 
 Usuario.hasMany(Auditoria, { foreignKey: "id_user" });
 Auditoria.belongsTo(Usuario, { foreignKey: "id_user" });
-AlertasUsuario.hasMany(Parametros_3, {
-  foreignKey: "id",
-  targetKey: "id_grupo_usuarios",
-  as: "alerta_grupo",
-});
+// AlertasUsuario.hasMany(Parametros, {
+//   foreignKey: "id",
+//   targetKey: "id_grupo_usuarios",
+//   as: "alerta_grupo",
+// });
 
-AlertasUsuario.belongsTo(TerminologiaAlerta, {
-  foreignKey: "id_tipo_alerta",
-  targetKey: "id",
-  as: "alerta_tipo",
-});
+// AlertasUsuario.belongsTo(TerminologiaAlerta, {
+//   foreignKey: "id_tipo_alerta",
+//   targetKey: "id",
+//   as: "alerta_tipo",
+// });
 
 Auditoria.sync()
   .then(() => {

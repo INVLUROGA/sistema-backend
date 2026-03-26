@@ -6,7 +6,8 @@ const {
   deleteAlertaUsuario,
   updateAlertaUsuario,
   updateMensaje,
-  confirmarPago
+  confirmarPago,
+  obtenerTiposDeAlerta,
 } = require("../controller/alertaUsuario.controller");
 const router = Router();
 /*
@@ -14,10 +15,11 @@ const router = Router();
 */
 //
 router.get("/get-alerta-usuario/:id", GetAlertaUsuario);
-router.post("/alerta-usuario", PostAlertaUsuario);
+router.post("/", PostAlertaUsuario);
 router.get("/get-alertas", GetAlertaUsuarios);
 router.put("/put-alerta/:id", updateAlertaUsuario);
 router.put("/delete-alerta/:id", deleteAlertaUsuario);
 router.put("/edit-mensaje", updateMensaje);
 router.put("/confirmar-pago/:id", confirmarPago);
+router.get("/tipo-alertas", obtenerTiposDeAlerta);
 module.exports = router;
