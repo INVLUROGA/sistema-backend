@@ -72,6 +72,8 @@ const getGastos = async (req = request, res = response) => {
         "id_estado_gasto",
         "fecha_pago",
         "fecha_comprobante",
+        "impuesto_igv",
+        "impuesto_renta",
       ],
       include: [
         {

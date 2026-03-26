@@ -951,6 +951,78 @@ const seccionGET = async (req = request, res = response) => {
         },
 
         {
+          key: "cantidad-socios-montos",
+          label: "Resumen general",
+          icon: "uil-home-alt",
+          url: "/resumen-general",
+          children: [
+            {
+              key: "r-comparativo-mensual",
+              icon: "uil-calender",
+              label: "Comparativo Mensual",
+              url: "/reporte/comparativo-mensual",
+              parentKey: "socios-montos",
+            },
+            {
+              key: "r-ventasAsesor",
+              label: "VENTAS POR ASESOR",
+              isTitle: false,
+              icon: "uil-chart-line",
+              url: "/reporte/ventas-asesor",
+            },
+            {
+              key: "resumen-ejecutivo",
+              label: "RESUMEN EJECUTIVO",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/resumen-ejecutivo",
+            },
+            {
+              key: "r-comparativo-mensual",
+              icon: "uil-calender",
+              label: "Comparativo Mensual Ventas",
+              url: "/reporte/comparativo-mensual-ventas",
+              parentKey: "socios-montos",
+            },
+          ],
+        },
+        {
+          key: "asesores",
+          label: "Asesores",
+          icon: "uil-home-alt",
+          url: "/reportes-asesores",
+          children: [
+            {
+              key: "r-renovaciones-mes",
+              icon: "uil-calender",
+              label: "COMPARATIVO por ASESOR",
+              url: "/reporte/ranking-por-asesor",
+              parentKey: "socios-montos",
+            },
+            {
+              key: "r-vigentes-historico",
+              icon: "uil-calender",
+              label: "Inscripciones por mes",
+              url: "/reporte/vigentes-historico",
+              parentKey: "socios-montos",
+            },
+            {
+              key: "r-ranking-asesor-diaria",
+              icon: "uil-calender",
+              label: "RANKING DIARIO",
+              url: "/reporte/ranking-asesor-diaria",
+              parentKey: "socios-montos",
+            },
+            {
+              key: "r-comisiones",
+              label: "COMISIONES",
+              isTitle: false,
+              icon: "uil-money-bill",
+              url: "/reporte/comisiones",
+            },
+          ],
+        },
+        {
           key: "reportes",
           label: "Reportes",
           url: "/reporte",

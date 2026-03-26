@@ -11,12 +11,10 @@ const {
 } = require("../config/whatssap-web");
 const dayjs = require("dayjs");
 const es = require("dayjs/locale/es");
-const { capturarAccion } = require("../middlewares/auditoria");
 const { typesCRUD, messageWSP } = require("../types/types");
 const { EtiquetasxIds, Parametros } = require("../models/Parametros");
 const { ServiciosCircus } = require("../models/modelsCircus/Servicios");
-dayjs.locale("es"); // Establece el idioma en español
-const env = process.env;
+dayjs.locale("es");
 
 const getVentasFilter = async (req = request, res = response) => {
   const { status_cita, id_cli, id_empl } = req.body;
@@ -67,7 +65,7 @@ const getVentasFilter = async (req = request, res = response) => {
                 " ",
                 Sequelize.col("apPaterno_cli"),
                 " ",
-                Sequelize.col("apMaterno_cli")
+                Sequelize.col("apMaterno_cli"),
               ),
               "nombres_apellidos_cli",
             ],
@@ -83,7 +81,7 @@ const getVentasFilter = async (req = request, res = response) => {
                 " ",
                 Sequelize.col("apPaterno_empl"),
                 " ",
-                Sequelize.col("apMaterno_empl")
+                Sequelize.col("apMaterno_empl"),
               ),
               "nombres_apellidos_empl",
             ],
@@ -136,7 +134,7 @@ const getServiciosCita = async (req, res) => {
               model: ServiciosCircus,
               as: "parametro_servicio",
             },
-          ],  
+          ],
         },
       ],
     });
@@ -191,14 +189,14 @@ const postServiciosCita = async (req = request, res = response) => {
           tb_empleado,
           tb_cliente,
           dayjs(cita.fecha_inicio).format("dddd DD [de] MMMM [a las] hh:mm A"),
-          citasDeCitasGeneradasJSON
-        )
+          citasDeCitasGeneradasJSON,
+        ),
       );
     }
     if (id_estado === 502) {
       await enviarMensajesWsp__CIRCUS(
         tb_cliente.tel_cli,
-        messageWSP.mensajeCitaRegistrada__clienteasistio(tb_cliente)
+        messageWSP.mensajeCitaRegistrada__clienteasistio(tb_cliente),
       );
     }
     console.log({
@@ -258,7 +256,7 @@ const getCitasxServ = async (req = request, res = response) => {
                 " ",
                 Sequelize.col("apPaterno_cli"),
                 " ",
-                Sequelize.col("apMaterno_cli")
+                Sequelize.col("apMaterno_cli"),
               ),
               "nombres_apellidos_cli",
             ],
@@ -274,7 +272,7 @@ const getCitasxServ = async (req = request, res = response) => {
                 " ",
                 Sequelize.col("apPaterno_empl"),
                 " ",
-                Sequelize.col("apMaterno_empl")
+                Sequelize.col("apMaterno_empl"),
               ),
               "nombres_apellidos_empl",
             ],
@@ -314,19 +312,6 @@ const postCita = async (req = request, res = response) => {
       status_cita,
       id_empl,
     });
-    let formAUDIT2 = {
-      id_user: req.id_user,
-      ip_user: req.ip_user,
-      accion: typesCRUD.POST,
-      arrayNuevo: {
-        ...req.body,
-      },
-      arrayViejo: {
-        ...req.body,
-      },
-      observacion: `Se agrego: El Cita de id ${cita.id}`,
-    };
-    await capturarAccion(formAUDIT2);
     await cita.save();
     const cliente = await Cliente.findOne({ where: { id_cli: id_cli } });
     const objSexoTst = {
@@ -356,10 +341,10 @@ Es muy importante que llegues 10 minutos antes, estés en ayunas o al menos 3 ho
           cliente.sexo_cli === objSexoTst.fem
             ? "BIENVENIDA"
             : cliente.sexo_cli === 0
-            ? "BIENVENID(a)"
-            : "BIENVENIDO"
+              ? "BIENVENID(a)"
+              : "BIENVENIDO"
         } AL CHANGE!💪✨
-`
+`,
       );
     }
     res.status(200).json({
@@ -437,7 +422,7 @@ const putCita = async (req = request, res = response) => {
 
       Recuerda llegar 15 min antes y en ayunas (o mínimo 3h sin comer).
       ¡Nos vemos pronto!
-              `
+              `,
       );
     }
     if (req.body.status_cita === "502") {
@@ -454,7 +439,7 @@ const putCita = async (req = request, res = response) => {
 Lamentamos que no hayas podido asistir a tu cita de evaluación nutricional en CHANGE. Sabemos que a veces surgen imprevistos, pero queremos recordarte que el 70% del resultado te lo dará la DIETA y que este seguimiento con nosotros es clave para lograr tus objetivos de salud y bienestar.
 
 Te invitamos a reagendar tu cita lo antes posible. Estamos aquí para apoyarte en cada paso del camino al CAMBIO!
-              `
+              `,
       );
     }
     res.status(200).json({
@@ -488,7 +473,7 @@ const getCitasxServicios = async (req = request, res = response) => {
                 " ",
                 Sequelize.col("apPaterno_cli"),
                 " ",
-                Sequelize.col("apMaterno_cli")
+                Sequelize.col("apMaterno_cli"),
               ),
               "nombres_apellidos_cli",
             ],
@@ -557,7 +542,7 @@ const getCitasxServiciosFilter = async (req = request, res = response) => {
                 " ",
                 Sequelize.col("apPaterno_cli"),
                 " ",
-                Sequelize.col("apMaterno_cli")
+                Sequelize.col("apMaterno_cli"),
               ),
               "nombres_apellidos_cli",
             ],
@@ -573,7 +558,7 @@ const getCitasxServiciosFilter = async (req = request, res = response) => {
                 " ",
                 Sequelize.col("apPaterno_empl"),
                 " ",
-                Sequelize.col("apMaterno_empl")
+                Sequelize.col("apMaterno_empl"),
               ),
               "nombres_apellidos_empl",
             ],
@@ -625,13 +610,6 @@ const obtenerServiciosxCliente = async (req = request, res = response) => {
       ok: false,
       msg: "Hable con el administrador",
     });
-  }
-};
-const postReservasMFit = async(req=request, res=response) => {
-  try {
-    const {  } = req.body;
-  } catch (error) {
-    
   }
 };
 module.exports = {

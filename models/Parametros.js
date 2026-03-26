@@ -1,7 +1,8 @@
 const { DataTypes } = require("sequelize");
 const { db } = require("../database/sequelizeConnection");
 const uuid = require("uuid");
-const { ImagePT } = require("./Image");
+const { Usuario } = require("./Usuarios");
+
 const Parametros = db.define("tb_parametro", {
   id_param: {
     type: DataTypes.INTEGER,
@@ -39,29 +40,36 @@ const Parametros = db.define("tb_parametro", {
     defaultValue: true,
   },
 });
-const Parametros_3 = db.define("tb_parametros_3", {
+const Parametros_3 = db.define("tb_parametros_2", {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
   },
   entidad: {
-    type: DataTypes.STRING(25),
+    type: DataTypes.STRING(200),
+  },
+  grupo: {
+    type: DataTypes.STRING(200),
   },
   id_1: {
     type: DataTypes.INTEGER,
+    defaultValue: 0,
   },
   id_2: {
     type: DataTypes.INTEGER,
+    defaultValue: 0,
   },
   id_3: {
     type: DataTypes.INTEGER,
+    defaultValue: 0,
   },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
 });
+
 const Parametros_zonas = db.define("tb_parametros_zonas", {
   id: {
     type: DataTypes.INTEGER,
@@ -182,23 +190,11 @@ EtiquetasxIds.hasOne(Parametros, {
   as: "parametro_etiqueta",
 });
 // carcel();
-
-// const ParNutr_vs_consulta = db.define("tb_ParNutr_vs_consulta", {
-//   id: {
-//     type: DataTypes.INTEGER,
-//     autoIncrement: true,
-//     primaryKey: true,
-//   },
-//   id_param_nutricional: {
-//     type: DataTypes.STRING,
-//   },
-//   id_consulta_nutri: {
-//     type: DataTypes.STRING,
-//   }
-// });
-
-/*
- */
+Parametros_3.hasOne(Parametros, {
+  foreignKey: "id_param",
+  sourceKey: "id_1",
+  as: "parametros_id_1",
+});
 Parametros_zonas.sync()
   .then(() => {
     console.log("La tabla Parametros_zonas ha sido creada o ya existe.");
@@ -206,7 +202,7 @@ Parametros_zonas.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 Parametro_periodo.sync()
@@ -216,17 +212,17 @@ Parametro_periodo.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 Parametros_3.sync()
   .then(() => {
-    console.log("La tabla Parametros_3 ha sido creada o ya existe.");
+    console.log("La tabla Parametros_2 ha sido creada o ya existe.");
   })
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 
@@ -237,7 +233,7 @@ Parametros.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 
@@ -248,7 +244,7 @@ EtiquetasxIds.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 module.exports = {

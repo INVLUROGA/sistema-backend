@@ -2,7 +2,7 @@ const { DataTypes, Sequelize } = require("sequelize");
 
 const { db } = require("../database/sequelizeConnection");
 const { ImagePT } = require("./Image");
-const { Parametros } = require("./Parametros");
+const { Parametros, Parametros_3 } = require("./Parametros");
 const uuid = require("uuid");
 //El usuario es todo aca, cuando registra un producto, el es al que se le notifica si el producto esta en stock minimo
 //Hay una pagina que se encarga de ver a quien notificar que hacen los usuarios
@@ -266,6 +266,11 @@ const Empresa = db.define("tb_empresa", {
   },
 });
 
+Parametros_3.hasMany(Usuario, {
+  foreignKey: "id_user",
+  sourceKey: "id_2",
+  as: "parametros_id_2",
+});
 Empleado.hasMany(ImagePT, {
   foreignKey: "uid_location",
   sourceKey: "uid_avatar",
@@ -298,7 +303,7 @@ Empresa.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 
@@ -309,7 +314,7 @@ Cliente.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 Empleado.sync()
@@ -319,7 +324,7 @@ Empleado.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos: Empleado",
-      error
+      error,
     );
   });
 Usuario.sync()
@@ -329,7 +334,7 @@ Usuario.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 

@@ -13,7 +13,7 @@ const {
 } = require("../models/Parametros");
 const { Sequelize } = require("sequelize");
 const { GeneradorFechas } = require("../models/GeneradorFechas");
-const { capturarAUDIT, capturarAccion } = require("../middlewares/auditoria");
+const { capturarAUDIT } = require("../middlewares/auditoria");
 const { typesCRUD } = require("../types/types");
 const { enviarMensajesWsp } = require("../config/whatssap-web");
 const { Usuario } = require("../models/Usuarios");
@@ -111,8 +111,6 @@ const registrarArticulo = async (req = request, res = response) => {
       observacion: `Se agrego: El articulo de id ${articulo.id}`,
     };
     await capturarAUDIT(formAUDIT);
-    await capturarAccion(formAUDIT);
-
     await HisCamArticulos.create({
       ...req.body,
       id_accion: typesCRUD.POST,
@@ -157,7 +155,6 @@ const actualizarArticulo = async (req = request, res = response) => {
       observacion: `Se edito: El articulo de id ${articulo.id}`,
     };
     await capturarAUDIT(formAUDIT);
-    await capturarAccion(formAUDIT);
     await articulo.update(req.body);
     await HisCamArticulos.create({
       ...req.body,
@@ -202,7 +199,6 @@ const eliminarArticulo = async (req = request, res = response) => {
       observacion: `Se elimino: El articulo de id ${articulo.id}`,
     };
     await capturarAUDIT(formAUDIT);
-    await capturarAccion(formAUDIT);
     await articulo.update({ flag: false });
     await HisCamArticulos.create({
       ...req.body,

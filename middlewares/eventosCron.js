@@ -1,20 +1,15 @@
 const { Sequelize, Op, where, fn, col } = require("sequelize");
 const { Cliente, Usuario, Empleado } = require("../models/Usuarios");
 const { Venta } = require("../models/Venta");
-const {
-  enviarMensajesWsp,
-  enviarMapaWsp__CIRCUS,
-  enviarMensajesWsp__CIRCUS,
-} = require("../config/whatssap-web");
+const { enviarMensajesWsp } = require("../config/whatssap-web");
 const dayjs = require("dayjs");
 require("dayjs/locale/es");
 dayjs.locale("es");
 const utc = require("dayjs/plugin/utc");
 const timezone = require("dayjs/plugin/timezone");
 const isSameOrBefore = require("dayjs/plugin/isSameOrBefore");
-const { eventoServicio } = require("../models/Cita");
-const { AlertasUsuario } = require("../models/Auditoria");
-const { messageWSP } = require("../types/types");
+const { AlertasUsuario, TerminologiaAlerta } = require("../models/Auditoria");
+const { Parametros_3, Parametros } = require("../models/Parametros");
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -147,92 +142,6 @@ const alertasUsuario = async () => {
     }
   } catch (error) {
     console.log("Error en alertasUsuario:", error);
-  }
-};
-const recordatorioReservaCita24hAntes = async () => {
-  try {
-    console.log("Ejecutando recordatorio 24h antes...");
-    const ahora = new Date();
-    const en24h = new Date(ahora.getTime() + 24 * 60 * 60 * 1000);
-    const citas = await eventoServicio.findAll({
-      where: {
-        flag: true,
-        id_empl: 3553,
-      },
-      include: [{ model: Cliente }, { model: Empleado }],
-    });
-    // Función para obtener solo la hora (en UTC o local)
-    const obtenerHora = (fecha) => {
-      const d = new Date(fecha);
-      return d.getUTCHours(); // Usa getHours() si quieres hora local
-    };
-
-    const citasFiltradas = citas.filter(
-      (cita) => obtenerHora(cita.fecha_inicio) === obtenerHora(en24h),
-    );
-    for (const cita of citasFiltradas) {
-      const fecha_inicio = dayjs(cita.fecha_inicio).format(
-        "dddd DD [de] MMMM [a las] hh:mm A",
-      );
-      await enviarMensajesWsp__CIRCUS(
-        cita.tb_cliente.tel_cli,
-        messageWSP.mensaje24hAntesDeLaReserva(
-          cita.tb_empleado,
-          cita.tb_cliente,
-          fecha_inicio,
-        ),
-      );
-      await enviarMapaWsp__CIRCUS(
-        cita.tb_cliente.tel_cli,
-        "CIRCUS SALON",
-        -12.133150008241682,
-        -77.02314616701953,
-      );
-    }
-  } catch (error) {
-    console.log(error);
-  }
-};
-const recordatorioReservaCita2hAntes = async () => {
-  try {
-    console.log("Ejecutando recordatorio 2h antes...");
-    const ahora = new Date();
-    const en24h = new Date(ahora.getTime() + 2 * 60 * 60 * 1000);
-    const citas = await eventoServicio.findAll({
-      where: {
-        flag: true,
-        id_empl: 3553,
-      },
-      include: [{ model: Cliente }, { model: Empleado }],
-    });
-    // Función para obtener solo la hora (en UTC o local)
-    const mismaFechaYHoraSinMinutos = (fecha1, fecha2) => {
-      const f1 = new Date(fecha1);
-      const f2 = new Date(fecha2);
-      return (
-        f1.getUTCFullYear() === f2.getUTCFullYear() &&
-        f1.getUTCMonth() === f2.getUTCMonth() &&
-        f1.getUTCDate() === f2.getUTCDate()
-      );
-    };
-    const citasFiltradas = citas.filter((cita) =>
-      mismaFechaYHoraSinMinutos(cita.fecha_inicio, en24h),
-    );
-    for (const cita of citasFiltradas) {
-      const fecha_inicio = dayjs(cita.fecha_inicio).format(
-        "dddd DD [de] MMMM [a las] hh:mm A",
-      );
-      await enviarMensajesWsp__CIRCUS(
-        cita.tb_cliente.tel_cli,
-        messageWSP.mensaje2hAntesDeLaReserva(
-          cita.tb_empleado,
-          cita.tb_cliente,
-          fecha_inicio,
-        ),
-      );
-    }
-  } catch (error) {
-    console.log(error);
   }
 };
 const obtenerCumpleaniosCliente = async () => {
@@ -477,22 +386,85 @@ const reactivarAlertasMensuales = async () => {
 
 const alertaUsuarioUnica = async () => {
   try {
-    const dia = new Date().getDate();
-    const mes = new Date().getMonth() + 1;
-    const anio = new Date().getFullYear();
+    const diaActual = new Date().getDate();
+    const mesActual = new Date().getMonth() + 1;
+    const anioActual = new Date().getFullYear();
+    const horaActual = new Date().getUTCHours();
+    const minActual = new Date().getUTCMinutes();
     const alertaUsuario = await AlertasUsuario.findAll({
-      
+      where: { flag: true, id_estado: true },
+      include: [
+        {
+          model: TerminologiaAlerta,
+          as: "alerta_tipo",
+        },
+        {
+          model: Parametros_3,
+          as: "alerta_grupo",
+          include: [
+            {
+              model: Usuario,
+              as: "parametros_id_2", //USUARIO
+            },
+          ],
+        },
+      ],
     });
+    //PRIMERO: FILTRAR POR FECHA, VA A COMPARAR LA FECHA CON LA FECHA_ACTUAL
+    const alertaUsuarioMAP = alertaUsuario
+      .map((a) => a.toJSON())
+      .map((m) => {
+        const fecha = new Date(m.fecha);
+        const anio = fecha.getUTCFullYear();
+        const mes = fecha.getUTCMonth() + 1; // 👈 enero = 0
+        const dia = fecha.getUTCDate();
+        const hora = fecha.getUTCHours();
+        const minuto = fecha.getUTCMinutes();
+        return {
+          ...m,
+          estructura_fecha_alerta: {
+            anio,
+            mes,
+            dia,
+            hora,
+            minuto,
+            fecha,
+          },
+        };
+      });
+    // .filter(
+    //   (f) =>
+    //     f.estructura_fecha_alerta.anio === anioActual &&
+    //     f.estructura_fecha_alerta.mes === mesActual &&
+    //     f.estructura_fecha_alerta.dia === diaActual &&
+    //     f.estructura_fecha_alerta.hora === horaActual &&
+    //     f.estructura_fecha_alerta.minuto === minActual,
+    // );
+    //FOR EACH A LOS USUARIOS, Y PASAR A MANDAR MENSAJE
+    for (const alerta of alertaUsuarioMAP) {
+      for (const e1 of alerta.alerta_grupo) {
+        for (const e2 of e1.parametros_id_2) {
+          enviarMensajesWsp(e2.telefono_user, alerta.mensaje);
+        }
+      }
+    }
+
+    //EL TIPO DE ALERTA
+
+    for (const alerta of alertaUsuarioMAP) {
+      
+    }
+
+    // VER EN ALERTA USUARIO, SI LA ALERTA {nombre_dias: 'SOLO UN DIA', dias: 1}, {nombre_dias: '', dias: 1}
   } catch (error) {
     console.log(error);
   }
 };
 
 module.exports = {
-  recordatorioReservaCita2hAntes,
+  alertaUsuarioUnica,
   obtenerCumpleaniosCliente,
   alertasUsuario,
-  recordatorioReservaCita24hAntes,
   obtenerCumpleaniosDeEmpleados,
   reactivarAlertasMensuales,
 };

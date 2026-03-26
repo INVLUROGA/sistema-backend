@@ -8,10 +8,9 @@ const cron = require("node-cron");
 const {
   obtenerCumpleaniosCliente,
   alertasUsuario,
-  recordatorioReservaCita24hAntes,
-  recordatorioReservaCita2hAntes,
   obtenerCumpleaniosDeEmpleados,
   reactivarAlertasMensuales,
+  alertaUsuarioUnica,
 } = require("./middlewares/eventosCron.js");
 
 //***********************************************/
@@ -45,19 +44,11 @@ cron.schedule("0 15 * * *", () => {
   // obtenerCumpleaniosCliente();
   obtenerCumpleaniosDeEmpleados();
 });
-cron.schedule("55 * * * *", () => {
-  recordatorioReservaCita24hAntes();
-});
 
 // Run alerts every minute to checking for specific times
 cron.schedule("* * * * *", () => {
-  alertasUsuario();
-});
-cron.schedule("30 8 * * *", () => {
-  recordatorioReservaCita2hAntes();
-});
-cron.schedule("59 23 * * *", () => {
-  recordatorioReservaCita2hAntes();
+  // alertasUsuario();
+  // alertaUsuarioUnica();
 });
 
 // Resumen diario de ventas → 6:00 AM hora Lima (UTC-5 = 11:00 AM UTC)
@@ -68,10 +59,6 @@ cron.schedule("0 11 * * *", () => {
 cron.schedule("0 1 * * *", () => {
   enviarResumenVentasDiario();
 });
-// Resumen diario de ventas → 6:00 AM hora Lima (UTC-5 = 11:00 AM UTC)
-// cron.schedule("9 6 * * *", () => {
-//   enviarResumenVentasDiario();
-// });
 const fileServer = express.static;
 require("dotenv").config();
 const env = process.env;
