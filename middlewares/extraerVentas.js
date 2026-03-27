@@ -272,6 +272,7 @@ const extraerPagos = async (req = request, res = response, next) => {
       n_operacion: e.n_operacion,
       observacion: e.observacion_pago,
       parcial_monto: e.monto_pago,
+      n_cuotas: Number(e.n_cuotas),
     };
   });
   req.pagosExtraidos = pagosExtraidos;

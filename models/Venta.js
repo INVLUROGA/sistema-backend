@@ -254,6 +254,10 @@ const detalleVenta_pagoVenta = db.define("detalleVenta_pagoVenta", {
   n_operacion: {
     type: DataTypes.STRING(50),
   },
+  n_cuotas: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
   observacion: {
     type: DataTypes.STRING(360),
   },
