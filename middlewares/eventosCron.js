@@ -437,7 +437,7 @@ const alertaUsuarioUnica = async () => {
         f.estructura_fecha_alerta.mes === mesActual &&
         f.estructura_fecha_alerta.dia === diaActual &&
         f.estructura_fecha_alerta.hora === horaActual &&
-        f.estructura_fecha_alerta.minuto - 1 === minActual,
+        f.estructura_fecha_alerta.minuto === minActual,
     );
 
     //FOR EACH A LOS USUARIOS, Y PASAR A MANDAR MENSAJE
