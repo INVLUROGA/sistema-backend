@@ -4685,10 +4685,11 @@ const obtenerPagosVentas = async (req = request, res = response) => {
         "fecha_venta",
         "observacion",
       ],
-      where: { flag: true },
+      where: { flag: true, id_empresa: 598 },
       order: [["id", "DESC"]],
       include: [
         {
+          required: true,
           model: detalleVenta_pagoVenta,
           attributes: [
             "fecha_pago",
@@ -4699,6 +4700,7 @@ const obtenerPagosVentas = async (req = request, res = response) => {
             "parcial_monto",
             "n_operacion",
             "observacion",
+            "n_cuotas",
           ],
           include: [
             {
