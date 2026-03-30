@@ -192,7 +192,7 @@ EtiquetasxIds.hasOne(Parametros, {
 // carcel();
 Parametros_3.hasOne(Parametros, {
   foreignKey: "id_param",
-  sourceKey: "id_1",
+  sourceKey: "id_2",
   as: "parametros_id_1",
 });
 Parametros_zonas.sync()

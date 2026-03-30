@@ -79,7 +79,7 @@ const TerminologiaAlerta = db.define("terminologia_alerta", {
 Usuario.hasMany(Auditoria, { foreignKey: "id_user" });
 Auditoria.belongsTo(Usuario, { foreignKey: "id_user" });
 AlertasUsuario.hasMany(Parametros_3, {
-  foreignKey: "id",
+  foreignKey: "id_1",
   sourceKey: "id_grupo_usuarios",
   as: "alerta_grupo",
 });

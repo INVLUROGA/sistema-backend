@@ -437,8 +437,9 @@ const alertaUsuarioUnica = async () => {
         f.estructura_fecha_alerta.mes === mesActual &&
         f.estructura_fecha_alerta.dia === diaActual &&
         f.estructura_fecha_alerta.hora === horaActual &&
-        f.estructura_fecha_alerta.minuto === minActual,
+        f.estructura_fecha_alerta.minuto - 1 === minActual,
     );
+
     //FOR EACH A LOS USUARIOS, Y PASAR A MANDAR MENSAJE
     for (const alerta of filtroAlertaUsuario) {
       for (const e1 of alerta.alerta_grupo) {
@@ -468,7 +469,6 @@ const alertaUsuarioUnica = async () => {
         case 1564:
           hoy.setUTCMinutes(hoy.getUTCMinutes() + 1);
           break;
-
         default:
           break;
       }

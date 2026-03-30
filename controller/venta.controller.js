@@ -4689,8 +4689,8 @@ const obtenerPagosVentas = async (req = request, res = response) => {
       order: [["id", "DESC"]],
       include: [
         {
-          required: true,
           model: detalleVenta_pagoVenta,
+          required: true,
           attributes: [
             "fecha_pago",
             "id_forma_pago",
