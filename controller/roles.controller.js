@@ -332,6 +332,13 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           children: [
             {
+              key: "reporte-pagos-operadores",
+              label: "PAGOS DE OPERADORES",
+              icon: "uil-calender",
+              url: "/reporte-admin/pagos-operadores",
+              parentKey: "reporte-fc",
+            },
+            {
               key: "reporte-flujo-caja",
               label: "FLUJO DE CAJA",
               icon: "uil-calender",

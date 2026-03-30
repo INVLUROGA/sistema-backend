@@ -840,8 +840,6 @@ const get_VENTAS = async (req = request, res = response) => {
         },
       ],
     });
-    //console.log({ ventas });
-
     res.status(200).json({
       ok: true,
       ventas,
@@ -4674,6 +4672,66 @@ const obtenerVentasxIdCli = async (req = request, res = response) => {
     });
   }
 };
+const obtenerPagosVentas = async (req = request, res = response) => {
+  try {
+    const ventasConPagos = await Venta.findAll({
+      attributes: [
+        "id",
+        "id_cli",
+        "id_empl",
+        "id_origen",
+        "id_tipoFactura",
+        "numero_transac",
+        "fecha_venta",
+        "observacion",
+      ],
+      where: { flag: true },
+      order: [["id", "DESC"]],
+      include: [
+        {
+          model: detalleVenta_pagoVenta,
+          attributes: [
+            "fecha_pago",
+            "id_forma_pago",
+            "id_tipo_tarjeta",
+            "id_tarjeta",
+            "id_banco",
+            "parcial_monto",
+            "n_operacion",
+            "observacion",
+          ],
+          include: [
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_banco",
+            },
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_forma_pago",
+            },
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_tipo_tarjeta",
+            },
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_tarjeta",
+            },
+          ],
+        },
+      ],
+    });
+    res.status(201).json({
+      ventasConPagos,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
   getVentasxFechaVenta,
   obtenerVentasxIdCli,
@@ -4720,4 +4778,5 @@ module.exports = {
   updateDetalleProducto,
   updateDetalleServicio,
   getVentasDashboard,
+  obtenerPagosVentas,
 };

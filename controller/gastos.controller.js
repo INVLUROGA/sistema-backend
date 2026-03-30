@@ -61,7 +61,6 @@ const getGastos = async (req = request, res = response) => {
         "monto_venta_cliente",
         "id_tipo_comprobante",
         "n_comprabante",
-        "impuesto_igv",
         "impuesto_renta",
         "n_operacion",
         "fec_registro",
@@ -74,6 +73,7 @@ const getGastos = async (req = request, res = response) => {
         "fecha_comprobante",
         "impuesto_igv",
         "impuesto_renta",
+        "esCompra",
       ],
       include: [
         {

@@ -59,6 +59,7 @@ const {
   obtenerVentasxIdCli,
   getVentasDashboard,
   getVentasxFechaVenta,
+  obtenerPagosVentas,
 } = require("../controller/venta.controller");
 
 const {
@@ -177,5 +178,7 @@ router.get(
 );
 
 router.get("/vencimientos-mes", getVencimientosPorMes);
+
+router.get("/pagos-venta", obtenerPagosVentas);
 
 module.exports = router;
