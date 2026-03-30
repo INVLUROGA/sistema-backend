@@ -8,8 +8,8 @@ dayjs.locale("es");
 const utc = require("dayjs/plugin/utc");
 const timezone = require("dayjs/plugin/timezone");
 const isSameOrBefore = require("dayjs/plugin/isSameOrBefore");
-const { AlertasUsuario, TerminologiaAlerta } = require("../models/Auditoria");
-const { Parametros_3, Parametros } = require("../models/Parametros");
+const { AlertasUsuario } = require("../models/Auditoria");
+const { Parametros_3 } = require("../models/Parametros");
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -385,108 +385,106 @@ const reactivarAlertasMensuales = async () => {
 };
 
 const alertaUsuarioUnica = async () => {
-  // try {
-  console.log("usuario");
+  try {
+    console.log("usuario");
 
-  // const diaActual = new Date().getDate();
-  // const mesActual = new Date().getMonth() + 1;
-  // const anioActual = new Date().getFullYear();
-  // const horaActual = new Date().getHours();
-  // const minActual = new Date().getMinutes();
-  // const alertaUsuario = await AlertasUsuario.findAll({
-  //   where: { flag: true, id_estado: 1 },
-  //   include: [
-  //     {
-  //       model: TerminologiaAlerta,
-  //       as: "alerta_tipo",
-  //     },
-  //     {
-  //       model: Parametros_3,
-  //       as: "alerta_grupo",
-  //       include: [
-  //         {
-  //           model: Usuario,
-  //           as: "parametros_id_2", //USUARIO
-  //         },
-  //       ],
-  //     },
-  //   ],
-  // });
+    const diaActual = new Date().getUTCDate();
+    const mesActual = new Date().getUTCMonth() + 1;
+    const anioActual = new Date().getUTCFullYear();
+    const horaActual = new Date().getUTCHours();
+    const minActual = new Date().getUTCMinutes();
+    const alertaUsuario = await AlertasUsuario.findAll({
+      where: { flag: true, id_estado: 1 },
+      include: [
+        {
+          model: Parametros_3,
+          as: "alerta_grupo",
+          include: [
+            {
+              model: Usuario,
+              as: "parametros_id_2", //USUARIO
+            },
+          ],
+        },
+      ],
+    });
 
-  //PRIMERO: FILTRAR POR FECHA, VA A COMPARAR LA FECHA CON LA FECHA_ACTUAL
-  // const alertaUsuarioMAP = alertaUsuario
-  //   .map((a) => a.toJSON())
-  //   .map((m) => {
-  //     const fecha = new Date(m.fecha);
-  //     const anio = fecha.getUTCFullYear();
-  //     const mes = fecha.getUTCMonth() + 1; // 👈 enero = 0
-  //     const dia = fecha.getUTCDate();
-  //     const hora = fecha.getUTCHours();
-  //     const minuto = fecha.getUTCMinutes();
-  //     return {
-  //       ...m,
-  //       estructura_fecha_alerta: {
-  //         anio,
-  //         mes,
-  //         dia,
-  //         hora,
-  //         minuto,
-  //         fecha,
-  //       },
-  //     };
-  //   });
-  // const filtroAlertaUsuario = alertaUsuarioMAP.filter(
-  //   (f) =>
-  //     f.estructura_fecha_alerta.anio === anioActual &&
-  //     f.estructura_fecha_alerta.mes === mesActual &&
-  //     f.estructura_fecha_alerta.dia === diaActual &&
-  //     f.estructura_fecha_alerta.hora === horaActual &&
-  //     f.estructura_fecha_alerta.minuto === minActual,
-  // );
-  // console.log({
-  //   diaActual,
-  //   mesActual,
-  //   anioActual,
-  //   horaActual,
-  //   minActual,
-  //   filtroAlertaUsuario: JSON.stringify(filtroAlertaUsuario, null, 2),
-  //   alertaUsuarioMAP: JSON.stringify(alertaUsuarioMAP, null, 2),
-  // });
+    //PRIMERO: FILTRAR POR FECHA, VA A COMPARAR LA FECHA CON LA FECHA_ACTUAL
+    const alertaUsuarioMAP = alertaUsuario
+      .map((a) => a.toJSON())
+      .map((m) => {
+        const fecha = new Date(m.fecha);
+        const anio = fecha.getUTCFullYear();
+        const mes = fecha.getUTCMonth() + 1; // 👈 enero = 0
+        const dia = fecha.getUTCDate();
+        const hora = fecha.getUTCHours();
+        const minuto = fecha.getUTCMinutes();
+        return {
+          ...m,
+          estructura_fecha_alerta: {
+            anio,
+            mes,
+            dia,
+            hora,
+            minuto,
+            fecha,
+          },
+        };
+      });
+    const filtroAlertaUsuario = alertaUsuarioMAP.filter(
+      (f) =>
+        f.estructura_fecha_alerta.anio === anioActual &&
+        f.estructura_fecha_alerta.mes === mesActual &&
+        f.estructura_fecha_alerta.dia === diaActual &&
+        f.estructura_fecha_alerta.hora === horaActual &&
+        f.estructura_fecha_alerta.minuto === minActual,
+    );
+    //FOR EACH A LOS USUARIOS, Y PASAR A MANDAR MENSAJE
+    for (const alerta of filtroAlertaUsuario) {
+      for (const e1 of alerta.alerta_grupo) {
+        for (const e2 of e1.parametros_id_2) {
+          enviarMensajesWsp(e2.telefono_user, alerta.mensaje);
+        }
+      }
+      await AlertasUsuario.update(
+        { flag: false, id_estado: 0 },
+        { where: { id: alerta.id } },
+      );
+      //EL TIPO DE ALERTA
+      const hoy = new Date();
+      switch (alerta.id_tipo_alerta) {
+        case 1563:
+          hoy.setUTCFullYear(hoy.getUTCFullYear() + 1);
+          break;
+        case 1566:
+          hoy.setUTCMonth(hoy.getUTCMonth() + 1 + 1);
+          break;
+        case 1425:
+          hoy.setUTCDate(hoy.getUTCDate() + 7);
+          break;
+        case 1426:
+          hoy.setUTCDate(hoy.getUTCDate() + 1);
+          break;
+        case 1564:
+          hoy.setUTCMinutes(hoy.getUTCMinutes() + 1);
+          break;
 
-  //FOR EACH A LOS USUARIOS, Y PASAR A MANDAR MENSAJE
-  // for (const alerta of filtroAlertaUsuario) {
-  //   for (const e1 of alerta.alerta_grupo) {
-  //     for (const e2 of e1.parametros_id_2) {
-  //       enviarMensajesWsp(e2.telefono_user, alerta.mensaje);
-  //     }
-  //   }
-  //   await AlertasUsuario.update(
-  //     { flag: false, id_estado: 0 },
-  //     { where: { id: alerta.id } },
-  //   );
-  //EL TIPO DE ALERTA
-  //   if (alerta.alerta_tipo.cadaTiempo !== 0) {
-  //     const fechaAlerta = new Date(alerta.fecha);
-  //     const nuevaFecha = new Date(fechaAlerta);
-  //     nuevaFecha.setDate(
-  //       nuevaFecha.getDate() + alerta.alerta_tipo.cadaTiempo,
-  //     );
-  //     await AlertasUsuario.create({
-  //       id_grupo_usuarios: alerta.id_grupo_usuarios,
-  //       id_tipo_alerta: alerta.id_tipo_alerta,
-  //       mensaje: alerta.mensaje,
-  //       fecha: nuevaFecha,
-  //       id_estado: 1,
-  //       flag: 1,
-  //     });
-  //   }
-  // }
-  // console.log("abcd");
-
-  // VER EN ALERTA USUARIO, SI LA ALERTA {nombre_dias: 'SOLO UN DIA', dias: 1}, {nombre_dias: '', dias: 1}
-  // } catch (error) {
-  //   console.log(error);
-  // }
+        default:
+          break;
+      }
+      await AlertasUsuario.create({
+        id_grupo_usuarios: alerta.id_grupo_usuarios,
+        id_tipo_alerta: alerta.id_tipo_alerta,
+        mensaje: alerta.mensaje,
+        fecha: hoy,
+        id_estado: 1,
+        flag: 1,
+      });
+    }
+    console.log("abcd");
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 module.exports = {

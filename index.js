@@ -48,7 +48,7 @@ cron.schedule("0 15 * * *", () => {
 // Run alerts every minute to checking for specific times
 cron.schedule("* * * * *", () => {
   // alertasUsuario();
-  // alertaUsuarioUnica();
+  alertaUsuarioUnica();
 });
 
 // Resumen diario de ventas → 6:00 AM hora Lima (UTC-5 = 11:00 AM UTC)

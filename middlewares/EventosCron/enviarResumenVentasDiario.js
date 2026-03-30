@@ -203,8 +203,8 @@ const enviarResumenVentasDiario = async () => {
 ${t2.nombreMes} ${t2.anio}: ${t2.montoCorte.toLocaleString("es-PE")} /  ${((t2.montoCorte / getQuotaParaMes(t2.mes, t2.anio).meta) * 100).toFixed(2)}%
 ${t3.nombreMes} ${t3.anio}: ${t3.montoCorte.toLocaleString("es-PE")} /  ${((t3.montoCorte / getQuotaParaMes(t3.mes, t3.anio).meta) * 100).toFixed(2)}%`;
   };
-  const mensaje = `*CHANGE* - The Slim Studio
-*COMPARATIVO VENTAS AL DIA*
+  const mensaje = `
+*COMPARATIVO VENTAS*
 
 *CUOTA ${NOMBRES_MESES.find((e) => e.value === MesHoy).label}: ${getQuotaParaMes(MesHoy, anioHoy).meta.toLocaleString("es-PE")}*
 % ALCANCE CUOTA: *${((mesActual.montoTotal / getQuotaParaMes(MesHoy, anioHoy).meta) * 100).toFixed(2)}%*
@@ -214,15 +214,11 @@ ${t3.nombreMes} ${t3.anio}: ${t3.montoCorte.toLocaleString("es-PE")} /  ${((t3.m
 
 ${renderTop3(mesesActualesxDiaInicioYDiaActual)}
 *${mesActual.nombreMes} ${mesActual.anio}: ${mesActual.montoCorte.toLocaleString("es-PE")} / ${((mesActual.montoCorte / getQuotaParaMes(MesHoy, anioHoy).meta) * 100).toFixed(2)}%*
-(% contra la venta total mes)
-
 
 *${nombreDelPrimerDia.toLocaleUpperCase()} 01 - ${nombreDelActualDiaMas3Dias.toLocaleUpperCase()} ${DiaHoyMas3Dias}*
-(ventas - cierre en 3 dias)
 
 ${renderTop3(mesesActualesxDiaInicioYDiaActualmas3Dias)}
-*${mesActual.nombreMes} ${mesActual.anio}: ${mesActual.montoCorte.toLocaleString("es-PE")} / ${((mesActual.montoCorte / getQuotaParaMes(MesHoy, anioHoy).meta) * 100).toFixed(2)}%*
-(% contra la venta total mes)`;
+*${mesActual.nombreMes} ${mesActual.anio}: ${mesActual.montoCorte.toLocaleString("es-PE")} / ${((mesActual.montoCorte / getQuotaParaMes(MesHoy, anioHoy).meta) * 100).toFixed(2)}%*`;
   const idsUsers = [35, 31, 30, 8, 22];
   await enviarWspUsuario(
     mensaje,

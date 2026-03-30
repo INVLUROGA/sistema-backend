@@ -78,18 +78,11 @@ const TerminologiaAlerta = db.define("terminologia_alerta", {
 
 Usuario.hasMany(Auditoria, { foreignKey: "id_user" });
 Auditoria.belongsTo(Usuario, { foreignKey: "id_user" });
-// AlertasUsuario.hasMany(Parametros, {
-//   foreignKey: "id",
-//   targetKey: "id_grupo_usuarios",
-//   as: "alerta_grupo",
-// });
-
-// AlertasUsuario.belongsTo(TerminologiaAlerta, {
-//   foreignKey: "id_tipo_alerta",
-//   targetKey: "id",
-//   as: "alerta_tipo",
-// });
-
+AlertasUsuario.hasMany(Parametros_3, {
+  foreignKey: "id",
+  sourceKey: "id_grupo_usuarios",
+  as: "alerta_grupo",
+});
 Auditoria.sync()
   .then(() => {
     console.log("La tabla Auditoria ha sido sync o ya existe.");
