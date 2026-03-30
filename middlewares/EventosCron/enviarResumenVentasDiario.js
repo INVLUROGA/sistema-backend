@@ -109,12 +109,23 @@ const enviarResumenVentasDiario = async () => {
   const hoy = new Date();
   const hora = hoy.getHours();
   const fechaHoyMas3Dias = new Date(hoy);
-  fechaHoyMas3Dias.setDate(hoy.getDate() + 3);
+  const ultimoDiasDelMesActual = new Date(
+    hoy.getFullYear(),
+    hoy.getMonth() + 1,
+    0,
+  ).getDate();
   const DiaHoy = hoy.getDate();
+
+  if (DiaHoy + 3 > ultimoDiasDelMesActual) {
+    fechaHoyMas3Dias.setDate(ultimoDiasDelMesActual);
+  } else {
+    fechaHoyMas3Dias.setDate(hoy.getDate() + 3);
+  }
   const DiaHoyMas3Dias = fechaHoyMas3Dias.getDate();
   const MesHoy = hoy.getMonth() + 1;
   const anioHoy = hoy.getFullYear();
   const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+
   const nombreDelPrimerDia = primerDia.toLocaleDateString("es-ES", {
     weekday: "long",
   });
