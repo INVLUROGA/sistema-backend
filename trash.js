@@ -24,20 +24,20 @@ const recordatorioReservaCita24hAntes = async () => {
       const fecha_inicio = dayjs(cita.fecha_inicio).format(
         "dddd DD [de] MMMM [a las] hh:mm A",
       );
-      await enviarMensajesWsp__CIRCUS(
-        cita.tb_cliente.tel_cli,
-        messageWSP.mensaje24hAntesDeLaReserva(
-          cita.tb_empleado,
-          cita.tb_cliente,
-          fecha_inicio,
-        ),
-      );
-      await enviarMapaWsp__CIRCUS(
-        cita.tb_cliente.tel_cli,
-        "CIRCUS SALON",
-        -12.133150008241682,
-        -77.02314616701953,
-      );
+      // await enviarMensajesWsp__CIRCUS(
+      //   cita.tb_cliente.tel_cli,
+      //   messageWSP.mensaje24hAntesDeLaReserva(
+      //     cita.tb_empleado,
+      //     cita.tb_cliente,
+      //     fecha_inicio,
+      //   ),
+      // );
+      // await enviarMapaWsp__CIRCUS(
+      //   cita.tb_cliente.tel_cli,
+      //   "CIRCUS SALON",
+      //   -12.133150008241682,
+      //   -77.02314616701953,
+      // );
     }
   } catch (error) {
     console.log(error);
@@ -72,14 +72,14 @@ const recordatorioReservaCita2hAntes = async () => {
       const fecha_inicio = dayjs(cita.fecha_inicio).format(
         "dddd DD [de] MMMM [a las] hh:mm A",
       );
-      await enviarMensajesWsp__CIRCUS(
-        cita.tb_cliente.tel_cli,
-        messageWSP.mensaje2hAntesDeLaReserva(
-          cita.tb_empleado,
-          cita.tb_cliente,
-          fecha_inicio,
-        ),
-      );
+      // await enviarMensajesWsp__CIRCUS(
+      //   cita.tb_cliente.tel_cli,
+      //   messageWSP.mensaje2hAntesDeLaReserva(
+      //     cita.tb_empleado,
+      //     cita.tb_cliente,
+      //     fecha_inicio,
+      //   ),
+      // );
     }
   } catch (error) {
     console.log(error);

@@ -60,6 +60,9 @@ const {
   getVentasDashboard,
   getVentasxFechaVenta,
   obtenerPagosVentas,
+  postVentasPagos,
+  obtenerVentasPagosxID,
+  updateVentasPagosxID,
 } = require("../controller/venta.controller");
 
 const {
@@ -181,4 +184,8 @@ router.get("/vencimientos-mes", getVencimientosPorMes);
 
 router.get("/pagos-venta", obtenerPagosVentas);
 
+router.post("/pagos", postVentasPagos);
+
+router.get("/pagos/id/:id", obtenerVentasPagosxID);
+router.put("/pagos/id/:id", updateVentasPagosxID);
 module.exports = router;

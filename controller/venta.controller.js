@@ -4692,6 +4692,7 @@ const obtenerPagosVentas = async (req = request, res = response) => {
           model: detalleVenta_pagoVenta,
           required: true,
           attributes: [
+            "id",
             "fecha_pago",
             "id_forma_pago",
             "id_tipo_tarjeta",
@@ -4734,7 +4735,48 @@ const obtenerPagosVentas = async (req = request, res = response) => {
     console.log(error);
   }
 };
+const postVentasPagos = async (req = request, res = response) => {
+  try {
+    const pagos = await detalleVenta_pagoVenta.create(req.body);
+    res.status(201).json({
+      ok: true,
+      pagos,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const updateVentasPagosxID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    console.log({ id, r: req.body });
+
+    const pago = await detalleVenta_pagoVenta.findOne({ where: { id } });
+    await pago.update(req.body);
+    res.status(201).json({
+      pago,
+      ok: true,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const obtenerVentasPagosxID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const pago = await detalleVenta_pagoVenta.findOne({ where: { id } });
+    res.status(201).json({
+      ok: true,
+      pago,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
+  obtenerVentasPagosxID,
+  updateVentasPagosxID,
+  postVentasPagos,
   getVentasxFechaVenta,
   obtenerVentasxIdCli,
   getComandas,

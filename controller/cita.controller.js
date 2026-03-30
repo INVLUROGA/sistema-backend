@@ -7,7 +7,6 @@ const { request, response } = require("express");
 const {
   enviarMensajesWsp,
   enviarMensajesWsp__CIRCUS,
-  enviarMapaWsp__CIRCUS,
 } = require("../config/whatssap-web");
 const dayjs = require("dayjs");
 const es = require("dayjs/locale/es");
@@ -183,21 +182,21 @@ const postServiciosCita = async (req = request, res = response) => {
     console.log({ estado: citaGenerada.id_estado, citaGeneradaJSON });
 
     if (id_estado === 500 || id_estado == undefined) {
-      await enviarMensajesWsp__CIRCUS(
-        tb_cliente.tel_cli,
-        messageWSP.mensajeCitaRegistrada(
-          tb_empleado,
-          tb_cliente,
-          dayjs(cita.fecha_inicio).format("dddd DD [de] MMMM [a las] hh:mm A"),
-          citasDeCitasGeneradasJSON,
-        ),
-      );
+      // await enviarMensajesWsp__CIRCUS(
+      //   tb_cliente.tel_cli,
+      //   messageWSP.mensajeCitaRegistrada(
+      //     tb_empleado,
+      //     tb_cliente,
+      //     dayjs(cita.fecha_inicio).format("dddd DD [de] MMMM [a las] hh:mm A"),
+      //     citasDeCitasGeneradasJSON,
+      //   ),
+      // );
     }
     if (id_estado === 502) {
-      await enviarMensajesWsp__CIRCUS(
-        tb_cliente.tel_cli,
-        messageWSP.mensajeCitaRegistrada__clienteasistio(tb_cliente),
-      );
+      // await enviarMensajesWsp__CIRCUS(
+      //   tb_cliente.tel_cli,
+      //   messageWSP.mensajeCitaRegistrada__clienteasistio(tb_cliente),
+      // );
     }
     console.log({
       cita: cita.id,
