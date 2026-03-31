@@ -387,14 +387,22 @@ const reactivarAlertasMensuales = async () => {
 const alertaUsuarioUnica = async () => {
   try {
     console.log("usuario");
-
-    const diaActual = new Date().getUTCDate();
-    const mesActual = new Date().getUTCMonth() + 1;
-    const anioActual = new Date().getUTCFullYear();
-    const horaActual = new Date().getUTCHours();
-    const minActual = new Date().getUTCMinutes();
+    const now = new Date();
+    const diaActual = now.getUTCDate();
+    const mesActual = now.getUTCMonth() + 1;
+    const anioActual = now.getUTCFullYear();
+    const horaActual = now.getUTCHours();
+    const minActual = now.getUTCMinutes();
+    const haceUnMin = new Date(now.getTime() - 60000);
+    const masUnMin = new Date(now.getTime() + 60000);
     const alertaUsuario = await AlertasUsuario.findAll({
-      where: { flag: true, id_estado: 1 },
+      where: {
+        flag: true,
+        id_estado: 1,
+        fecha: {
+          [Op.between]: [haceUnMin, masUnMin],
+        },
+      },
       include: [
         {
           model: Parametros_3,
@@ -439,9 +447,8 @@ const alertaUsuarioUnica = async () => {
         f.estructura_fecha_alerta.hora === horaActual &&
         f.estructura_fecha_alerta.minuto === minActual,
     );
-
     //FOR EACH A LOS USUARIOS, Y PASAR A MANDAR MENSAJE
-    for (const alerta of filtroAlertaUsuario) {
+    for (const alerta of alertaUsuarioMAP) {
       for (const e1 of alerta.alerta_grupo) {
         for (const e2 of e1.parametros_id_2) {
           enviarMensajesWsp(e2.telefono_user, alerta.mensaje);
