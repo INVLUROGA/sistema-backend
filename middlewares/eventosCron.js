@@ -3,147 +3,16 @@ const { Cliente, Usuario, Empleado } = require("../models/Usuarios");
 const { Venta } = require("../models/Venta");
 const { enviarMensajesWsp } = require("../config/whatssap-web");
 const dayjs = require("dayjs");
-require("dayjs/locale/es");
-dayjs.locale("es");
 const utc = require("dayjs/plugin/utc");
 const timezone = require("dayjs/plugin/timezone");
 const isSameOrBefore = require("dayjs/plugin/isSameOrBefore");
 const { AlertasUsuario } = require("../models/Auditoria");
 const { Parametros_3 } = require("../models/Parametros");
-
+require("dayjs/locale/es");
+dayjs.locale("es");
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.extend(isSameOrBefore);
-const alertasUsuario = async () => {
-  try {
-    const dataAlertas = await AlertasUsuario.findAll({
-      where: { flag: true, id_estado: 1 },
-      include: [{ model: Usuario }],
-    });
-    const alertasJSON = dataAlertas.map((a) => a.toJSON());
-    const ahora = dayjs().tz("America/Lima");
-    const horaPeru = ahora.hour();
-    const minutoActual = ahora.minute();
-
-    const processedKeys = new Set();
-    for (const alerta of alertasJSON) {
-      const fechaAlerta = dayjs(alerta.fecha).tz("America/Lima");
-
-      // 1. Validar que sea el mismo día (común para todos)
-      const esMismoDia = ahora.isSame(fechaAlerta, "day");
-
-      let coincide = false;
-      const esAlertaMensual = alerta.tipo_alerta === 1425;
-
-      if (esAlertaMensual) {
-        const esHoraBatch =
-          (horaPeru === 11 || horaPeru === 16) && minutoActual === 0;
-        coincide = esMismoDia && esHoraBatch;
-      } else {
-        coincide =
-          esMismoDia &&
-          horaPeru === fechaAlerta.hour() &&
-          minutoActual === fechaAlerta.minute();
-      }
-      if (coincide) {
-        const mensajeLimpio = alerta.mensaje.trim().replace(/\s+/g, " ");
-
-        const uniqueKey = `${alerta.id_user}|${alerta.tipo_alerta}|${mensajeLimpio}`;
-
-        if (processedKeys.has(uniqueKey)) continue;
-        processedKeys.add(uniqueKey);
-
-        if (alerta.tipo_alerta === 1425 || alerta.tipo_alerta === 1428) {
-          // 🔒 LOCK ATÓMICO: marcar como "en proceso" (id_estado=2) ANTES de enviar.
-          // Si otra instancia ya lo tomó, el UPDATE afecta 0 filas → saltamos.
-          const [filasAfectadas] = await AlertasUsuario.update(
-            { id_estado: 2 },
-            {
-              where: {
-                id: alerta.id,
-                id_estado: 1, // Solo lo toma si sigue en estado 1
-              },
-            },
-          );
-
-          if (filasAfectadas === 0) {
-            console.log(
-              `[DUPLICADO EVITADO 1425] Otra instancia ya procesó la alerta id=${alerta.id}`,
-            );
-            continue;
-          }
-          // Marcar como enviada (id_estado=0) para no reenviar en siguientes ejecuciones del día
-          await AlertasUsuario.update(
-            { id_estado: 0 },
-            { where: { id: alerta.id } },
-          );
-        } else {
-          await AlertasUsuario.update(
-            { id_estado: 0 },
-            {
-              where: {
-                id_user: alerta.id_user,
-                tipo_alerta: alerta.tipo_alerta,
-                mensaje: alerta.mensaje,
-                fecha: alerta.fecha,
-                id_estado: 1,
-              },
-            },
-          );
-
-          // 2. Calculamos la nueva fecha
-          let nuevaFecha = null;
-          if (alerta.tipo_alerta === 1426) {
-            nuevaFecha = fechaAlerta.add(1, "day");
-            if (nuevaFecha.day() === 0) nuevaFecha = nuevaFecha.add(1, "day"); // Salta domingo
-          } else if (alerta.tipo_alerta === 1427) {
-            nuevaFecha = fechaAlerta.add(15, "day");
-          }
-
-          // 3. Creamos UN SOLO registro para el futuro usando findOrCreate para evitar condición de carrera
-          if (nuevaFecha) {
-            const [alertaCreada, created] = await AlertasUsuario.findOrCreate({
-              where: {
-                id_user: alerta.id_user,
-                tipo_alerta: alerta.tipo_alerta,
-                mensaje: alerta.mensaje,
-                fecha: nuevaFecha.toDate(),
-                id_estado: 1,
-                flag: true,
-              },
-              defaults: {
-                id_user: alerta.id_user,
-                tipo_alerta: alerta.tipo_alerta,
-                mensaje: alerta.mensaje,
-                fecha: nuevaFecha.toDate(),
-                id_estado: 1,
-                flag: true,
-              },
-            });
-
-            if (!created) {
-              console.log(
-                `[DUPLICADO EVITADO] Otra instancia ya había programado la alerta futura para: ${alerta.mensaje}`,
-              );
-            }
-          }
-          console.log({ aq: "holaaaa??????" });
-
-          // 4. Enviamos UN SOLO mensaje
-          await enviarMensajesWsp(
-            alerta.auth_user.telefono_user,
-            alerta.mensaje,
-          );
-          console.log(
-            `Mensaje enviado y limpiado duplicados: ${alerta.mensaje}`,
-          );
-        }
-      }
-    }
-  } catch (error) {
-    console.log("Error en alertasUsuario:", error);
-  }
-};
 const obtenerCumpleaniosCliente = async () => {
   try {
     // Obtener la fecha actual (mes y día)
@@ -316,83 +185,10 @@ const obtenerCumpleaniosDeEmpleados = async () => {
     return [];
   }
 };
-const reactivarAlertasMensuales = async () => {
-  try {
-    console.log("REACTIVANDO ALERTAS MENSUALES...");
-    const hoy = new Date(); // Se asume que esto corre el día 1 de cada mes
-
-    // Calcular mes anterior
-    const mesAnterior = new Date(hoy);
-    mesAnterior.setMonth(mesAnterior.getMonth() - 1);
-    const alertasCanceladas = await AlertasUsuario.findAll({
-      where: {
-        tipo_alerta: 1425,
-        id_estado: { [Op.in]: [0, 1, 3] },
-        flag: true,
-        fecha: {
-          [Op.gte]: new Date(
-            mesAnterior.getFullYear(),
-            mesAnterior.getMonth(),
-            1,
-          ),
-          [Op.lt]: new Date(hoy.getFullYear(), hoy.getMonth(), 1),
-        },
-      },
-    });
-
-    for (const alerta of alertasCanceladas) {
-      // Generar nueva fecha para este mes usando dayjs para manejar overflows (ej: 31 Ene -> 28 Feb)
-      let nuevaFecha = dayjs(alerta.fecha).add(1, "month").toDate();
-
-      // Caso simple: Alerta MENSUAL (1425).
-      if (alerta.tipo_alerta === 1425) {
-        // Verificar si ya existe para no duplicar en caso de múltiples ejecuciones
-        const existe = await AlertasUsuario.findOne({
-          where: {
-            id_user: alerta.id_user,
-            tipo_alerta: 1425,
-            mensaje: alerta.mensaje,
-            fecha: {
-              [Op.gte]: new Date(hoy.getFullYear(), hoy.getMonth(), 1),
-              [Op.lt]: new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1),
-            },
-          },
-        });
-
-        if (!existe) {
-          // Crear nueva alerta ACTIVA
-          await AlertasUsuario.create({
-            id_user: alerta.id_user,
-            tipo_alerta: alerta.tipo_alerta,
-            mensaje: alerta.mensaje,
-            fecha: nuevaFecha,
-            id_estado: 1, // ACTIVA
-          });
-        }
-
-        // Si la vieja era estado 3 (pagada), la pasamos a 0 (procesada) para limpieza.
-        // Si era 0 o 1, la dejamos igual, es histórico.
-        if (alerta.id_estado === 3) {
-          await alerta.update({ id_estado: 0 });
-        }
-      }
-      // TODO: Lógica para diario/quincenal si aplica. Por ahora solo mensual es crítico.
-    }
-    console.log(`Reactivadas ${alertasCanceladas.length} alertas.`);
-  } catch (error) {
-    console.error("Error reactivando alertas:", error);
-  }
-};
-
 const alertaUsuarioUnica = async () => {
   try {
     console.log("usuario");
     const now = new Date();
-    const diaActual = now.getUTCDate();
-    const mesActual = now.getUTCMonth() + 1;
-    const anioActual = now.getUTCFullYear();
-    const horaActual = now.getUTCHours();
-    const minActual = now.getUTCMinutes();
     const haceUnMin = new Date(now.getTime() - 60000);
     const masUnMin = new Date(now.getTime() + 60000);
     const alertaUsuario = await AlertasUsuario.findAll({
@@ -400,7 +196,7 @@ const alertaUsuarioUnica = async () => {
         flag: true,
         id_estado: 1,
         fecha: {
-          [Op.between]: [haceUnMin, masUnMin],
+          [Op.between]: [now, masUnMin],
         },
       },
       include: [
@@ -439,14 +235,6 @@ const alertaUsuarioUnica = async () => {
           },
         };
       });
-    const filtroAlertaUsuario = alertaUsuarioMAP.filter(
-      (f) =>
-        f.estructura_fecha_alerta.anio === anioActual &&
-        f.estructura_fecha_alerta.mes === mesActual &&
-        f.estructura_fecha_alerta.dia === diaActual &&
-        f.estructura_fecha_alerta.hora === horaActual &&
-        f.estructura_fecha_alerta.minuto === minActual,
-    );
     //FOR EACH A LOS USUARIOS, Y PASAR A MANDAR MENSAJE
     for (const alerta of alertaUsuarioMAP) {
       for (const e1 of alerta.alerta_grupo) {
@@ -493,11 +281,8 @@ const alertaUsuarioUnica = async () => {
     console.log(error);
   }
 };
-
 module.exports = {
   alertaUsuarioUnica,
   obtenerCumpleaniosCliente,
-  alertasUsuario,
   obtenerCumpleaniosDeEmpleados,
-  reactivarAlertasMensuales,
 };

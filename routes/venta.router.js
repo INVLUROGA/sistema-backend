@@ -67,6 +67,7 @@ const {
 
 const {
   obtenerMembresiasxFecha,
+  obtenerMembresiasVentas,
 } = require("../controller/venta-membresias.controller");
 const {
   obtenerReporteSociosxDistritos,
@@ -179,6 +180,8 @@ router.get(
   "/reporte/obtenerMembresiasxFecha/:id_enterprice",
   obtenerMembresiasxFecha,
 );
+
+router.get(`/membresias/empresa/:id_empresa`, obtenerMembresiasVentas);
 
 router.get("/vencimientos-mes", getVencimientosPorMes);
 

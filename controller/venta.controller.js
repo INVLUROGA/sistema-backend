@@ -3322,68 +3322,6 @@ const obtenerComparativoResumenClientes = async (
       ],
     });
 
-    // const ventasDeMembresias = await detalleVenta_membresias.findAll({
-    //   attributes: [
-    //     "horario",
-    //     "tarifa_monto",
-    //     "id_tarifa",
-    //     "fec_inicio_mem",
-    //     "fec_fin_mem",
-    //   ],
-    //   where: {
-    //     fec_inicio_mem: {
-    //       [Op.between]: [
-    //         new Date(fechaInicio).toISOString(),
-    //         new Date(fechaFin).toISOString(),
-    //       ],
-    //     },
-    //   },
-    //   include: [
-    //     {
-    //       model: SemanasTraining,
-    //       attributes: ["sesiones"],
-    //     },
-    //     {
-    //       model: Venta,
-    //       where: {
-    //         fecha_venta: {
-    //           [Op.between]: [
-    //             new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
-    //             new Date(fechaFin).setUTCHours(23, 59, 59, 999),
-    //           ],
-    //         },
-    //       },
-    //       attributes: [
-    //         "id_tipoFactura",
-    //         "fecha_venta",
-    //         "id_cli",
-    //         "id",
-    //         "id_origen",
-    //       ],
-    //       include: [
-    //         {
-    //           model: Cliente,
-    //           include: [
-    //             {
-    //               model: Distritos,
-    //             },
-    //             {
-    //               model: Marcacion,
-    //               where: {
-    //                 tiempo_marcacion_new: {
-    //                   [Op.between]: [
-    //                     new Date(fechaInicio).setUTCHours(0, 0, 0, 0),
-    //                     new Date(fechaFin).setUTCHours(23, 59, 59, 999),
-    //                   ],
-    //                 },
-    //               },
-    //             },
-    //           ],
-    //         },
-    //       ],
-    //     },
-    //   ],
-    // });
     res.status(200).json({
       ventasProgramas,
       ventasTransferencias,
@@ -3922,7 +3860,6 @@ const obtenerTransferenciasxFecha = async (req = request, res = response) => {
   }
 };
 
-const obtenerVentasxTipoFactura = async (req = request, res = response) => {};
 
 const obtenerClientesConMembresia = async (req = request, res = response) => {
   try {
@@ -4810,7 +4747,6 @@ module.exports = {
   obtenerComparativoResumen,
   obtenerComparativoResumenDashboard,
   obtenerEstadoResumen,
-  obtenerVentasxTipoFactura,
   obtenerVentasDeClientesNuevos,
   obtenerTransferenciasxFecha,
   obtenerClientesConMembresia,

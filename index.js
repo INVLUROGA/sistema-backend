@@ -6,10 +6,7 @@ const { db } = require("./database/sequelizeConnection.js");
 const { validarJWT } = require("./middlewares/validarJWT.js");
 const cron = require("node-cron");
 const {
-  obtenerCumpleaniosCliente,
-  alertasUsuario,
   obtenerCumpleaniosDeEmpleados,
-  reactivarAlertasMensuales,
   alertaUsuarioUnica,
 } = require("./middlewares/eventosCron.js");
 
@@ -41,13 +38,11 @@ cron.schedule("0 3 1 * *", () => {
 });
 
 cron.schedule("0 15 * * *", () => {
-  // obtenerCumpleaniosCliente();
   obtenerCumpleaniosDeEmpleados();
 });
 
 // Run alerts every minute to checking for specific times
 cron.schedule("* * * * *", () => {
-  // alertasUsuario();
   alertaUsuarioUnica();
 });
 
@@ -59,17 +54,16 @@ cron.schedule("0 11 * * *", () => {
 cron.schedule("0 1 * * *", () => {
   enviarResumenVentasDiario();
 });
+// Resumen diario de ventas → 6:00 AM hora Lima (UTC-5 = 11:00 AM UTC)
+cron.schedule("0 15 * * *", () => {
+  enviarResumenVentasDiario();
+});
 const fileServer = express.static;
 require("dotenv").config();
 const env = process.env;
 
 //Creando el servidor de express
 const app = express();
-// app.use(compression());
-// test();
-//Base de datos
-//dbConnection()
-// getConnection();
 const getConnectionORM = async () => {
   try {
     await db.authenticate();

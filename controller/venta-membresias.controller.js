@@ -12,13 +12,10 @@ const {
 const { Cliente, Empleado } = require("../models/Usuarios");
 const { Distritos } = require("../models/Distritos");
 const { ImagePT } = require("../models/Image");
-const { Op } = require("sequelize");
+const { Op, Sequelize } = require("sequelize");
 
 const obtenerMembresiasxFecha = async (req = request, res = response) => {
-  // const { arrayDate } = req.query;
   const { id_enterprice } = req.params;
-  const dateRanges = ["2024-09-01 00:00:00", "2025-12-30 00:00:00"];
-
   try {
     const ventasProgramas = await ProgramaTraining.findAll({
       attributes: ["name_pgm", "id_pgm"],
@@ -58,12 +55,6 @@ const obtenerMembresiasxFecha = async (req = request, res = response) => {
               model: Venta,
               where: {
                 id_empresa: id_enterprice,
-                fecha_venta: {
-                  [Op.between]: [
-                    new Date(dateRanges[0]).setUTCHours(0, 0, 0, 0),
-                    new Date(dateRanges[1]).setUTCHours(23, 59, 59, 999),
-                  ], // Suponiendo que fecha_inicial y fecha_final son variables con las fechas deseadas
-                },
               },
               attributes: [
                 "id_tipoFactura",
@@ -93,9 +84,6 @@ const obtenerMembresiasxFecha = async (req = request, res = response) => {
                     // },
                   ],
                 },
-                //   {
-                //     model: Empleado,
-                //   },
               ],
             },
           ],
@@ -112,6 +100,112 @@ const obtenerMembresiasxFecha = async (req = request, res = response) => {
     console.log(error);
   }
 };
+const obtenerMembresiasVentas = async (req = request, res = response) => {
+  const { id_empresa } = req.params;
+  try {
+    const ventas = await Venta.findAll({
+      where: { flag: true, id_empresa: id_empresa },
+      attributes: [
+        "id",
+        "id_cli",
+        "id_empl",
+        "id_origen",
+        "id_tipoFactura",
+        "numero_transac",
+        "fecha_venta",
+        "status_remove",
+        "observacion",
+      ],
+      order: [["fecha_venta", "DESC"]],
+      include: [
+        {
+          model: Cliente,
+          attributes: [
+            [
+              Sequelize.fn(
+                "CONCAT",
+                Sequelize.col("nombre_cli"),
+                " ",
+                Sequelize.col("apPaterno_cli"),
+                " ",
+                Sequelize.col("apMaterno_cli"),
+              ),
+              "nombres_apellidos_cli",
+            ],
+            "sexo_cli",
+            "ubigeo_distrito_cli",
+            "ubigeo_distrito_trabajo",
+            "numDoc_cli",
+            "tel_cli",
+          ],
+          include: [
+            {
+              model: ImagePT,
+            },
+          ],
+        },
+        {
+          model: Empleado,
+          attributes: [
+            [
+              Sequelize.fn(
+                "CONCAT",
+                Sequelize.col("nombre_empl"),
+                " ",
+                Sequelize.col("apPaterno_empl"),
+                " ",
+                Sequelize.col("apMaterno_empl"),
+              ),
+              "nombres_apellidos_empl",
+            ],
+          ],
+        },
+        {
+          model: detalleVenta_Transferencia,
+          as: "venta_venta",
+          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
+          attributes: ["id_venta", "tarifa_monto"],
+        },
+        {
+          model: detalleVenta_membresias,
+          required: false, // Para que no excluya toda la venta si no tiene productos con flag=true
+          attributes: [
+            "id",
+            "id_venta",
+            "id_pgm",
+            "id_tarifa",
+            "horario",
+            "id_st",
+            "tarifa_monto",
+            "fecha_inicio",
+            "id_membresia_anterior",
+          ],
+          include: [
+            {
+              model: ProgramaTraining,
+              attributes: ["name_pgm"],
+            },
+            {
+              model: SemanasTraining,
+              attributes: ["semanas_st"],
+            },
+          ],
+        },
+      ],
+    });
+    res.status(200).json({
+      ok: true,
+      ventas,
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      error: `Error en el servidor, en controller de get_VENTAS, hable con el administrador: ${error}`,
+    });
+  }
+};
 module.exports = {
   obtenerMembresiasxFecha,
+  obtenerMembresiasVentas
 };
