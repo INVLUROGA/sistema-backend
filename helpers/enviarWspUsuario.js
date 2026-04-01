@@ -16,16 +16,7 @@ const enviarWspUsuario = async (mensaje, fecha, idsUsers) => {
     });
 
     for (const usuario of usuarios) {
-      // 4. Enviamos UN SOLO mensaje
       await enviarMensajesWsp(usuario.telefono_user, mensaje);
-      // await AlertasUsuario.create({
-      //   id_user: usuario.id_user,
-      //   tipo_alerta: 1428,
-      //   mensaje: mensaje,
-      //   fecha: fecha,
-      //   id_estado: 1,
-      //   flag: true,
-      // });
       console.log(
         `[enviarWspUsuario] ✅ Alerta registrada para user ${usuario.id_user} en tb_alertaUsuarios.`,
       );
