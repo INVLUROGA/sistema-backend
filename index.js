@@ -46,13 +46,10 @@ cron.schedule("* * * * *", () => {
   alertaUsuarioUnica();
 });
 
-cron.schedule("0 11 * * *", () => {
-  enviarResumenVentasDiario();
-});
 cron.schedule("0 1 * * *", () => {
   enviarResumenVentasDiario();
 });
-cron.schedule("0 15 * * *", async() => {
+cron.schedule("0 15 * * *", async () => {
   await enviarResumenVentasDiario();
 });
 
