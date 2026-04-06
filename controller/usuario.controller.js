@@ -17,7 +17,7 @@ const {
   SemanasTraining,
 } = require("../models/ProgramaTraining");
 const { extraerIpUser } = require("../helpers/extraerUser");
-const { capturarAUDIT, capturarAccion } = require("../middlewares/auditoria");
+const { capturarAUDIT } = require("../middlewares/auditoria");
 const { typesCRUD } = require("../types/types");
 const { Producto } = require("../models/Producto");
 const { Inversionista } = require("../models/Ingresos");
@@ -401,7 +401,6 @@ const putUsuarioCliente = async (req = request, res = response) => {
       },
       observacion: `Se edito: El cliente de id ${cliente.id}`,
     };
-    await capturarAccion(formAUDIT2);
     await capturarAUDIT(formAUDIT);
     await cliente.update(req.body);
     res.status(200).json({
