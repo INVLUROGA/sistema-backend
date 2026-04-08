@@ -3860,7 +3860,6 @@ const obtenerTransferenciasxFecha = async (req = request, res = response) => {
   }
 };
 
-
 const obtenerClientesConMembresia = async (req = request, res = response) => {
   try {
     const clientesConMembresia = await Cliente.findAll({
@@ -4625,6 +4624,9 @@ const obtenerPagosVentas = async (req = request, res = response) => {
       where: { flag: true, id_empresa: 598 },
       order: [["id", "DESC"]],
       include: [
+        {
+          model: Cliente,
+        },
         {
           model: detalleVenta_pagoVenta,
           required: true,
