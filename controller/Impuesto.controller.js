@@ -1,5 +1,9 @@
 const { request, response } = require("express");
-const { Impuesto, HistorialImpuesto } = require("../models/Impuesto");
+const {
+  Impuesto,
+  HistorialImpuesto,
+  ImpuestosPOS,
+} = require("../models/Impuesto");
 const { Sequelize } = require("sequelize");
 
 const postImpuesto = async (req = request, res = response) => {
@@ -106,7 +110,70 @@ const obtenerImpuestoIGV = async (req = request, res = response) => {
     });
   }
 };
+
+// IMPUESTO POS
+const postPOS = async (req = request, res = response) => {
+  try {
+    const impuestoPOS = await ImpuestosPOS.create(req.body);
+    res.status(201).json({
+      ok: true,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const updatePOSxID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const impuestoPOS = await ImpuestosPOS.findOne({ where: { id } });
+    await impuestoPOS.update(req.body);
+    res.status(201).json({
+      ok: true,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const obtenerPOSxID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const impuestoPOS = await ImpuestosPOS.findOne({ where: { id } });
+    res.status(201).json({
+      impuestoPOS,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const deletePOSxID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const impuestoPOS = await ImpuestosPOS.findOne({ where: { id } });
+    await impuestoPOS.update({ flag: false });
+    res.status(201).json({
+      impuestoPOS,
+      ok: true,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const obtenerPOSs = async (req = request, res = response) => {
+  try {
+    const impuestoPOSs = await ImpuestosPOS.findAll({ where: { flag: true } });
+    res.status(201).json({
+      impuestoPOSs,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
+  postPOS,
+  updatePOSxID,
+  obtenerPOSxID,
+  deletePOSxID,
+  obtenerPOSs,
   HISTORYpostImpuesto,
   postImpuesto,
   HISTORYgetxImpuesto,

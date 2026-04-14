@@ -38,6 +38,28 @@ const HistorialImpuesto = db.define("tb_historial_impuesto", {
     defaultValue: true,
   },
 });
+const ImpuestosPOS = db.define("tb_impuestosPOS", {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  id_forma_pago: {
+    type: DataTypes.INTEGER,
+  },
+  id_tipo_tarjeta: {
+    type: DataTypes.INTEGER,
+  },
+  id_banco: {
+    type: DataTypes.INTEGER,
+  },
+  n_cuotas: {
+    type: DataTypes.INTEGER,
+  },
+  porcentaje: {
+    type: DataTypes.DECIMAL,
+  },
+});
 
 Impuesto.hasMany(HistorialImpuesto, {
   foreignKey: "id_impuesto",
@@ -56,7 +78,7 @@ Impuesto.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 HistorialImpuesto.sync()
@@ -66,11 +88,22 @@ HistorialImpuesto.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
+    );
+  });
+ImpuestosPOS.sync()
+  .then(() => {
+    console.log("La tabla HistorialImpuesto ha sido creada o ya existe.");
+  })
+  .catch((error) => {
+    console.error(
+      "Error al sincronizar el modelo con la base de datos:",
+      error,
     );
   });
 
 module.exports = {
   Impuesto,
   HistorialImpuesto,
+  ImpuestosPOS,
 };
