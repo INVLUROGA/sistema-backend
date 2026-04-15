@@ -2010,6 +2010,9 @@ const obtenerVentasMembresiaxEmpresa = async (
         },
       ],
     });
+    res.status(201).json({
+      ventas,
+    });
   } catch (error) {
     console.log(error);
 

@@ -363,13 +363,13 @@ const seccionGET = async (req = request, res = response) => {
         },
         {
           key: "pagos-ventas",
-          label: "Pagos de ventas",
+          label: "COSTO OPERADORES",
           icon: "uil-calender",
           url: "/pagos-ventas",
           children: [
             {
               key: "pagos-ventas",
-              label: "Gestion de pagos de ventas",
+              label: "Gestion de costo por operadores",
               isTitle: false,
               icon: "uil-calender",
               url: "/gestion-pagos-ventas",

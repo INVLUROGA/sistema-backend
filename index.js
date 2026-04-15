@@ -49,10 +49,9 @@ cron.schedule("* * * * *", () => {
 cron.schedule("0 1 * * *", () => {
   enviarResumenVentasDiario();
 });
-cron.schedule("0 15 * * *", async () => {
-  await enviarResumenVentasDiario();
+cron.schedule("0 15 * * *", () => {
+  enviarResumenVentasDiario();
 });
-
 const fileServer = express.static;
 require("dotenv").config();
 const env = process.env;
@@ -197,7 +196,7 @@ app.use("/api/circus", require("./routes/routersCircus/servicios.router.js"));
 
 app.use("/api/canjes", require("./routes/canjes.router.js"));
 app.use("/api/penalidad", require("./routes/penalidad.router.js"));
-app.use("/api/operadores-pago", require("./routes/formaPago.route.js"))
+app.use("/api/operadores-pago", require("./routes/formaPago.route.js"));
 //Escuchar peticiones
 app.listen(env.PORT || 3001, env.IP, () => {
   console.log(`Servidor corriendo en el puerto ${env.IP}${env.PORT || 3001}`);
