@@ -233,6 +233,9 @@ const detalleVenta_pagoVenta = db.define("detalleVenta_pagoVenta", {
     autoIncrement: true,
     primaryKey: true,
   },
+  id_operador: {
+    type: DataTypes.INTEGER,
+  },
   id_venta: {
     type: DataTypes.INTEGER,
   },
@@ -367,6 +370,11 @@ detalleVenta_membresias.hasOne(TarifaTraining, {
   as: "tarifa_venta",
 });
 
+detalleVenta_pagoVenta.hasOne(Parametros, {
+  foreignKey: "id_param",
+  sourceKey: "id_operador",
+  as: "parametro_operador",
+});
 detalleVenta_pagoVenta.hasOne(Parametros, {
   foreignKey: "id_param",
   sourceKey: "id_forma_pago",

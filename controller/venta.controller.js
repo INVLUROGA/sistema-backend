@@ -4649,6 +4649,11 @@ const obtenerPagosVentas = async (req = request, res = response) => {
             {
               model: Parametros,
               attributes: ["id_param", "label_param"],
+              as: "parametro_operador",
+            },
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
               as: "parametro_banco",
             },
             {
