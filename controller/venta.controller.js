@@ -4635,6 +4635,7 @@ const obtenerPagosVentas = async (req = request, res = response) => {
           required: true,
           attributes: [
             "id",
+            "id_operador",
             "fecha_pago",
             "id_forma_pago",
             "id_tipo_tarjeta",
