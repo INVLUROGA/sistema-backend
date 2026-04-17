@@ -30,7 +30,7 @@ const OperadorPago = db.define("tb_operadoresPago", {
     type: DataTypes.INTEGER,
   },
   porcentaje_comision: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.DECIMAL(10, 2),
   },
   estado: {
     type: DataTypes.INTEGER,
