@@ -4645,6 +4645,7 @@ const obtenerPagosVentas = async (req = request, res = response) => {
             "n_operacion",
             "observacion",
             "n_cuotas",
+            "es_nacional",
           ],
           include: [
             {

@@ -7,7 +7,7 @@ const { Cliente } = require("../models/Usuarios");
 
 const getSeguimientos = async (req = request, res = response) => {
   try {
-    const seguimiento = await Seguimiento.findAll({
+    const dataSeguimiento = await Seguimiento.findAll({
       where: {
         flag: true,
         fecha_vencimiento: {
@@ -34,7 +34,7 @@ const getSeguimientos = async (req = request, res = response) => {
       ],
     });
     res.status(201).json({
-      seguimiento,
+      dataSeguimiento,
     });
   } catch (error) {
     console.log(error);
@@ -42,31 +42,45 @@ const getSeguimientos = async (req = request, res = response) => {
 };
 const obtenerSeguimientosxIdCli = async (req = request, res = response) => {
   try {
-    const { id_cli } = req.params;
-    const seguimientos = await Seguimiento.findAll({
-      where: { flag: true },
+    const dataSeguimiento = await Cliente.findAll({
+      attributes: ["id_cli", "nombre_cli", "apPaterno_cli", "apMaterno_cli"],
       include: [
         {
-          model: detalleVenta_membresias,
-          as: "venta",
-          required: true,
+          model: Seguimiento,
+          as: "cli_seguimiento",
+          where: {
+            flag: true,
+          },
+          order: [["id", "asc"]],
           include: [
             {
-              model: ProgramaTraining,
-            },
-            {
-              model: Venta,
-              required: true,
-              where: { id_cli },
+              model: detalleVenta_membresias,
+              attributes: [
+                "tarifa_monto",
+                "id_pgm",
+                "id",
+                "id_venta",
+                "fecha_inicio",
+              ],
+              as: "venta",
+              include: [
+                {
+                  model: Venta,
+                  attributes: ["id", "id_cli", "id_origen", "fecha_venta"],
+                  required: true,
+                  where: {
+                    id_empresa: 598,
+                  },
+                },
+              ],
             },
           ],
         },
       ],
     });
-    console.log({ id_cli });
 
     res.status(201).json({
-      seguimientos,
+      dataSeguimiento,
     });
   } catch (error) {
     console.log(error);

@@ -32,6 +32,9 @@ const clienteMFRouter = require("./routes/cliente_mf.router");
 const {
   enviarResumenVentasDiario,
 } = require("./middlewares/EventosCron/enviarResumenVentasDiario.js");
+const {
+  obtenerDataSeguimientos,
+} = require("./middlewares/EventosCron/obtenerDataSeguimientos.js");
 // Programa una tarea para las 9 AM todos los días
 cron.schedule("0 3 1 * *", () => {
   reactivarAlertasMensuales();
@@ -39,6 +42,10 @@ cron.schedule("0 3 1 * *", () => {
 
 cron.schedule("0 15 * * *", () => {
   obtenerCumpleaniosDeEmpleados();
+});
+
+cron.schedule("* * * * *", () => {
+  // obtenerDataSeguimientos();
 });
 
 // Run alerts every minute to checking for specific times

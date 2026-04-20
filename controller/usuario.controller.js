@@ -957,16 +957,6 @@ const loginUsuario = async (req = request, res = response) => {
         },
       ];
     }
-    //mod-inventario-proyection
-    let formAUDIT = {
-      id_user: usuario.id_user,
-      ip_user: ip_user,
-      accion: typesCRUD.GET,
-      observacion: `Usuario Ingresando`,
-      fecha_audit: new Date(),
-    };
-    //await capturarAUDIT(formAUDIT);
-
     res.json({
       ok: true,
       uid: usuario.uid,

@@ -267,6 +267,10 @@ const detalleVenta_pagoVenta = db.define("detalleVenta_pagoVenta", {
   parcial_monto: {
     type: DataTypes.DECIMAL(10, 2),
   },
+  es_nacional: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
 });
 
 const detalle_cambioPrograma = db.define("detalle_cambioPrograma", {

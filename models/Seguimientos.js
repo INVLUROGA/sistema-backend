@@ -61,6 +61,12 @@ Seguimiento.hasOne(Cliente, {
   as: "cli",
 });
 
+Cliente.hasMany(Seguimiento, {
+  foreignKey: "id_cli",
+  sourceKey: "id_cli",
+  as: "cli_seguimiento",
+});
+
 Seguimiento.hasOne(ExtensionMembresia, {
   foreignKey: "id",
   sourceKey: "id_extension",

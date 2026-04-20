@@ -11,7 +11,7 @@ const router = Router();
  */
 
 router.get("/", getSeguimientos);
-router.get('/rango-fecha-vencimiento', getSeguimientoxFechaVencimientos)
-router.get("/id_cli/:id_cli", obtenerSeguimientosxIdCli);
+router.get("/rango-fecha-vencimiento", getSeguimientoxFechaVencimientos);
+router.get("/xcliente", obtenerSeguimientosxIdCli);
 
 module.exports = router;
