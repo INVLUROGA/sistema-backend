@@ -35,6 +35,10 @@ const OperadorPago = db.define("tb_operadoresPago", {
   estado: {
     type: DataTypes.INTEGER,
   },
+  es_nacional: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
