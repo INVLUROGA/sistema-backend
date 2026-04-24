@@ -24,13 +24,9 @@ const {
   getVentasxFecha,
   obtener_contrato_pdf,
   postTraspasoMembresia,
-  estadosClienteMembresiaVar,
-  comparativaPorProgramaApi,
   obtenerContratosClientes,
   obtenerVentasMembresiaxEmpresa,
   obtenerClientesVentas,
-  obtenerClientesxDistritos,
-  agregarFirmaEnContrato,
   obtenerComparativoResumen,
   obtenerComparativoResumenDashboard,
   obtenerEstadoResumen,
@@ -45,8 +41,6 @@ const {
   obtenerMembresiasxUIDcliente,
   putVentaxId,
   obtenerComparativoTotal,
-  postCajaApertura,
-  buscarCajasxFecha,
   obtenerUltimasVentasxComprobantes,
   get_VENTAS_CIRCUS,
   postVentaProductos,
@@ -57,12 +51,12 @@ const {
   updateDetalleServicio,
   getVencimientosPorMes,
   obtenerVentasxIdCli,
-  getVentasDashboard,
   getVentasxFechaVenta,
   obtenerPagosVentas,
   postVentasPagos,
   obtenerVentasPagosxID,
   updateVentasPagosxID,
+  obtenerContrato,
 } = require("../controller/venta.controller");
 
 const {
@@ -90,8 +84,6 @@ router.get(
   "/obtener-ventas-x-comprobante/:id_comprobante/:id_empresa",
   obtenerUltimasVentasxComprobantes,
 );
-router.post("/caja-apertura/:id_enterprice", postCajaApertura);
-router.get("/buscar-cajas", buscarCajasxFecha);
 router.post(
   "/post-ventas/:id_enterprice",
   extraerProductos2,
@@ -113,28 +105,24 @@ router.get(
   "/get-ventas-membresia-x-empresa/:id_empresa",
   obtenerVentasMembresiaxEmpresa,
 );
-router.post("/post-venta/agregar-firma-en-contrato", agregarFirmaEnContrato);
 // router.post("/send-email/:id_venta", mailMembresia);
 router.get("/reporte/obtener-todo-membresias", obtenerMembresias);
 router.get("/reporte/obtener-todo-membresias-x-fecha", obtenerMembresias);
 router.post("/traspaso-membresia", postTraspasoMembresia);
 router.get("/get-ventas/599", get_VENTAS_CIRCUS);
 router.get("/get-ventas/:id_empresa", get_VENTAS);
-router.get("/get-ventas-dashboard/:id_empresa", getVentasDashboard);
 router.post("/invoice-mail/:id_venta", mailMembresia);
 router.get("/get-id-ventas/:id", get_VENTA_ID);
 router.post("/invoice-PDFcontrato", obtener_contrato_pdf);
 router.put("/update-colaborador-servicio/:id", updateDetalleServicio);
 router.put("/update-colaborador-producto/:id", updateDetalleProducto);
 // router.post("/")
-router.post("/estado-membresia", estadosClienteMembresiaVar);
 
 router.get(
   "/obtener-contratos-clientes/:id_enterprice",
   obtenerContratosClientes,
 );
-router.get("/comparativaPorProgramaApi/:fecha", comparativaPorProgramaApi);
-
+router.get("/obtener-contrato/:id_venta", obtenerContrato);
 router.get(
   "/reporte/reporte-ventas-x-programa/:id_pgm",
   obtenerReporteSociosxDistritos,

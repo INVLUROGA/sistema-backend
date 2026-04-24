@@ -10,6 +10,7 @@ const Client_Contrato = async (dataInfo) => {
   // Cargar el archivo de tipografía (ejemplo: Arial.ttf)
   // Cargar el PDF existente
   const existingPdfBytes = fs.readFileSync("contrato_socio2.pdf");
+
   // Cargar el documento PDF en memoria
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
   // Obtener la primera página del PDF
@@ -25,12 +26,12 @@ const Client_Contrato = async (dataInfo) => {
       "..",
       "public",
       "fonts",
-      "Instagram Sans Bold.ttf"
-    )
+      "Instagram Sans Bold.ttf",
+    ),
   );
   if (!fontIgBold || fontIgBold.length === 0) {
     throw new Error(
-      "No se pudo cargar la fuente. Verifica que la ruta de la fuente sea correcta."
+      "No se pudo cargar la fuente. Verifica que la ruta de la fuente sea correcta.",
     );
   }
 
@@ -45,7 +46,7 @@ const Client_Contrato = async (dataInfo) => {
     "..",
     "..",
     "public",
-    "Green_check.png"
+    "Green_check.png",
   );
   // Leer la imagen como buffer
   const imagecheckBuffer = fs.readFileSync(IMAGEcheck);
@@ -159,7 +160,7 @@ const Client_Contrato = async (dataInfo) => {
       y: 589,
       size: 9,
       color: rgb(0, 0, 0),
-    }
+    },
   );
   const apPaternoCliente = firstPage.drawText(
     `${
@@ -173,7 +174,7 @@ const Client_Contrato = async (dataInfo) => {
       y: 564,
       size: 9,
       color: rgb(0, 0, 0),
-    }
+    },
   );
   const dniCliente = firstPage.drawText(safeText(dataInfo.dni), {
     x: 175,
@@ -181,12 +182,15 @@ const Client_Contrato = async (dataInfo) => {
     size: 9,
     color: rgb(0, 0, 0),
   });
-  const DireccionCliente = firstPage.drawText(safeText(dataInfo.DireccionCliente), {
-    x: 175,
-    y: 509,
-    size: 9,
-    color: rgb(0, 0, 0),
-  });
+  const DireccionCliente = firstPage.drawText(
+    safeText(dataInfo.DireccionCliente),
+    {
+      x: 175,
+      y: 509,
+      size: 9,
+      color: rgb(0, 0, 0),
+    },
+  );
   const PaisCliente = firstPage.drawText(safeText(dataInfo.PaisCliente), {
     x: 175,
     y: 477,
@@ -224,14 +228,17 @@ const Client_Contrato = async (dataInfo) => {
       y: 564,
       size: 9,
       color: rgb(0, 0, 0),
-    }
+    },
   );
-  const DistritoCliente = firstPage.drawText(safeText(dataInfo.DistritoCliente), {
-    x: 388,
-    y: 538,
-    size: 9,
-    color: rgb(0, 0, 0),
-  });
+  const DistritoCliente = firstPage.drawText(
+    safeText(dataInfo.DistritoCliente),
+    {
+      x: 388,
+      y: 538,
+      size: 9,
+      color: rgb(0, 0, 0),
+    },
+  );
   const FechaDeNacimientoCliente = firstPage.drawText(
     safeText(dataInfo.FechaDeNacimientoCliente),
     {
@@ -239,7 +246,7 @@ const Client_Contrato = async (dataInfo) => {
       y: 590,
       size: 9,
       color: rgb(0, 0, 0),
-    }
+    },
   );
   const CentroDeTrabajoCliente = firstPage.drawText(
     safeText(dataInfo.CentroDeTrabajoCliente),
@@ -248,7 +255,7 @@ const Client_Contrato = async (dataInfo) => {
       y: 479,
       size: 9,
       color: rgb(0, 0, 0),
-    }
+    },
   );
   const origenCliente = firstPage.drawText(safeText(dataInfo.origenCliente), {
     x: 388,
@@ -282,7 +289,7 @@ const Client_Contrato = async (dataInfo) => {
       y: 225,
       size: 9,
       color: rgb(0, 0, 0),
-    }
+    },
   );
   const DiasDeCongelamiento = firstPage.drawText(safeText(dataInfo.dias_cong), {
     x: 176,
@@ -304,7 +311,7 @@ const Client_Contrato = async (dataInfo) => {
       y: 196,
       size: 9,
       color: rgb(0, 0, 0),
-    }
+    },
   );
   //Columna 3
   const Sesiones = firstPage.drawText(`${dataInfo.semanas * 5}`, {
@@ -339,7 +346,7 @@ const Client_Contrato = async (dataInfo) => {
       y: 527,
       size: 9,
       color: rgb(0, 0, 0),
-    }
+    },
   );
   page10.drawText(`${dataInfo.dni}`, {
     x: 205,
@@ -369,7 +376,7 @@ const Client_Contrato = async (dataInfo) => {
       y: 243,
       size: 9,
       color: rgb(0, 0, 0),
-    }
+    },
   );
   page13.drawText(`${dataInfo.dni}`, {
     x: 205,

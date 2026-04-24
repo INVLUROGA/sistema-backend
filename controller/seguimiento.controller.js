@@ -2,7 +2,10 @@ const { request, response } = require("express");
 const { Seguimiento } = require("../models/Seguimientos");
 const { detalleVenta_membresias, Venta } = require("../models/Venta");
 const { Op } = require("sequelize");
-const { ProgramaTraining } = require("../models/ProgramaTraining");
+const {
+  ProgramaTraining,
+  SemanasTraining,
+} = require("../models/ProgramaTraining");
 const { Cliente } = require("../models/Usuarios");
 
 const getSeguimientos = async (req = request, res = response) => {
@@ -61,6 +64,7 @@ const obtenerSeguimientosxIdCli = async (req = request, res = response) => {
                 "id",
                 "id_venta",
                 "fecha_inicio",
+                "horario",
               ],
               as: "venta",
               include: [
@@ -71,6 +75,14 @@ const obtenerSeguimientosxIdCli = async (req = request, res = response) => {
                   where: {
                     id_empresa: 598,
                   },
+                },
+                {
+                  model: ProgramaTraining,
+                  attributes: ["name_pgm"],
+                },
+                {
+                  model: SemanasTraining,
+                  attributes: ["semanas_st"],
                 },
               ],
             },

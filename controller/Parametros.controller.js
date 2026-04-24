@@ -1,5 +1,5 @@
 const { request, response } = require("express");
-const NodeCache = require('node-cache');
+const NodeCache = require("node-cache");
 const membresiasCache = new NodeCache({ stdTTL: 600 }); // 10 minutes default ttl
 
 const {
@@ -83,38 +83,32 @@ const getFinBaseFromSemanas = (m) => {
   if (!inicio || !semanas) return null;
 
   const fin = new Date(inicio);
-  fin.setDate(fin.getDate() + (semanas * 7)); // Magia: 12 * 7 = 84 días agregados
+  fin.setDate(fin.getDate() + semanas * 7); // Magia: 12 * 7 = 84 días agregados
   return fin;
 };
 
 // 2. Tu función orquestadora (Esta ya la tienes bien)
 const getFinBase = (m) =>
-  getFinBaseFromSemanas(m) ||          // Prioridad 1: Cálculo matemático (Arregla tu error)
-  parseDateOnly(m?.fec_fin_mem) ||     // Prioridad 2: Fecha guardada (Fallback)
+  getFinBaseFromSemanas(m) || // Prioridad 1: Cálculo matemático (Arregla tu error)
+  parseDateOnly(m?.fec_fin_mem) || // Prioridad 2: Fecha guardada (Fallback)
   parseDateOnly(m?.fec_fin_mem_oftime) ||
   parseDateOnly(m?.fec_fin_mem_viejo);
 const calcFinEfectivo = (m) => {
-
   const base = getFinBase(m);
 
   if (!base) return null;
 
   const ext = Array.isArray(m.tb_extension_membresia)
-
     ? m.tb_extension_membresia
-
     : [];
 
   const diasHab = ext.reduce(
-
     (acc, e) => acc + parseInt(e?.dias_habiles ?? 0, 10),
 
     0,
-
   );
 
   return diasHab > 0 ? addBusinessDays(base, diasHab) : base;
-
 };
 const obtenerEmpleadosxCargoxDepartamentoxEmpresa = async (
   req = request,
@@ -205,7 +199,7 @@ const getParametrosporId = async (req = request, res = response) => {
   }
 };
 const getParametrosxEntidadxGrupo = async (req = request, res = response) => {
-  const { } = req.params;
+  const {} = req.params;
   try {
     const parametros = await Parametros.findAll({ where: { flag: true } });
     return res.status(200).json(parametros);
@@ -380,6 +374,10 @@ const getParametrosporCliente = async (req, res) => {
         "uid",
       ],
       include: [
+        {
+          model: ImagePT,
+          attributes: ["name_image"],
+        },
         {
           model: Venta,
           include: [
@@ -572,7 +570,7 @@ const getParametroSemanaPGM = async (req = request, res = response) => {
         ["sesiones", "sesiones"],
         [
           Sequelize.literal(
-            "CONCAT('SEMANAS ', semanas_st, ' | SESIONES ', sesiones, ' | CONGELAMIENTO ', congelamiento_st, ' DIAS | NUTRICION ', nutricion_st, ' CITAS')"
+            "CONCAT('SEMANAS ', semanas_st, ' | SESIONES ', sesiones, ' | CONGELAMIENTO ', congelamiento_st, ' DIAS | NUTRICION ', nutricion_st, ' CITAS')",
           ),
           "label",
         ],
@@ -908,7 +906,6 @@ const getVigentesResumenEmpresa = async (req, res) => {
     const dias = Number(req.query.dias || 15);
     const incluirMontoCero = String(req.query.incluirMontoCero ?? "0") === "1";
 
-
     let snapStr = String(req.query.snapshot || "");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(snapStr)) {
       const now = new Date();
@@ -943,13 +940,11 @@ const getVigentesResumenEmpresa = async (req, res) => {
     lim.setHours(0, 0, 0, 0);
     const limTime = lim.getTime();
 
-
     const whereDetalle = {};
 
     if (!incluirMontoCero) {
       whereDetalle.tarifa_monto = { [Op.gt]: 0 };
     }
-
 
     const rows = await detalleVenta_membresias.findAll({
       attributes: [
@@ -1098,7 +1093,12 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
           include: [
             {
               model: Cliente,
-              attributes: ["id_cli", "nombre_cli", "apPaterno_cli", "apMaterno_cli"],
+              attributes: [
+                "id_cli",
+                "nombre_cli",
+                "apPaterno_cli",
+                "apMaterno_cli",
+              ],
               required: false,
             },
             {
@@ -1106,7 +1106,7 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
               attributes: ["nombre_empl", "apPaterno_empl", "apMaterno_empl"],
               required: false,
             },
-          ]
+          ],
         },
         {
           model: ProgramaTraining,
@@ -1140,7 +1140,8 @@ const getMembresiasVigentesEmpresa = async (req, res) => {
 
     const vigentes = [];
     for (const m of rows) {
-      if (!isActiveFlag(m?.flag) || !(Number(m?.tarifa_monto ?? 0) > 0)) continue;
+      if (!isActiveFlag(m?.flag) || !(Number(m?.tarifa_monto ?? 0) > 0))
+        continue;
 
       const fin = calcFinEfectivo(m);
       if (!fin) continue;
@@ -1204,13 +1205,17 @@ const getMembresiasVigentesHistorico = async (req, res) => {
   try {
     const empresa = Number(req.query.empresa || 598);
     const year = Number(req.query.year || new Date().getFullYear());
-    const selectedMonth = Number(req.query.selectedMonth || new Date().getMonth() + 1);
+    const selectedMonth = Number(
+      req.query.selectedMonth || new Date().getMonth() + 1,
+    );
 
     // Mes y día de corte seleccionados por el usuario en el frontend.
     // cutMonth indica PARA QUÉ MES aplica el corte (puede ser distinto de selectedMonth,
     // ya que el frontend siempre envía selectedMonth=12 para obtener todas las columnas).
     const clientCutDay = req.query.cutDay ? Number(req.query.cutDay) : null;
-    const clientCutMonth = req.query.cutMonth ? Number(req.query.cutMonth) : selectedMonth;
+    const clientCutMonth = req.query.cutMonth
+      ? Number(req.query.cutMonth)
+      : selectedMonth;
 
     const cacheKey = `vigentes_historico_${empresa}_${year}_${selectedMonth}_${clientCutMonth}_${clientCutDay ?? "last"}`;
     const cachedData = membresiasCache.get(cacheKey);
@@ -1224,8 +1229,14 @@ const getMembresiasVigentesHistorico = async (req, res) => {
     // Solo traemos los campos matemáticamente necesarios
     const rows = await detalleVenta_membresias.findAll({
       attributes: [
-        "id", "tarifa_monto", "fec_inicio_mem", "fec_fin_mem",
-        "fec_fin_mem_oftime", "fec_fin_mem_viejo", "flag", "id_pgm"
+        "id",
+        "tarifa_monto",
+        "fec_inicio_mem",
+        "fec_fin_mem",
+        "fec_fin_mem_oftime",
+        "fec_fin_mem_viejo",
+        "flag",
+        "id_pgm",
       ],
       include: [
         {
@@ -1259,7 +1270,6 @@ const getMembresiasVigentesHistorico = async (req, res) => {
       // pero limitar los atributos reduce el peso de memoria un 80%
     });
 
-
     const prevYear = year - 1;
 
     const lastYearCols = [9, 10, 11, 12].map((m) => ({
@@ -1282,7 +1292,8 @@ const getMembresiasVigentesHistorico = async (req, res) => {
     // 2. PROCESAMIENTO MÁS RÁPIDO
     const processedRows = [];
     for (const m of rows) {
-      if (!isActiveFlag(m?.flag) || !(Number(m?.tarifa_monto ?? 0) > 0)) continue;
+      if (!isActiveFlag(m?.flag) || !(Number(m?.tarifa_monto ?? 0) > 0))
+        continue;
 
       const fin = calcFinEfectivo(m);
       if (!fin) continue;
@@ -1294,7 +1305,10 @@ const getMembresiasVigentesHistorico = async (req, res) => {
       const inicio = getInicioBase(m);
       if (!inicio) continue;
 
-      const plan = m?.tb_programa_training?.name_pgm || m?.tb_ProgramaTraining?.name_pgm || (m?.id_pgm ? `PGM ${m.id_pgm}` : "-");
+      const plan =
+        m?.tb_programa_training?.name_pgm ||
+        m?.tb_ProgramaTraining?.name_pgm ||
+        (m?.id_pgm ? `PGM ${m.id_pgm}` : "-");
 
       processedRows.push({
         inicio: inicio.getTime(), // Siempre es un timestamp válido ahora
@@ -1331,7 +1345,15 @@ const getMembresiasVigentesHistorico = async (req, res) => {
       // Para todos los demás meses pasados: usar el último día del mes (correcto)
 
       // Convertimos el snapshot a milisegundos de una vez
-      const snapshotTime = new Date(c.year, c.month - 1, cutDay, 0, 0, 0, 0).getTime();
+      const snapshotTime = new Date(
+        c.year,
+        c.month - 1,
+        cutDay,
+        0,
+        0,
+        0,
+        0,
+      ).getTime();
       const vigentes = [];
 
       for (const r of processedRows) {
@@ -1357,7 +1379,9 @@ const getMembresiasVigentesHistorico = async (req, res) => {
     return res.json(result);
   } catch (e) {
     console.error("getMembresiasVigentesHistorico", e);
-    return res.status(500).json({ error: "Error listando historico vigentes", detail: e.message });
+    return res
+      .status(500)
+      .json({ error: "Error listando historico vigentes", detail: e.message });
   }
 };
 
@@ -1741,14 +1765,17 @@ const getLogicaEstadoMembresia = async (req = request, res = response) => {
   }
 };
 
-
 const getMembresiasCruzadas = async (req, res) => {
   try {
     const empresa = Number(req.query.empresa || 598);
     const year = Number(req.query.year || new Date().getFullYear());
-    const selectedMonth = Number(req.query.selectedMonth || new Date().getMonth() + 1);
+    const selectedMonth = Number(
+      req.query.selectedMonth || new Date().getMonth() + 1,
+    );
     const initDay = Number(req.query.initDay || 1);
-    const cutDay = Number(req.query.cutDay || new Date(year, selectedMonth, 0).getDate());
+    const cutDay = Number(
+      req.query.cutDay || new Date(year, selectedMonth, 0).getDate(),
+    );
 
     // Validar que cutDay no exceda los días reales del mes para evitar error SQL (ej. 31 Febrero -> Error 242)
     const lastDayOfMonth = new Date(year, selectedMonth, 0).getDate();
@@ -1762,18 +1789,25 @@ const getMembresiasCruzadas = async (req, res) => {
     rangeEnd.setHours(23, 59, 59, 999);
 
     // Strings limpios para evitar que SQL Server falle con las zonas horarias
-    const startStr = `${year}-${String(selectedMonth).padStart(2, '0')}-${String(initDay).padStart(2, '0')} 00:00:00`;
-    const endStr = `${year}-${String(selectedMonth).padStart(2, '0')}-${String(safeCutDay).padStart(2, '0')} 23:59:59`;
+    const startStr = `${year}-${String(selectedMonth).padStart(2, "0")}-${String(initDay).padStart(2, "0")} 00:00:00`;
+    const endStr = `${year}-${String(selectedMonth).padStart(2, "0")}-${String(safeCutDay).padStart(2, "0")} 23:59:59`;
 
     // 2. Traemos todas las membresías activas
     const rows = await detalleVenta_membresias.findAll({
       // AGREGADO: "id_st" a los atributos
-      attributes: ["id", "fec_inicio_mem", "id_venta", "id_pgm", "id_st", "flag"],
+      attributes: [
+        "id",
+        "fec_inicio_mem",
+        "id_venta",
+        "id_pgm",
+        "id_st",
+        "flag",
+      ],
       where: {
         flag: true,
-        // Traemos todo lo que inició antes del fin del rango. 
+        // Traemos todo lo que inició antes del fin del rango.
         // (Quitamos el filtro de BD de fec_fin_mem porque ahora lo calcularemos en JS)
-        fec_inicio_mem: { [Op.lte]: endStr }
+        fec_inicio_mem: { [Op.lte]: endStr },
       },
       include: [
         {
@@ -1784,28 +1818,33 @@ const getMembresiasCruzadas = async (req, res) => {
           include: [
             {
               model: Cliente,
-              attributes: ["id_cli", "nombre_cli", "apPaterno_cli", "apMaterno_cli"],
-              required: true
+              attributes: [
+                "id_cli",
+                "nombre_cli",
+                "apPaterno_cli",
+                "apMaterno_cli",
+              ],
+              required: true,
             },
             {
               model: Empleado,
               attributes: ["nombre_empl", "apPaterno_empl"],
-              required: false
-            }
-          ]
+              required: false,
+            },
+          ],
         },
         {
           model: ProgramaTraining,
           attributes: ["name_pgm"],
-          required: false
+          required: false,
         },
         // AGREGADO: Incluimos la tabla de semanas para poder calcular el fin
         {
           model: SemanasTraining,
           attributes: ["id_st", "semanas_st"],
-          required: false
-        }
-      ]
+          required: false,
+        },
+      ],
     });
 
     // 3. Agrupamos las membresías por ID de cliente
@@ -1824,11 +1863,13 @@ const getMembresiasCruzadas = async (req, res) => {
     // 4. Lógica Matemática de JS para hallar los solapamientos
     const cruces = [];
 
-    Object.keys(clientMemberships).forEach(idCli => {
+    Object.keys(clientMemberships).forEach((idCli) => {
       const mems = clientMemberships[idCli];
 
       // Ordenamos por fecha de inicio
-      mems.sort((a, b) => new Date(a.fec_inicio_mem) - new Date(b.fec_inicio_mem));
+      mems.sort(
+        (a, b) => new Date(a.fec_inicio_mem) - new Date(b.fec_inicio_mem),
+      );
 
       // Doble bucle para comparar Membresía A con Membresía B
       for (let i = 0; i < mems.length; i++) {
@@ -1838,31 +1879,34 @@ const getMembresiasCruzadas = async (req, res) => {
 
           if (memA.id_venta === memB.id_venta) continue;
 
-
           const startA = new Date(memA.fec_inicio_mem);
-          const semanasA = memA.SemanasTraining?.semanas_st || memA.tb_semana_training?.semanas_st || 0;
+          const semanasA =
+            memA.SemanasTraining?.semanas_st ||
+            memA.tb_semana_training?.semanas_st ||
+            0;
           const endA = new Date(startA);
           // Sumamos (semanas * 7 días)
-          endA.setDate(endA.getDate() + (semanasA * 7));
+          endA.setDate(endA.getDate() + semanasA * 7);
           endA.setHours(23, 59, 59, 999);
 
           const startB = new Date(memB.fec_inicio_mem);
-          const semanasB = memB.SemanasTraining?.semanas_st || memB.tb_semana_training?.semanas_st || 0;
+          const semanasB =
+            memB.SemanasTraining?.semanas_st ||
+            memB.tb_semana_training?.semanas_st ||
+            0;
           const endB = new Date(startB);
-          endB.setDate(endB.getDate() + (semanasB * 7));
+          endB.setDate(endB.getDate() + semanasB * 7);
           endB.setHours(23, 59, 59, 999);
           // ==========================================
 
           // ¿Se cruzan la A y la B en general?
           if (startA < endB && endA > startB) {
-
             // Calculamos el periodo exacto del cruce
             const overlapStart = new Date(Math.max(startA, startB));
             const overlapEnd = new Date(Math.min(endA, endB));
 
             // ¿Este cruce ocurre DENTRO del mes que el usuario seleccionó en la UI?
             if (overlapStart <= rangeEnd && overlapEnd >= rangeStart) {
-
               const diffTime = overlapEnd - overlapStart;
               const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
@@ -1873,14 +1917,23 @@ const getMembresiasCruzadas = async (req, res) => {
 
                 cruces.push({
                   cliente_id: idCli,
-                  nombre_cliente: [c.nombre_cli, c.apPaterno_cli, c.apMaterno_cli].filter(Boolean).join(" "),
+                  nombre_cliente: [
+                    c.nombre_cli,
+                    c.apPaterno_cli,
+                    c.apMaterno_cli,
+                  ]
+                    .filter(Boolean)
+                    .join(" "),
                   id_mem_A: memA.id,
                   plan_A: memA.tb_ProgramaTraining?.name_pgm || "-",
                   venta_A: memA.id_venta,
                   observacion_A: memA.tb_ventum?.observacion || "",
                   inicio_A: startA.toISOString().slice(0, 10),
                   fin_A: endA.toISOString().slice(0, 10), // Mostramos la fecha que acabamos de calcular
-                  asesor_A: [eA.nombre_empl, eA.apPaterno_empl].filter(Boolean).join(" ") || "-",
+                  asesor_A:
+                    [eA.nombre_empl, eA.apPaterno_empl]
+                      .filter(Boolean)
+                      .join(" ") || "-",
 
                   id_mem_B: memB.id,
                   plan_B: memB.tb_ProgramaTraining?.name_pgm || "-",
@@ -1888,9 +1941,12 @@ const getMembresiasCruzadas = async (req, res) => {
                   observacion_B: memB.tb_ventum?.observacion || "",
                   inicio_B: startB.toISOString().slice(0, 10),
                   fin_B: endB.toISOString().slice(0, 10), // Mostramos la fecha que acabamos de calcular
-                  asesor_B: [eB.nombre_empl, eB.apPaterno_empl].filter(Boolean).join(" ") || "-",
+                  asesor_B:
+                    [eB.nombre_empl, eB.apPaterno_empl]
+                      .filter(Boolean)
+                      .join(" ") || "-",
 
-                  dias_solapados: diffDays
+                  dias_solapados: diffDays,
                 });
               }
             }
@@ -1904,15 +1960,16 @@ const getMembresiasCruzadas = async (req, res) => {
     return res.json({
       intervalo: {
         inicio: rangeStart.toISOString().slice(0, 10),
-        fin: rangeEnd.toISOString().slice(0, 10)
+        fin: rangeEnd.toISOString().slice(0, 10),
       },
       total_cruces: cruces.length,
-      cruces
+      cruces,
     });
-
   } catch (error) {
     console.error("Error en getMembresiasCruzadas:", error);
-    return res.status(500).json({ error: "Error calculando cruces.", detail: error.message });
+    return res
+      .status(500)
+      .json({ error: "Error calculando cruces.", detail: error.message });
   }
 };
 const getParametrosVendedoresVendiendoTodo = async (
@@ -2359,7 +2416,10 @@ const deleteParametrosGenerales = async (req = request, res = response) => {
     });
   }
 };
-const getSociosConMultiplesContratos = async (req = request, res = response) => {
+const getSociosConMultiplesContratos = async (
+  req = request,
+  res = response,
+) => {
   try {
     const empresa = Number(req.query.empresa || 598);
     // Sugerencia: Limitar a contratos de los últimos 2 años para no saturar
@@ -2371,13 +2431,19 @@ const getSociosConMultiplesContratos = async (req = request, res = response) => 
       where: {
         flag: true,
         id_empresa: empresa,
-        fecha_venta: { [Op.gte]: fechaLimite } // 🔥 Filtro de seguridad
+        fecha_venta: { [Op.gte]: fechaLimite }, // 🔥 Filtro de seguridad
       },
       include: [
         {
           model: Cliente,
           as: "tb_cliente", // Revisa si tu alias es este
-          attributes: ["id_cli", "nombre_cli", "apPaterno_cli", "apMaterno_cli", "tel_cli"],
+          attributes: [
+            "id_cli",
+            "nombre_cli",
+            "apPaterno_cli",
+            "apMaterno_cli",
+            "tel_cli",
+          ],
         },
         {
           model: detalleVenta_membresias,
@@ -2407,7 +2473,8 @@ const getSociosConMultiplesContratos = async (req = request, res = response) => 
       if (!grouped[id]) {
         grouped[id] = {
           id_cli: id,
-          nombre_completo: `${cli.nombre_cli} ${cli.apPaterno_cli} ${cli.apMaterno_cli || ""}`.trim(),
+          nombre_completo:
+            `${cli.nombre_cli} ${cli.apPaterno_cli} ${cli.apMaterno_cli || ""}`.trim(),
           telefono: cli.tel_cli || "-",
           contratos: [],
         };
@@ -2435,7 +2502,6 @@ const getSociosConMultiplesContratos = async (req = request, res = response) => 
       .sort((a, b) => b.cantidad_contratos - a.cantidad_contratos);
 
     res.status(200).json({ total: socios.length, socios });
-
   } catch (error) {
     console.error("getSociosConMultiplesContratos:", error);
     res.status(500).json({ msg: "Error", error: error.message });
@@ -2504,8 +2570,9 @@ const getSociosInactivos91Dias = async (req = request, res = response) => {
       if (!clientesMap[idCli]) {
         clientesMap[idCli] = {
           id_cli: idCli,
-          nombre_completo: `${cli.nombre_cli} ${cli.apPaterno_cli} ${cli.apMaterno_cli || ""
-            }`.trim(),
+          nombre_completo: `${cli.nombre_cli} ${cli.apPaterno_cli} ${
+            cli.apMaterno_cli || ""
+          }`.trim(),
           telefono: cli.tel_cli || "-",
           email: cli.email_cli || "-",
           ultima_fecha_fin: fechaFin,

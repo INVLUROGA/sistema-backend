@@ -260,6 +260,7 @@ const extraerPagos = async (req = request, res = response, next) => {
   if (!req.body.datos_pagos) return next();
   const pagosExtraidos = req.body.datos_pagos.map((e) => {
     return {
+      es_nacional: e.es_nacional,
       id_forma_pago: e.id_forma_pago,
       label_forma_pago: e.label_forma_pago,
       label_banco: e.label_banco,
@@ -272,6 +273,7 @@ const extraerPagos = async (req = request, res = response, next) => {
       n_operacion: e.n_operacion,
       observacion: e.observacion_pago,
       parcial_monto: e.monto_pago,
+      id_operador: e.id_operador,
       n_cuotas: Number(e.n_cuotas),
     };
   });

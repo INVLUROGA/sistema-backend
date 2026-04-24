@@ -48,451 +48,12 @@ const sumarSemanas = require("../helpers/sumarSemanas");
 
 // Cargar el plugin
 dayjs.extend(utc);
-const postCajaApertura = async (req = request, res = response) => {
-  try {
-    const caja = new cajasMovimientos({
-      fecha_apertura: new Date(),
-      fecha_cierre: new Date(3000, 0, 1),
-    });
-    await caja.save();
-    res.status(200).json({
-      ok: true,
-      msg: caja,
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      ok: false,
-      msg: "Error en el servidor" + error,
-    });
-  }
-};
-const buscarCajasxFecha = async (req = request, res = response) => {
-  try {
-    const { fecha } = req.query;
-    const cajas = await cajasMovimientos.findAll({
-      order: [["id", "desc"]],
-      where: {
-        fecha_apertura: { [Op.lte]: fecha }, // apertura ≤ ahora
-        fecha_cierre: { [Op.gte]: fecha }, // cierre ≥ ahora
-      },
-    });
-    res.status(201).json({
-      cajas,
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      ok: false,
-      msg: "Error en el servidor" + error,
-    });
-  }
-};
-const estadosClienteMembresiaVar = async (req = request, res = response) => {
-  //const {tipoPrograma , fechaDesde, fechaHasta} = req.body;
-  const { tipoPrograma, fechaDesde, fechaHasta } = req.body;
-  try {
-    const respuesta = await estadosClienteMembresiaV2(
-      tipoPrograma,
-      fechaDesde,
-      fechaHasta,
-    );
-    res.status(200).json({
-      ok: true,
-      msg: respuesta,
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      ok: false,
-      msg: "Error en el servidor" + error,
-    });
-  }
-};
-
-async function estadosClienteMembresiaV2(
-  tipoPrograma,
-  fechaDesdeStr,
-  fechaHastaStr,
-) {
-  fechaDesdeStr = new Date(fechaDesdeStr);
-  fechaHastaStr = new Date(fechaHastaStr);
-
-  let VentasPorCliente = {};
-  let response = {};
-
-  let ventas;
-  if (tipoPrograma == 0) {
-    ventas = await Venta.findAll({
-      order: [["fecha_venta", "DESC"]],
-      where: {
-        id_tipoFactura: {
-          [Op.ne]: 701, // Excluye los registros con id_tipoFactura igual a 84
-        },
-      },
-      flag: true,
-      include: [
-        {
-          model: Cliente,
-          attributes: [
-            [
-              Sequelize.fn(
-                "CONCAT",
-                Sequelize.col("nombre_cli"),
-                " ",
-                Sequelize.col("apPaterno_cli"),
-                " ",
-                Sequelize.col("apMaterno_cli"),
-              ),
-              "nombres_apellidos_cli",
-            ],
-          ],
-        },
-        {
-          model: detalleVenta_membresias,
-          where: {
-            //id_pgm: tipoPrograma,
-            flag: true,
-            tarifa_monto: {
-              [Op.ne]: 0.0, // Excluye los registros con id_tipoFactura igual a 84
-            },
-          },
-          include: [
-            {
-              model: ProgramaTraining,
-              attributes: ["name_pgm"],
-            },
-            {
-              model: SemanasTraining,
-              attributes: ["semanas_st", "congelamiento_st", "nutricion_st"],
-            },
-            {
-              model: ImagePT,
-              as: "contrato_x_serv",
-              attributes: ["name_image"],
-            },
-          ],
-          required: true,
-        },
-      ],
-      //limit: 2,
-    });
-  } else {
-    ventas = await Venta.findAll({
-      order: [["fecha_venta", "DESC"]],
-      where: {
-        id_tipoFactura: {
-          [Op.ne]: 701, // Excluye los registros con id_tipoFactura igual a 84
-        },
-      },
-      flag: true,
-
-      include: [
-        {
-          model: detalleVenta_membresias,
-          where: {
-            id_pgm: tipoPrograma,
-            flag: true,
-            tarifa_monto: {
-              [Op.ne]: 0.0, // Excluye los registros con id_tipoFactura igual a 84
-            },
-          },
-
-          include: [
-            {
-              model: ProgramaTraining,
-              attributes: ["name_pgm"],
-            },
-            {
-              model: SemanasTraining,
-              attributes: ["semanas_st", "congelamiento_st", "nutricion_st"],
-            },
-            {
-              model: ImagePT,
-              as: "contrato_x_serv",
-              attributes: ["name_image"],
-            },
-          ],
-          required: true,
-        },
-        {
-          model: Cliente,
-          attributes: [
-            [
-              Sequelize.fn(
-                "CONCAT",
-                Sequelize.col("nombre_cli"),
-                " ",
-                Sequelize.col("apPaterno_cli"),
-                " ",
-                Sequelize.col("apMaterno_cli"),
-              ),
-              "nombres_apellidos_cli",
-            ],
-          ],
-        },
-      ],
-      //limit: 2,
-    });
-  }
-
-  ventas.map((venta) => {
-    if (!VentasPorCliente[venta.id_cli]) {
-      VentasPorCliente[venta.id_cli] = {
-        ventas: [venta],
-      };
-    } else {
-      VentasPorCliente[venta.id_cli].ventas.push(venta);
-    }
-  });
-
-  for (let key in VentasPorCliente) {
-    let contadorVentasConTrue = 0;
-    let ContadorVentasGeneral = 0;
-    let tipoCliente = "";
-
-    let Primerafecha_fin_membresia;
-    let Segundafecha_fin_membresia;
-    VentasPorCliente[key].ventas.map((venta) => {
-      venta = venta.toJSON();
-
-      let primeraFechaVenta = venta.fecha_venta;
-      //let fecha_venta = new Date(venta.fecha_venta);
-      let segundaFechaVenta = venta.fecha_venta;
-
-      let fecha_venta = new Date(venta.fecha_venta);
-      ContadorVentasGeneral++;
-
-      if (primeraFechaVenta < fecha_venta) {
-        primeraFechaVenta = fecha_venta;
-      }
-      if (
-        new Date(venta.detalle_ventaMembresia[0].fec_fin_mem) >
-        Segundafecha_fin_membresia
-      ) {
-        Segundafecha_fin_membresia = new Date(
-          venta.detalle_ventaMembresia[0].fec_fin_mem,
-        );
-      }
-
-      if (fecha_venta >= fechaDesdeStr && fecha_venta <= fechaHastaStr) {
-        contadorVentasConTrue++;
-      }
-
-      if (contadorVentasConTrue == 1 && ContadorVentasGeneral == 1) {
-        tipoCliente = "Cliente Nuevo";
-        Primerafecha_fin_membresia = new Date(
-          venta.detalle_ventaMembresia[0].fec_fin_mem,
-        );
-      }
-
-      if (contadorVentasConTrue == 2 || ContadorVentasGeneral == 2) {
-        Segundafecha_fin_membresia = new Date(
-          venta.detalle_ventaMembresia[0].fec_fin_mem,
-        );
-      }
-      if (
-        primeraFechaVenta &&
-        Segundafecha_fin_membresia /*&& (contadorVentasConTrue == 2)*/
-      ) {
-        //la primera es la más reciente y la segunda es la más antigua
-        if (primeraFechaVenta < Segundafecha_fin_membresia) {
-          //01/01/2022 < 02/01/2021
-          tipoCliente = "Cliente Reinscrito";
-        }
-        if (primeraFechaVenta > Segundafecha_fin_membresia) {
-          //01/01/2022 < 02/01/2021
-          tipoCliente = "Cliente Renovado";
-        }
-      }
-
-      if (venta.id_cli == 882) {
-        console.log(venta);
-        console.log(primeraFechaVenta + " " + Segundafecha_fin_membresia);
-      }
-
-      if (!response[key]) {
-        response[key] = {
-          ventas: [venta],
-          tipoCliente: tipoCliente,
-        };
-      } else {
-        response[key].ventas.push(venta);
-        response[key].tipoCliente = tipoCliente;
-      }
-    });
-  }
-
-  response = ContadoresEstadoClienteInscripcion(
-    response,
-    fechaDesdeStr,
-    fechaHastaStr,
-  );
-  return response;
-}
-
-function ContadoresEstadoClienteInscripcion(
-  AnalisisGeneral,
-  fechaDesde,
-  fechaHasta,
-) {
-  let response = {};
-  let clientesNuevos = {};
-  let clientesRei = {};
-  let clientesReno = {};
-  let contadorClienteNuevo = 0;
-  let contadorClienteRenovado = 0;
-  let contadorClienteReinscrito = 0;
-  console.log(AnalisisGeneral);
-
-  for (key in AnalisisGeneral) {
-    AnalisisGeneral[key].ventas.map((venta) => {
-      let fechaVenta = new Date(venta.fecha_venta);
-
-      if (fechaVenta >= fechaDesde && fechaVenta <= fechaHasta) {
-        switch (AnalisisGeneral[key].tipoCliente) {
-          case "Cliente Nuevo":
-            contadorClienteNuevo++;
-
-            clientesNuevos[key] = {
-              idCliente: key,
-              ventas: venta,
-              tipoCliente: "Cliente Nuevo",
-            };
-            break;
-          case "Cliente Reinscrito":
-            contadorClienteReinscrito++;
-            clientesRei[key] = {
-              idCliente: key,
-              ventas: venta,
-              tipoCliente: "Cliente reinscrito",
-            };
-            break;
-          case "Cliente Renovado":
-            contadorClienteRenovado++;
-            clientesReno[key] = {
-              idCliente: key,
-              ventas: venta,
-              tipoCliente: "Cliente renovados",
-            };
-            break;
-
-          default:
-            break;
-        }
-      }
-    });
-  }
-
-  response.cantidadPorEstado = {
-    ClienteNuevo: contadorClienteNuevo,
-    ClienteReinscrito: contadorClienteReinscrito,
-    ClienteRenovado: contadorClienteRenovado,
-  };
-  response.clientesNuevos = Object.values(clientesNuevos);
-  response.clientesRei = Object.values(clientesRei);
-  response.clientesReno = Object.values(clientesReno);
-
-  return response;
-}
-
-const comparativaPorProgramaApi = async (req = request, res = response) => {
-  const { fecha } = req.params;
-  //const {tipoPrograma , fechaDesde, fechaHasta} = req.body;
-  try {
-    let fechaDate = new Date(fecha);
-    let nroMesActual = fechaDate.getMonth();
-    let NroMesAnterior = nroMesActual - 1;
-
-    const respuesta1 = await comparativaPorPrograma(
-      new Date(fechaDate.getFullYear(), nroMesActual, 1),
-    );
-    //const respuesta2  = await comparativaPorPrograma(new Date (fechaDate.getFullYear() , NroMesAnterior , 1));
-    //const respuesta3  = await comparativaPorPrograma(fecha);
-
-    const resultado = {
-      mesActual: respuesta1,
-      //mesAnterior : respuesta2
-    };
-
-    res.status(200).json({
-      ok: true,
-      msg: resultado,
-    });
-  } catch (error) {
-    res.status(500).json({
-      ok: false,
-      msg: "Error en el servidor" + error,
-    });
-  }
-};
-
-async function comparativaPorPrograma(fecha) {
-  let resultado = {};
-  let fechaDate = new Date(fecha);
-  let nroMes = fechaDate.getMonth();
-
-  let primerDiaMesActual = new Date(fechaDate.getFullYear(), nroMes, 1);
-  let ultimoDiaMesActual = new Date(fechaDate.getFullYear(), nroMes + 1, 0);
-
-  let ventasMesActual = await Venta.findAll({
-    where: {
-      fecha_venta: { [Op.between]: [primerDiaMesActual, ultimoDiaMesActual] },
-      flag: true,
-    },
-  });
-
-  await Promise.all(
-    ventasMesActual.map(async (venta) => {
-      let detalleMembresia = await detalleVenta_membresias.findOne({
-        where: {
-          id_venta: venta.id,
-        },
-      });
-
-      if (detalleMembresia) {
-        let programaTraining = await ProgramaTraining.findOne({
-          where: {
-            id_pgm: detalleMembresia.id_pgm,
-          },
-        });
-
-        if (!resultado[programaTraining.name_pgm]) {
-          resultado[programaTraining.name_pgm] = {
-            cantidad: 1,
-            monto: detalleMembresia.tarifa_monto,
-            tikectMedio: 0,
-          };
-        }
-
-        if (resultado[programaTraining.name_pgm]) {
-          resultado[programaTraining.name_pgm].cantidad += 1;
-          resultado[programaTraining.name_pgm].monto +=
-            detalleMembresia.tarifa_monto;
-        }
-
-        //resultado[programaTraining.name_pgm] = ( resultado[programaTraining.name_pgm] || 0 ) + 1;
-        //programaTraining.name_pgm;
-      }
-    }),
-  );
-
-  for (programa in resultado) {
-    let tikectMedio = resultado[programa].monto / resultado[programa].cantidad;
-    resultado[programa].tikectMedio = tikectMedio.toFixed(2);
-  }
-
-  return resultado;
-}
 
 function calcularEdad(fecha_nac) {
   const hoy = dayjs();
   const fechaNacimiento = dayjs(fecha_nac);
   const edad = hoy.diff(fechaNacimiento, "year");
   return edad;
-}
-function formatearNumero(numero) {
-  return numero.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,");
 }
 
 const postVenta = async (req = request, res = response) => {
@@ -564,6 +125,7 @@ const postVenta = async (req = request, res = response) => {
     if (req.pagosExtraidos && req.pagosExtraidos.length > 0) {
       const pagosVentasConIdVenta = await req.pagosExtraidos.map((pagos) => ({
         id_venta: req.ventaID,
+        id_operador: req.id_operador,
         ...pagos,
       }));
       await detalleVenta_pagoVenta.bulkCreate(pagosVentasConIdVenta);
@@ -603,6 +165,66 @@ const obtener_contrato_pdf = async (req = request, res = response) => {
       dataVenta.dataTarifa.value,
       dataVenta.fecha_inicio,
       dataVenta.firmaCli,
+    );
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=CONTRATO-CLIENTE.pdf",
+    );
+    res.send(Buffer.from(pdfContrato));
+  } catch (error) {
+    console.log(error);
+  }
+};
+const obtenerContrato = async (req = request, res = response) => {
+  try {
+    const { id_venta } = req.params;
+    const venta = await Venta.findOne({ where: { id: id_venta } });
+
+    const detalleMembresia = await detalleVenta_membresias.findOne({
+      where: { id_venta: id_venta },
+      attributes: ["horario", "id_st", "id_tarifa", "fecha_inicio"],
+    });
+    console.log({ detalleMembresia }, "aqui est");
+    const pagos = await detalleVenta_pagoVenta.findAll({
+      where: { id_venta: id_venta },
+      attributes: ["id_forma_pago", "id_banco"],
+      include: [
+        {
+          model: Parametros,
+          as: "parametro_forma_pago",
+          attributes: ["label_param"],
+        },
+        {
+          model: Parametros,
+          as: "parametro_banco",
+          attributes: ["label_param"],
+        },
+      ],
+    });
+    const dataPagos = pagos.map((p) => {
+      return {
+        id_forma_pago: p.id_forma_pago,
+        label_tipo_tarjeta: p.parametro_forma_pago.label_param,
+        label_banco: p.parametro_banco.label_param,
+      };
+    });
+    const dataVenta = {
+      id_empl: venta.id_empl,
+      id_cli: venta.id_cli,
+      id_origen: venta.id_origen,
+      fecha_venta: venta.fecha_venta,
+    };
+    const horario = detalleMembresia.horario;
+    const pdfContrato = await getPDF_CONTRATO(
+      detalleMembresia.id_st,
+      dataVenta,
+      dataPagos,
+      horario,
+      id_venta,
+      detalleMembresia.id_tarifa,
+      detalleMembresia.fecha_inicio,
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=",
     );
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
@@ -849,164 +471,6 @@ const get_VENTAS = async (req = request, res = response) => {
 
     res.status(500).json({
       error: `Error en el servidor, en controller de get_VENTAS, hable con el administrador: ${error}`,
-    });
-  }
-};
-
-const getVentasDashboard = async (req = request, res = response) => {
-  const { id_empresa } = req.params;
-  const { fechaInicio, fechaFin } = req.query;
-
-  try {
-    const cacheKey = `ventasDash_${id_empresa}_${fechaInicio || "all"}_${fechaFin || "all"}`;
-    const cachedData = ventasGeneralesCache.get(cacheKey);
-
-    if (cachedData) {
-      console.log(`[Cache Hit] Ventas Dashboard: ${cacheKey}`);
-      return res.status(200).json(cachedData);
-    }
-    console.log(`[Cache Miss] Ventas Dashboard: ${cacheKey}`);
-
-    const whereParams = { flag: true, id_empresa: id_empresa };
-
-    if (fechaInicio && fechaFin) {
-      whereParams.fecha_venta = {
-        [Op.between]: [new Date(fechaInicio), new Date(fechaFin)],
-      };
-    }
-
-    const ventas = await Venta.findAll({
-      where: whereParams,
-      attributes: [
-        "id",
-        "id_cli",
-        "id_empl",
-        "id_origen",
-        "id_tipoFactura",
-        "numero_transac",
-        "fecha_venta",
-        "status_remove",
-        "observacion",
-      ],
-      order: [["fecha_venta", "DESC"]],
-      include: [
-        {
-          model: Cliente,
-          attributes: [
-            [
-              Sequelize.fn(
-                "CONCAT",
-                Sequelize.col("nombre_cli"),
-                " ",
-                Sequelize.col("apPaterno_cli"),
-                " ",
-                Sequelize.col("apMaterno_cli"),
-              ),
-              "nombres_apellidos_cli",
-            ],
-            "sexo_cli",
-            "ubigeo_distrito_cli",
-            "ubigeo_distrito_trabajo",
-          ],
-          include: [{ model: ImagePT }],
-        },
-        {
-          model: Empleado,
-          attributes: [
-            [
-              Sequelize.fn(
-                "CONCAT",
-                Sequelize.col("nombre_empl"),
-                " ",
-                Sequelize.col("apPaterno_empl"),
-                " ",
-                Sequelize.col("apMaterno_empl"),
-              ),
-              "nombres_apellidos_empl",
-            ],
-          ],
-        },
-        {
-          model: detalleVenta_Transferencia,
-          as: "venta_venta",
-          required: false,
-          attributes: ["id_venta", "tarifa_monto"],
-        },
-        {
-          model: detalleVenta_producto,
-          required: false,
-          attributes: [
-            "id_venta",
-            "id_producto",
-            "cantidad",
-            "precio_unitario",
-            "tarifa_monto",
-          ],
-          include: [
-            {
-              model: Producto,
-              attributes: ["id", "nombre_producto", "id_categoria"],
-            },
-          ],
-        },
-        {
-          model: detalleVenta_membresias,
-          required: false,
-          attributes: [
-            "id",
-            "id_venta",
-            "id_pgm",
-            "id_tarifa",
-            "horario",
-            "id_st",
-            "tarifa_monto",
-            "fecha_inicio",
-            "id_membresia_anterior",
-          ],
-          include: [
-            {
-              model: ProgramaTraining,
-              attributes: ["name_pgm"],
-            },
-            {
-              model: SemanasTraining,
-              attributes: ["semanas_st"],
-            },
-          ],
-        },
-        {
-          model: detalleVenta_citas,
-          required: false,
-          attributes: ["id_venta", "id_servicio", "tarifa_monto"],
-        },
-        {
-          model: detalleVenta_pagoVenta,
-          attributes: ["id_venta", "parcial_monto"],
-          include: [
-            {
-              model: Parametros,
-              as: "parametro_forma_pago",
-            },
-          ],
-        },
-      ],
-    });
-
-    const ventasMapeadas = ventas.map((v) => v.get({ plain: true }));
-
-    const responsePayload = {
-      ok: true,
-      ventas: ventasMapeadas,
-    };
-
-    ventasGeneralesCache.set(cacheKey, responsePayload);
-
-    res.status(200).json(responsePayload);
-  } catch (error) {
-    console.log(error);
-
-    res.status(500).json({
-      error: `Error en el servidor, en controller de getVentasDashboard, hable con el administrador: ${error}`,
     });
   }
 };
@@ -2196,17 +1660,6 @@ const obtenerUltimasVentasxComprobantes = async (
     });
   } catch (error) {
     console.log(error);
-  }
-};
-const agregarFirmaEnContrato = (req, res) => {
-  try {
-    const { id_venta } = req.body;
-    // const { } =
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      error: error,
-    });
   }
 };
 const obtenerComparativoResumen = async (req = request, res = response) => {
@@ -4723,6 +4176,7 @@ const obtenerVentasPagosxID = async (req = request, res = response) => {
   }
 };
 module.exports = {
+  obtenerContrato,
   obtenerVentasPagosxID,
   updateVentasPagosxID,
   postVentasPagos,
@@ -4734,7 +4188,6 @@ module.exports = {
   postVentaServicios,
   obtenerUltimasVentasxComprobantes,
   putVentaxId,
-  postCajaApertura,
   obtenerMembresiasxUIDcliente,
   obtenerComparativoResumenClientes,
   obtenerTransferenciasResumenxMes,
@@ -4750,12 +4203,9 @@ module.exports = {
   getVencimientosPorMes,
   mailMembresia,
   postTraspasoMembresia,
-  estadosClienteMembresiaVar,
-  comparativaPorProgramaApi,
   obtenerVentasMembresiaxEmpresa,
   obtenerContratosClientes,
   obtenerClientesVentas,
-  agregarFirmaEnContrato,
   obtenerComparativoResumen,
   obtenerComparativoResumenDashboard,
   obtenerEstadoResumen,
@@ -4766,9 +4216,7 @@ module.exports = {
   obtenerMembresias,
   obtenerMarcacionesClientexMembresias,
   obtenerComparativoTotal,
-  buscarCajasxFecha,
   updateDetalleProducto,
   updateDetalleServicio,
-  getVentasDashboard,
   obtenerPagosVentas,
 };
