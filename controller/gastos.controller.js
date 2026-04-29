@@ -516,6 +516,18 @@ const obtenerGastosxFechasComprobante = async (
         {
           model: Proveedor,
           attributes: ["razon_social_prov"],
+          include: [
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_oficio",
+            },
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_marca",
+            },
+          ],
         },
         {
           model: ParametroGastos,

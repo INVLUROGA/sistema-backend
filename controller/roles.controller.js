@@ -1022,14 +1022,6 @@ const seccionGET = async (req = request, res = response) => {
               icon: "uil-calender",
               url: "/reporte/reporte-clientes-membresia",
             },
-          ],
-        },
-        {
-          key: "canales-reportes",
-          label: "CANALES",
-          url: "/reporte",
-          icon: "uil-home-alt",
-          children: [
             {
               key: "mkt-renovacion",
               label: "RENOVACION",
