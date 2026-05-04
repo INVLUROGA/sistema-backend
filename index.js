@@ -48,7 +48,6 @@ cron.schedule("* * * * *", () => {
   // obtenerDataSeguimientos();
 });
 
-
 // Run alerts every minute to checking for specific times
 cron.schedule("* * * * *", () => {
   alertaUsuarioUnica();

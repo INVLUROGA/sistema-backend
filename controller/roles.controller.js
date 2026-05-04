@@ -966,6 +966,56 @@ const seccionGET = async (req = request, res = response) => {
     if (modulo === "mod-marketing") {
       MENU_ITEMS = [
         {
+          key: "ventas",
+          label: "Ventas",
+          url: "/ventas",
+          icon: "uil-home-alt",
+          children: [
+            {
+              key: "ventas-nuevaVenta",
+              label: "Nueva venta",
+              icon: "uil-calender",
+              url: "/nueva-venta",
+              parentKey: "ventas-nueva-venta",
+            },
+            {
+              key: "gestion-ventas",
+              label: "Ventas",
+              icon: "uil-calender",
+              url: "/gestion-ventas",
+              parentKey: "ventas-gestion-ventas",
+            },
+            {
+              key: "gestion-ventas-transferencias",
+              label: "ventas de transferencias",
+              icon: "uil-calender",
+              url: "/ventas-transferencias",
+              parentKey: "ventas-transferencias",
+            },
+            // {
+            //   key: "ventas-seguimiento",
+            //   label: "Seguimiento",
+            //   icon: "uil-calender",
+            //   url: "/seguimiento",
+            //   parentKey: "ventas-seguimiento",
+            // },
+            {
+              key: "ventas-seguimiento",
+              label: "reporte de seguimiento",
+              icon: "uil-calender",
+              url: "/reporte/reporte-seguimiento",
+              parentKey: "ventas-ventas-seguimiento",
+            },
+            {
+              key: "ventas-seguimiento",
+              label: "Seguimiento por mes",
+              icon: "uil-calender",
+              url: "/reporte/seguimiento-x-mes",
+              parentKey: "ventas-seguimiento-x-mes",
+            },
+          ],
+        },
+        {
           key: "cantidad-socios-montos",
           label: "Resumen general",
           icon: "uil-home-alt",
