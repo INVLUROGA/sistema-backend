@@ -26,6 +26,7 @@ const GetArticulosxEmpresa = async (req = request, res = response) => {
         id_empresa,
         flag: true,
       },
+      order: [["id", "desc"]],
       include: [
         {
           model: ImagePT,
@@ -44,6 +45,7 @@ const GetArticulosxEmpresa = async (req = request, res = response) => {
             ["nombre_zona", "label_param"],
             ["orden_zona", "orden_param"],
             ["nivel", "nivel"],
+            "id",
           ],
           include: [
             {

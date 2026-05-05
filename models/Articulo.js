@@ -72,6 +72,12 @@ const Articulos = db.define("tb_articulos", {
   id_empresa: {
     type: DataTypes.INTEGER,
   },
+  id_categoria: {
+    type: DataTypes.INTEGER,
+  },
+  id_subcategoria: {
+    type: DataTypes.INTEGER,
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
