@@ -62,6 +62,10 @@ const ParametroGastos = db.define("tb_parametros_gastos", {
   nombre_gasto: {
     type: DataTypes.STRING(380),
   },
+  sin_limite: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,

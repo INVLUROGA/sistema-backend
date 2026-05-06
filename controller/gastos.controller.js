@@ -537,6 +537,10 @@ const obtenerGastosxFechasComprobante = async (
             "grupo",
             "orden",
             "id_tipoGasto",
+            "monto_proyectado",
+            "fecha_inicio",
+            "fecha_fin",
+            "sin_limite"
           ],
           where: {
             id_empresa: id_empresa,
