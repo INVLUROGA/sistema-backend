@@ -50,6 +50,15 @@ const ParametroGastos = db.define("tb_parametros_gastos", {
   orden: {
     type: DataTypes.INTEGER,
   },
+  monto_proyectado: {
+    type: DataTypes.DECIMAL(10, 2),
+  },
+  fecha_inicio: {
+    type: DataTypes.DATE,
+  },
+  fecha_fin: {
+    type: DataTypes.DATE,
+  },
   nombre_gasto: {
     type: DataTypes.STRING(380),
   },
