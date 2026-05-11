@@ -80,7 +80,7 @@ const getReporteSeguimiento = async (req, res) => {
         },
         {
           model: Venta,
-          attributes: ["id", "fecha_venta", "id_tipoFactura"],
+          attributes: ["id", "fecha_venta", "id_tipoFactura", "id_origen"],
           where: { id_empresa: id_empresa },
           include: [
             {
@@ -95,7 +95,7 @@ const getReporteSeguimiento = async (req, res) => {
                     " ",
                     Sequelize.col("apPaterno_cli"),
                     " ",
-                    Sequelize.col("apMaterno_cli")
+                    Sequelize.col("apMaterno_cli"),
                   ),
                   "nombres_apellidos_cli",
                 ],
@@ -159,7 +159,7 @@ const getReporteSeguimiento = async (req, res) => {
                     " ",
                     Sequelize.col("apPaterno_cli"),
                     " ",
-                    Sequelize.col("apMaterno_cli")
+                    Sequelize.col("apMaterno_cli"),
                   ),
                   "nombres_apellidos_cli",
                 ],
@@ -205,7 +205,7 @@ const getReporteSeguimiento = async (req, res) => {
 
       const totalDiasHabiles = tbExtensionMembresia.reduce(
         (total, ext) => total + parseInt(ext.dias_habiles, 10),
-        0
+        0,
       );
 
       // Calcular la nueva fecha sumando los días hábiles a 'fec_fin_mem'
@@ -229,12 +229,12 @@ const getReporteSeguimiento = async (req, res) => {
         if (
           !currentEntry ||
           new Date(item.fec_fin_mem_new) >
-          new Date(currentEntry.fec_fin_mem_new)
+            new Date(currentEntry.fec_fin_mem_new)
         ) {
           acc[clienteId] = item; // Guardar la membresía más reciente
         }
         return acc;
-      }, {})
+      }, {}),
     );
 
     // 3. Filtrado basado en `isClienteActive`
@@ -263,7 +263,7 @@ const getReporteSeguimiento = async (req, res) => {
     res.status(200).json({
       newMembresias: relacionarTransferencias(
         transferenciasMembresias,
-        filteredMembresias
+        filteredMembresias,
       ),
     });
   } catch (error) {
@@ -308,7 +308,7 @@ const getReporteSeguimientoClientes = async (req, res) => {
                     " ",
                     Sequelize.col("apPaterno_cli"),
                     " ",
-                    Sequelize.col("apMaterno_cli")
+                    Sequelize.col("apMaterno_cli"),
                   ),
                   "nombres_apellidos_cli",
                 ],
@@ -371,7 +371,7 @@ const getReporteSeguimientoClientes = async (req, res) => {
                     " ",
                     Sequelize.col("apPaterno_cli"),
                     " ",
-                    Sequelize.col("apMaterno_cli")
+                    Sequelize.col("apMaterno_cli"),
                   ),
                   "nombres_apellidos_cli",
                 ],
@@ -414,7 +414,7 @@ const getReporteSeguimientoClientes = async (req, res) => {
 
       const totalDiasHabiles = tbExtensionMembresia.reduce(
         (total, ext) => total + parseInt(ext.dias_habiles, 10),
-        0
+        0,
       );
 
       // Calcular la nueva fecha sumando los días hábiles a 'fec_fin_mem'
@@ -438,12 +438,12 @@ const getReporteSeguimientoClientes = async (req, res) => {
         if (
           !currentEntry ||
           new Date(item.fec_fin_mem_new) >
-          new Date(currentEntry.fec_fin_mem_new)
+            new Date(currentEntry.fec_fin_mem_new)
         ) {
           acc[clienteId] = item; // Guardar la membresía más reciente
         }
         return acc;
-      }, {})
+      }, {}),
     );
 
     // 3. Filtrado basado en `isClienteActive`
@@ -472,7 +472,7 @@ const getReporteSeguimientoClientes = async (req, res) => {
     res.status(200).json({
       newMembresias: relacionarTransferencias(
         transferenciasMembresias,
-        filteredMembresias
+        filteredMembresias,
       ),
     });
   } catch (error) {
@@ -483,10 +483,10 @@ const getReporteSeguimientoClientes = async (req, res) => {
   }
 };
 
-const getReporteProgramas = async (req, res) => { };
+const getReporteProgramas = async (req, res) => {};
 const getReporteVentasPrograma_COMPARATIVACONMEJORANO = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   const { id_programa, rangoDate } = req.query;
   try {
@@ -582,12 +582,12 @@ const getReporteVentasPrograma_COMPARATIVACONMEJORANO = async (
     }, {});
 
     const bestYear = Object.keys(ventasAnualesMEJORANIO).reduce((a, b) =>
-      ventasAnualesMEJORANIO[a] > ventasAnualesMEJORANIO[b] ? a : b
+      ventasAnualesMEJORANIO[a] > ventasAnualesMEJORANIO[b] ? a : b,
     );
 
     // Paso 3: Obtener las ventas mensuales para el mejor año
     const ventasMensualesMejorAnio = ventasMEJORANIO.filter(
-      (venta) => venta.anio == bestYear
+      (venta) => venta.anio == bestYear,
     );
     // Ordenar los datos por mes
     const dataMEJOR_ANIO = new Array(12).fill(0);
@@ -698,7 +698,7 @@ const getReporteVentasPrograma_COMPARATIVACONMEJORANO = async (
       return acc;
     }, {});
     const Year_v = Object.keys(ventasAnual).reduce((a, b) =>
-      ventasAnual[a] > ventasAnual[b] ? a : b
+      ventasAnual[a] > ventasAnual[b] ? a : b,
     );
 
     // Paso 3: Obtener las ventas mensuales para el mejor año
@@ -732,7 +732,7 @@ const getReporteVentasPrograma_COMPARATIVACONMEJORANO = async (
 };
 const getReporteVentasPrograma_EstadoCliente = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   // const { dateRanges, id_programa } = req.query;
   // const id_programa = 2;
@@ -986,7 +986,7 @@ const getReporteVentasPrograma_EstadoCliente = async (
       ventas: filtrarPorFechaVenta(
         groupByClientId(ventas_Programas_x_Cliente),
         fechaInicioFiltro,
-        fechaFinFiltro
+        fechaFinFiltro,
       ),
       // ventas_Programas_x_Cliente: filtrarPorFechas(
       //   groupByClientId(ventas_Programas_x_Cliente),
@@ -1040,11 +1040,11 @@ const getReporteDeVentasTickets = async (req = request, res = response) => {
 
       let sumTarifa = datamembresias.reduce(
         (total, objeto) => total + objeto.tarifa_monto,
-        0
+        0,
       );
       let sumSemanas = datamembresias.reduce(
         (total, objeto) => total + objeto["tb_semana_training.semanas_st"],
-        0
+        0,
       );
 
       res.status(200).json({
@@ -1092,11 +1092,11 @@ const getReporteDeVentasTickets = async (req = request, res = response) => {
 
       let sumTarifa = datamembresias.reduce(
         (total, objeto) => total + objeto.tarifa_monto,
-        0
+        0,
       );
       let sumSemanas = datamembresias.reduce(
         (total, objeto) => total + objeto["tb_semana_training.semanas_st"],
-        0
+        0,
       );
 
       res.status(200).json({
@@ -1142,7 +1142,7 @@ const getReporteDeClientesFrecuentes = async (req, res) => {
               attributes: [
                 [
                   Sequelize.literal(
-                    "CONCAT(nombre_cli, ' ', apPaterno_cli, ' ', apMaterno_cli)"
+                    "CONCAT(nombre_cli, ' ', apPaterno_cli, ' ', apMaterno_cli)",
                   ),
                   "nombres_apellidos_clientes",
                 ],
@@ -1212,7 +1212,7 @@ const getReporteDeProgramasXsemanas = async (req = request, res = response) => {
           }
           acc[id_st].items.push(item);
           return acc;
-        }, {})
+        }, {}),
       );
 
       res.status(200).json({
@@ -1258,7 +1258,7 @@ const getReporteDeProgramasXsemanas = async (req = request, res = response) => {
           }
           acc[id_st].items.push(item);
           return acc;
-        }, {})
+        }, {}),
       );
 
       res.status(200).json({
@@ -1279,7 +1279,7 @@ const getReporteDeEgresos = async (req = request, res = response) => {
   const fechaFin = arrayDate[1];
   console.log(
     dayjs(fechaInicio).format("YYYY-MM-DD"),
-    dayjs(fechaFin).format("YYYY-MM-DD")
+    dayjs(fechaFin).format("YYYY-MM-DD"),
   );
 
   try {
@@ -1289,7 +1289,7 @@ const getReporteDeEgresos = async (req = request, res = response) => {
         [Sequelize.Op.and]: Sequelize.where(
           Sequelize.fn("YEAR", Sequelize.col("fec_comprobante")),
           "<",
-          2030
+          2030,
         ),
         id: {
           [Sequelize.Op.not]: 2548,
@@ -1371,7 +1371,7 @@ const getReporteDeUtilidadesTotal = async (req = request, res = response) => {
         [Sequelize.Op.and]: Sequelize.where(
           Sequelize.fn("YEAR", Sequelize.col("fec_pago")),
           "<",
-          2030
+          2030,
         ),
         id: {
           [Sequelize.Op.not]: 2548,
@@ -1411,7 +1411,7 @@ const getReporteDeUtilidadesTotal = async (req = request, res = response) => {
         [Sequelize.Op.and]: Sequelize.where(
           Sequelize.fn("YEAR", Sequelize.col("fec_pago")),
           "<",
-          2030
+          2030,
         ),
         id: {
           [Sequelize.Op.not]: 2548,
@@ -1535,7 +1535,7 @@ function getArrayDate(req) {
 }
 const getReporteDeTotalDeVentas_ClientesVendedores = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   try {
     const rango = getArrayDate(req);
@@ -1568,7 +1568,7 @@ const getReporteDeTotalDeVentas_ClientesVendedores = async (
             "id_cli",
             [
               Sequelize.literal(
-                "CONCAT(nombre_cli, ' ', apPaterno_cli, ' ', apMaterno_cli)"
+                "CONCAT(nombre_cli, ' ', apPaterno_cli, ' ', apMaterno_cli)",
               ),
               "nombres_apellidos_clientes",
             ],
@@ -1581,7 +1581,7 @@ const getReporteDeTotalDeVentas_ClientesVendedores = async (
             "id_empl",
             [
               Sequelize.literal(
-                "CONCAT(nombre_empl, ' ', apPaterno_empl, ' ', apMaterno_empl)"
+                "CONCAT(nombre_empl, ' ', apPaterno_empl, ' ', apMaterno_empl)",
               ),
               "nombres_apellidos_clientes",
             ],
@@ -1647,20 +1647,40 @@ const getReporteVentas = async (req = request, res = response) => {
             [
               Sequelize.fn(
                 "CONCAT",
-                Sequelize.col("nombre_cli"), " ",
-                Sequelize.col("apPaterno_cli"), " ",
-                Sequelize.col("apMaterno_cli")
+                Sequelize.col("nombre_cli"),
+                " ",
+                Sequelize.col("apPaterno_cli"),
+                " ",
+                Sequelize.col("apMaterno_cli"),
               ),
               "nombres_apellidos_cli",
             ],
-            "estCivil_cli", "sexo_cli", "ubigeo_distrito_cli", "nacionalidad_cli",
-            "tipoCli_cli", "fecNac_cli", "fecha_nacimiento", "createdAt",
+            "estCivil_cli",
+            "sexo_cli",
+            "ubigeo_distrito_cli",
+            "nacionalidad_cli",
+            "tipoCli_cli",
+            "fecNac_cli",
+            "fecha_nacimiento",
+            "createdAt",
           ],
           include: [
             { model: Distritos, attributes: ["distrito"], as: "ubigeo_nac" },
-            { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_estCivil" },
-            { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_tipocli" },
-            { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_sexo" },
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_estCivil",
+            },
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_tipocli",
+            },
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_sexo",
+            },
           ],
         },
         {
@@ -1669,9 +1689,11 @@ const getReporteVentas = async (req = request, res = response) => {
             [
               Sequelize.fn(
                 "CONCAT",
-                Sequelize.col("nombre_empl"), " ",
-                Sequelize.col("apPaterno_empl"), " ",
-                Sequelize.col("apMaterno_empl")
+                Sequelize.col("nombre_empl"),
+                " ",
+                Sequelize.col("apPaterno_empl"),
+                " ",
+                Sequelize.col("apMaterno_empl"),
               ),
               "nombres_apellidos_empl",
             ],
@@ -1690,15 +1712,26 @@ const getReporteVentas = async (req = request, res = response) => {
         {
           model: detalleVenta_producto,
           separate: true, // <--- OPTIMIZACIÓN CLAVE
-          attributes: ["id_venta", "id_producto", "cantidad", "precio_unitario", "tarifa_monto"],
-          include: [
-            { model: Producto, attributes: ["id", "id_categoria"] },
+          attributes: [
+            "id_venta",
+            "id_producto",
+            "cantidad",
+            "precio_unitario",
+            "tarifa_monto",
           ],
+          include: [{ model: Producto, attributes: ["id", "id_categoria"] }],
         },
         {
           model: detalleVenta_membresias,
           separate: true, // <--- OPTIMIZACIÓN CLAVE
-          attributes: ["id_venta", "id_pgm", "id_tarifa", "horario", "id_st", "tarifa_monto"],
+          attributes: [
+            "id_venta",
+            "id_pgm",
+            "id_tarifa",
+            "horario",
+            "id_st",
+            "tarifa_monto",
+          ],
           include: [
             {
               model: ProgramaTraining,
@@ -1711,19 +1744,33 @@ const getReporteVentas = async (req = request, res = response) => {
           model: detalleVenta_citas,
           separate: true, // <--- OPTIMIZACIÓN CLAVE
           attributes: ["id_venta", "id_servicio", "tarifa_monto"],
-          include: [
-            { model: Servicios, attributes: ["id", "tipo_servicio"] },
-          ],
+          include: [{ model: Servicios, attributes: ["id", "tipo_servicio"] }],
         },
         {
           model: detalleVenta_pagoVenta,
           separate: true, // <--- OPTIMIZACIÓN CLAVE
           attributes: ["id_venta", "parcial_monto"],
           include: [
-            { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_banco" },
-            { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_forma_pago" },
-            { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_tipo_tarjeta" },
-            { model: Parametros, attributes: ["id_param", "label_param"], as: "parametro_tarjeta" },
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_banco",
+            },
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_forma_pago",
+            },
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_tipo_tarjeta",
+            },
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_tarjeta",
+            },
           ],
         },
       ],
@@ -1752,16 +1799,21 @@ const getReporteVentas = async (req = request, res = response) => {
       const vPlain = venta.get({ plain: true });
 
       if (vPlain.tb_empleado && vPlain.tb_empleado.uid_avatar) {
-        vPlain.tb_empleado.tb_images = imageMap[vPlain.tb_empleado.uid_avatar] || [];
+        vPlain.tb_empleado.tb_images =
+          imageMap[vPlain.tb_empleado.uid_avatar] || [];
       } else if (vPlain.tb_empleado) {
         vPlain.tb_empleado.tb_images = [];
       }
 
-      if (vPlain.detalle_ventaMembresium && Array.isArray(vPlain.detalle_ventaMembresium)) {
+      if (
+        vPlain.detalle_ventaMembresium &&
+        Array.isArray(vPlain.detalle_ventaMembresium)
+      ) {
         vPlain.detalle_ventaMembresium.forEach((det) => {
           if (det.tb_ProgramaTraining && det.tb_ProgramaTraining.uid_avatar) {
             const imgs = imageMap[det.tb_ProgramaTraining.uid_avatar];
-            det.tb_ProgramaTraining.tb_image = imgs && imgs.length > 0 ? imgs[0] : null;
+            det.tb_ProgramaTraining.tb_image =
+              imgs && imgs.length > 0 ? imgs[0] : null;
           } else if (det.tb_ProgramaTraining) {
             det.tb_ProgramaTraining.tb_image = null;
           }
@@ -1775,7 +1827,6 @@ const getReporteVentas = async (req = request, res = response) => {
       ok: true,
       reporte: reportesLimpios,
     });
-
   } catch (error) {
     console.log("ERROR getReporteVentas:", error);
     return res.status(500).json({
@@ -1791,7 +1842,9 @@ const getReporteProductosResumen = async (req = request, res = response) => {
   const { id_empresa } = req.params;
 
   if (!arrayDate || arrayDate.length !== 2) {
-    return res.status(400).json({ ok: false, msg: "Falta arrayDate con 2 elementos" });
+    return res
+      .status(400)
+      .json({ ok: false, msg: "Falta arrayDate con 2 elementos" });
   }
 
   const fechaInicio = arrayDate[0];
@@ -1838,7 +1891,7 @@ const getReporteProductosResumen = async (req = request, res = response) => {
     });
 
     // Serializamos a objetos planos para evitar que node-cache intente clonar los objetos complejos de Sequelize (lo que causa el error TCP clone)
-    const ventasPlanos = ventas.map(v => v.get({ plain: true }));
+    const ventasPlanos = ventas.map((v) => v.get({ plain: true }));
 
     // Cache the result for 15 minutes (900 seconds)
     reportesCache.set(cacheKey, ventasPlanos, 900);
@@ -2016,7 +2069,8 @@ const getReporteVentasResumen = async (req = request, res = response) => {
 
       // Match the structure expected by the frontend (same as getReporteVentas)
       if (vPlain.tb_empleado && vPlain.tb_empleado.uid_avatar) {
-        vPlain.tb_empleado.tb_images = imageMap[vPlain.tb_empleado.uid_avatar] || [];
+        vPlain.tb_empleado.tb_images =
+          imageMap[vPlain.tb_empleado.uid_avatar] || [];
       } else if (vPlain.tb_empleado) {
         vPlain.tb_empleado.tb_images = [];
       }
@@ -2134,13 +2188,13 @@ const getReporteFormasDePago = async (req = request, res = response) => {
 
 const getReporteDeMembresiasxFechaxPrograma = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   const { rangoDate } = req.query;
   const fechaInicio = rangoDate[0];
   const fechaFin = rangoDate[1];
   try {
-    const { } = await res.status(200).json({
+    const {} = await res.status(200).json({
       ok: true,
       reporte: ventas,
     });
@@ -2152,7 +2206,7 @@ const getReporteDeMembresiasxFechaxPrograma = async (
 };
 const obtenerReporteSociosxDistritos = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   const { id_pgm } = req.params;
   const { arrayDate } = req.query;
@@ -2235,7 +2289,7 @@ const obtenerReporteSociosxDistritos = async (
                   " ",
                   Sequelize.col("apPaterno_cli"),
                   " ",
-                  Sequelize.col("apMaterno_cli")
+                  Sequelize.col("apMaterno_cli"),
                 ),
                 "nombres_apellidos_cli",
               ],
@@ -2306,7 +2360,7 @@ const obtenerReporteSociosxDistritos = async (
                   " ",
                   Sequelize.col("apPaterno_cli"),
                   " ",
-                  Sequelize.col("apMaterno_cli")
+                  Sequelize.col("apMaterno_cli"),
                 ),
                 "nombres_apellidos_cli",
               ],
@@ -2366,7 +2420,7 @@ const obtenerReporteSociosxDistritos = async (
     });
   }
 };
-const obtenerTraspaso = async (req = request, res = response) => { };
+const obtenerTraspaso = async (req = request, res = response) => {};
 const obtenerTransferencias = async (req = request, res = response) => {
   try {
     const { id_pgm } = req.params;
@@ -2394,7 +2448,7 @@ const obtenerTransferencias = async (req = request, res = response) => {
               as: "venta_venta",
             },
           ],
-        }
+        },
       );
       res.status(200).json({
         ok: true,
@@ -2429,7 +2483,7 @@ const obtenerTransferencias = async (req = request, res = response) => {
                       " ",
                       Sequelize.col("apPaterno_cli"),
                       " ",
-                      Sequelize.col("apMaterno_cli")
+                      Sequelize.col("apMaterno_cli"),
                     ),
                     "nombres_apellidos_cli",
                   ],
@@ -2507,19 +2561,19 @@ const relacionarTransferencias = (transferencias, ventas) => {
             id_cli: transferenciaRelacionada["venta_venta.tb_cliente.id_cli"],
             nombres_apellidos_cli:
               transferenciaRelacionada[
-              "venta_venta.tb_cliente.nombres_apellidos_cli"
+                "venta_venta.tb_cliente.nombres_apellidos_cli"
               ],
             email_cli:
               transferenciaRelacionada["venta_venta.tb_cliente.email_cli"],
             tel_cli: transferenciaRelacionada["venta_venta.tb_cliente.tel_cli"],
             ubigeo_distrito_cli:
               transferenciaRelacionada[
-              "venta_venta.tb_cliente.ubigeo_distrito_cli"
+                "venta_venta.tb_cliente.ubigeo_distrito_cli"
               ],
             tb_distrito: {
               distrito:
                 transferenciaRelacionada[
-                "venta_venta.tb_cliente.tb_distrito.distrito"
+                  "venta_venta.tb_cliente.tb_distrito.distrito"
                 ],
             },
           },

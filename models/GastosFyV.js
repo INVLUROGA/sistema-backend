@@ -185,6 +185,11 @@ ParametroGastos.hasOne(ParametroGrupo, {
   sourceKey: "id_grupo",
   as: "parametro_grupo",
 });
+ParametroGrupo.hasMany(ParametroGastos, {
+  foreignKey: "id_grupo",
+  sourceKey: "id",
+  as: "parametro_grupo_gasto",
+});
 Gastos.hasOne(ParametroGastos, {
   foreignKey: "id",
   sourceKey: "id_gasto",

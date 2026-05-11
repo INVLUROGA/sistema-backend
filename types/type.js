@@ -235,8 +235,8 @@
     isTitle: true,
   },
   {
-    key: "gestion-gfgv",
-    label: "Registro de compra",
+    key: "gestion-calculo-igv",
+    label: "Calculo igv",
     isTitle: false,
     icon: "uil-calender",
     url: "/orden-compra",

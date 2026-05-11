@@ -24,6 +24,7 @@ const {
   updateTerminologiasGruposxID,
   postTerminologiasGrupos,
   obtenerTerminologiasGruposxID,
+  obtenerTerminologiasGruposxConcepto,
 } = require("../controller/terminologia.controller");
 const router = Router();
 
@@ -61,6 +62,10 @@ router.put("/term1/id/:id", updateTerminologia1xID);
 router.put("/term1/delete/id/:id", deleteTerminologia1xID);
 // * TODO: GRUPOS
 router.get("/grupo/id_empresa/:id_empresa", obtenerTerminologiasGrupos);
+router.get(
+  "/grupo-y-concepto/:id_empresa/:id_tipo",
+  obtenerTerminologiasGruposxConcepto,
+);
 router.put("/grupo/id/:id", updateTerminologiasGruposxID);
 router.put("/grupo/delete/id/:id", deleteTerminologiasGruposxID);
 router.post("/grupo/:id_empresa", postTerminologiasGrupos);

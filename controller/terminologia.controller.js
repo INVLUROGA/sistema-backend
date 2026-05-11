@@ -91,7 +91,6 @@ const terminologiasGastosxEmpresa = async (req = request, res = response) => {
         },
       ],
     });
-    console.log({ id_tipo, termGastos });
 
     res.status(201).json({
       termGastos,
@@ -362,6 +361,30 @@ const obtenerTerminologia1xEntidadxGrupo = async (
     console.log(error);
   }
 };
+const obtenerTerminologiasGruposxConcepto = async (
+  req = request,
+  res = response,
+) => {
+  try {
+    const { id_empresa, id_tipo } = req.params;
+    const termGastos = await ParametroGrupo.findAll({
+      where: { id_empresa: id_empresa, flag: true },
+      order: [["id", "desc"]],
+      include: [
+        {
+          model: ParametroGastos,
+          as: "parametro_grupo_gasto",
+          where: { tipo: id_tipo, id_empresa: id_empresa, flag: true },
+        },
+      ],
+    });
+    res.status(201).json({
+      termGastos,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 const obtenerTerminologiasGrupos = async (req = request, res = response) => {
   try {
     const { id_empresa } = req.params;
@@ -443,6 +466,7 @@ module.exports = {
   deleteTerminologia2xID,
   obtenerTerminologia2xEmpresaxTipoxTipoGasto,
   // TERM1
+  obtenerTerminologiasGruposxConcepto,
   obtenerTerminologia1,
   postTerminologia1,
   updateTerminologia1xID,

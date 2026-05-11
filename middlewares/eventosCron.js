@@ -196,7 +196,7 @@ const alertaUsuarioUnica = async () => {
         flag: true,
         id_estado: 1,
         fecha: {
-          [Op.between]: [now, masUnMin],
+          [Op.between]: [haceUnMin, masUnMin],
         },
       },
       include: [
@@ -263,6 +263,36 @@ const alertaUsuarioUnica = async () => {
           break;
         case 1564:
           hoy.setUTCMinutes(hoy.getUTCMinutes() + 1);
+          break;
+        case 1797:
+          const esDomingo = hoy.getUTCDay() + 1 === 0;
+          if (esDomingo) {
+            return hoy.setUTCDate(hoy.getUTCDate() + 2);
+          } else {
+            return hoy.setUTCDate(hoy.getUTCDate() + 1);
+          }
+          break;
+        case 1798:
+          const esSabado = hoy.getUTCDay() + 1 === 6;
+          if (esSabado) {
+            return hoy.setUTCDate(hoy.getUTCDate() + 2);
+          } else {
+            return hoy.setUTCDate(hoy.getUTCDate() + 1);
+          }
+          break;
+        case 1799:
+          const esLunes = hoy.getUTCDay() + 1 === 1;
+          const esMiercoles = hoy.getUTCDay() + 1 === 3;
+          const esViernes = hoy.getUTCDay() + 1 === 5;
+          if (esLunes) {
+            return hoy.setUTCDate(hoy.getUTCDate() + 2);
+          } 
+          if(esMiercoles){
+            return hoy.setUTCDate(hoy.getUTCDate() + 2);
+          }
+          if(esViernes){
+            return hoy.setUTCDate(hoy.getUTCDate() + 2);
+          }
           break;
         default:
           break;

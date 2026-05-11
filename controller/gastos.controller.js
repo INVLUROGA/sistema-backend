@@ -494,6 +494,7 @@ const obtenerGastosxFechasComprobante = async (
       },
       order: [["fec_registro", "desc"]],
       attributes: [
+        "id_gasto",
         "id",
         "moneda",
         "monto",
@@ -540,7 +541,7 @@ const obtenerGastosxFechasComprobante = async (
             "monto_proyectado",
             "fecha_inicio",
             "fecha_fin",
-            "sin_limite"
+            "sin_limite",
           ],
           where: {
             id_empresa: id_empresa,

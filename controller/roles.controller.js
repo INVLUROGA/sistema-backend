@@ -246,8 +246,8 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           children: [
             {
-              key: "gestion-compra",
-              label: "Registro de compra",
+              key: "gestion-calculo-igv",
+              label: "Calculo igv",
               isTitle: false,
               icon: "uil-calender",
               url: "/orden-compra",
@@ -1128,6 +1128,7 @@ const seccionGET = async (req = request, res = response) => {
           key: "marketing",
           label: "Marketing",
           icon: "uil-home-alt",
+          url: "/marketing",
           children: [
             {
               key: "gestion-lead",
