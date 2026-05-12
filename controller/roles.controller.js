@@ -1066,6 +1066,12 @@ const seccionGET = async (req = request, res = response) => {
               url: "/resultados-change",
             },
             {
+              key: "r-resumenComparativo",
+              label: "RESUMEN PARA MARKETING",
+              url: "/reporte/resumen-comparativo",
+              parentKey: "resumen-comparativo",
+            },
+            {
               key: "cliente-admClientes",
               label: "Membresias de socios",
               isTitle: false,
