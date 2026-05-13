@@ -1221,6 +1221,22 @@ const seccionGET = async (req = request, res = response) => {
             },
           ],
         },
+
+        {
+          key: "movimiento",
+          label: "Ingresos y Egresos",
+          url: "/movimiento",
+          icon: "uil-calender",
+          children: [
+            {
+              key: "gestion-egresos",
+              label: "Egresos",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-egresos",
+            },
+          ],
+        },
         {
           label: "TERMINOLOGIAS",
           isTitle: false,
