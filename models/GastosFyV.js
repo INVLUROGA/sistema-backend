@@ -44,8 +44,8 @@ const ParametroGastos = db.define("tb_parametros_gastos", {
   tipo: {
     type: DataTypes.INTEGER,
   },
-  isAnualizado: {
-    type: DataTypes.INTEGER,
+  isPromediado: {
+    type: DataTypes.BOOLEAN,
   },
   orden: {
     type: DataTypes.INTEGER,
