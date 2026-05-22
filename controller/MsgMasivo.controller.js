@@ -7,8 +7,8 @@ const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 const enviarMasivoAlwsp = async () => {
   const numerosDup = [
-    { numero: "914 028 922", nombre: "ALVARO INICIO" },
-    { numero: "933 102 718", nombre: "CARLOS INICIO" },
+    { numero: "914 028 922", nombre: "ALVARO" },
+    { numero: "933 102 718", nombre: "CARLOS" },
   ];
 
   // Normaliza y deduplica por número
@@ -32,19 +32,19 @@ const enviarMasivoAlwsp = async () => {
       try {
         const imagenResp = await enviarTextConImagenWsp(
           numero,
-          "https://archivosluroga.blob.core.windows.net/avatar-empleado/WhatsApp Image 2026-04-22 at 9.15.35 AM-1776869005477.jpeg",
+          "https://archivosluroga.blob.core.windows.net/avatar-empleado/D%C3%8DAS%20CHANGE.jpg.jpeg",
           `
-SEMANAS DEL SOCIO CHANGE*
+Hola ${nombre} 👋🏻
 
-Hola ${nombre}, te tenemos una invitación especial 👀
+Queremos que no pierdas el avance que ya lograste en CHANGE 💪
 
-*Del 22 al 28 de abril podrás volver a entrenar GRATIS como socio CHANGE.*
+Por eso, del 20 al 27 de mayo, hemos activado una campaña exclusiva de renovación y reinscripción para miembros y ex miembros de nuestra comunidad 🔥
 
-Además, según disponibilidad, tendrás una evaluación express de tu composición corporal para que sepas exactamente dónde estás y cómo avanzar.
+12 semanas por S/.999
 
-Queremos que retomes tu proceso con enfoque y sin perder tiempo.
+Sabemos que retomar a tiempo hace toda la diferencia, y queremos ayudarte a seguir avanzando con la estructura, acompañamiento y seguimiento que ya conoces 🙌
 
-*Son cupos limitados. ¿Te separo un horario?*`,
+Si deseas aprovechar esta campaña especial, escríbeme y te ayudo personalmente.`,
         );
         if (!imagenResp.ok) {
           console.error(`❌ Falló imagen a ${numero}`);

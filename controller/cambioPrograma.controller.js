@@ -27,11 +27,10 @@ const postCambioPrograma = async (req = request, res = response) => {
       id_horario,
       id_motivo,
       observacion,
-      // Aquí se deben llenar los campos del cambio de programa
     });
-    await cambioPrograma.save()
+    await cambioPrograma.save();
     res.status(201).json({
-      data: 'cliente cambiado de programa con exito'
+      data: "cliente cambiado de programa con exito",
     });
   } catch (error) {
     console.log(error);
@@ -40,7 +39,21 @@ const postCambioPrograma = async (req = request, res = response) => {
     });
   }
 };
+const obtenerCambioProgramaxIDcli = async (req = request, res = response) => {
+  try {
+    const { idcli } = req.params;
+    const cambioPrograma = await detalle_cambioPrograma.findAll({
+      where: { flag: true, id_cli: idcli },
+    });
+    res.status(201).json({
+      data: cambioPrograma,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
   obtenerCambioPrograma: obtenerTodoCambioPrograma,
+  obtenerCambioProgramaxIDcli,
   postCambioPrograma,
 };

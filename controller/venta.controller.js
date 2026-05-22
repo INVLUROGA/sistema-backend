@@ -4099,6 +4099,7 @@ const obtenerPagosVentas = async (req = request, res = response) => {
             "observacion",
             "n_cuotas",
             "es_nacional",
+            "monto_porcentaje",
           ],
           include: [
             {
@@ -4151,8 +4152,6 @@ const postVentasPagos = async (req = request, res = response) => {
 const updateVentasPagosxID = async (req = request, res = response) => {
   try {
     const { id } = req.params;
-    console.log({ id, r: req.body });
-
     const pago = await detalleVenta_pagoVenta.findOne({ where: { id } });
     await pago.update(req.body);
     res.status(201).json({

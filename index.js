@@ -35,6 +35,12 @@ const {
 const {
   obtenerDataSeguimientos,
 } = require("./middlewares/EventosCron/obtenerDataSeguimientos.js");
+const {
+  enviarResumenVentasDigitalDiaria,
+} = require("./middlewares/EventosCron/enviarResumenVentasDigitalDiaria.js");
+const {
+  obtenerCumpleaniosEmpleadosxDia,
+} = require("./middlewares/EventosCron/obtenerCumpleaniosEmpleadosxDia.js");
 // Programa una tarea para las 9 AM todos los días
 cron.schedule("0 3 1 * *", () => {
   reactivarAlertasMensuales();
@@ -44,10 +50,9 @@ cron.schedule("0 15 * * *", () => {
   obtenerCumpleaniosDeEmpleados();
 });
 
-cron.schedule("* * * * *", () => {
-  // obtenerDataSeguimientos();
-});
-
+// obtenerDataSeguimientos();
+// enviarResumenVentasDigitalDiaria();
+// obtenerCumpleaniosEmpleadosxDia()
 // Run alerts every minute to checking for specific times
 cron.schedule("* * * * *", () => {
   alertaUsuarioUnica();
@@ -98,41 +103,6 @@ app.use(
   }),
 );
 
-// const bizSdk = require("facebook-nodejs-business-sdk");
-
-// const AdAccount = bizSdk.AdAccount;
-
-// const account = new AdAccount("act_3401374960165898");
-// async function test() {
-//   try {
-//     // DATOS GENERALES
-//     const insights = await account.getInsights(["spend"], {
-//       time_range: {
-//         since: "2026-05-01",
-//         until: "2026-05-31",
-//       },
-//     });
-
-//     console.log("===== ACCOUNT =====");
-//     console.log(insights);
-
-//     // TRANSACCIONES
-//     const transactions = await account.getTransactions([
-//       "id",
-//       "time",
-//       "type",
-//       "amount",
-//       "currency",
-//     ]);
-
-//     console.log("===== TRANSACTIONS =====");
-//     console.log(transactions);
-//   } catch (error) {
-//     console.log(error);
-//   }
-// }
-
-// test();
 console.log("Conectado");
 app.use(morgan("dev")); // Usa "dev" o cualquier otro formato que prefieras
 //Directorio publico

@@ -1,0 +1,209 @@
+const { Op } = require("sequelize");
+const { enviarMensajesWsp } = require("../../config/whatssap-web");
+const { detalleVenta_membresias, Venta } = require("../../models/Venta");
+const { campaniasMeta } = require("../Redes/Campaniasmeta");
+
+const getQuotaParaMes = (monthIndex, year) => {
+  const y = year;
+  const m = monthIndex;
+  switch (`${m}-${y}`) {
+    case "5-2026":
+      return {
+        meta: 45000,
+      };
+  }
+};
+
+function agruparPorFecha(arr = []) {
+  const map = {};
+
+  arr.forEach((item) => {
+    const fecha = new Date(
+      new Date(item.tb_ventum.fecha_venta).getTime() - 5 * 60 * 60 * 1000,
+    );
+
+    const dia = fecha.getDate();
+    const mes = fecha.getMonth() + 1;
+    const anio = fecha.getFullYear();
+
+    const key = `${dia}-${mes}-${anio}`;
+
+    if (!map[key]) {
+      map[key] = {
+        dia,
+        mes,
+        anio,
+        tarifa_monto_total: 0,
+        data: [],
+      };
+    }
+
+    map[key].tarifa_monto_total += item.tarifa_monto || 0;
+    map[key].data.push(item);
+  });
+
+  return Object.values(map);
+}
+const obtenerVentasxFecha = async (idsOrigenes = []) => {
+  try {
+    const membresias = await detalleVenta_membresias.findAll({
+      attributes: ["tarifa_monto"],
+      include: [
+        {
+          model: Venta,
+          attributes: ["fecha_venta"],
+          where: {
+            id_empresa: 598,
+            flag: true,
+            id_origen: {
+              [Op.in]: idsOrigenes,
+            },
+          },
+          required: true,
+        },
+      ],
+    });
+    const membresiasMAP = membresias.map((a) => a.toJSON());
+    return agruparPorFecha(membresiasMAP);
+  } catch (error) {
+    console.log(error);
+  }
+};
+const obtenerVentasxMes = async (
+  idsOrigenes = [],
+  diaAntes = 1,
+  diaDespues = 30,
+) => {
+  const obtener = await obtenerVentasxFecha(idsOrigenes);
+  const obtenerVentasFiltradas = obtener.filter(
+    (f) => f.dia >= diaAntes && f.dia <= diaDespues,
+  );
+
+  const ventasxMes = agruparPorMes(obtenerVentasFiltradas);
+  return ventasxMes;
+};
+
+const ventasxOrigen = async (
+  idsOrigenes = [],
+  diaAntes = 1,
+  diaDespues = 10,
+) => {
+  const ventas = await obtenerVentasxMes(
+    idsOrigenes,
+    diaAntes,
+    Number(diaDespues),
+  );
+  const ordenarVentas = ventas.sort(
+    (a, b) => b.tarifa_monto_total - a.tarifa_monto_total,
+    0,
+  );
+  return ordenarVentas;
+};
+
+const enviarResumenVentasDigitalDiaria = async () => {
+  const hoy = new Date();
+  const hora = hoy.getHours();
+  const DiaHoy = hoy.getDate();
+  const mesHoy = hoy.getMonth() + 1;
+  const anioHoy = hoy.getFullYear();
+  const { conversaciones, costoxResultadoxCampanias, importeGastado } =
+    await campaniasMeta(
+      `${anioHoy}-${mesHoy}-${1}`,
+      `${anioHoy}-${mesHoy}-${DiaHoy}`,
+    );
+  const ventasMeta = await ventasxOrigen([694, 693], 1, DiaHoy);
+  const ventasTiktok = await ventasxOrigen([695], 1, DiaHoy);
+  const ventasRedesFechaActual = await ventasxOrigen(
+    [694, 693, 695],
+    18,
+    DiaHoy,
+  );
+  const VentasRedesHoy = ventasRedesFechaActual.find(
+    (f) => f.mes === mesHoy && f.anio === anioHoy,
+  );
+  const ventasMetaAdsMejorMes1 = ventasMeta[0];
+  const ventasMetaAdsMejorMes2 = ventasMeta[1];
+  const ventasMetaAdsMejorMes3 = ventasMeta[2];
+
+  const ventasTikTokHoy = ventasTiktok.find(
+    (f) => f.mes === mesHoy && f.anio === anioHoy,
+  );
+  const ventasMetaHoy = ventasMeta.find(
+    (f) => f.mes === mesHoy && f.anio === anioHoy,
+  );
+  const ventasTiktokAdsMejorMes1 = ventasTiktok[0];
+  const ventasTiktokAdsMejorMes2 = ventasTiktok[1];
+  const ventasTiktokAdsMejorMes3 = ventasTiktok[2];
+  const costoxLead = importeGastado / conversaciones;
+  const mensaje = `
+*Marketing a la fecha ${DiaHoy} de Mayo*
+
+Objetivo: S/.${getQuotaParaMes(mesHoy, anioHoy).meta || 0}
+Hoy: S/. ${VentasRedesHoy?.tarifa_monto_total || 0}
+% del resultado: ${((conversaciones / getQuotaParaMes(mesHoy, anioHoy).meta) * 100).toLocaleString("es-PE")}%
+
+*META*
+
+1. Facturación: ${ventasMetaHoy?.tarifa_monto_total.toLocaleString("es-PE") || 0}
+2. ⁠Leads: ${conversaciones || 0}
+3. ⁠Inversión: $ ${importeGastado.toLocaleString("es-PE")}
+4. Costo por resultado: ${costoxLead.toFixed(2)}
+5. ⁠Número de cierres: ${ventasMetaHoy?.data?.length}
+6. ⁠CAC: ${(ventasMetaHoy?.tarifa_monto_total / ventasMetaHoy?.data?.length).toLocaleString("es-PE")}
+7. ⁠ROAS ${(ventasMetaHoy?.tarifa_monto_total / importeGastado).toLocaleString("es-PE")}
+
+*TIK TOK* 
+
+1. Facturación: ${ventasTikTokHoy?.tarifa_monto_total || 0} 
+2. ⁠Leads: ${ventasTikTokHoy?.tarifa_monto_total || 0}
+3. ⁠Inversión 
+4. ⁠Número de mensajes - Costo por lead 
+5. ⁠Número de cierres 
+6. ⁠CAC
+7. ⁠ROAS
+
+*Resultados mejores meses a la fecha*
+
+Mes 1: 
+    Leads: , 
+    Facturación: , 
+    Número de ventas: .
+Mes 2: 
+    Leads, 
+    Facturación, 
+    Número de ventas 
+Mes 3: 
+    Leads, 
+    Facturación, 
+    Número de ventas
+    `;
+  enviarMensajesWsp(933102718, mensaje);
+};
+
+const agruparPorMes = (arr = []) => {
+  const resu = Object.values(
+    arr.reduce((acc, item) => {
+      const key = `${item.anio}-${item.mes}`;
+
+      if (!acc[key]) {
+        acc[key] = {
+          mes: item.mes,
+          anio: item.anio,
+          tarifa_monto_total: 0,
+          data: [],
+          dias: [],
+        };
+      }
+
+      acc[key].tarifa_monto_total += item.tarifa_monto_total || 0;
+      acc[key].data.push(...(item.data || []));
+      acc[key].dias.push(item);
+
+      return acc;
+    }, {}),
+  );
+  return resu;
+};
+module.exports = {
+  enviarResumenVentasDigitalDiaria,
+};

@@ -6,7 +6,8 @@ const router = Router();
  * /api/cambio-programa
  */
 
-router.get("/obtener-cambios-programa", obtenerCambioPrograma)
-router.post("/post-cambios-programa", postCambioPrograma)
+router.get("/", obtenerCambioPrograma)
+router.get("/cli/:idcli", obtenerCambioPrograma)
+router.post("/", postCambioPrograma)
 // router.post("")
 module.exports = router;
