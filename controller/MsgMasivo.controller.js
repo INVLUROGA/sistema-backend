@@ -7,8 +7,6 @@ const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 const enviarMasivoAlwsp = async () => {
   const numerosDup = [
-    { numero: "914 028 922", nombre: "ALVARO" },
-    { numero: "933 102 718", nombre: "CARLOS" },
   ];
 
   // Normaliza y deduplica por número
@@ -28,23 +26,29 @@ const enviarMasivoAlwsp = async () => {
   try {
     for (const persona of numeros) {
       const { nombre, numero } = persona;
+      console.log({ persona, numero });
 
       try {
         const imagenResp = await enviarTextConImagenWsp(
           numero,
-          "https://archivosluroga.blob.core.windows.net/avatar-empleado/D%C3%8DAS%20CHANGE.jpg.jpeg",
+          "https://archivosluroga.blob.core.windows.net/avatar-articulos/DÍAS CHANGE1.jpeg",
           `
+🚨 Últimos días de nuestra promoción de 12 semanas por S/999 🚨
+
 Hola ${nombre} 👋🏻
 
-Queremos que no pierdas el avance que ya lograste en CHANGE 💪
+Si ya entrenaste con nosotros, sabes que aquí no vendemos solo acceso a un gimnasio… trabajamos resultados reales 💪
 
-Por eso, del 20 al 27 de mayo, hemos activado una campaña exclusiva de renovación y reinscripción para miembros y ex miembros de nuestra comunidad 🔥
+Esta promoción exclusiva de renovación y reinscripción ya está por finalizar, y es una gran oportunidad para volver a enfocarte, retomar tu proceso y seguir avanzando con el sistema CHANGE 🔥
 
-12 semanas por S/.999
+✅ 12 semanas por solo S/999
+✅ Promoción válida por tiempo limitado
+✅ Exclusivo para alumnos y ex alumnos
 
-Sabemos que retomar a tiempo hace toda la diferencia, y queremos ayudarte a seguir avanzando con la estructura, acompañamiento y seguimiento que ya conoces 🙌
+No lo dejes para después… los resultados se mantienen cuando decides continuar 👊
 
-Si deseas aprovechar esta campaña especial, escríbeme y te ayudo personalmente.`,
+Escríbenos y asegura tu renovación antes que termine la promo.
+`,
         );
         if (!imagenResp.ok) {
           console.error(`❌ Falló imagen a ${numero}`);

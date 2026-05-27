@@ -57,6 +57,7 @@ const {
   obtenerVentasPagosxID,
   updateVentasPagosxID,
   obtenerContrato,
+  getVentasxFechaMembresia,
 } = require("../controller/venta.controller");
 
 const {
@@ -78,6 +79,7 @@ router.get("/comanda/:id_empresa", getComandas);
 router.post("/comanda/:id_empresa", postComanda);
 router.post("/servicios/:id_venta", validarComandaPagada, postVentaServicios);
 router.get("/get-ventas-x-fecha/:id_empresa", getVentasxFecha);
+router.get("/get-ventas-x-fecha/membresias/:id_empresa", getVentasxFechaMembresia);
 router.get("/fecha-venta/id_empresa/:id_empresa", getVentasxFechaVenta);
 router.post("/productos/:id_venta", validarComandaPagada, postVentaProductos);
 router.get(

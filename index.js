@@ -102,8 +102,6 @@ app.use(
     },
   }),
 );
-
-console.log("Conectado");
 app.use(morgan("dev")); // Usa "dev" o cualquier otro formato que prefieras
 //Directorio publico
 app.use(express.static("public"));

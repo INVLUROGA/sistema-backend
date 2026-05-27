@@ -430,7 +430,9 @@ detalleVenta_membresias.hasMany(detalle_cambioPrograma, {
 detalle_cambioPrograma.hasOne(ProgramaTraining, {
   foreignKey: "id_pgm",
   sourceKey: "id_pgm",
+  as: 'pgm'
 });
+
 
 detalleVenta_membresias.hasOne(ImagePT, {
   foreignKey: "uid_location",

@@ -914,9 +914,6 @@ const getVentasxFecha = async (req = request, res = response) => {
   const fechaFin = arrayDate[1];
 
   try {
-    // 0. Revisar si solo necesitamos productos (optimización para reporte histórico)
-    const { mode } = req.query; // 'products_only'
-    const isProductsOnly = mode === "products_only";
     try {
       const ventas = await Venta.findAll({
         attributes: [
@@ -1044,20 +1041,110 @@ const getVentasxFecha = async (req = request, res = response) => {
               },
             ],
           },
-          // {
-          //   model: detalleventa_servicios,
-          //   attributes: ["cantidad", "tarifa_monto"],
-          //   include: [
-          //     {
-          //       model: ServiciosCircus,
-          //       include: [
-          //         {
-          //           model: Parametros,
-          //         },
-          //       ],
-          //     },
-          //   ],
-          // },
+        ],
+      });
+      res.status(200).json({
+        ok: true,
+        ventas,
+      });
+    } catch (error) {
+      console.log("errorrrr: ", error);
+      res.status(500).json({
+        error: `Error en el servidor, en controller de get_VENTASxFECHA, hable con el administrador: ${error}`,
+      });
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const getVentasxFechaMembresia = async (req = request, res = response) => {
+  const { arrayDate } = req.query;
+  const { id_empresa } = req.params;
+  const fechaInicio = arrayDate[0];
+  const fechaFin = arrayDate[1];
+
+  try {
+    try {
+      const ventas = await Venta.findAll({
+        attributes: [
+          "id",
+          "id_cli",
+          "id_empl",
+          "id_tipoFactura",
+          "id_origen",
+          "numero_transac",
+          "fecha_venta",
+          "id_empresa",
+        ],
+        where: {
+          fecha_venta: {
+            [Op.between]: [fechaInicio, fechaFin],
+          },
+          flag: true,
+          id_empresa: id_empresa,
+          id_tipoFactura: { [Op.in]: [699, 700] },
+        },
+        order: [["id", "DESC"]],
+        include: [
+          {
+            model: Cliente,
+            attributes: [
+              [
+                Sequelize.fn(
+                  "CONCAT",
+                  Sequelize.col("nombre_cli"),
+                  " ",
+                  Sequelize.col("apPaterno_cli"),
+                  " ",
+                  Sequelize.col("apMaterno_cli"),
+                ),
+                "nombres_apellidos_cli",
+              ],
+              "fecha_nacimiento",
+              "estCivil_cli",
+              "sexo_cli",
+              "tipoDoc_cli",
+            ],
+          },
+          {
+            model: Empleado,
+            attributes: [
+              [
+                Sequelize.fn(
+                  "CONCAT",
+                  Sequelize.col("nombre_empl"),
+                  " ",
+                  Sequelize.col("apPaterno_empl"),
+                  " ",
+                  Sequelize.col("apMaterno_empl"),
+                ),
+                "nombres_apellidos_empl",
+              ],
+            ],
+          },
+          {
+            model: detalleVenta_membresias,
+            required: true,
+            attributes: [
+              "id_venta",
+              "id_pgm",
+              "id_tarifa",
+              "horario",
+              "id_st",
+              "tarifa_monto",
+            ],
+            include: [
+              {
+                model: ProgramaTraining,
+                attributes: ["name_pgm"],
+              },
+              {
+                model: SemanasTraining,
+                attributes: ["semanas_st", "sesiones"],
+              },
+            ],
+          },
         ],
       });
       res.status(200).json({
@@ -4175,6 +4262,7 @@ const obtenerVentasPagosxID = async (req = request, res = response) => {
   }
 };
 module.exports = {
+  getVentasxFechaMembresia,
   obtenerContrato,
   obtenerVentasPagosxID,
   updateVentasPagosxID,
