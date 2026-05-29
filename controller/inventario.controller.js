@@ -62,6 +62,7 @@ const obtenerInventario = async (req = request, res = response) => {
             ["nombre_zona", "label_param"],
             ["orden_zona", "orden_param"],
             ["nivel", "nivel"],
+            "id",
           ],
           include: [
             {
