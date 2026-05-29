@@ -951,6 +951,21 @@ const seccionGET = async (req = request, res = response) => {
     if (modulo === "mod-marketing") {
       MENU_ITEMS = [
         {
+          key: "reporte-admin",
+          label: "GASTOS",
+          url: "/reportes-admin",
+          icon: "uil-calender",
+          children: [
+            {
+              key: "reporte-flujo-caja",
+              label: "FLUJO DE CAJA",
+              icon: "uil-calender",
+              url: "/reporte-admin/flujo-caja",
+              parentKey: "reporte-fc",
+            },
+          ],
+        },
+        {
           key: "ventas",
           label: "Ventas",
           url: "/ventas",
