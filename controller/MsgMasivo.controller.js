@@ -7,6 +7,8 @@ const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 const enviarMasivoAlwsp = async () => {
   const numerosDup = [
+    { numero: "933102718" },
+    { numero: "" },
   ];
 
   // Normaliza y deduplica por número
@@ -31,23 +33,15 @@ const enviarMasivoAlwsp = async () => {
       try {
         const imagenResp = await enviarTextConImagenWsp(
           numero,
-          "https://archivosluroga.blob.core.windows.net/avatar-articulos/DÍAS CHANGE1.jpeg",
+          "https://archivosluroga.blob.core.windows.net/articulos-lugares/DÍAS CHANGE.jpg (4).jpeg",
           `
-🚨 Últimos días de nuestra promoción de 12 semanas por S/999 🚨
-
-Hola ${nombre} 👋🏻
-
-Si ya entrenaste con nosotros, sabes que aquí no vendemos solo acceso a un gimnasio… trabajamos resultados reales 💪
-
-Esta promoción exclusiva de renovación y reinscripción ya está por finalizar, y es una gran oportunidad para volver a enfocarte, retomar tu proceso y seguir avanzando con el sistema CHANGE 🔥
-
-✅ 12 semanas por solo S/999
-✅ Promoción válida por tiempo limitado
-✅ Exclusivo para alumnos y ex alumnos
-
-No lo dejes para después… los resultados se mantienen cuando decides continuar 👊
-
-Escríbenos y asegura tu renovación antes que termine la promo.
+🔥 SOLO HOY 29 Y MAÑANA 30 DE MAYO 🔥
+Empieza tu cambio con 4 semanas de entrenamiento dirigido por solo S/ 449.
+✅ Resultados reales
+✅ Entrenamiento guiado
+✅ Cupos limitados
+⏳ Promoción válida únicamente hasta mañana.
+📲 Reserva tu cupo ahora antes de que finalice la oferta.
 `,
         );
         if (!imagenResp.ok) {
