@@ -150,6 +150,7 @@ app.use(
 );
 app.use("/api/producto", require("./routes/producto.route.js"));
 app.use("/api/egreso", validarJWT, require("./routes/gastos.router.js"));
+app.use("/api/flujo-caja", validarJWT, require("./routes/flujo-caja.router.js"));
 app.use("/api/programaTraining", require("./routes/programaTraining.route.js"));
 app.use("/api/parametros", require("./routes/parametros.route.js"));
 app.use("/api/jornada", require("./routes/jornada.route.js"));

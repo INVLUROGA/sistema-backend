@@ -7,6 +7,7 @@ const { typesCRUD } = require("../types/types");
 const { Parametros } = require("../models/Parametros");
 const { ParametroGastos, ParametroGrupo } = require("../models/GastosFyV");
 const { Proveedor } = require("../models/Proveedor");
+const { deleteFlujoCaja } = require("./flujo-caja.controller");
 
 const postIngreso = async (req = request, res = response) => {
   try {
@@ -18,6 +19,16 @@ const postIngreso = async (req = request, res = response) => {
       observacion: `Se registro: El ingreso de id ${ingreso.id}`,
     };
     await capturarAUDIT(formAUDIT);
+    await postFlujoCaja({
+      tipo_movimiento: "INGRESO",
+      id_concepto: ingreso.id_gasto,
+      id_registro: ingreso.id,
+      fecha_pago: ingreso.fecha_pago,
+      fecha_comprobante: ingreso.fecha_comprobante,
+      moneda: ingreso.moneda,
+      monto: ingreso.monto,
+      id_estado: ingreso.id_estado_gasto,
+    });
     res.status(200).json({ msg: "Success", ingreso });
   } catch (error) {
     res.status(500).json({
@@ -183,6 +194,7 @@ const deleteIngresoxID = async (req = request, res = response) => {
       observacion: `Se elimino: El ingreso de id ${ingreso.id}`,
     };
     await capturarAUDIT(formAUDIT);
+    await deleteFlujoCaja(id);
     res.status(200).json({
       msg: "Ingreso eliminado correctamente",
     });
@@ -208,6 +220,15 @@ const putIngresoxID = async (req = request, res = response) => {
       observacion: `Se actualizo: El ingreso de id 22`,
     };
     await capturarAUDIT(formAUDIT);
+    await updateFlujoCaja({
+      id_estado: ingreso.id_estado_gasto,
+      moneda: ingreso.moneda,
+      monto: ingreso.monto,
+      fecha_comprobante: ingreso.fecha_comprobante,
+      fecha_pago: ingreso.fecha_pago,
+      id_concepto: ingreso.id_gasto,
+      id_registro: id,
+    });
     res.status(200).json({ msg: "Success", ingreso });
   } catch (error) {
     res.status(500).json({

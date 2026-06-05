@@ -9,6 +9,11 @@ const { Sequelize, Op } = require("sequelize");
 const { Parametros } = require("../models/Parametros");
 const { capturarAUDIT } = require("../middlewares/auditoria");
 const { typesCRUD } = require("../types/types");
+const {
+  postFlujoCaja,
+  updateFlujoCaja,
+  deleteFlujoCaja,
+} = require("./flujo-caja.controller");
 
 const postGasto = async (req = request, res = response) => {
   try {
@@ -26,6 +31,16 @@ const postGasto = async (req = request, res = response) => {
       observacion: `Se registro: El gasto de id ${gasto.id}`,
     };
     await capturarAUDIT(formAUDIT);
+    await postFlujoCaja({
+      tipo_movimiento: "EGRESO",
+      id_concepto: gasto.id_gasto,
+      id_registro: gasto.id,
+      fecha_pago: gasto.fecha_pago,
+      fecha_comprobante: gasto.fecha_comprobante,
+      moneda: gasto.moneda,
+      monto: gasto.monto,
+      id_estado: gasto.id_estado_gasto,
+    });
     res.status(200).json({
       msg: "success",
       gasto,
@@ -206,6 +221,15 @@ const putGasto = async (req = request, res = response) => {
       observacion: `Se actualizo: El gasto de id ${gasto.id}`,
     };
     await capturarAUDIT(formAUDIT);
+    await updateFlujoCaja({
+      id_estado: gasto.id_estado_gasto,
+      moneda: gasto.moneda,
+      monto: gasto.monto,
+      fecha_comprobante: gasto.fecha_comprobante,
+      fecha_pago: gasto.fecha_pago,
+      id_concepto: gasto.id_gasto,
+      id_registro: id,
+    });
     res.status(200).json({
       msg: "success",
     });
@@ -227,6 +251,7 @@ const deleteGasto = async (req = request, res = response) => {
       observacion: `Se elimino: El gasto de id ${gasto.id}`,
     };
     await capturarAUDIT(formAUDIT);
+    await deleteFlujoCaja(id);
     res.status(200).json({
       msg: "success",
     });
