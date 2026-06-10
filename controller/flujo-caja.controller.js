@@ -1,8 +1,53 @@
 const { response, request } = require("express");
 const { FlujoCaja } = require("../models/flujo-caja");
+const { Op } = require("sequelize");
+const { ParametroGastos, ParametroGrupo } = require("../models/GastosFyV");
 
-const obtenerFlujoCaja = (req = request, res = response) => {
-  const { arrayDate } = req.query;
+const obtenerFlujoCajaxFecha = async (req = request, res = response) => {
+  try {
+    const { arrayDate } = req.query;
+    const { id_empresa } = req.params;
+    const fechaInicio = arrayDate[0];
+    const fechaFin = arrayDate[1];
+    const flujoCaja = await FlujoCaja.findAll({
+      where: {
+        fecha_comprobante: {
+          [Op.gte]: fechaInicio,
+          [Op.lte]: fechaFin,
+        },
+      },
+      include: [
+        {
+          model: ParametroGastos,
+          attributes: [
+            "id_empresa",
+            "nombre_gasto",
+            "grupo",
+            "orden",
+            "id_tipoGasto",
+            "monto_proyectado",
+            "fecha_inicio",
+            "fecha_fin",
+            "sin_limite",
+          ],
+          where: {
+            id_empresa: id_empresa,
+          },
+          include: [
+            {
+              model: ParametroGrupo,
+              as: "parametro_grupo",
+            },
+          ],
+        },
+      ],
+    });
+    res.status(201).json({
+      data: flujoCaja,
+    });
+  } catch (error) {
+    console.log(error);
+  }
 };
 const postFlujoCaja = async ({
   id_registro = 0,
@@ -13,6 +58,7 @@ const postFlujoCaja = async ({
   monto,
   id_estado,
   moneda,
+  id_empresa,
 }) => {
   try {
     await FlujoCaja.create({
@@ -24,6 +70,7 @@ const postFlujoCaja = async ({
       monto,
       id_estado,
       moneda,
+      id_empresa,
     });
   } catch (error) {
     console.log(error);
@@ -37,6 +84,7 @@ const updateFlujoCaja = async ({
   monto,
   id_estado,
   moneda,
+  id_empresa,
 }) => {
   try {
     const flujocaja = await FlujoCaja.findOne({ where: { id_registro } });
@@ -47,6 +95,7 @@ const updateFlujoCaja = async ({
       monto,
       id_estado,
       moneda,
+      id_empresa,
     });
   } catch (error) {
     console.log(error);
@@ -63,7 +112,7 @@ const deleteFlujoCaja = async (id_registro = 0) => {
   }
 };
 module.exports = {
-  obtenerFlujoCaja,
+  obtenerFlujoCajaxFecha,
   postFlujoCaja,
   updateFlujoCaja,
   deleteFlujoCaja,

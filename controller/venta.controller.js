@@ -45,6 +45,7 @@ const { Cita, eventoServicio } = require("../models/Cita");
 const { ExtensionMembresia } = require("../models/ExtensionMembresia");
 const { ServiciosCircus } = require("../models/modelsCircus/Servicios");
 const sumarSemanas = require("../helpers/sumarSemanas");
+const { postFlujoCaja } = require("./flujo-caja.controller");
 
 // Cargar el plugin
 dayjs.extend(utc);
@@ -60,8 +61,6 @@ const postVenta = async (req = request, res = response) => {
   // const { uid_firma, uid_contrato } = req.query;
   const uid_firma = v4();
   const uid_contrato = v4();
-  console.log({ rb: JSON.stringify(req.body, 2, null) });
-
   // let base64_contratoPDF = "";
   try {
     if (req.servicios && req.servicios.length > 0) {
@@ -77,8 +76,6 @@ const postVenta = async (req = request, res = response) => {
       await detalleventa_servicios.bulkCreate(ventasServiciosConIdVenta);
     }
     if (req.productos && req.productos.length > 0) {
-      console.log({ r: req.productos });
-
       const ventasProductosConIdVenta = await req.productos.map((producto) => ({
         id_producto: producto.id_producto,
         cantidad: producto.cantidad,
@@ -89,6 +86,17 @@ const postVenta = async (req = request, res = response) => {
       }));
       // Crear múltiples registros en detalleVenta_producto
       await detalleVenta_producto.bulkCreate(ventasProductosConIdVenta);
+      // await postFlujoCaja({
+      //   id_empresa: 598,
+      //   id_estado: 1423,
+      //   moneda: "PEN",
+      //   monto: producto.tarifa,
+      //   fecha_comprobante: new Date(),
+      //   fecha_pago: new Date(),
+      //   id_concepto: 0,
+      //   id_registro: req.ventaID,
+      //   tipo_movimiento: "INGRESO",
+      // });
     }
     if (req.ventaProgramas && req.ventaProgramas.length > 0) {
       const ventasMembresiasConIdVenta = await req.ventaProgramas.map(
@@ -101,6 +109,17 @@ const postVenta = async (req = request, res = response) => {
       );
 
       await detalleVenta_membresias.bulkCreate(ventasMembresiasConIdVenta);
+      // await postFlujoCaja({
+      //   id_empresa: 598,
+      //   id_estado: 1423,
+      //   moneda: "PEN",
+      //   monto: producto.tarifa,
+      //   fecha_comprobante: new Date(),
+      //   fecha_pago: new Date(),
+      //   id_concepto: 0,
+      //   id_registro: req.ventaID,
+      //   tipo_movimiento: "INGRESO",
+      // });
     }
     if (req.citas && req.citas.length > 0) {
       const ventasCitasConIdVenta = await req.citas.map((cita) => ({

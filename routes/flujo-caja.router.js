@@ -1,7 +1,7 @@
 const { Router } = require("express");
 
 const {
-    
+  obtenerFlujoCajaxFecha,
 } = require("../controller/flujo-caja.controller.js");
 const router = Router();
 /**
@@ -9,5 +9,5 @@ const router = Router();
  * /api/flujo-caja
  */
 
-// router.get("/", );
+router.get("/fecha-comprobante/:id_empresa", obtenerFlujoCajaxFecha);
 module.exports = router;

@@ -185,130 +185,95 @@ const obtenerCumpleaniosDeEmpleados = async () => {
     return [];
   }
 };
+// Mapa de incrementos de fecha por tipo de alerta
+const TIPO_ALERTA_INCREMENTO = {
+  1563: (fecha) => fecha.setUTCFullYear(fecha.getUTCFullYear() + 1),
+  1566: (fecha) => fecha.setUTCMonth(fecha.getUTCMonth() + 1),
+  1425: (fecha) => fecha.setUTCDate(fecha.getUTCDate() + 7),
+  1426: (fecha) => fecha.setUTCDate(fecha.getUTCDate() + 1),
+  1564: (fecha) => fecha.setUTCMinutes(fecha.getUTCMinutes() + 1),
+  // Lunes a viernes: si es viernes avanza 3 días, si no avanza 1
+  1797: (fecha) => {
+    const dia = fecha.getUTCDay(); // 0=Dom, 6=Sab
+    fecha.setUTCDate(fecha.getUTCDate() + (dia === 5 ? 3 : dia === 6 ? 2 : 1));
+  },
+  // Lunes a sábado: si es sábado avanza 2 días, si no avanza 1
+  1798: (fecha) => {
+    const dia = fecha.getUTCDay();
+    fecha.setUTCDate(fecha.getUTCDate() + (dia === 6 ? 2 : 1));
+  },
+  // Lunes, miércoles y viernes: avanza al siguiente día válido
+  1799: (fecha) => {
+    const dia = fecha.getUTCDay();
+    const incrementos = { 1: 2, 3: 2, 5: 3 }; // Lun+2, Mié+2, Vie+3
+    fecha.setUTCDate(fecha.getUTCDate() + (incrementos[dia] ?? 1));
+  },
+};
+
+const calcularProximaFecha = (idTipoAlerta) => {
+  const hoy = new Date();
+  const incrementar = TIPO_ALERTA_INCREMENTO[idTipoAlerta];
+  if (incrementar) incrementar(hoy);
+  return hoy;
+};
+
 const alertaUsuarioUnica = async () => {
   try {
-    console.log("usuario");
+    console.log('ALERTAS INICIO');
     const now = new Date();
-    const haceUnMin = new Date(now.getTime() - 60000);
-    const masUnMin = new Date(now.getTime() + 60000);
-    const alertaUsuario = await AlertasUsuario.findAll({
+    const haceUnMin = new Date(now.getTime() - 60_000);
+    const masUnMin = new Date(now.getTime() + 60_000);
+
+    const alertas = await AlertasUsuario.findAll({
       where: {
         flag: true,
         id_estado: 1,
-        fecha: {
-          [Op.between]: [haceUnMin, masUnMin],
-        },
+        fecha: { [Op.between]: [haceUnMin, masUnMin] },
       },
       include: [
         {
           model: Parametros_3,
           as: "alerta_grupo",
-          include: [
-            {
-              model: Usuario,
-              as: "parametros_id_2", //USUARIO
-            },
-          ],
+          include: [{ model: Usuario, as: "parametros_id_2" }],
         },
       ],
     });
 
-    //PRIMERO: FILTRAR POR FECHA, VA A COMPARAR LA FECHA CON LA FECHA_ACTUAL
-    const alertaUsuarioMAP = alertaUsuario
-      .map((a) => a.toJSON())
-      .map((m) => {
-        const fecha = new Date(m.fecha);
-        const anio = fecha.getUTCFullYear();
-        const mes = fecha.getUTCMonth() + 1; // 👈 enero = 0
-        const dia = fecha.getUTCDate();
-        const hora = fecha.getUTCHours();
-        const minuto = fecha.getUTCMinutes();
-        return {
-          ...m,
-          estructura_fecha_alerta: {
-            anio,
-            mes,
-            dia,
-            hora,
-            minuto,
-            fecha,
-          },
-        };
-      });
-    //FOR EACH A LOS USUARIOS, Y PASAR A MANDAR MENSAJE
-    for (const alerta of alertaUsuarioMAP) {
-      for (const e1 of alerta.alerta_grupo) {
-        for (const e2 of e1.parametros_id_2) {
-          enviarMensajesWsp(e2.telefono_user, alerta.mensaje);
-        }
-      }
+    if (!alertas.length) return;
+
+    for (const alerta of alertas.map((a) => a.toJSON())) {
+      // Enviar mensajes a todos los usuarios del grupo
+      const telefonos = alerta.alerta_grupo.flatMap((grupo) =>
+        grupo.parametros_id_2.map((usuario) => usuario.telefono_user)
+      );
+
+      await Promise.all(
+        telefonos.map((telefono) =>
+          enviarMensajesWsp(telefono, alerta.mensaje)
+        )
+      );
+
+      // Desactivar la alerta actual
       await AlertasUsuario.update(
         { flag: false, id_estado: 0 },
-        { where: { id: alerta.id } },
+        { where: { id: alerta.id } }
       );
-      //EL TIPO DE ALERTA
-      const hoy = new Date();
-      switch (alerta.id_tipo_alerta) {
-        case 1563:
-          hoy.setUTCFullYear(hoy.getUTCFullYear() + 1);
-          break;
-        case 1566:
-          hoy.setUTCMonth(hoy.getUTCMonth() + 1 + 1);
-          break;
-        case 1425:
-          hoy.setUTCDate(hoy.getUTCDate() + 7);
-          break;
-        case 1426:
-          hoy.setUTCDate(hoy.getUTCDate() + 1);
-          break;
-        case 1564:
-          hoy.setUTCMinutes(hoy.getUTCMinutes() + 1);
-          break;
-        case 1797:
-          const esDomingo = hoy.getUTCDay() + 1 === 0;
-          if (esDomingo) {
-            return hoy.setUTCDate(hoy.getUTCDate() + 2);
-          } else {
-            return hoy.setUTCDate(hoy.getUTCDate() + 1);
-          }
-          break;
-        case 1798:
-          const esSabado = hoy.getUTCDay() + 1 === 6;
-          if (esSabado) {
-            return hoy.setUTCDate(hoy.getUTCDate() + 2);
-          } else {
-            return hoy.setUTCDate(hoy.getUTCDate() + 1);
-          }
-          break;
-        case 1799:
-          const esLunes = hoy.getUTCDay() + 1 === 1;
-          const esMiercoles = hoy.getUTCDay() + 1 === 3;
-          const esViernes = hoy.getUTCDay() + 1 === 5;
-          if (esLunes) {
-            return hoy.setUTCDate(hoy.getUTCDate() + 2);
-          } 
-          if(esMiercoles){
-            return hoy.setUTCDate(hoy.getUTCDate() + 2);
-          }
-          if(esViernes){
-            return hoy.setUTCDate(hoy.getUTCDate() + 2);
-          }
-          break;
-        default:
-          break;
-      }
+
+      // Crear la siguiente alerta según tipo
+      const proximaFecha = calcularProximaFecha(alerta.id_tipo_alerta);
       await AlertasUsuario.create({
         id_grupo_usuarios: alerta.id_grupo_usuarios,
         id_tipo_alerta: alerta.id_tipo_alerta,
         mensaje: alerta.mensaje,
-        fecha: hoy,
+        fecha: proximaFecha,
         id_estado: 1,
         flag: 1,
       });
     }
-    console.log("abcd");
+    console.log('ALERTAS FIN');
+    
   } catch (error) {
-    console.log(error);
+    console.error("[alertaUsuarioUnica]", error);
   }
 };
 module.exports = {

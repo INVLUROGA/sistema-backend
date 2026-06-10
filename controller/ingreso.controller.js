@@ -7,7 +7,7 @@ const { typesCRUD } = require("../types/types");
 const { Parametros } = require("../models/Parametros");
 const { ParametroGastos, ParametroGrupo } = require("../models/GastosFyV");
 const { Proveedor } = require("../models/Proveedor");
-const { deleteFlujoCaja } = require("./flujo-caja.controller");
+const { deleteFlujoCaja, postFlujoCaja, updateFlujoCaja } = require("./flujo-caja.controller");
 
 const postIngreso = async (req = request, res = response) => {
   try {

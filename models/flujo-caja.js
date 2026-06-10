@@ -1,5 +1,6 @@
 const { DataTypes } = require("sequelize");
 const { db } = require("../database/sequelizeConnection");
+const { ParametroGastos } = require("./GastosFyV");
 
 const FlujoCaja = db.define("tb_flujocaja", {
   id: {
@@ -42,6 +43,10 @@ const FlujoCaja = db.define("tb_flujocaja", {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
+  id_empresa: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
@@ -58,6 +63,15 @@ FlujoCaja.sync()
       error,
     );
   });
+
+FlujoCaja.hasOne(ParametroGastos, {
+  foreignKey: "id",
+  sourceKey: "id_concepto",
+});
+FlujoCaja.belongsTo(FlujoCaja, {
+  foreignKey: "id",
+  targetKey: "id_concepto",
+});
 
 module.exports = {
   FlujoCaja,
