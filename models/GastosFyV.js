@@ -62,6 +62,11 @@ const ParametroGastos = db.define("tb_parametros_gastos", {
   nombre_gasto: {
     type: DataTypes.STRING(380),
   },
+  mas_de_un_movimiento: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+
   sin_limite: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
@@ -146,6 +151,9 @@ const Gastos = db.define("tb_egresos", {
   },
   fecha_pago: {
     type: DataTypes.DATE,
+  },
+  id_facturado_por: {
+    type: DataTypes.INTEGER,
   },
   id_estado_gasto: {
     type: DataTypes.INTEGER,

@@ -89,6 +89,7 @@ const getGastos = async (req = request, res = response) => {
         "impuesto_igv",
         "impuesto_renta",
         "esCompra",
+        "id_facturado_por",
       ],
       include: [
         {
