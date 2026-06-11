@@ -135,6 +135,87 @@ const getGastos = async (req = request, res = response) => {
     });
   }
 };
+const getFacturas = async (req = request, res = response) => {
+  const { id_facturado_por } = req.params;
+  try {
+    const gastos = await Gastos.findAll({
+      where: {
+        flag: true,
+        [Sequelize.Op.and]: Sequelize.where(
+          Sequelize.fn("YEAR", Sequelize.col("fec_comprobante")),
+          "<",
+          2030,
+        ),
+        id: {
+          [Sequelize.Op.not]: 2548,
+        },
+        id_facturado_por: id_facturado_por,
+      },
+      order: [["updatedAt", "desc"]],
+      attributes: [
+        "id",
+        "moneda",
+        "monto",
+        "fec_pago",
+        "monto_venta_cliente",
+        "id_tipo_comprobante",
+        "n_comprabante",
+        "impuesto_renta",
+        "n_operacion",
+        "fec_registro",
+        "fec_comprobante",
+        "descripcion",
+        "id_prov",
+        "cod_trabajo",
+        "id_estado_gasto",
+        "fecha_pago",
+        "fecha_comprobante",
+        "impuesto_igv",
+        "impuesto_renta",
+        "esCompra",
+        "id_facturado_por",
+      ],
+      include: [
+        {
+          model: Proveedor,
+          attributes: ["razon_social_prov"],
+        },
+        {
+          model: ParametroGastos,
+          attributes: ["id_empresa", "nombre_gasto", "grupo", "id_tipoGasto"],
+        },
+        {
+          model: Parametros,
+          attributes: ["id_param", "label_param"],
+          as: "parametro_banco",
+        },
+        {
+          model: Parametros,
+          attributes: ["id_param", "label_param"],
+          as: "parametro_forma_pago",
+        },
+        {
+          model: Parametros,
+          attributes: ["id_param", "label_param"],
+          as: "parametro_comprobante",
+        },
+        {
+          model: Parametros,
+          attributes: ["id_param", "label_param"],
+          as: "estado_gasto",
+        },
+      ],
+    });
+    res.status(200).json({
+      msg: "success",
+      gastos,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: `Error en el servidor, en controller de getGastos, hable con el administrador: ${error}`,
+    });
+  }
+};
 const getProveedoresGastos_SinRep = async (req = request, res = response) => {
   try {
     const proveedoresUnicos = await Gastos.findAll({
@@ -604,6 +685,112 @@ const obtenerGastosxFechasComprobante = async (
     console.log(error);
   }
 };
+const obtenerFacturasxFechasComprobante = async (
+  req = request,
+  res = response,
+) => {
+  const { arrayDate } = req.query;
+  const { id_facturado_por } = req.params;
+
+  const fechaInicio = arrayDate[0];
+  const fechaFin = arrayDate[1];
+  console.log({ arrayDate });
+
+  try {
+    const gastos = await Gastos.findAll({
+      where: {
+        flag: true,
+        // 3. Filtro por fecha_comprobante entre inicio y fin (incluyendo todo el día)
+        fecha_comprobante: {
+          [Op.gte]: fechaInicio,
+          [Op.lte]: fechaFin,
+        },
+        id_facturado_por: id_facturado_por,
+      },
+      order: [["fec_registro", "desc"]],
+      attributes: [
+        "id_gasto",
+        "id",
+        "moneda",
+        "monto",
+        "fec_pago",
+        "id_tipo_comprobante",
+        "n_comprabante",
+        "impuesto_igv",
+        "impuesto_renta",
+        "n_operacion",
+        "fec_registro",
+        "fec_comprobante",
+        "descripcion",
+        "id_prov",
+        "cod_trabajo",
+        "id_estado_gasto",
+        "fecha_pago",
+        "fecha_comprobante",
+        "id_facturado_por",
+      ],
+      include: [
+        {
+          model: Proveedor,
+          attributes: ["razon_social_prov"],
+          include: [
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_oficio",
+            },
+            {
+              model: Parametros,
+              attributes: ["id_param", "label_param"],
+              as: "parametro_marca",
+            },
+          ],
+        },
+        {
+          model: ParametroGastos,
+          attributes: [
+            "id_empresa",
+            "nombre_gasto",
+            "grupo",
+            "orden",
+            "id_tipoGasto",
+            "monto_proyectado",
+            "fecha_inicio",
+            "fecha_fin",
+            "sin_limite",
+          ],
+          include: [
+            {
+              model: ParametroGrupo,
+              as: "parametro_grupo",
+            },
+          ],
+        },
+        {
+          model: Parametros,
+          attributes: ["id_param", "label_param"],
+          as: "parametro_banco",
+        },
+        {
+          model: Parametros,
+          attributes: ["id_param", "label_param"],
+          as: "parametro_forma_pago",
+        },
+        {
+          model: Parametros,
+          attributes: ["id_param", "label_param"],
+          as: "parametro_comprobante",
+        },
+      ],
+    });
+    res.status(200).json({
+      msg: "success",
+      gastos,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 const obtenerPagosContratos = async (req = request, res = response) => {
   const { id_enterp } = req.params;
   try {
@@ -709,6 +896,7 @@ const getgastoxID = async (req = request, res = response) => {
   }
 };
 module.exports = {
+  obtenerFacturasxFechasComprobante,
   postGasto,
   getGastos,
   getGastoxGrupo,
@@ -721,4 +909,5 @@ module.exports = {
   obtenerPagosContratos,
   obtenerGastosxFechasComprobante,
   getgastoxID,
+  getFacturas,
 };
