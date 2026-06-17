@@ -963,6 +963,13 @@ const seccionGET = async (req = request, res = response) => {
               icon: "uil-calender",
               url: "/totalizado-inventario",
             },
+            {
+              //key: "reporte-utilidad-pgm",
+              label: "GESTION DE INVENTARIO",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-inventario",
+            },
           ],
         },
         {
