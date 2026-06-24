@@ -41,7 +41,10 @@ const ImagePT = db.define(
       defaultValue: true,
     },
   },
-  { tableName: "tb_image", indexes: [{ fields: ["uid_location"] }, { fields: ["uid"] }] }
+  {
+    tableName: "tb_image",
+    indexes: [{ fields: ["uid_location"] }, { fields: ["uid"] }],
+  },
 );
 const Files = db.define("tb_files", {
   id: {
@@ -181,7 +184,7 @@ DocumentosInternos.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 Files.sync()
@@ -191,7 +194,7 @@ Files.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 // Sincroniza el modelo con la base de datos (crea la tabla si no existe)
@@ -202,7 +205,7 @@ ImagePT.sync()
   .catch((error) => {
     console.error(
       "Error al sincronizar el modelo con la base de datos:",
-      error
+      error,
     );
   });
 module.exports = {

@@ -10,6 +10,8 @@ const {
   deleteArchivoxID,
   getFileCenterInterno,
   getFileCenterInternoxIdEmpresa,
+  getFileCenterInternoxId,
+  updateArchivoxID,
 } = require("../controller/Files.controller");
 
 const router = Router();
@@ -26,18 +28,20 @@ router.get("/get-files/:uid_Location", obtenerFilesxUIDFILE);
 
 router.post(
   "/interno/center/:id_seccionVisible/:id_empresa",
-  postFileCenterInterno
+  postFileCenterInterno,
 );
 router.get("/interno/center", getFileCenterInterno);
 router.get("/interno/center/:id_empresa", getFileCenterInternoxIdEmpresa);
+router.get("/interno/center/id/:id", getFileCenterInternoxId);
+router.put("/interno/center/id/:id", updateArchivoxID);
 router.post(
   "/interno/:id_seccionVisible/:uid_location/:id_empresa",
-  postFileInterno
+  postFileInterno,
 );
 router.get("/interno/tb/:id_seccionVisible", obtenerFileInternoxseccionVisible);
 router.put("/interno/center/delete/id/:id", deleteArchivoxID);
 router.get(
   "/interno/:uid_location/:id_seccionVisible",
-  obtenerFileInternoxUidLocation
+  obtenerFileInternoxUidLocation,
 );
 module.exports = router;

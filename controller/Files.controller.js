@@ -100,7 +100,7 @@ const postFileInterno = async (req = request, res = response) => {
 };
 const obtenerFileInternoxUidLocation = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   try {
     const { id_seccionVisible, uid_location } = req.params;
@@ -123,7 +123,7 @@ const obtenerFileInternoxUidLocation = async (
 };
 const obtenerFileInternoxseccionVisible = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   try {
     const { id_seccionVisible } = req.params;
@@ -201,12 +201,40 @@ const getFileCenterInterno = async (req = request, res = response) => {
 };
 const getFileCenterInternoxIdEmpresa = async (
   req = request,
-  res = response
+  res = response,
 ) => {
   try {
     const { id_empresa } = req.params;
     const documentosInternos = await DocumentosInternos.findAll({
       where: { flag: true, id_empresa },
+      order: [["id", "desc"]],
+      include: [
+        {
+          model: ImagePT,
+        },
+        {
+          model: Parametros,
+          as: "tipo",
+        },
+        {
+          model: Parametros,
+          as: "visibles",
+        },
+      ],
+    });
+
+    res.status(201).json({
+      documentosInternos,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const getFileCenterInternoxId = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const documentosInternos = await DocumentosInternos.findOne({
+      where: { flag: true, id: id },
       order: [["id", "desc"]],
       include: [
         {
@@ -245,7 +273,23 @@ const deleteArchivoxID = async (req = request, res = response) => {
     console.log(error);
   }
 };
+const updateArchivoxID = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const documento = await DocumentosInternos.findOne({
+      where: { id },
+    });
+    await documento.update(req.body);
+    res.status(201).json({
+      documento,
+      ok: true,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
+  updateArchivoxID,
   postFiles,
   deleteArchivoxID,
   deleteFilexID,
@@ -256,4 +300,5 @@ module.exports = {
   postFileCenterInterno,
   getFileCenterInternoxIdEmpresa,
   getFileCenterInterno,
+  getFileCenterInternoxId,
 };

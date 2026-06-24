@@ -85,6 +85,7 @@ const obtenerInventario = async (req = request, res = response) => {
     });
   }
 };
+
 const registrarArticulo = async (req = request, res = response) => {
   const { id_enterprice } = req.params;
   const uid_image = uid.v4();
