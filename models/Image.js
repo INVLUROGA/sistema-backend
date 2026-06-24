@@ -97,6 +97,9 @@ const DocumentosInternos = db.define("tb_documentosInternos", {
   id_tipo_doc: {
     type: DataTypes.INTEGER,
   },
+  id_sub_tipo_doc: {
+    type: DataTypes.INTEGER,
+  },
   titulo: {
     type: DataTypes.STRING(120),
   },
@@ -125,6 +128,12 @@ DocumentosInternos.hasOne(Parametros, {
   foreignKey: "id_param",
   sourceKey: "id_tipo_doc",
   as: "tipo",
+});
+
+DocumentosInternos.hasOne(Parametros, {
+  foreignKey: "id_param",
+  sourceKey: "id_sub_tipo_doc",
+  as: "subtipo",
 });
 
 DocumentosInternos.hasOne(ImagePT, {

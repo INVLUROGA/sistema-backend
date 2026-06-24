@@ -72,7 +72,13 @@ const obtenerFilesxUIDFILE = async (req = request, res = response) => {
 const postFileInterno = async (req = request, res = response) => {
   try {
     const { id_empresa, id_seccionVisible, uid_location } = req.params;
-    const { fecha_registro, id_tipo_doc, titulo, observacion } = req.body;
+    const {
+      fecha_registro,
+      id_tipo_doc,
+      titulo,
+      observacion,
+      id_sub_tipo_doc,
+    } = req.body;
     const uid_file = uuid.v4();
     const documentoInterno = new DocumentosInternos({
       id_empresa,
@@ -83,6 +89,7 @@ const postFileInterno = async (req = request, res = response) => {
       titulo,
       observacion,
       id_seccionVisible,
+      id_sub_tipo_doc,
     });
     await documentoInterno.save();
     res.status(201).json({
@@ -147,7 +154,13 @@ const obtenerFileInternoxseccionVisible = async (
 const postFileCenterInterno = async (req = request, res = response) => {
   try {
     const { id_empresa, id_seccionVisible } = req.params;
-    const { fecha_registro, id_tipo_doc, titulo, observacion } = req.body;
+    const {
+      fecha_registro,
+      id_tipo_doc,
+      titulo,
+      observacion,
+      id_sub_tipo_doc,
+    } = req.body;
     const uid_file = uuid.v4();
     const documentoInterno = new DocumentosInternos({
       id_empresa,
@@ -157,6 +170,7 @@ const postFileCenterInterno = async (req = request, res = response) => {
       titulo,
       observacion,
       id_seccionVisible,
+      id_sub_tipo_doc,
     });
     await documentoInterno.save();
     res.status(201).json({
@@ -184,6 +198,10 @@ const getFileCenterInterno = async (req = request, res = response) => {
         {
           model: Parametros,
           as: "tipo",
+        },
+        {
+          model: Parametros,
+          as: "subtipo",
         },
         {
           model: Parametros,
