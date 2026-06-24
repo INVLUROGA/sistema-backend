@@ -236,6 +236,10 @@ const getFileCenterInternoxIdEmpresa = async (
         },
         {
           model: Parametros,
+          as: "subtipo",
+        },
+        {
+          model: Parametros,
           as: "visibles",
         },
       ],
