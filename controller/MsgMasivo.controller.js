@@ -33,15 +33,13 @@ const enviarMasivoAlwsp = async () => {
       try {
         const imagenResp = await enviarTextConImagenWsp(
           numero,
-          "https://archivosluroga.blob.core.windows.net/articulos-lugares/DÍAS CHANGE.jpg (4).jpeg",
+          "https://archivosluroga.blob.core.windows.net/articulos-lugares/12SOLDOUT.jpeg",
           `
-🔥 SOLO HOY 29 Y MAÑANA 30 DE MAYO 🔥
-Empieza tu cambio con 4 semanas de entrenamiento dirigido por solo S/ 449.
-✅ Resultados reales
-✅ Entrenamiento guiado
-✅ Cupos limitados
-⏳ Promoción válida únicamente hasta mañana.
-📲 Reserva tu cupo ahora antes de que finalice la oferta.
+🔥 ¡SOLD OUT EN 12 HORAS! 🔥
+LANZAMOS UNA CAMPAÑA exclusiva para socios que querían renovar o retomar su proceso en Change.
+12 horas después, ya NO quedaba un solo cupo disponible.
+Lo que más nos alegra no es que se agotaran los espacios, sino ver a tantas personas decidir seguir apostando por su salud, imagen y resultados.
+Gracias por confiar en el proceso 👏🏼
 `,
         );
         if (!imagenResp.ok) {

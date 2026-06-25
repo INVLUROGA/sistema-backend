@@ -41,6 +41,9 @@ const {
 const {
   obtenerCumpleaniosEmpleadosxDia,
 } = require("./middlewares/EventosCron/obtenerCumpleaniosEmpleadosxDia.js");
+const {
+  enviarReporteVentas,
+} = require("./middlewares/EventosCron/ResumenVentasComparativas.js");
 // Programa una tarea para las 9 AM todos los días
 cron.schedule("0 3 1 * *", () => {
   reactivarAlertasMensuales();
@@ -58,10 +61,16 @@ cron.schedule("* * * * *", () => {
   alertaUsuarioUnica();
 });
 
-cron.schedule("0 1 * * *", () => {
-  enviarResumenVentasDiario();
+cron.schedule("0 14 * * *", () => {
+  enviarReporteVentas();
 });
-cron.schedule("0 15 * * *", () => {
+cron.schedule("30 5 * * *", () => {
+  enviarReporteVentas();
+});
+cron.schedule("0 20 * * *", () => {
+  enviarReporteVentas();
+});
+cron.schedule("0 11 * * *", () => {
   enviarResumenVentasDiario();
 });
 const fileServer = express.static;

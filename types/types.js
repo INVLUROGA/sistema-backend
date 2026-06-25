@@ -8,7 +8,7 @@ exports.messageWSP = {
     tb_empleado,
     tb_cliente,
     fecha_inicio = "MARTES 27 de mayo a las 12:30 PM",
-    servicios = []
+    servicios = [],
   ) => {
     const { nombre_empl, sexo_empl } = tb_empleado;
     const { nombre_cli } = tb_cliente;
@@ -48,7 +48,7 @@ CIRCUS SALON 🎪✨
     tb_empleado,
     tb_cliente,
     fecha_inicio = "MARTES 27 de mayo a las 12:30 PM",
-    servicios = []
+    servicios = [],
   ) => {
     const { nombre_empl, sexo_empl } = tb_empleado;
     const { nombre_cli } = tb_cliente;
@@ -70,7 +70,7 @@ CIRCUS SALON 🎪✨
     tb_empleado,
     tb_cliente,
     fecha_inicio = "MARTES 27 de mayo a las 12:30 PM",
-    servicios = []
+    servicios = [],
   ) => {
     const { nombre_empl, sexo_empl } = tb_empleado;
     const { nombre_cli, sexo_cli } = tb_cliente;
@@ -94,7 +94,7 @@ Toma en cuenta que cada servicio que realizas no está solo EL NOMBRE DE CIRCUS 
     tb_empleado,
     tb_cliente,
     fecha_inicio = "MARTES 27 de mayo a las 12:30 PM",
-    servicios = []
+    servicios = [],
   ) => {
     const { nombre_empl, sexo_empl } = tb_empleado;
     const { nombre_cli } = tb_cliente;
@@ -110,7 +110,7 @@ Hola ${
     tb_empleado,
     tb_cliente,
     fecha_inicio = "MARTES 27 de mayo a las 12:30 PM",
-    servicios = []
+    servicios = [],
   ) => {
     const { nombre_empl, sexo_empl } = tb_empleado;
     const { nombre_cli } = tb_cliente;
@@ -133,7 +133,7 @@ cita con nuestro ESTILISTA ${
     tb_empleado,
     tb_cliente,
     fecha_inicio = "MARTES 27 de mayo a las 12:30 PM",
-    servicios = []
+    servicios = [],
   ) => {
     const { nombre_empl, sexo_empl } = tb_empleado;
     const { nombre_cli } = tb_cliente;
@@ -158,3 +158,13 @@ exports.typesCRUD = {
   DELETE: 4,
   PATCH: 5,
 };
+
+exports.programasIDS = [
+  { value: 2, label: "CHANGE 45", orden: 1 },
+  { value: 3, label: "FS 45", orden: 3 },
+  { value: 4, label: "FISIO MUSCLE", orden: 2 },
+];
+exports.generosIDS = [
+  { value: 8, label: "MASCULINO" },
+  { value: 9, label: "FEMENINO" },
+];
