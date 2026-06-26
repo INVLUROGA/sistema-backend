@@ -72,8 +72,8 @@ cron.schedule("30 5 * * *", () => {
 cron.schedule("0 20 * * *", () => {
   enviarResumenVentasDiario();
 });
-enviarReporteVentas();
 cron.schedule("0 11 * * *", () => {
+  enviarReporteVentas();
 });
 const fileServer = express.static;
 require("dotenv").config();
