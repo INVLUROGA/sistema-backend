@@ -62,16 +62,18 @@ cron.schedule("* * * * *", () => {
 });
 
 cron.schedule("0 14 * * *", () => {
-  enviarReporteVentas();
+  enviarResumenVentasDiario();
+
 });
 cron.schedule("30 5 * * *", () => {
-  enviarReporteVentas();
+  enviarResumenVentasDiario();
+
 });
 cron.schedule("0 20 * * *", () => {
-  enviarReporteVentas();
-});
-cron.schedule("0 11 * * *", () => {
   enviarResumenVentasDiario();
+});
+enviarReporteVentas();
+cron.schedule("0 11 * * *", () => {
 });
 const fileServer = express.static;
 require("dotenv").config();

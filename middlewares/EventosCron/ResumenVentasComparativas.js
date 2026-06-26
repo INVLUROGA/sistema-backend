@@ -90,17 +90,70 @@ const enviarReporteVentas = async () => {
      .join("\n   ")}
    *TOTAL: ${agruparxNoFirmados(linea.dataFechaCorte_.data).length}*
 
-  *7) PORCENTAJES*:
-   ${agruparxGenero(linea.dataFechaCorte_.data)
-     .sort((a, b) => b.sexo_cli - a.sexo_cli)
-     .map(
-       ({ id_empl, monto_total, data }) =>
-         `${generosIDS.find((f) => f.value === data[0].tb_ventum.tb_cliente.sexo_cli).label}: ${((monto_total / linea.montoPorFechaCorte) * 100).toFixed(2).toLocaleString("es-PE")}%`,
-     )
-     .join("\n   ")}
-   *TOTAL: ${100}%*
-  
-  *8) RANGOS EDADES*:
+  *7) RANGO EDADES / % GENERO*:
+     ${
+       agruparxEdad(linea.dataFechaCorte_.data)
+         .sort((a, b) => b.monto_total - a.monto_total)
+         .map(
+           ({ rango_edad, monto_total, data }) =>
+             `${rango_edad}: ${monto_total.toLocaleString("es-PE")}
+         ${agruparxGenero(data)
+           .sort((a, b) => b.sexo_cli - a.sexo_cli)
+           .map(
+             ({ id_empl, monto_total, data }) =>
+               `${generosIDS.find((f) => f.value === data[0].tb_ventum.tb_cliente.sexo_cli).label}: ${((monto_total / linea.montoPorFechaCorte) * 100).toFixed(2).toLocaleString("es-PE")}%`,
+           )
+           .join("\n         ")}`,
+         )[0]
+     }
+     ${
+       agruparxEdad(linea.dataFechaCorte_.data)
+         .sort((a, b) => b.monto_total - a.monto_total)
+         .map(
+           ({ rango_edad, monto_total, data }) =>
+             `${rango_edad}: ${monto_total.toLocaleString("es-PE")}
+         ${agruparxGenero(data)
+           .sort((a, b) => b.sexo_cli - a.sexo_cli)
+           .map(
+             ({ id_empl, monto_total, data }) =>
+               `${generosIDS.find((f) => f.value === data[0].tb_ventum.tb_cliente.sexo_cli).label}: ${((monto_total / linea.montoPorFechaCorte) * 100).toFixed(2).toLocaleString("es-PE")}%`,
+           )
+           .join("\n         ")}`,
+         )[1]
+     }
+     ${
+       agruparxEdad(linea.dataFechaCorte_.data)
+         .sort((a, b) => b.monto_total - a.monto_total)
+         .map(
+           ({ rango_edad, monto_total, data }) =>
+             `${rango_edad}: ${monto_total.toLocaleString("es-PE")}
+         ${agruparxGenero(data)
+           .sort((a, b) => b.sexo_cli - a.sexo_cli)
+           .map(
+             ({ id_empl, monto_total, data }) =>
+               `${generosIDS.find((f) => f.value === data[0].tb_ventum.tb_cliente.sexo_cli).label}: ${((monto_total / linea.montoPorFechaCorte) * 100).toFixed(2).toLocaleString("es-PE")}%`,
+           )
+           .join("\n         ")}
+                    `,
+         )[2]
+     }
+  *8) PROGRAMA / % GENERO*:
+     ${agruparxPgm(linea.dataFechaCorte_.data)
+       .map(
+         (
+           g,
+         ) => `${programasIDS.find((f) => f.value === g.data[0].id_pgm).label}:
+      ${agruparxGenero(g.data)
+        .sort((a, b) => b.sexo_cli - a.sexo_cli)
+        .map(
+          ({ monto_total, data }) =>
+            `${generosIDS.find((f) => f.value === data[0].tb_ventum.tb_cliente.sexo_cli).label}: ${((monto_total / g.monto_total) * 100).toFixed(2)}%`,
+        )
+        .join("\n      ")}`,
+       )
+       .join("\n    ")}
+        
+  *9) RANGOS EDADES*:
    ${agruparxPgm(linea.dataFechaCorte_.data)
      .map(
        ({ id_empl, monto_total, data }) =>
@@ -128,11 +181,11 @@ const enviarReporteVentas = async () => {
                ({ rango_edad, monto_total, data }) =>
                  `${rango_edad}: ${monto_total.toLocaleString("es-PE")}`,
              )[2]
-         }
-           `,
+         }`,
      )
-     .join("\n   ")}
-`;
+     .join("\n    ")}
+
+   `;
   console.log({ mensaje });
   const idsUsers = [35, 31, 30, 8, 22];
   await enviarWspUsuario(
