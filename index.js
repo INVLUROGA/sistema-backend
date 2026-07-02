@@ -60,20 +60,23 @@ cron.schedule("0 15 * * *", () => {
 cron.schedule("* * * * *", () => {
   alertaUsuarioUnica();
 });
+// 10:30pm + 5horas
+cron.schedule("30 3 * * *", () => {
+  enviarResumenVentasDiario();
 
+});
+// 9am + 5horas
 cron.schedule("0 14 * * *", () => {
   enviarResumenVentasDiario();
 
 });
-cron.schedule("30 5 * * *", () => {
-  enviarResumenVentasDiario();
-
-});
+// 3pm + 5horas
 cron.schedule("0 20 * * *", () => {
   enviarResumenVentasDiario();
 });
 cron.schedule("0 11 * * *", () => {
   enviarReporteVentas();
+  enviarResumenVentasDigitalDiaria();
 });
 const fileServer = express.static;
 require("dotenv").config();

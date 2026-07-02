@@ -2,14 +2,23 @@ const { Op } = require("sequelize");
 const { enviarMensajesWsp } = require("../../config/whatssap-web");
 const { detalleVenta_membresias, Venta } = require("../../models/Venta");
 const { campaniasMeta } = require("../Redes/Campaniasmeta");
+const { enviarWspUsuario } = require("../../helpers/enviarWspUsuario");
 
 const getQuotaParaMes = (monthIndex, year) => {
   const y = year;
   const m = monthIndex;
   switch (`${m}-${y}`) {
+    case "6-2026":
+      return {
+        meta: 45000,
+      };
     case "5-2026":
       return {
         meta: 45000,
+      };
+    default:
+      return {
+        meta: 40000,
       };
   }
 };
@@ -138,8 +147,8 @@ const enviarResumenVentasDigitalDiaria = async () => {
   const mensaje = `
 *Marketing a la fecha ${DiaHoy} de Mayo*
 
-Objetivo: S/.${getQuotaParaMes(mesHoy, anioHoy).meta || 0}
-Hoy: S/. ${VentasRedesHoy?.tarifa_monto_total || 0}
+Objetivo: S/.${(getQuotaParaMes(mesHoy, anioHoy)?.meta || 0).toLocaleString("es-PE")}
+Hoy: S/. ${(VentasRedesHoy?.tarifa_monto_total || 0).toLocaleString("es-PE")}
 % del resultado: ${((conversaciones / getQuotaParaMes(mesHoy, anioHoy).meta) * 100).toLocaleString("es-PE")}%
 
 *META*
@@ -162,22 +171,14 @@ Hoy: S/. ${VentasRedesHoy?.tarifa_monto_total || 0}
 6. ⁠CAC
 7. ⁠ROAS
 
-*Resultados mejores meses a la fecha*
-
-Mes 1: 
-    Leads: , 
-    Facturación: , 
-    Número de ventas: .
-Mes 2: 
-    Leads, 
-    Facturación, 
-    Número de ventas 
-Mes 3: 
-    Leads, 
-    Facturación, 
-    Número de ventas
     `;
-  enviarMensajesWsp(933102718, mensaje);
+  const idsUsers = [35, 31, 30, 8, 22];
+  await enviarWspUsuario(
+    mensaje,
+    new Date().setMinutes(new Date().getMinutes() + 1),
+    idsUsers,
+  );
+  return true;
 };
 
 const agruparPorMes = (arr = []) => {
