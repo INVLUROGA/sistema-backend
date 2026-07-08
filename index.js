@@ -77,8 +77,8 @@ cron.schedule("0 20 * * *", () => {
 });
 cron.schedule("0 11 * * *", () => {
   enviarReporteVentas();
-  enviarResumenVentasDigitalDiaria();
 });
+enviarResumenVentasDigitalDiaria();
 //3am + 5horas
 cron.schedule("0 8 * * *", () => {
   registrarAdsDiario();

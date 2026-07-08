@@ -162,28 +162,30 @@ const enviarResumenVentasDigitalDiaria = async () => {
 
   const inversion = importeGastado * 1.18;
   const mensaje = `
-*Marketing a la fecha ${DiaHoy} de ${meses[mesHoy - 1]}*
+📊 *Marketing a la fecha ${DiaHoy} de ${meses[mesHoy - 1]}*
 
 Objetivo: S/.${(getQuotaParaMes(mesHoy, anioHoy)?.meta || 0).toLocaleString("es-PE")}
-Hoy: S/. ${(ventasMetaHoy?.tarifa_monto_total || 0).toLocaleString("es-PE")}
-% del resultado: ${((ventasMetaHoy?.tarifa_monto_total / getQuotaParaMes(mesHoy, anioHoy).meta) * 100).toLocaleString("es-PE")}%
+Venta del 1 hasta ${DiaHoy}: S/. ${(ventasMetaHoy?.tarifa_monto_total || 0).toLocaleString("es-PE")}
+% del resultado: ${((ventasMetaHoy?.tarifa_monto_total / getQuotaParaMes(mesHoy, anioHoy).meta) * 100).toFixed(2).toLocaleString("es-PE")}%
+Venta hoy: S/. ${(ventasMetaHoy_f?.tarifa_monto_total || 0).toLocaleString("es-PE")}
 
 *META*
 
-1. Facturación: ${ventasMetaHoy?.tarifa_monto_total.toLocaleString("es-PE") || 0}
+1. Venta: ${ventasMetaHoy?.tarifa_monto_total.toLocaleString("es-PE") || 0}
 2. ⁠Leads: ${conversaciones || 0}
-3. ⁠Inversión: $ ${inversion.toLocaleString("es-PE")}
+3. ⁠Inversión: $ ${inversion.toFixed(2).toLocaleString("es-PE")} (S/.${(inversion * 3.73).toFixed(2).toLocaleString("es-PE")})
 4. Costo por resultado: ${costoxLead.toFixed(2)}
 5. ⁠Número de cierres: ${ventasMetaHoy?.data?.length}
-6. ⁠CAC: ${(inversion / ventasMetaHoy?.data?.length).toLocaleString("es-PE")}
-7. ⁠ROAS ${(ventasMetaHoy?.tarifa_monto_total / (Number(inversion) * 3.73)).toLocaleString("es-PE")}
+6. ⁠CAC: ${(inversion / ventasMetaHoy?.data?.length).toFixed(2).toLocaleString("es-PE")}
+7. ⁠ROAS ${(ventasMetaHoy?.tarifa_monto_total / (Number(inversion) * 3.73)).toFixed(0).toLocaleString("es-PE")}
     `;
-  const idsUsers = [35, 31, 30, 8, 22];
-  await enviarWspUsuario(
-    mensaje,
-    new Date().setMinutes(new Date().getMinutes() + 1),
-    idsUsers,
-  );
+  console.log({ventasMetaHoy: JSON.stringify(ventasMetaHoy, null, 2)});
+  // const idsUsers = [35, 31, 30, 8, 22];
+  // await enviarWspUsuario(
+  //   mensaje,
+  //   new Date().setMinutes(new Date().getMinutes() + 1),
+  //   idsUsers,
+  // );
   return true;
 };
 
