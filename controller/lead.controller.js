@@ -35,25 +35,10 @@ const postLead = async (req = request, res = response) => {
 const getLeads = async (req = request, res = response) => {
   const { id_empresa } = req.params;
   try {
-    const cacheKey = `leads_${id_empresa}`;
-    const cachedLeads = leadCache.get(cacheKey);
-
-    if (cachedLeads) {
-      console.log(`[Cache Hit] ${cacheKey}`);
-      return res.status(200).json({
-        msg: "ok",
-        leads: cachedLeads,
-      });
-    }
-
-    console.log(`[Cache Miss] ${cacheKey} - Fetching from DB...`);
     const leads = await leadsxDia.findAll({
       where: { flag: true, id_empresa: id_empresa },
       order: [["fecha", "desc"]],
     });
-
-    leadCache.set(cacheKey, leads);
-
     res.status(200).json({
       msg: "ok",
       leads,

@@ -44,6 +44,9 @@ const {
 const {
   enviarReporteVentas,
 } = require("./middlewares/EventosCron/ResumenVentasComparativas.js");
+const {
+  registrarAdsDiario,
+} = require("./middlewares/EventosCron/registrarAdsDiario.js");
 // Programa una tarea para las 9 AM todos los días
 cron.schedule("0 3 1 * *", () => {
   reactivarAlertasMensuales();
@@ -63,12 +66,10 @@ cron.schedule("* * * * *", () => {
 // 10:30pm + 5horas
 cron.schedule("30 3 * * *", () => {
   enviarResumenVentasDiario();
-
 });
 // 9am + 5horas
 cron.schedule("0 14 * * *", () => {
   enviarResumenVentasDiario();
-
 });
 // 3pm + 5horas
 cron.schedule("0 20 * * *", () => {
@@ -77,6 +78,10 @@ cron.schedule("0 20 * * *", () => {
 cron.schedule("0 11 * * *", () => {
   enviarReporteVentas();
   enviarResumenVentasDigitalDiaria();
+});
+//3am + 5horas
+cron.schedule("0 8 * * *", () => {
+  registrarAdsDiario();
 });
 const fileServer = express.static;
 require("dotenv").config();

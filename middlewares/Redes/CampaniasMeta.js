@@ -44,7 +44,7 @@ const campaniasMeta = async (
             (f) =>
               f.action_type ===
               "onsite_conversion.messaging_conversation_started_7d",
-          ).value,
+          )?.value ?? 0,
         ),
       };
     });
@@ -55,7 +55,7 @@ const campaniasMeta = async (
             (f) =>
               f.action_type ===
               "onsite_conversion.messaging_conversation_started_7d",
-          )?.value,
+          )?.value ?? 0,
         ),
       };
     });

@@ -120,6 +120,7 @@ const enviarResumenVentasDigitalDiaria = async () => {
       `${anioHoy}-${mesHoy}-${1}`,
       `${anioHoy}-${mesHoy}-${DiaHoy}`,
     );
+  const ventasMetaH = await ventasxOrigen([694, 693], DiaHoy, DiaHoy);
   const ventasMeta = await ventasxOrigen([694, 693], 1, DiaHoy);
   const ventasTiktok = await ventasxOrigen([695], 1, DiaHoy);
   const ventasRedesFechaActual = await ventasxOrigen(
@@ -137,40 +138,45 @@ const enviarResumenVentasDigitalDiaria = async () => {
   const ventasTikTokHoy = ventasTiktok.find(
     (f) => f.mes === mesHoy && f.anio === anioHoy,
   );
+  const ventasMetaHoy_f = ventasMetaH.find(
+    (f) => f.mes === mesHoy && f.anio === anioHoy,
+  );
   const ventasMetaHoy = ventasMeta.find(
     (f) => f.mes === mesHoy && f.anio === anioHoy,
   );
-  const ventasTiktokAdsMejorMes1 = ventasTiktok[0];
-  const ventasTiktokAdsMejorMes2 = ventasTiktok[1];
-  const ventasTiktokAdsMejorMes3 = ventasTiktok[2];
   const costoxLead = importeGastado / conversaciones;
+  const meses = [
+    "Enero",
+    "Febrero",
+    "Marzo",
+    "Abril",
+    "Mayo",
+    "Junio",
+    "Julio",
+    "Agosto",
+    "Septiembre",
+    "Octubre",
+    "Noviembre",
+    "Diciembre",
+  ];
+
+  const inversion = importeGastado * 1.18;
   const mensaje = `
-*Marketing a la fecha ${DiaHoy} de Mayo*
+*Marketing a la fecha ${DiaHoy} de ${meses[mesHoy - 1]}*
 
 Objetivo: S/.${(getQuotaParaMes(mesHoy, anioHoy)?.meta || 0).toLocaleString("es-PE")}
-Hoy: S/. ${(VentasRedesHoy?.tarifa_monto_total || 0).toLocaleString("es-PE")}
-% del resultado: ${((conversaciones / getQuotaParaMes(mesHoy, anioHoy).meta) * 100).toLocaleString("es-PE")}%
+Hoy: S/. ${(ventasMetaHoy?.tarifa_monto_total || 0).toLocaleString("es-PE")}
+% del resultado: ${((ventasMetaHoy?.tarifa_monto_total / getQuotaParaMes(mesHoy, anioHoy).meta) * 100).toLocaleString("es-PE")}%
 
 *META*
 
 1. Facturación: ${ventasMetaHoy?.tarifa_monto_total.toLocaleString("es-PE") || 0}
 2. ⁠Leads: ${conversaciones || 0}
-3. ⁠Inversión: $ ${importeGastado.toLocaleString("es-PE")}
+3. ⁠Inversión: $ ${inversion.toLocaleString("es-PE")}
 4. Costo por resultado: ${costoxLead.toFixed(2)}
 5. ⁠Número de cierres: ${ventasMetaHoy?.data?.length}
-6. ⁠CAC: ${(ventasMetaHoy?.tarifa_monto_total / ventasMetaHoy?.data?.length).toLocaleString("es-PE")}
-7. ⁠ROAS ${(ventasMetaHoy?.tarifa_monto_total / importeGastado).toLocaleString("es-PE")}
-
-*TIK TOK* 
-
-1. Facturación: ${ventasTikTokHoy?.tarifa_monto_total || 0} 
-2. ⁠Leads: ${ventasTikTokHoy?.tarifa_monto_total || 0}
-3. ⁠Inversión 
-4. ⁠Número de mensajes - Costo por lead 
-5. ⁠Número de cierres 
-6. ⁠CAC
-7. ⁠ROAS
-
+6. ⁠CAC: ${(inversion / ventasMetaHoy?.data?.length).toLocaleString("es-PE")}
+7. ⁠ROAS ${(ventasMetaHoy?.tarifa_monto_total / (Number(inversion) * 3.73)).toLocaleString("es-PE")}
     `;
   const idsUsers = [35, 31, 30, 8, 22];
   await enviarWspUsuario(

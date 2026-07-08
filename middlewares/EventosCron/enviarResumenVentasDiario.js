@@ -27,6 +27,10 @@ const getQuotaParaMes = (monthIndex, year) => {
   const y = year;
   const m = monthIndex;
   switch (`${m}-${y}`) {
+    case "7-2026":
+      return {
+        meta: 100000,
+      };
     case "6-2026":
       return {
         meta: 115000,
@@ -110,10 +114,9 @@ const getQuotaParaMes = (monthIndex, year) => {
       return {
         meta: 60000,
       };
-
     default:
       return {
-        meta: 10000,
+        meta: 100000,
       };
   }
 };

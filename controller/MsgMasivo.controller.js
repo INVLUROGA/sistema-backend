@@ -6,10 +6,7 @@ const {
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 const enviarMasivoAlwsp = async () => {
-  const numerosDup = [
-    { numero: "933102718" },
-    { numero: "" },
-  ];
+  const numerosDup = [{ numero: "933102718" }, { numero: "914028922" }];
 
   // Normaliza y deduplica por número
   const numeros = [
@@ -33,13 +30,16 @@ const enviarMasivoAlwsp = async () => {
       try {
         const imagenResp = await enviarTextConImagenWsp(
           numero,
-          "https://archivosluroga.blob.core.windows.net/articulos-lugares/12SOLDOUT.jpeg",
+          "https://archivosluroga.blob.core.windows.net/avatar-articulos/julio2026.jpeg",
           `
-🔥 ¡SOLD OUT EN 12 HORAS! 🔥
-LANZAMOS UNA CAMPAÑA exclusiva para socios que querían renovar o retomar su proceso en Change.
-12 horas después, ya NO quedaba un solo cupo disponible.
-Lo que más nos alegra no es que se agotaran los espacios, sino ver a tantas personas decidir seguir apostando por su salud, imagen y resultados.
-Gracias por confiar en el proceso 👏🏼
+🇵🇪 ¡Promoción exclusiva para socios y reinscripciones! 
+
+*DEL 08 AL 17 DE JULIO*
+Aprovecha nuestra campaña por Fiestas Patrias y entrena todo julio GRATIS al renovar o reinscribirte en un plan de 12 semanas o más.
+
+ *¡EL MES DE JULIO VA POR NUESTRA CUENTA!* 🇵🇪
+
+*Pregunta por nuestras promociones*
 `,
         );
         if (!imagenResp.ok) {
