@@ -48,7 +48,7 @@ const enviarReporteVentas = async () => {
   console.log({ linea: JSON.stringify(linea, null, 2) });
 
   const mensaje = `
-  *VENTAS COMPARATIVAS JUNIO*
+  *MARKETING / ANALISIS*
 
   *1) SOCIOS VIGENTES*:
    ${agruparxUltimaPgm(sociosActivos)

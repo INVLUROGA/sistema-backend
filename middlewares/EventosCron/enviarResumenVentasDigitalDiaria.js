@@ -56,7 +56,7 @@ function agruparPorFecha(arr = []) {
 const obtenerVentasxFecha = async (idsOrigenes = []) => {
   try {
     const membresias = await detalleVenta_membresias.findAll({
-      attributes: ["tarifa_monto"],
+      attributes: ["tarifa_monto", "id_pgm"],
       include: [
         {
           model: Venta,
@@ -108,11 +108,46 @@ const ventasxOrigen = async (
   );
   return ordenarVentas;
 };
+const ventasxPrograma = async (
+  idsOrigenes = [],
+  id_pgm = 0,
+  diaAntes = 1,
+  diaDespues = 10,
+) => {
+  const ventasOrigenes = await ventasxOrigen(
+    idsOrigenes,
+    diaAntes,
+    Number(diaDespues),
+  );
+  const ventasxPgm = await agruparPorPrograma(ventasOrigenes).find(
+    (f) => f.id_pgm === id_pgm,
+  )?.dias;
+  return ventasxPgm;
+};
+const ventasProgramasMesActual = async (
+  idsOrigenes = [],
+  id_pgm = 0,
+  diaAntes = 1,
+  diaDespues = 10,
+  mesHoy,
+  anioHoy,
+) => {
+  const ventasRedesxPrograma2MesActual = await ventasxPrograma(
+    idsOrigenes,
+    id_pgm,
+    diaAntes,
+    diaDespues,
+  );
 
+  return ventasRedesxPrograma2MesActual?.filter(
+    (f) => f.mes === mesHoy && f.anio === anioHoy,
+  );
+};
 const enviarResumenVentasDigitalDiaria = async () => {
   const hoy = new Date();
   const hora = hoy.getHours();
   const DiaHoy = hoy.getDate();
+  const day = hoy.getDay().toLocaleString("es-PE", { weekday: "long" });
   const mesHoy = hoy.getMonth() + 1;
   const anioHoy = hoy.getFullYear();
   const { conversaciones, costoxResultadoxCampanias, importeGastado } =
@@ -122,6 +157,34 @@ const enviarResumenVentasDigitalDiaria = async () => {
     );
   const ventasMetaH = await ventasxOrigen([694, 693], DiaHoy, DiaHoy);
   const ventasMeta = await ventasxOrigen([694, 693], 1, DiaHoy);
+  const ventasRedesxP2MesActual = await ventasProgramasMesActual(
+    [694, 693, 695],
+    2,
+    1,
+    DiaHoy,
+    mesHoy,
+    anioHoy,
+  );
+  const ventasRedesxP3MesActual = await ventasProgramasMesActual(
+    [694, 693, 695],
+    3,
+    1,
+    DiaHoy,
+    mesHoy,
+    anioHoy,
+  );
+  const ventasRedesxP4MesActual = await ventasProgramasMesActual(
+    [694, 693, 695],
+    4,
+    1,
+    DiaHoy,
+    mesHoy,
+    anioHoy,
+  );
+  console.log({
+    ventasRedesxP2MesActual: JSON.stringify(ventasRedesxP2MesActual, null, 2),
+  });
+
   const ventasTiktok = await ventasxOrigen([695], 1, DiaHoy);
   const ventasRedesFechaActual = await ventasxOrigen(
     [694, 693, 695],
@@ -131,10 +194,6 @@ const enviarResumenVentasDigitalDiaria = async () => {
   const VentasRedesHoy = ventasRedesFechaActual.find(
     (f) => f.mes === mesHoy && f.anio === anioHoy,
   );
-  const ventasMetaAdsMejorMes1 = ventasMeta[0];
-  const ventasMetaAdsMejorMes2 = ventasMeta[1];
-  const ventasMetaAdsMejorMes3 = ventasMeta[2];
-
   const ventasTikTokHoy = ventasTiktok.find(
     (f) => f.mes === mesHoy && f.anio === anioHoy,
   );
@@ -146,46 +205,67 @@ const enviarResumenVentasDigitalDiaria = async () => {
   );
   const costoxLead = importeGastado / conversaciones;
   const meses = [
-    "Enero",
-    "Febrero",
-    "Marzo",
-    "Abril",
-    "Mayo",
-    "Junio",
-    "Julio",
-    "Agosto",
-    "Septiembre",
-    "Octubre",
-    "Noviembre",
-    "Diciembre",
+    "ENERO",
+    "FEBRERO",
+    "MARZO",
+    "ABRIL",
+    "MAYO",
+    "JUNIO",
+    "JULIO",
+    "AGOSTO",
+    "SEPTIEMBRE",
+    "OCTUBRE",
+    "NOVIEMBRE",
+    "DICIEMBRE",
   ];
-
+  const dia = [
+    "LUNES",
+    "MARTES",
+    "MIÉRCOLES",
+    "JUEVES",
+    "VIERNES",
+    "SÁBADO",
+    "DOMINGO",
+  ];
   const inversion = importeGastado * 1.18;
   const mensaje = `
-📊 *Marketing a la fecha ${DiaHoy} de ${meses[mesHoy - 1]}*
+*REDES / ${dia[day - 1]?.toUpperCase()} ${DiaHoy} ${meses[mesHoy - 1].toUpperCase()}*
 
-Objetivo: S/.${(getQuotaParaMes(mesHoy, anioHoy)?.meta || 0).toLocaleString("es-PE")}
-Venta del 1 hasta ${DiaHoy}: S/. ${(ventasMetaHoy?.tarifa_monto_total || 0).toLocaleString("es-PE")}
-% del resultado: ${((ventasMetaHoy?.tarifa_monto_total / getQuotaParaMes(mesHoy, anioHoy).meta) * 100).toFixed(2).toLocaleString("es-PE")}%
-Venta hoy: S/. ${(ventasMetaHoy_f?.tarifa_monto_total || 0).toLocaleString("es-PE")}
+*CUOTA: ${(getQuotaParaMes(mesHoy, anioHoy)?.meta || 0).toLocaleString("es-PE")}*
+
+*VENTA HOY: ${(ventasMetaHoy_f?.tarifa_monto_total || 0).toLocaleString("es-PE")} / 0* 
+  *%* 0.0
+  *CHANGE 45:* 0 / 0
+  *%* 0.0
+  *FISIO MUSCLE:* 0 / 0
+  *%* 0.0
+  *FS 45:* 0 / 0
+  *%* 0.0
+
+*VENTA ACUMULADA:* ${ventasMetaHoy?.tarifa_monto_total.toLocaleString("es-PE") || 0}
+  *CHANGE 45:* ${ventasRedesxP2MesActual?.flatMap((f) => f.data)?.length || 0} / ${ventasRedesxP2MesActual?.reduce((a, b) => a + b.tarifa_monto_total, 0).toLocaleString("es-PE") || 0}
+  *%* ${((ventasRedesxP2MesActual?.reduce((a, b) => a + b.tarifa_monto_total, 0) / ventasMetaHoy?.tarifa_monto_total) * 100).toFixed(2) || 0}
+  *FISIO MUSCLE:* ${ventasRedesxP4MesActual?.flatMap((f) => f.data)?.length || 0} / ${ventasRedesxP4MesActual?.reduce((a, b) => a + b.tarifa_monto_total, 0).toLocaleString("es-PE") || 0}
+  *%* ${((ventasRedesxP4MesActual?.reduce((a, b) => a + b.tarifa_monto_total, 0) / ventasMetaHoy?.tarifa_monto_total) * 100).toFixed(2) || 0}
+  *FS 45:* ${ventasRedesxP3MesActual?.flatMap((f) => f.data)?.length || 0} / ${ventasRedesxP3MesActual?.reduce((a, b) => a + b.tarifa_monto_total, 0).toLocaleString("es-PE") || 0}
+  *%* ${((ventasRedesxP3MesActual?.reduce((a, b) => a + b.tarifa_monto_total, 0) / ventasMetaHoy?.tarifa_monto_total) * 100).toFixed(2) || 0}
+
+*% ALCANCE CUOTA: ${((ventasMetaHoy?.tarifa_monto_total / getQuotaParaMes(mesHoy, anioHoy).meta) * 100).toFixed(2).toLocaleString("es-PE")}%*
 
 *META*
-
-1. Venta: ${ventasMetaHoy?.tarifa_monto_total.toLocaleString("es-PE") || 0}
-2. ⁠Leads: ${conversaciones || 0}
-3. ⁠Inversión: $ ${inversion.toFixed(2).toLocaleString("es-PE")} (S/.${(inversion * 3.73).toFixed(2).toLocaleString("es-PE")})
-4. Costo por resultado: ${costoxLead.toFixed(2)}
-5. ⁠Número de cierres: ${ventasMetaHoy?.data?.length}
-6. ⁠CAC: ${(inversion / ventasMetaHoy?.data?.length).toFixed(2).toLocaleString("es-PE")}
-7. ⁠ROAS ${(ventasMetaHoy?.tarifa_monto_total / (Number(inversion) * 3.73)).toFixed(0).toLocaleString("es-PE")}
+  *LEADS:* ${conversaciones || 0}
+  *INVERSIÓN:* *$* ${inversion.toFixed(2).toLocaleString("es-PE")} (${Number((inversion * 3.73).toFixed(2)).toLocaleString("es-PE")})
+  *COSTO POR LEAD:* ${costoxLead.toFixed(2)}
+  *N° DE CIERRES:* ${ventasMetaHoy?.data?.length}
+  ⁠*CAC:* ${((inversion * 3.73) / ventasMetaHoy?.data?.length).toFixed(2).toLocaleString("es-PE")}
+  ⁠*ROAS:* ${(ventasMetaHoy?.tarifa_monto_total / (Number(inversion) * 3.73)).toFixed(0).toLocaleString("es-PE")}
     `;
-  console.log({ventasMetaHoy: JSON.stringify(ventasMetaHoy, null, 2)});
-  // const idsUsers = [35, 31, 30, 8, 22];
-  // await enviarWspUsuario(
-  //   mensaje,
-  //   new Date().setMinutes(new Date().getMinutes() + 1),
-  //   idsUsers,
-  // );
+  const idsUsers = [35, 31, 30, 8, 22];
+  await enviarWspUsuario(
+    mensaje,
+    new Date().setMinutes(new Date().getMinutes() + 1),
+    idsUsers,
+  );
   return true;
 };
 
@@ -213,6 +293,61 @@ const agruparPorMes = (arr = []) => {
   );
   return resu;
 };
+function agruparPorPrograma(array) {
+  const resultado = {};
+
+  array.forEach((mes) => {
+    mes.data.forEach((item) => {
+      const id = item.id_pgm;
+
+      if (!resultado[id]) {
+        resultado[id] = {
+          id_pgm: id,
+          data: [],
+          dias: [],
+        };
+      }
+
+      // Agregar venta
+      resultado[id].data.push(item);
+    });
+
+    mes.dias.forEach((dia) => {
+      // Filtrar únicamente las ventas de ese id_pgm
+      const ventas = dia.data.filter((item) => item.id_pgm);
+
+      // Agrupar los días por programa
+      const programas = {};
+
+      ventas.forEach((item) => {
+        if (!programas[item.id_pgm]) {
+          programas[item.id_pgm] = [];
+        }
+        programas[item.id_pgm].push(item);
+      });
+
+      Object.entries(programas).forEach(([id, data]) => {
+        if (!resultado[id]) {
+          resultado[id] = {
+            id_pgm: Number(id),
+            data: [],
+            dias: [],
+          };
+        }
+
+        resultado[id].dias.push({
+          dia: dia.dia,
+          mes: dia.mes,
+          anio: dia.anio,
+          tarifa_monto_total: data.reduce((s, x) => s + x.tarifa_monto, 0),
+          data,
+        });
+      });
+    });
+  });
+
+  return Object.values(resultado);
+}
 module.exports = {
   enviarResumenVentasDigitalDiaria,
 };

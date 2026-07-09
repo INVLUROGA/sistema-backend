@@ -175,6 +175,8 @@ const enviarResumenVentasDiario = async () => {
     const linea = lineaPorMes(ventas, a.mes, a.anio, 1, DiaHoy);
     return {
       ...linea,
+      lenCorte: linea.lenCorte,
+      lenTotal: linea.lenTotal,
       montoTotal: linea.montoPorFechaTotal,
       montoCorte: linea.montoPorFechaCorte,
       mes: a.mes,
@@ -186,6 +188,8 @@ const enviarResumenVentasDiario = async () => {
     (a) => {
       const linea = lineaPorMes(ventas, a.mes, a.anio, 1, DiaHoyMas3Dias);
       return {
+        lenCorte: linea.lenCorte,
+        lenTotal: linea.lenTotal,
         montoTotal: linea.montoPorFechaTotal,
         montoCorte: linea.montoPorFechaCorte,
         mes: a.mes,
@@ -195,6 +199,8 @@ const enviarResumenVentasDiario = async () => {
     },
   );
   const mesActual = {
+    lenCorte: lineaPorMes(ventas, MesHoy, anioHoy, 1, DiaHoy).lenCorte,
+    lenTotal: lineaPorMes(ventas, MesHoy, anioHoy, 1, DiaHoy).lenTotal,
     montoTotal: lineaPorMes(ventas, MesHoy, anioHoy, 1, DiaHoy)
       .montoPorFechaTotal,
     montoCorte: lineaPorMes(ventas, MesHoy, anioHoy, 1, DiaHoy)
@@ -214,26 +220,30 @@ const enviarResumenVentasDiario = async () => {
     const t1 = sortTotal[0];
     const t2 = sortTotal[1];
     const t3 = sortTotal[2];
-    return `${t1.nombreMes} ${t1.anio}: ${t1.montoCorte.toLocaleString("es-PE")} /  ${((t1.montoCorte / getQuotaParaMes(t1.mes, t1.anio).meta) * 100).toFixed(2)}%
-${t2.nombreMes} ${t2.anio}: ${t2.montoCorte.toLocaleString("es-PE")} /  ${((t2.montoCorte / getQuotaParaMes(t2.mes, t2.anio).meta) * 100).toFixed(2)}%
-${t3.nombreMes} ${t3.anio}: ${t3.montoCorte.toLocaleString("es-PE")} /  ${((t3.montoCorte / getQuotaParaMes(t3.mes, t3.anio).meta) * 100).toFixed(2)}%`;
+    return `
+  ${t1.nombreMes} ${t1.anio}  :    ${t1.lenCorte}  /  ${t1.montoCorte.toLocaleString("es-PE")} 
+  ${((t1.montoCorte / getQuotaParaMes(t1.mes, t1.anio).meta) * 100).toFixed(2)}%
+  ${t2.nombreMes} ${t2.anio}  :    ${t2.lenCorte}  /  ${t2.montoCorte.toLocaleString("es-PE")}
+  ${((t2.montoCorte / getQuotaParaMes(t2.mes, t2.anio).meta) * 100).toFixed(2)}%
+  ${t3.nombreMes} ${t3.anio}  :    ${t3.lenCorte}  /  ${t3.montoCorte.toLocaleString("es-PE")}
+  ${((t3.montoCorte / getQuotaParaMes(t3.mes, t3.anio).meta) * 100).toFixed(2)}%`;
   };
   const mensaje = `
-*COMPARATIVO VENTAS*
+*VENTAS / COMPARATIVO*
 
 *CUOTA ${NOMBRES_MESES.find((e) => e.value === MesHoy).label}: ${getQuotaParaMes(MesHoy, anioHoy).meta.toLocaleString("es-PE")}*
-% ALCANCE CUOTA: *${((mesActual.montoTotal / getQuotaParaMes(MesHoy, anioHoy).meta) * 100).toFixed(2)}%*
+*% ALCANCE CUOTA: ${((mesActual.montoTotal / getQuotaParaMes(MesHoy, anioHoy).meta) * 100).toFixed(2)}%*
 
 
-*${nombreDelPrimerDia.toLocaleUpperCase()} 01 - ${nombreDelActualDia.toLocaleUpperCase()} ${DiaHoy}*
+*VENTAS AL ${nombreDelActualDia.toLocaleUpperCase()} ${DiaHoy}*
+  ${renderTop3(mesesActualesxDiaInicioYDiaActual)}
+  *${mesActual.nombreMes} ${mesActual.anio}  :   ${mesActual.lenCorte}  /  ${mesActual.montoCorte.toLocaleString("es-PE")}*
+  *${((mesActual.montoCorte / getQuotaParaMes(MesHoy, anioHoy).meta) * 100).toFixed(2)}%*
 
-${renderTop3(mesesActualesxDiaInicioYDiaActual)}
-*${mesActual.nombreMes} ${mesActual.anio}: ${mesActual.montoCorte.toLocaleString("es-PE")} / ${((mesActual.montoCorte / getQuotaParaMes(MesHoy, anioHoy).meta) * 100).toFixed(2)}%*
-
-*${nombreDelPrimerDia.toLocaleUpperCase()} 01 - ${nombreDelActualDiaMas3Dias.toLocaleUpperCase()} ${DiaHoyMas3Dias}*
-
-${renderTop3(mesesActualesxDiaInicioYDiaActualmas3Dias)}
-*${mesActual.nombreMes} ${mesActual.anio}: ${mesActual.montoCorte.toLocaleString("es-PE")} / ${((mesActual.montoCorte / getQuotaParaMes(MesHoy, anioHoy).meta) * 100).toFixed(2)}%*`;
+*VENTAS AL ${nombreDelActualDiaMas3Dias.toLocaleUpperCase()} ${DiaHoyMas3Dias}*
+  ${renderTop3(mesesActualesxDiaInicioYDiaActualmas3Dias)}
+  *${mesActual.nombreMes} ${mesActual.anio}  :    ${mesActual.lenCorte}  /  ${mesActual.montoCorte.toLocaleString("es-PE")}*
+  *${((mesActual.montoCorte / getQuotaParaMes(MesHoy, anioHoy).meta) * 100).toFixed(2)}%*`;
   const idsUsers = [35, 31, 30, 8, 22];
   await enviarWspUsuario(
     mensaje,
@@ -257,6 +267,8 @@ const lineaPorMes = (ventas, mes, anio, diaInicio = 1, diaFin = 9) => {
     dataFechaTotal,
     montoPorFechaCorte: dataFechaCorte_?.tarifa_monto_total || 0,
     montoPorFechaTotal: dataFechaTotal_?.tarifa_monto_total || 0,
+    lenCorte: dataFechaCorte_?.dias?.length || 0,
+    lenTotal: dataFechaTotal_?.dias?.length || 0,
   };
 };
 const obtenerDataxFechaCorte = (data = [], diaInicio = 1, diaFin = 9) => {

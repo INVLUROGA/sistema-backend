@@ -75,10 +75,11 @@ cron.schedule("0 14 * * *", () => {
 cron.schedule("0 20 * * *", () => {
   enviarResumenVentasDiario();
 });
-cron.schedule("0 11 * * *", () => {
+//10:30PM + 5horas
+cron.schedule("30 17 * * *", () => {
   enviarReporteVentas();
+  enviarResumenVentasDigitalDiaria();
 });
-enviarResumenVentasDigitalDiaria();
 //3am + 5horas
 cron.schedule("0 8 * * *", () => {
   registrarAdsDiario();
