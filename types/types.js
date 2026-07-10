@@ -161,8 +161,8 @@ exports.typesCRUD = {
 
 exports.programasIDS = [
   { value: 2, label: "CHANGE 45", orden: 1 },
-  { value: 3, label: "FS 45", orden: 3 },
-  { value: 4, label: "FISIO MUSCLE", orden: 2 },
+  { value: 3, label: "FS 45", orden: 2 },
+  { value: 4, label: "FISIO MUSCLE", orden: 3 },
 ];
 exports.generosIDS = [
   { value: 8, label: "MASCULINO" },

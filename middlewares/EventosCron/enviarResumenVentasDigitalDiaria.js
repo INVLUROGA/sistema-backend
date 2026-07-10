@@ -229,11 +229,11 @@ const enviarResumenVentasDigitalDiaria = async () => {
   ];
   const inversion = importeGastado * 1.18;
   const mensaje = `
-*REDES / ${dia[day - 1]?.toUpperCase()} ${DiaHoy} ${meses[mesHoy - 1].toUpperCase()}*
-
+*REDES VENTAS*
+*${dia[day - 1]?.toUpperCase()} ${DiaHoy} ${meses[mesHoy - 1].toUpperCase()}*
 *CUOTA: ${(getQuotaParaMes(mesHoy, anioHoy)?.meta || 0).toLocaleString("es-PE")}*
 
-*VENTA HOY: ${(ventasMetaHoy_f?.tarifa_monto_total || 0).toLocaleString("es-PE")} / 0* 
+*1. VENTA HOY: ${(ventasMetaHoy_f?.tarifa_monto_total || 0).toLocaleString("es-PE")} / 0* 
   *%* 0.0
   *CHANGE 45:* 0 / 0
   *%* 0.0
@@ -242,7 +242,7 @@ const enviarResumenVentasDigitalDiaria = async () => {
   *FS 45:* 0 / 0
   *%* 0.0
 
-*VENTA ACUMULADA:* ${ventasMetaHoy?.tarifa_monto_total.toLocaleString("es-PE") || 0}
+*2. VENTA AL ${DiaHoy}:* ${ventasMetaHoy?.tarifa_monto_total.toLocaleString("es-PE") || 0}
   *CHANGE 45:* ${ventasRedesxP2MesActual?.flatMap((f) => f.data)?.length || 0} / ${ventasRedesxP2MesActual?.reduce((a, b) => a + b.tarifa_monto_total, 0).toLocaleString("es-PE") || 0}
   *%* ${((ventasRedesxP2MesActual?.reduce((a, b) => a + b.tarifa_monto_total, 0) / ventasMetaHoy?.tarifa_monto_total) * 100).toFixed(2) || 0}
   *FISIO MUSCLE:* ${ventasRedesxP4MesActual?.flatMap((f) => f.data)?.length || 0} / ${ventasRedesxP4MesActual?.reduce((a, b) => a + b.tarifa_monto_total, 0).toLocaleString("es-PE") || 0}
@@ -250,9 +250,9 @@ const enviarResumenVentasDigitalDiaria = async () => {
   *FS 45:* ${ventasRedesxP3MesActual?.flatMap((f) => f.data)?.length || 0} / ${ventasRedesxP3MesActual?.reduce((a, b) => a + b.tarifa_monto_total, 0).toLocaleString("es-PE") || 0}
   *%* ${((ventasRedesxP3MesActual?.reduce((a, b) => a + b.tarifa_monto_total, 0) / ventasMetaHoy?.tarifa_monto_total) * 100).toFixed(2) || 0}
 
-*% ALCANCE CUOTA: ${((ventasMetaHoy?.tarifa_monto_total / getQuotaParaMes(mesHoy, anioHoy).meta) * 100).toFixed(2).toLocaleString("es-PE")}%*
+*3. % ALCANCE CUOTA: ${((ventasMetaHoy?.tarifa_monto_total / getQuotaParaMes(mesHoy, anioHoy).meta) * 100).toFixed(2).toLocaleString("es-PE")}%*
 
-*META*
+*4. META*
   *LEADS:* ${conversaciones || 0}
   *INVERSIÓN:* *$* ${inversion.toFixed(2).toLocaleString("es-PE")} (${Number((inversion * 3.73).toFixed(2)).toLocaleString("es-PE")})
   *COSTO POR LEAD:* ${costoxLead.toFixed(2)}

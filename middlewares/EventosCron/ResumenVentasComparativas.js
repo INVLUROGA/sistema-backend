@@ -46,42 +46,9 @@ const enviarReporteVentas = async () => {
     sumaMontoData: linea.montoPorFechaCorte,
   };
   console.log({ linea: JSON.stringify(linea, null, 2) });
-
-  const mensaje = `
-  *MARKETING / ANALISIS*
-
-  *1) SOCIOS VIGENTES*:
-   ${agruparxUltimaPgm(sociosActivos)
-     .map(
-       ({ ultimoPgm, data }) =>
-         `${programasIDS.find((f) => f.value === ultimoPgm)?.label}: ${data.length}`,
-     )
-     .join("\n   ")}
-   *TOTAL: ${agruparxUltimaPgm(sociosActivos).reduce((a, b) => a + b.data.length, 0)}*
+  /*
   
-  *2) PROGRAMAS*:
-   ${agruparxPgm(linea.dataFechaCorte_.data)
-     .map(
-       ({ id_empl, monto_total, data }) =>
-         `${programasIDS.find((f) => f.value === data[0].id_pgm).label}: ${monto_total.toLocaleString("es-PE")}`,
-     )
-     .join("\n   ")}
-   *TOTAL: ${linea.montoPorFechaCorte.toLocaleString("es-PE")}*
-   
-  *3) UNIDADES VENDIDAS*: ${ticketMedio.dataLen}
-
-  *4) T. MEDIO*: ${Number((ticketMedio.sumaMontoData / ticketMedio.dataLen).toFixed(2)).toLocaleString("es-PE")}
-  
-  *5) ASESORES*:
-   ${agruparxVendedor(linea.dataFechaCorte_.data)
-     .map(
-       ({ id_empl, monto_total, data }) =>
-         `${data[0].tb_ventum.tb_empleado.nombres_apellidos_empl.split(" ")[0]}: ${monto_total.toLocaleString("es-PE")}`,
-     )
-     .join("\n   ")}
-   *TOTAL: ${linea.montoPorFechaCorte.toLocaleString("es-PE")}*
-  
-  *6) CONTRATO S/ FIRMAR*: 
+  *2) CONTRATO S/ FIRMAR*: 
    ${agruparxNoFirmadosXpgm(linea.dataFechaCorte_.data)
      .map(
        ({ id_empl, monto_total, data }) =>
@@ -90,13 +57,56 @@ const enviarReporteVentas = async () => {
      .join("\n   ")}
    *TOTAL: ${agruparxNoFirmados(linea.dataFechaCorte_.data).length}*
 
-  *7) RANGO EDADES / % GENERO*:
+  */
+  const mensaje = `
+  *MARKETING / ANALISIS*
+
+  *1) SOCIOS VIGENTES: ${agruparxUltimaPgm(sociosActivos).reduce((a, b) => a + b.data.length, 0)}*
+   ${agruparxUltimaPgm(sociosActivos)
+     .map(
+       ({ ultimoPgm, data }) =>
+         `*${programasIDS.find((f) => f.value === ultimoPgm)?.label}  :*    ${data.length}  /  ${((data.length/agruparxUltimaPgm(sociosActivos).reduce((a, b) => a + b.data.length, 0))*100).toFixed(2)}%`,
+     )
+     .join("\n   ")}
+
+  *2) RANGOS EDADES*:
+   ${agruparxPgm(linea.dataFechaCorte_.data)
+     .map(
+       ({ id_empl, monto_total, data }) =>
+         `*${programasIDS.find((f) => f.value === data[0].id_pgm).label}:* 
+         ${
+           agruparxEdad(data)
+             .sort((a, b) => b.monto_total - a.monto_total)
+             .map(
+               ({ rango_edad, monto_total, data }) =>
+                 `*${rango_edad}:* ${monto_total.toLocaleString("es-PE")}`,
+             )[0]
+         }
+         ${
+           agruparxEdad(data)
+             .sort((a, b) => b.monto_total - a.monto_total)
+             .map(
+               ({ rango_edad, monto_total, data }) =>
+                 `*${rango_edad}:* ${monto_total.toLocaleString("es-PE")}`,
+             )[1]
+         }
+         ${
+           agruparxEdad(data)
+             .sort((a, b) => b.monto_total - a.monto_total)
+             .map(
+               ({ rango_edad, monto_total, data }) =>
+                 `*${rango_edad}:* ${monto_total.toLocaleString("es-PE")}`,
+             )[2]
+         }`,
+     )
+     .join("\n    ")}
+  *3) RANGO EDADES / % GENERO*:
      ${
        agruparxEdad(linea.dataFechaCorte_.data)
          .sort((a, b) => b.monto_total - a.monto_total)
          .map(
            ({ rango_edad, monto_total, data }) =>
-             `${rango_edad}: ${monto_total.toLocaleString("es-PE")}
+                `    *${rango_edad}:* ${monto_total.toLocaleString("es-PE")}
          ${agruparxGenero(data)
            .sort((a, b) => b.sexo_cli - a.sexo_cli)
            .map(
@@ -111,7 +121,7 @@ const enviarReporteVentas = async () => {
          .sort((a, b) => b.monto_total - a.monto_total)
          .map(
            ({ rango_edad, monto_total, data }) =>
-             `${rango_edad}: ${monto_total.toLocaleString("es-PE")}
+             `    *${rango_edad}:* ${monto_total.toLocaleString("es-PE")}
          ${agruparxGenero(data)
            .sort((a, b) => b.sexo_cli - a.sexo_cli)
            .map(
@@ -126,7 +136,7 @@ const enviarReporteVentas = async () => {
          .sort((a, b) => b.monto_total - a.monto_total)
          .map(
            ({ rango_edad, monto_total, data }) =>
-             `${rango_edad}: ${monto_total.toLocaleString("es-PE")}
+             `    *${rango_edad}:* ${monto_total.toLocaleString("es-PE")}
          ${agruparxGenero(data)
            .sort((a, b) => b.sexo_cli - a.sexo_cli)
            .map(
@@ -137,12 +147,12 @@ const enviarReporteVentas = async () => {
                     `,
          )[2]
      }
-  *8) PROGRAMA / % GENERO*:
+  *4) PROGRAMA / % GENERO*:
      ${agruparxPgm(linea.dataFechaCorte_.data)
        .map(
          (
            g,
-         ) => `${programasIDS.find((f) => f.value === g.data[0].id_pgm).label}:
+         ) => `*${programasIDS.find((f) => f.value === g.data[0].id_pgm).label}:*
       ${agruparxGenero(g.data)
         .sort((a, b) => b.sexo_cli - a.sexo_cli)
         .map(
@@ -152,39 +162,6 @@ const enviarReporteVentas = async () => {
         .join("\n      ")}`,
        )
        .join("\n    ")}
-        
-  *9) RANGOS EDADES*:
-   ${agruparxPgm(linea.dataFechaCorte_.data)
-     .map(
-       ({ id_empl, monto_total, data }) =>
-         `${programasIDS.find((f) => f.value === data[0].id_pgm).label}: 
-         ${
-           agruparxEdad(data)
-             .sort((a, b) => b.monto_total - a.monto_total)
-             .map(
-               ({ rango_edad, monto_total, data }) =>
-                 `${rango_edad}: ${monto_total.toLocaleString("es-PE")}`,
-             )[0]
-         }
-         ${
-           agruparxEdad(data)
-             .sort((a, b) => b.monto_total - a.monto_total)
-             .map(
-               ({ rango_edad, monto_total, data }) =>
-                 `${rango_edad}: ${monto_total.toLocaleString("es-PE")}`,
-             )[1]
-         }
-         ${
-           agruparxEdad(data)
-             .sort((a, b) => b.monto_total - a.monto_total)
-             .map(
-               ({ rango_edad, monto_total, data }) =>
-                 `${rango_edad}: ${monto_total.toLocaleString("es-PE")}`,
-             )[2]
-         }`,
-     )
-     .join("\n    ")}
-
    `;
   console.log({ mensaje });
   const idsUsers = [35, 31, 30, 8, 22];
@@ -440,7 +417,7 @@ const agruparxVendedor = (data = []) => {
   );
 };
 const rangos = [
-  { rango_edad: "56 a más", min: 56, max: Infinity },
+  { rango_edad: "56 - +", min: 56, max: Infinity },
   { rango_edad: "52 - 55", min: 52, max: 55 },
   { rango_edad: "48 - 51", min: 48, max: 51 },
   { rango_edad: "44 - 47", min: 44, max: 47 },
