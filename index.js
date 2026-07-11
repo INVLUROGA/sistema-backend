@@ -47,6 +47,7 @@ const {
 const {
   registrarAdsDiario,
 } = require("./middlewares/EventosCron/registrarAdsDiario.js");
+const { FacturasMeta } = require("./middlewares/Redes/FacturasMeta.js");
 // Programa una tarea para las 9 AM todos los días
 cron.schedule("0 3 1 * *", () => {
   reactivarAlertasMensuales();
@@ -77,10 +78,11 @@ cron.schedule("0 20 * * *", () => {
 });
 // 10:30pm + 5horas
 cron.schedule("30 3 * * *", () => {
-  enviarReporteVentas();
   enviarResumenVentasDiario();
-  enviarResumenVentasDigitalDiaria();
+  enviarReporteVentas();
+  FacturasMeta();
 });
+enviarResumenVentasDigitalDiaria();
 const fileServer = express.static;
 require("dotenv").config();
 const env = process.env;

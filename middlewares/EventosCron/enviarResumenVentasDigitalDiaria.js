@@ -229,7 +229,7 @@ const enviarResumenVentasDigitalDiaria = async () => {
   ];
   const inversion = importeGastado * 1.18;
   const mensaje = `
-*REDES VENTAS*
+📊 *REDES VENTAS  /  ${ventasMetaHoy?.tarifa_monto_total.toLocaleString("es-PE") || 0}*
 *${dia[day - 1]?.toUpperCase()} ${DiaHoy} ${meses[mesHoy - 1].toUpperCase()}*
 *CUOTA: ${(getQuotaParaMes(mesHoy, anioHoy)?.meta || 0).toLocaleString("es-PE")}*
 
@@ -254,11 +254,12 @@ const enviarResumenVentasDigitalDiaria = async () => {
 
 *4. META*
   *LEADS:* ${conversaciones || 0}
-  *INVERSIÓN:* *$* ${inversion.toFixed(2).toLocaleString("es-PE")} (${Number((inversion * 3.73).toFixed(2)).toLocaleString("es-PE")})
+  *INVERSIÓN:* *$* ${inversion.toFixed(2).toLocaleString("es-PE")} (${Number((inversion * 3.60).toFixed(2)).toLocaleString("es-PE")})
   *COSTO POR LEAD:* ${costoxLead.toFixed(2)}
   *N° DE CIERRES:* ${ventasMetaHoy?.data?.length}
-  ⁠*CAC:* ${((inversion * 3.73) / ventasMetaHoy?.data?.length).toFixed(2).toLocaleString("es-PE")}
+  ⁠*CAC:* *$* ${((inversion) / ventasMetaHoy?.data?.length).toFixed(2).toLocaleString("es-PE")} (${((inversion*3.60) / ventasMetaHoy?.data?.length).toFixed(2).toLocaleString("es-PE")})
   ⁠*ROAS:* ${(ventasMetaHoy?.tarifa_monto_total / (Number(inversion) * 3.73)).toFixed(0).toLocaleString("es-PE")}
+  ⁠*CONVERSION:* ${Number(((ventasMetaHoy?.data?.length / conversaciones) * 100).toFixed(2)).toLocaleString("es-PE")}%
     `;
   const idsUsers = [35, 31, 30, 8, 22];
   await enviarWspUsuario(

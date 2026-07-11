@@ -242,7 +242,8 @@ ${((t2.montoCorte / getQuotaParaMes(t2.mes, t2.anio).meta) * 100).toFixed(2)}%
 ${isDiaActual ? `T. MED. PROM.  :    *${Number((t2.montoCorte / t2.lenCorte).toFixed(2)).toLocaleString("es-PE")}*` : "".replace(/false|\r?\n/g, "")}
 *${t3.nombreMes} ${t3.anio}  :*    ${t3.lenCorte}  /  ${t3.montoCorte.toLocaleString("es-PE")}
 ${((t3.montoCorte / getQuotaParaMes(t3.mes, t3.anio).meta) * 100).toFixed(2)}%
-${isDiaActual ? `T. MED. PROM.  :    *${Number((t3.montoCorte / t3.lenCorte).toFixed(2)).toLocaleString("es-PE")}*` : "".replace(/false|\r?\n/g, "")}`;
+${isDiaActual ? `T. MED. PROM.  :    *${Number((t3.montoCorte / t3.lenCorte).toFixed(2)).toLocaleString("es-PE")}*` : "".replace(/false|\r?\n/g, "")}
+`;
   };
 
   const renderTop3_1 = (
@@ -279,7 +280,7 @@ ${((t3.montoCorte / getQuotaParaMes(t3.mes, t3.anio).meta) * 100).toFixed(2)}%`;
     ${agruparxVendedor(linea.dataFechaCorte_.data)
       .map(
         ({ id_empl, monto_total, data }) =>
-          `${data[0].tb_ventum.tb_empleado.nombres_apellidos_empl.split(" ")[0]}  :   ${data.length}  /  ${monto_total.toLocaleString("es-PE")}`,
+          `${data[0].tb_ventum.tb_empleado.nombres_apellidos_empl.split(" ")[0]}  :   ${data.length}  /  ${monto_total.toLocaleString("es-PE")}  /  ${((data.length / agruparxVendedor(linea.dataFechaCorte_.data).reduce((a, b) => a + b.data.length, 0)) * 100).toFixed(2)}%`,
       )
       .join("\n    ")}
 

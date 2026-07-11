@@ -1,8 +1,9 @@
 const bizSdk = require("facebook-nodejs-business-sdk");
 const { default: axios } = require("axios");
+require("dotenv").config();
+const env = process.env;
 
-const accessToken =
-  "EAAS2ZA7oAJgoBRZASaPuXYaKUEraJXPkUZCMjvvNqrZA4yvAwmczFBS6DA6PONBNqyZB5fjBm9cJCpBpOQQpSkM7A5CoYW8ahxrYZB1bT1G5vVwiLHZAT6nedoXM46ZANZC6635qSCIHo3mnEf1CZAbOAkIDQ9PjoaZAehnRJeATfiK4VqI5ycsQG7SWZCIEqpbq6wZDZD";
+const accessToken = env.TOKEN_META
 const api = bizSdk.FacebookAdsApi.init(accessToken);
 const AdAccount = bizSdk.AdAccount;
 const Ad = bizSdk.Ad;
@@ -12,7 +13,7 @@ const campaniasMeta = async (
   fechaAntes = "2026-05-01",
   fechaDespues = "2026-05-31",
 ) => {
-  const AD_ACCOUNT_ID = "act_3401374960165898";
+  const AD_ACCOUNT_ID = env.AD_ACCOUNT_ID_META;
   const TOKEN = accessToken;
   try {
     const { data } = await axios.get(
@@ -36,7 +37,6 @@ const campaniasMeta = async (
         },
       },
     );
-
     const conversacionesxCampanias = data.data.map((m) => {
       return {
         actions: Number(
@@ -64,8 +64,6 @@ const campaniasMeta = async (
         actions: Number(m.spend),
       };
     });
-    console.log(JSON.stringify(importeGastado, null, 2));
-
     return {
       importeGastado: importeGastado.reduce(
         (total, item) => total + item.actions,
