@@ -77,12 +77,12 @@ cron.schedule("0 20 * * *", () => {
   enviarResumenVentasDiario();
 });
 // 10:30pm + 5horas
+enviarResumenVentasDiario();
 cron.schedule("30 3 * * *", () => {
-  enviarResumenVentasDiario();
   enviarReporteVentas();
   FacturasMeta();
+  enviarResumenVentasDigitalDiaria();
 });
-enviarResumenVentasDigitalDiaria();
 const fileServer = express.static;
 require("dotenv").config();
 const env = process.env;

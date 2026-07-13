@@ -13,8 +13,8 @@ function obtenerMesesHasta(fechaInicio = "2024-09") {
   const [anioFin, mesFin] = fechaInicio.split("-").map(Number);
 
   const hoy = new Date();
-  let anio = hoy.getFullYear();
-  let mes = hoy.getMonth() + 1; // 1-12
+  let anio = hoy.getUTCFullYear();
+  let mes = hoy.getUTCMonth() + 1; // 1-12
 
   const resultado = [];
 
@@ -129,29 +129,29 @@ const getQuotaParaMes = (monthIndex, year) => {
   }
 };
 const hoy = new Date();
-const anioHoy = hoy.getFullYear();
-const mesHoy = hoy.getMonth() + 1; // 1-12
-const dia = hoy.getDate();
+const anioHoy = hoy.getUTCFullYear();
+const mesHoy = hoy.getUTCMonth() + 1; // 1-12
+const dia = hoy.getUTCDate();
 
 const enviarResumenVentasDiario = async () => {
   const hora = hoy.getHours();
   const fechaHoyMas3Dias = new Date(hoy);
   const ultimoDiasDelMesActual = new Date(
-    hoy.getFullYear(),
-    hoy.getMonth() + 1,
+    hoy.getUTCFullYear(),
+    hoy.getUTCMonth() + 1,
     0,
-  ).getDate();
-  const DiaHoy = hoy.getDate();
+  ).getUTCDate();
+  const DiaHoy = hoy.getUTCDate();
   const sociosActivos = await obtenerSociosActivos();
   if (DiaHoy + 3 > ultimoDiasDelMesActual) {
     fechaHoyMas3Dias.setDate(ultimoDiasDelMesActual);
   } else {
-    fechaHoyMas3Dias.setDate(hoy.getDate() + 3);
+    fechaHoyMas3Dias.setDate(hoy.getUTCDate() + 3);
   }
-  const DiaHoyMas3Dias = fechaHoyMas3Dias.getDate();
-  const MesHoy = hoy.getMonth() + 1;
-  const anioHoy = hoy.getFullYear();
-  const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  const DiaHoyMas3Dias = fechaHoyMas3Dias.getUTCDate();
+  const MesHoy = hoy.getUTCMonth() + 1;
+  const anioHoy = hoy.getUTCFullYear();
+  const primerDia = new Date(hoy.getUTCFullYear(), hoy.getUTCMonth(), 1);
 
   const nombreDelPrimerDia = primerDia.toLocaleDateString("es-ES", {
     weekday: "long",
@@ -192,6 +192,24 @@ const enviarResumenVentasDiario = async () => {
       lenTotal: linea.lenTotal,
       montoTotal: linea.montoPorFechaTotal,
       montoCorte: linea.montoPorFechaCorte,
+      lenNuevosCorte: linea.nuevosFechaCorte.length || 0,
+      montoNuevosCorte:
+        linea.nuevosFechaCorte?.reduce(
+          (total, item) => total + item.tarifa_monto,
+          0,
+        ) || 0,
+      lenRenovacionesCorte: linea.renovacionesFechaCorte.length || 0,
+      montoRenovacionesCorte:
+        linea?.renovacionesFechaCorte?.reduce(
+          (total, item) => total + item.tarifa_monto,
+          0,
+        ) || 0,
+      lenReinscripcionesCorte: linea.reinscripcionesFechaCorte.length || 0,
+      montoReinscripcionesCorte:
+        linea.reinscripcionesFechaCorte?.reduce(
+          (total, item) => total + item.tarifa_monto,
+          0,
+        ) || 0,
       mes: a.mes,
       nombreMes: NOMBRES_MESES.find((e) => e.value === a.mes).label,
       anio: a.anio,
@@ -204,6 +222,24 @@ const enviarResumenVentasDiario = async () => {
         ...linea,
         lenCorte: linea.lenCorte,
         lenTotal: linea.lenTotal,
+        lenNuevosCorte: linea.nuevosFechaCorte.length || 0,
+        montoNuevosCorte:
+          linea.nuevosFechaCorte?.reduce(
+            (total, item) => total + item.tarifa_monto,
+            0,
+          ) || 0,
+        lenRenovacionesCorte: linea.renovacionesFechaCorte.length || 0,
+        montoRenovacionesCorte:
+          linea.renovacionesFechaCorte?.reduce(
+            (total, item) => total + item.tarifa_monto,
+            0,
+          ) || 0,
+        lenReinscripcionesCorte: linea.reinscripcionesFechaCorte.length || 0,
+        montoReinscripcionesCorte:
+          linea.reinscripcionesFechaCorte?.reduce(
+            (total, item) => total + item.tarifa_monto,
+            0,
+          ) || 0,
         montoTotal: linea.montoPorFechaTotal,
         montoCorte: linea.montoPorFechaCorte,
         mes: a.mes,
@@ -213,11 +249,28 @@ const enviarResumenVentasDiario = async () => {
     },
   );
   const mesActual = {
-    lenCorte: lineaPorMes(ventas, MesHoy, anioHoy, 1, 10).dataFechaCorte_.data
-      .length,
-    lenTotal: lineaPorMes(ventas, MesHoy, anioHoy, 1, 10).lenTotal,
-    montoTotal: lineaPorMes(ventas, MesHoy, anioHoy, 1, 10).montoPorFechaTotal,
-    montoCorte: lineaPorMes(ventas, MesHoy, anioHoy, 1, 10).montoPorFechaCorte,
+    lenCorte: linea.dataFechaCorte_.data.length,
+    lenNuevosFechaCorte: linea.nuevosFechaCorte.length || 0,
+    montoNuevosCorte:
+      linea.nuevosFechaCorte.reduce(
+        (total, item) => total + item.tarifa_monto,
+        0,
+      ) || 0,
+    lenRenovacionesCorte: linea.renovacionesFechaCorte.length || 0,
+    montoRenovacionesCorte:
+      linea.renovacionesFechaCorte.reduce(
+        (total, item) => total + item.tarifa_monto,
+        0,
+      ) || 0,
+    lenReinscripcionesCorte: linea.reinscripcionesFechaCorte.length || 0,
+    montoReinscripcionesCorte:
+      linea.reinscripcionesFechaCorte.reduce(
+        (total, item) => total + item.tarifa_monto,
+        0,
+      ) || 0,
+    lenTotal: linea.lenTotal,
+    montoTotal: linea.montoPorFechaTotal,
+    montoCorte: linea.montoPorFechaCorte,
     mes: MesHoy,
     anio: anioHoy,
     nombreMes: NOMBRES_MESES.find((e) => e.value === MesHoy).label,
@@ -225,7 +278,21 @@ const enviarResumenVentasDiario = async () => {
 
   const renderTop3 = (
     data = [
-      { montoTotal: 0, montoCorte: 0, nombreMes: "", anio: 2026, mes: 1 },
+      {
+        montoTotal: 0,
+        montoCorte: 0,
+        nombreMes: "",
+        anio: 2026,
+        mes: 1,
+        lenRenovacionesCorte: 0,
+        montoRenovacionesCorte: 0,
+        lenReinscripcionesCorte: 0,
+        montoReinscripcionesCorte: 0,
+        lenReinscripcionesCorte: 0,
+        montoReinscripcionesCorte: 0,
+        lenNuevosCorte: 0,
+        montoNuevosCorte: 0,
+      },
     ],
     isDiaActual = true,
   ) => {
@@ -235,20 +302,43 @@ const enviarResumenVentasDiario = async () => {
     const t3 = sortTotal[2];
     return `
 *${t1.nombreMes} ${t1.anio}  :*    ${t1.lenCorte}  /  ${t1.montoCorte.toLocaleString("es-PE")} 
-${((t1.montoCorte / getQuotaParaMes(t1.mes, t1.anio).meta) * 100).toFixed(2)}%
+${((t1.montoCorte / t1.montoTotal) * 100).toFixed(2)}%
+NUEVOS:  ${t1.lenNuevosCorte}  /  ${Number(t1.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
+RENOVACIONES  :    ${t1.lenRenovacionesCorte}  /  ${Number(t1.montoRenovacionesCorte.toFixed(2)).toLocaleString("es-PE")}
+REINSCRIPCIONES:  ${t1.lenReinscripcionesCorte}  /  ${Number(t1.montoReinscripcionesCorte.toFixed(2)).toLocaleString("es-PE")}
 ${`${isDiaActual && `T. MED. PROM.  :    *${Number((t1.montoCorte / t1.lenCorte).toFixed(2)).toLocaleString("es-PE")}*`}`.replace(/false|\r?\n/g, "")}
 *${t2.nombreMes} ${t2.anio}  :*    ${t2.lenCorte}  /  ${t2.montoCorte.toLocaleString("es-PE")}
-${((t2.montoCorte / getQuotaParaMes(t2.mes, t2.anio).meta) * 100).toFixed(2)}%
+${((t2.montoCorte / t2.montoTotal) * 100).toFixed(2)}%
+NUEVOS:  ${t2.lenNuevosCorte}  /  ${Number(t2.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
+RENOVACIONES  :    ${t2.lenRenovacionesCorte} /  ${Number(t2.montoRenovacionesCorte.toFixed(2)).toLocaleString("es-PE")}
+REINSCRIPCIONES:   ${t2.lenReinscripcionesCorte} /  ${Number(t2.montoReinscripcionesCorte.toFixed(2)).toLocaleString("es-PE")}
 ${isDiaActual ? `T. MED. PROM.  :    *${Number((t2.montoCorte / t2.lenCorte).toFixed(2)).toLocaleString("es-PE")}*` : "".replace(/false|\r?\n/g, "")}
 *${t3.nombreMes} ${t3.anio}  :*    ${t3.lenCorte}  /  ${t3.montoCorte.toLocaleString("es-PE")}
-${((t3.montoCorte / getQuotaParaMes(t3.mes, t3.anio).meta) * 100).toFixed(2)}%
+${((t3.montoCorte / t3.montoTotal) * 100).toFixed(2)}%
+NUEVOS:  ${t3.lenNuevosCorte}  /  ${Number(t3.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
+RENOVACIONES  :    ${t3.lenRenovacionesCorte}  /  ${Number(t3.montoRenovacionesCorte.toFixed(2)).toLocaleString("es-PE")}
+REINSCRIPCIONES:  ${t3.lenReinscripcionesCorte}  /  ${Number(t3.montoReinscripcionesCorte.toFixed(2)).toLocaleString("es-PE")}
 ${isDiaActual ? `T. MED. PROM.  :    *${Number((t3.montoCorte / t3.lenCorte).toFixed(2)).toLocaleString("es-PE")}*` : "".replace(/false|\r?\n/g, "")}
 `;
   };
 
   const renderTop3_1 = (
     data = [
-      { montoTotal: 0, montoCorte: 0, nombreMes: "", anio: 2026, mes: 1 },
+      {
+        montoTotal: 0,
+        montoCorte: 0,
+        nombreMes: "",
+        anio: 2026,
+        mes: 1,
+        lenRenovacionesCorte: 0,
+        montoRenovacionesCorte: 0,
+        lenReinscripcionesCorte: 0,
+        montoReinscripcionesCorte: 0,
+        lenReinscripcionesCorte: 0,
+        montoReinscripcionesCorte: 0,
+        montoNuevosCorte: 0,
+        lenNuevosCorte: 0,
+      },
     ],
     isDiaActual = true,
   ) => {
@@ -258,11 +348,20 @@ ${isDiaActual ? `T. MED. PROM.  :    *${Number((t3.montoCorte / t3.lenCorte).toF
     const t3 = sortTotal[2];
     return `
 *${t1.nombreMes} ${t1.anio}  :    ${t1.lenCorte}  /  ${t1.montoCorte.toLocaleString("es-PE")}*
-${((t1.montoCorte / getQuotaParaMes(t1.mes, t1.anio).meta) * 100).toFixed(2)}%
+${((t1.montoCorte / t1.montoTotal) * 100).toFixed(2)}%
+NUEVOS:  ${t1.lenNuevosCorte}  /  ${Number(t1.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
+RENOVACIONES  :   ${t1.lenRenovacionesCorte}  /  ${Number(t1.montoRenovacionesCorte.toFixed(2)).toLocaleString("es-PE")}
+REINSCRIPCIONES:  ${t1.lenReinscripcionesCorte}  /  ${Number(t1.montoReinscripcionesCorte.toFixed(2)).toLocaleString("es-PE")}
 *${t2.nombreMes} ${t2.anio}  :    ${t2.lenCorte}  /  ${t2.montoCorte.toLocaleString("es-PE")}*
-${((t2.montoCorte / getQuotaParaMes(t2.mes, t2.anio).meta) * 100).toFixed(2)}%
+${((t2.montoCorte / t2.montoTotal) * 100).toFixed(2)}%
+NUEVOS:  ${t2.lenNuevosCorte}  /  ${Number(t2.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
+RENOVACIONES  :  ${t2.lenRenovacionesCorte}  /  ${Number(t2.montoRenovacionesCorte.toFixed(2)).toLocaleString("es-PE")}
+REINSCRIPCIONES  :    ${t2.lenReinscripcionesCorte}  /  ${Number(t2.montoReinscripcionesCorte.toFixed(2)).toLocaleString("es-PE")}
 *${t3.nombreMes} ${t3.anio}  :    ${t3.lenCorte}  /  ${t3.montoCorte.toLocaleString("es-PE")}*
-${((t3.montoCorte / getQuotaParaMes(t3.mes, t3.anio).meta) * 100).toFixed(2)}%`;
+${((t3.montoCorte / t3.montoTotal) * 100).toFixed(2)}%
+NUEVOS:  ${t3.lenNuevosCorte}  /  ${Number(t3.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
+RENOVACIONES  :  ${t3.lenRenovacionesCorte}  /  ${Number(t3.montoRenovacionesCorte.toFixed(2)).toLocaleString("es-PE")}
+REINSCRIPCIONES:  ${t3.lenReinscripcionesCorte}  /  ${Number(t3.montoReinscripcionesCorte.toFixed(2)).toLocaleString("es-PE")}`;
   };
   const mensaje = `
 *VENTAS / COMPARATIVO*
@@ -287,7 +386,10 @@ ${((t3.montoCorte / getQuotaParaMes(t3.mes, t3.anio).meta) * 100).toFixed(2)}%`;
 *3. VENTAS AL ${nombreDelActualDia.toLocaleUpperCase()} ${DiaHoy}*
 ${renderTop3(mesesActualesxDiaInicioYDiaActual, true)}
 *${mesActual.nombreMes} ${mesActual.anio}  :   ${mesActual.lenCorte}  /  ${mesActual.montoCorte.toLocaleString("es-PE")}*
-*${((mesActual.montoCorte / getQuotaParaMes(MesHoy, anioHoy).meta) * 100).toFixed(2)}%*
+NUEVOS:  ${mesActual.lenNuevosFechaCorte}  /  ${Number(mesActual.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
+RENOVACIONES  :  ${mesActual.lenRenovacionesCorte}  /  ${Number(mesActual.montoRenovacionesCorte.toFixed(2)).toLocaleString("es-PE")}
+REINSCRIPCIONES:  ${mesActual.lenReinscripcionesCorte}  /  ${Number(mesActual.montoReinscripcionesCorte.toFixed(2)).toLocaleString("es-PE")}
+*${((mesActual.montoCorte / mesActual.montoTotal) * 100).toFixed(2)}%*
 *T. MED. PROM.  :    ${Number((mesActual.montoCorte / mesActual.lenCorte).toFixed(2)).toLocaleString("es-PE")}*
     
     ${agruparxPgm(linea.dataFechaCorte_.data)
@@ -325,6 +427,15 @@ const lineaPorMes = (ventas, mes, anio, diaInicio = 1, diaFin = 9) => {
   return {
     dataFechaCorte_,
     dataFechaCorte,
+    nuevosFechaCorte:
+      dataFechaCorte_?.data?.filter(
+        (f) => f.tb_ventum.id_origen !== 691 && f.tb_ventum.id_origen !== 692,
+      ) || [],
+    renovacionesFechaCorte:
+      dataFechaCorte_?.data?.filter((f) => f.tb_ventum.id_origen === 691) || [],
+    reinscripcionesFechaCorte:
+      dataFechaCorte_?.data?.filter((f) => f.tb_ventum.id_origen === 692) || [],
+    dataFechaTotal_,
     dataFechaTotal,
     montoPorFechaCorte: dataFechaCorte_?.tarifa_monto_total || 0,
     montoPorFechaTotal: dataFechaTotal_?.tarifa_monto_total || 0,
@@ -357,7 +468,7 @@ const obtenerVentasxFecha = async () => {
         },
         {
           model: Venta,
-          attributes: ["fecha_venta", "id_empl"],
+          attributes: ["fecha_venta", "id_empl", "id_origen"],
           where: {
             id_empresa: 598,
             flag: true,
@@ -417,9 +528,9 @@ function agruparPorFecha(arr = []) {
       new Date(item.tb_ventum.fecha_venta).getTime() - 5 * 60 * 60 * 1000,
     );
 
-    const dia = fecha.getDate();
-    const mes = fecha.getMonth() + 1;
-    const anio = fecha.getFullYear();
+    const dia = fecha.getUTCDate();
+    const mes = fecha.getUTCMonth() + 1;
+    const anio = fecha.getUTCFullYear();
 
     const key = `${dia}-${mes}-${anio}`;
 
@@ -510,11 +621,14 @@ function calcularEdad(fechaNacimiento, fechaReferencia = new Date()) {
   const nacimiento = new Date(fechaNacimiento);
   const referencia = new Date(fechaReferencia);
 
-  let edad = referencia.getFullYear() - nacimiento.getFullYear();
+  let edad = referencia.getUTCFullYear() - nacimiento.getUTCFullYear();
 
-  const mes = referencia.getMonth() - nacimiento.getMonth();
+  const mes = referencia.getUTCMonth() - nacimiento.getUTCMonth();
 
-  if (mes < 0 || (mes === 0 && referencia.getDate() < nacimiento.getDate())) {
+  if (
+    mes < 0 ||
+    (mes === 0 && referencia.getUTCDate() < nacimiento.getUTCDate())
+  ) {
     edad--;
   }
 

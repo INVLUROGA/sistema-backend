@@ -65,7 +65,7 @@ const enviarReporteVentas = async () => {
    ${agruparxUltimaPgm(sociosActivos)
      .map(
        ({ ultimoPgm, data }) =>
-         `*${programasIDS.find((f) => f.value === ultimoPgm)?.label}  :*    ${data.length}  /  ${((data.length/agruparxUltimaPgm(sociosActivos).reduce((a, b) => a + b.data.length, 0))*100).toFixed(2)}%`,
+         `*${programasIDS.find((f) => f.value === ultimoPgm)?.label}  :*    ${data.length}  /  ${((data.length / agruparxUltimaPgm(sociosActivos).reduce((a, b) => a + b.data.length, 0)) * 100).toFixed(2)}%`,
      )
      .join("\n   ")}
 
@@ -106,7 +106,7 @@ const enviarReporteVentas = async () => {
          .sort((a, b) => b.monto_total - a.monto_total)
          .map(
            ({ rango_edad, monto_total, data }) =>
-                `    *${rango_edad}:* ${monto_total.toLocaleString("es-PE")}
+             `    *${rango_edad}:* ${monto_total.toLocaleString("es-PE")}
          ${agruparxGenero(data)
            .sort((a, b) => b.sexo_cli - a.sexo_cli)
            .map(
