@@ -215,9 +215,6 @@ const obtenerDataSeguimientos = async () => {
       };
     });
     await Seguimiento.bulkCreate(dataSeguimiento);
-    console.log({
-      ventasMembresiasConTransferencias,
-    });
     return true;
     // EXTRAER CAMBIO DE MEMBRESIA
   } catch (error) {

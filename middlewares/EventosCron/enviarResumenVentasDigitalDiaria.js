@@ -181,6 +181,32 @@ const enviarResumenVentasDigitalDiaria = async () => {
     mesHoy,
     anioHoy,
   );
+
+  // TODO: SOLO HOY
+  const ventasRedesxP2SoloHoy = await ventasProgramasMesActual(
+    [694, 693, 695],
+    2,
+    DiaHoy,
+    DiaHoy,
+    mesHoy,
+    anioHoy,
+  );
+  const ventasRedesxP3SoloHoy = await ventasProgramasMesActual(
+    [694, 693, 695],
+    3,
+    DiaHoy,
+    DiaHoy,
+    mesHoy,
+    anioHoy,
+  );
+  const ventasRedesxP4SoloHoy = await ventasProgramasMesActual(
+    [694, 693, 695],
+    4,
+    DiaHoy,
+    DiaHoy,
+    mesHoy,
+    anioHoy,
+  );
   console.log({
     ventasRedesxP2MesActual: JSON.stringify(ventasRedesxP2MesActual, null, 2),
   });
@@ -235,11 +261,11 @@ const enviarResumenVentasDigitalDiaria = async () => {
 
 *1. VENTA HOY: ${(ventasMetaHoy_f?.tarifa_monto_total || 0).toLocaleString("es-PE")} / 0* 
   *%* 0.0
-  *CHANGE 45:* 0 / 0
+  *CHANGE 45:* ${ventasRedesxP2SoloHoy?.flatMap((f) => f.data)?.length || 0} / ${ventasRedesxP2SoloHoy?.reduce((a, b) => a + b.tarifa_monto_total, 0).toLocaleString("es-PE") || 0}
   *%* 0.0
-  *FISIO MUSCLE:* 0 / 0
+  *FISIO MUSCLE:* ${ventasRedesxP4SoloHoy?.flatMap((f) => f.data)?.length || 0} / ${ventasRedesxP4SoloHoy?.reduce((a, b) => a + b.tarifa_monto_total, 0).toLocaleString("es-PE") || 0}
   *%* 0.0
-  *FS 45:* 0 / 0
+  *FS 45:* ${ventasRedesxP3SoloHoy?.flatMap((f) => f.data)?.length || 0} / ${ventasRedesxP3SoloHoy?.reduce((a, b) => a + b.tarifa_monto_total, 0).toLocaleString("es-PE") || 0}
   *%* 0.0
 
 *2. VENTA AL ${DiaHoy}:* ${ventasMetaHoy?.tarifa_monto_total.toLocaleString("es-PE") || 0}
@@ -254,10 +280,10 @@ const enviarResumenVentasDigitalDiaria = async () => {
 
 *4. META*
   *LEADS:* ${conversaciones || 0}
-  *INVERSIÓN:* *$* ${inversion.toFixed(2).toLocaleString("es-PE")} (${Number((inversion * 3.60).toFixed(2)).toLocaleString("es-PE")})
+  *INVERSIÓN:* *$* ${inversion.toFixed(2).toLocaleString("es-PE")} (${Number((inversion * 3.6).toFixed(2)).toLocaleString("es-PE")})
   *COSTO POR LEAD:* ${costoxLead.toFixed(2)}
   *N° DE CIERRES:* ${ventasMetaHoy?.data?.length}
-  ⁠*CAC:* *$* ${((inversion) / ventasMetaHoy?.data?.length).toFixed(2).toLocaleString("es-PE")} (${((inversion*3.60) / ventasMetaHoy?.data?.length).toFixed(2).toLocaleString("es-PE")})
+  ⁠*CAC:* *$* ${(inversion / ventasMetaHoy?.data?.length).toFixed(2).toLocaleString("es-PE")} (${((inversion * 3.6) / ventasMetaHoy?.data?.length).toFixed(2).toLocaleString("es-PE")})
   ⁠*ROAS:* ${(ventasMetaHoy?.tarifa_monto_total / (Number(inversion) * 3.73)).toFixed(0).toLocaleString("es-PE")}
   ⁠*CONVERSION:* ${Number(((ventasMetaHoy?.data?.length / conversaciones) * 100).toFixed(2)).toLocaleString("es-PE")}%
     `;

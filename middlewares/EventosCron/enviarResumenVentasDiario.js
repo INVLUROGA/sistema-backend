@@ -303,22 +303,22 @@ const enviarResumenVentasDiario = async () => {
     return `
 *${t1.nombreMes} ${t1.anio}  :*    ${t1.lenCorte}  /  ${t1.montoCorte.toLocaleString("es-PE")} 
 ${((t1.montoCorte / t1.montoTotal) * 100).toFixed(2)}%
-NUEVOS:  ${t1.lenNuevosCorte}  /  ${Number(t1.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
-RENOVACIONES  :    ${t1.lenRenovacionesCorte}  /  ${Number(t1.montoRenovacionesCorte.toFixed(2)).toLocaleString("es-PE")}
-REINSCRIPCIONES:  ${t1.lenReinscripcionesCorte}  /  ${Number(t1.montoReinscripcionesCorte.toFixed(2)).toLocaleString("es-PE")}
-${`${isDiaActual && `T. MED. PROM.  :    *${Number((t1.montoCorte / t1.lenCorte).toFixed(2)).toLocaleString("es-PE")}*`}`.replace(/false|\r?\n/g, "")}
+    NUEVOS:  ${t1.lenNuevosCorte}  /  ${Number(t1.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
+    RENOVACIONES  :    ${t1.lenRenovacionesCorte}  /  ${Number(t1.montoRenovacionesCorte.toFixed(2)).toLocaleString("es-PE")}
+    REINSCRIPCIONES:  ${t1.lenReinscripcionesCorte}  /  ${Number(t1.montoReinscripcionesCorte.toFixed(2)).toLocaleString("es-PE")}
+${`${isDiaActual && `    T. MED. PROM.  :    *${Number((t1.montoCorte / t1.lenCorte).toFixed(2)).toLocaleString("es-PE")}*`}`.replace(/false|\r?\n/g, "")}
 *${t2.nombreMes} ${t2.anio}  :*    ${t2.lenCorte}  /  ${t2.montoCorte.toLocaleString("es-PE")}
 ${((t2.montoCorte / t2.montoTotal) * 100).toFixed(2)}%
-NUEVOS:  ${t2.lenNuevosCorte}  /  ${Number(t2.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
-RENOVACIONES  :    ${t2.lenRenovacionesCorte} /  ${Number(t2.montoRenovacionesCorte.toFixed(2)).toLocaleString("es-PE")}
-REINSCRIPCIONES:   ${t2.lenReinscripcionesCorte} /  ${Number(t2.montoReinscripcionesCorte.toFixed(2)).toLocaleString("es-PE")}
-${isDiaActual ? `T. MED. PROM.  :    *${Number((t2.montoCorte / t2.lenCorte).toFixed(2)).toLocaleString("es-PE")}*` : "".replace(/false|\r?\n/g, "")}
+    NUEVOS:  ${t2.lenNuevosCorte}  /  ${Number(t2.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
+    RENOVACIONES  :    ${t2.lenRenovacionesCorte} /  ${Number(t2.montoRenovacionesCorte.toFixed(2)).toLocaleString("es-PE")}
+    REINSCRIPCIONES:   ${t2.lenReinscripcionesCorte} /  ${Number(t2.montoReinscripcionesCorte.toFixed(2)).toLocaleString("es-PE")}
+${isDiaActual ? `    T. MED. PROM.  :    *${Number((t2.montoCorte / t2.lenCorte).toFixed(2)).toLocaleString("es-PE")}*` : "".replace(/false|\r?\n/g, "")}
 *${t3.nombreMes} ${t3.anio}  :*    ${t3.lenCorte}  /  ${t3.montoCorte.toLocaleString("es-PE")}
 ${((t3.montoCorte / t3.montoTotal) * 100).toFixed(2)}%
-NUEVOS:  ${t3.lenNuevosCorte}  /  ${Number(t3.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
-RENOVACIONES  :    ${t3.lenRenovacionesCorte}  /  ${Number(t3.montoRenovacionesCorte.toFixed(2)).toLocaleString("es-PE")}
-REINSCRIPCIONES:  ${t3.lenReinscripcionesCorte}  /  ${Number(t3.montoReinscripcionesCorte.toFixed(2)).toLocaleString("es-PE")}
-${isDiaActual ? `T. MED. PROM.  :    *${Number((t3.montoCorte / t3.lenCorte).toFixed(2)).toLocaleString("es-PE")}*` : "".replace(/false|\r?\n/g, "")}
+    NUEVOS:  ${t3.lenNuevosCorte}  /  ${Number(t3.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
+    RENOVACIONES  :    ${t3.lenRenovacionesCorte}  /  ${Number(t3.montoRenovacionesCorte.toFixed(2)).toLocaleString("es-PE")}
+    REINSCRIPCIONES:  ${t3.lenReinscripcionesCorte}  /  ${Number(t3.montoReinscripcionesCorte.toFixed(2)).toLocaleString("es-PE")}
+${isDiaActual ? `    T. MED. PROM.  :    *${Number((t3.montoCorte / t3.lenCorte).toFixed(2)).toLocaleString("es-PE")}*` : "".replace(/false|\r?\n/g, "")}
 `;
   };
 
@@ -349,20 +349,60 @@ ${isDiaActual ? `T. MED. PROM.  :    *${Number((t3.montoCorte / t3.lenCorte).toF
     return `
 *${t1.nombreMes} ${t1.anio}  :    ${t1.lenCorte}  /  ${t1.montoCorte.toLocaleString("es-PE")}*
 ${((t1.montoCorte / t1.montoTotal) * 100).toFixed(2)}%
-NUEVOS:  ${t1.lenNuevosCorte}  /  ${Number(t1.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
-RENOVACIONES  :   ${t1.lenRenovacionesCorte}  /  ${Number(t1.montoRenovacionesCorte.toFixed(2)).toLocaleString("es-PE")}
-REINSCRIPCIONES:  ${t1.lenReinscripcionesCorte}  /  ${Number(t1.montoReinscripcionesCorte.toFixed(2)).toLocaleString("es-PE")}
+    NUEVOS:  ${t1.lenNuevosCorte}  /  ${Number(t1.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
+    RENOVACIONES  :   ${t1.lenRenovacionesCorte}  /  ${Number(t1.montoRenovacionesCorte.toFixed(2)).toLocaleString("es-PE")}
+    REINSCRIPCIONES:  ${t1.lenReinscripcionesCorte}  /  ${Number(t1.montoReinscripcionesCorte.toFixed(2)).toLocaleString("es-PE")}
 *${t2.nombreMes} ${t2.anio}  :    ${t2.lenCorte}  /  ${t2.montoCorte.toLocaleString("es-PE")}*
 ${((t2.montoCorte / t2.montoTotal) * 100).toFixed(2)}%
-NUEVOS:  ${t2.lenNuevosCorte}  /  ${Number(t2.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
-RENOVACIONES  :  ${t2.lenRenovacionesCorte}  /  ${Number(t2.montoRenovacionesCorte.toFixed(2)).toLocaleString("es-PE")}
-REINSCRIPCIONES  :    ${t2.lenReinscripcionesCorte}  /  ${Number(t2.montoReinscripcionesCorte.toFixed(2)).toLocaleString("es-PE")}
+    NUEVOS:  ${t2.lenNuevosCorte}  /  ${Number(t2.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
+    RENOVACIONES  :  ${t2.lenRenovacionesCorte}  /  ${Number(t2.montoRenovacionesCorte.toFixed(2)).toLocaleString("es-PE")}
+    REINSCRIPCIONES  :    ${t2.lenReinscripcionesCorte}  /  ${Number(t2.montoReinscripcionesCorte.toFixed(2)).toLocaleString("es-PE")}
 *${t3.nombreMes} ${t3.anio}  :    ${t3.lenCorte}  /  ${t3.montoCorte.toLocaleString("es-PE")}*
 ${((t3.montoCorte / t3.montoTotal) * 100).toFixed(2)}%
-NUEVOS:  ${t3.lenNuevosCorte}  /  ${Number(t3.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
-RENOVACIONES  :  ${t3.lenRenovacionesCorte}  /  ${Number(t3.montoRenovacionesCorte.toFixed(2)).toLocaleString("es-PE")}
-REINSCRIPCIONES:  ${t3.lenReinscripcionesCorte}  /  ${Number(t3.montoReinscripcionesCorte.toFixed(2)).toLocaleString("es-PE")}`;
+    NUEVOS:  ${t3.lenNuevosCorte}  /  ${Number(t3.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
+    RENOVACIONES  :  ${t3.lenRenovacionesCorte}  /  ${Number(t3.montoRenovacionesCorte.toFixed(2)).toLocaleString("es-PE")}
+    REINSCRIPCIONES:  ${t3.lenReinscripcionesCorte}  /  ${Number(t3.montoReinscripcionesCorte.toFixed(2)).toLocaleString("es-PE")}`;
   };
+  const lll = agruparxPgm(linea.dataFechaCorte_.data).map((m) => {
+    return {
+      procedencia: {
+        reno: {
+          monto: m.data
+            .filter((d) => d.tb_ventum.id_origen === 691)
+            .reduce((a, b) => a + b.tarifa_monto, 0),
+          len: m.data.filter((d) => d.tb_ventum.id_origen === 691).length,
+          data: m.data.filter((d) => d.tb_ventum.id_origen === 691),
+        },
+        reins: {
+          monto: m.data
+            .filter((d) => d.tb_ventum.id_origen === 692)
+            .reduce((a, b) => a + b.tarifa_monto, 0),
+          len: m.data.filter((d) => d.tb_ventum.id_origen === 692).length,
+          data: m.data.filter((d) => d.tb_ventum.id_origen === 692),
+        },
+        nuevos: {
+          monto: m.data
+            .filter(
+              (d) =>
+                d.tb_ventum.id_origen !== 691 && d.tb_ventum.id_origen !== 692,
+            )
+            .reduce((a, b) => a + b.tarifa_monto, 0),
+          len: m.data.filter(
+            (d) =>
+              d.tb_ventum.id_origen !== 691 && d.tb_ventum.id_origen !== 692,
+          ).length,
+          data: m.data.filter(
+            (d) =>
+              d.tb_ventum.id_origen !== 691 && d.tb_ventum.id_origen !== 692,
+          ),
+        },
+      },
+      id_pgm: m.id_pgm,
+      orden: m.orden,
+      monto_total: m.monto_total,
+      data: m.data,
+    };
+  });
   const mensaje = `
 *VENTAS / COMPARATIVO*
 *CUOTA ${NOMBRES_MESES.find((e) => e.value === MesHoy).label}: ${getQuotaParaMes(MesHoy, anioHoy).meta.toLocaleString("es-PE")}*
@@ -379,27 +419,31 @@ REINSCRIPCIONES:  ${t3.lenReinscripcionesCorte}  /  ${Number(t3.montoReinscripci
     ${agruparxVendedor(linea.dataFechaCorte_.data)
       .map(
         ({ id_empl, monto_total, data }) =>
-          `${data[0].tb_ventum.tb_empleado.nombres_apellidos_empl.split(" ")[0]}  :   ${data.length}  /  ${monto_total.toLocaleString("es-PE")}  /  ${((data.length / agruparxVendedor(linea.dataFechaCorte_.data).reduce((a, b) => a + b.data.length, 0)) * 100).toFixed(2)}%`,
+          `${data[0].tb_ventum.tb_empleado.nombres_apellidos_empl.split(" ")[0]}  :   ${data.length}  /  ${monto_total.toLocaleString("es-PE")}  /  
+    ${((data.length / agruparxVendedor(linea.dataFechaCorte_.data).reduce((a, b) => a + b.data.length, 0)) * 100).toFixed(2)}%`,
       )
       .join("\n    ")}
 
 *3. VENTAS AL ${nombreDelActualDia.toLocaleUpperCase()} ${DiaHoy}*
 ${renderTop3(mesesActualesxDiaInicioYDiaActual, true)}
 *${mesActual.nombreMes} ${mesActual.anio}  :   ${mesActual.lenCorte}  /  ${mesActual.montoCorte.toLocaleString("es-PE")}*
-NUEVOS:  ${mesActual.lenNuevosFechaCorte}  /  ${Number(mesActual.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
-RENOVACIONES  :  ${mesActual.lenRenovacionesCorte}  /  ${Number(mesActual.montoRenovacionesCorte.toFixed(2)).toLocaleString("es-PE")}
-REINSCRIPCIONES:  ${mesActual.lenReinscripcionesCorte}  /  ${Number(mesActual.montoReinscripcionesCorte.toFixed(2)).toLocaleString("es-PE")}
+    NUEVOS:  ${mesActual.lenNuevosFechaCorte}  /  ${Number(mesActual.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
+    RENOVACIONES  :  ${mesActual.lenRenovacionesCorte}  /  ${Number(mesActual.montoRenovacionesCorte.toFixed(2)).toLocaleString("es-PE")}
+    REINSCRIPCIONES:  ${mesActual.lenReinscripcionesCorte}  /  ${Number(mesActual.montoReinscripcionesCorte.toFixed(2)).toLocaleString("es-PE")}
 *${((mesActual.montoCorte / mesActual.montoTotal) * 100).toFixed(2)}%*
-*T. MED. PROM.  :    ${Number((mesActual.montoCorte / mesActual.lenCorte).toFixed(2)).toLocaleString("es-PE")}*
+     *T. MED. PROM.  :    ${Number((mesActual.montoCorte / mesActual.lenCorte).toFixed(2)).toLocaleString("es-PE")}*
     
-    ${agruparxPgm(linea.dataFechaCorte_.data)
+    ${lll
       .map(
-        ({ id_empl, monto_total, data }) =>
+        ({ id_empl, monto_total, data, procedencia }) =>
           `*${programasIDS.find((f) => f.value === data[0].id_pgm).label}  :*   ${data.length}  /  ${monto_total.toLocaleString("es-PE")}
     ${Number((monto_total / mesActual.montoCorte) * 100)
       .toFixed(2)
       .toLocaleString("es-PE")}%
-    T. MED.: *${Number((monto_total / data.length).toFixed(2)).toLocaleString("es-PE")}*`,
+      NUEVOS:  ${procedencia.nuevos.len}  /  ${Number(procedencia.nuevos.monto.toFixed(2)).toLocaleString("es-PE")}
+      RENOVACIONES:  ${procedencia.reno.len}  /  ${Number(procedencia.reno.monto.toFixed(2)).toLocaleString("es-PE")}
+      REINSCRIPCIONES:  ${procedencia.reins.len}  /  ${Number(procedencia.reins.monto.toFixed(2)).toLocaleString("es-PE")}
+      T. MED.: *${Number((monto_total / data.length).toFixed(2)).toLocaleString("es-PE")}*`,
       )
       .join("\n    ")}
 
