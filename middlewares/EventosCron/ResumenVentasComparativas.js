@@ -1,5 +1,9 @@
 const { Op, Sequelize } = require("sequelize");
-const { Venta, detalleVenta_membresias } = require("../../models/Venta");
+const {
+  Venta,
+  detalleVenta_membresias,
+  detalle_cambioPrograma,
+} = require("../../models/Venta");
 const { enviarWspUsuario } = require("../../helpers/enviarWspUsuario");
 const { Cliente, Empleado } = require("../../models/Usuarios");
 const { programasIDS, generosIDS } = require("../../types/types");
@@ -39,28 +43,32 @@ const enviarReporteVentas = async () => {
   console.log("aaa");
 
   const ventas = await obtenerVentasxFecha();
-  const sociosActivos = await obtenerSociosActivos();
+  const sociosSeguimiento = await obtenerSociosActivos();
+  const sociosActivos = sociosSeguimiento.filter((f) => {
+    const fecha = new Date(f.fecha_vencimiento);
+    const fechaActual = new Date(
+      `${anio}-${mes.toString().padStart(2, "0")}-${dia.toString().padStart(2, "0")}T12:00:00.000Z`,
+    );
+    return fecha > fechaActual;
+  });
+  const sociosInactivos = sociosSeguimiento.filter((f) => {
+    const fecha = new Date(f.fecha_vencimiento);
+    const fechaActual = new Date(
+      `${anio}-${mes.toString().padStart(2, "0")}-${dia.toString().padStart(2, "0")}T12:00:00.000Z`,
+    );
+    const mesActualPrimero = new Date(
+      `${anio}-${mes.toString().padStart(2, "0")}-01T12:00:00.000Z`,
+    );
+    return fecha <= fechaActual && fecha >= mesActualPrimero;
+  });
   const linea = lineaPorMes(ventas, mes, anio, 1, dia);
   const ticketMedio = {
     dataLen: linea.dataFechaCorte_.data.length,
     sumaMontoData: linea.montoPorFechaCorte,
   };
-  console.log({ linea: JSON.stringify(linea, null, 2) });
-  /*
-  
-  *2) CONTRATO S/ FIRMAR*: 
-   ${agruparxNoFirmadosXpgm(linea.dataFechaCorte_.data)
-     .map(
-       ({ id_empl, monto_total, data }) =>
-         `${programasIDS.find((f) => f.value === data[0].id_pgm).label}: ${data.length}`,
-     )
-     .join("\n   ")}
-   *TOTAL: ${agruparxNoFirmados(linea.dataFechaCorte_.data).length}*
-
-  */
   const mensaje = `
-  *MARKETING / ANALISIS*
-
+ *MARKETING / ANALISIS*
+ 
   *1) SOCIOS VIGENTES: ${agruparxUltimaPgm(sociosActivos).reduce((a, b) => a + b.data.length, 0)}*
    ${agruparxUltimaPgm(sociosActivos)
      .map(
@@ -68,8 +76,17 @@ const enviarReporteVentas = async () => {
          `*${programasIDS.find((f) => f.value === ultimoPgm)?.label}  :*    ${data.length}  /  ${((data.length / agruparxUltimaPgm(sociosActivos).reduce((a, b) => a + b.data.length, 0)) * 100).toFixed(2)}%`,
      )
      .join("\n   ")}
+     
+  *2) CHURN: ${agruparxUltimaPgm(sociosInactivos).reduce((a, b) => a + b.data.length, 0)}*
+   ${agruparxUltimaPgm(sociosInactivos)
+     .map(
+       ({ ultimoPgm, data }) =>
+         `*${programasIDS.find((f) => f.value === ultimoPgm)?.label}  :*    ${data.length}  /  ${((data.length / agruparxUltimaPgm(sociosInactivos).reduce((a, b) => a + b.data.length, 0)) * 100).toFixed(2)}%`,
+     )
+     .join("\n   ")}
 
-  *2) RANGOS EDADES*:
+
+  *4) RANGOS EDADES*:
    ${agruparxPgm(linea.dataFechaCorte_.data)
      .map(
        ({ id_empl, monto_total, data }) =>
@@ -100,7 +117,7 @@ const enviarReporteVentas = async () => {
          }`,
      )
      .join("\n    ")}
-  *3) RANGO EDADES / % GENERO*:
+  *5) RANGO EDADES / % GENERO*:
      ${
        agruparxEdad(linea.dataFechaCorte_.data)
          .sort((a, b) => b.monto_total - a.monto_total)
@@ -147,7 +164,7 @@ const enviarReporteVentas = async () => {
                     `,
          )[2]
      }
-  *4) PROGRAMA / % GENERO*:
+  *6) PROGRAMA / % GENERO*:
      ${agruparxPgm(linea.dataFechaCorte_.data)
        .map(
          (
@@ -163,7 +180,6 @@ const enviarReporteVentas = async () => {
        )
        .join("\n    ")}
    `;
-  console.log({ mensaje });
   const idsUsers = [35, 31, 30, 8, 22];
   await enviarWspUsuario(
     mensaje,
@@ -198,6 +214,16 @@ const obtenerSociosActivos = async () => {
               as: "venta",
               include: [
                 {
+                  model: detalle_cambioPrograma,
+                  as: "cambio_programa",
+                  include: [
+                    {
+                      model: ProgramaTraining,
+                      as: "pgm",
+                    },
+                  ],
+                },
+                {
                   model: Venta,
                   attributes: ["id", "id_cli", "id_origen", "fecha_venta"],
                   required: true,
@@ -208,6 +234,10 @@ const obtenerSociosActivos = async () => {
                 {
                   model: ProgramaTraining,
                   attributes: ["name_pgm"],
+                },
+                {
+                  model: SemanasTraining,
+                  attributes: ["semanas_st"],
                 },
               ],
             },
@@ -245,13 +275,8 @@ const obtenerSociosActivos = async () => {
         fecha_vencimiento: ultimaMembresia.fecha_vencimiento,
       };
     });
-    return dataSeguimiento2.filter((f) => {
-      const fecha = new Date(f.fecha_vencimiento);
-      const fechaActual = new Date(
-        `${anio}-${mes.toString().padStart(2, "0")}-${dia.toString().padStart(2, "0")}T12:00:00.000Z`,
-      );
-      return fecha > fechaActual;
-    });
+    console.log({ dataSeguimiento2 });
+    return dataSeguimiento2;
   } catch (error) {
     console.log(error);
   }
@@ -563,6 +588,29 @@ const agruparxNoFirmadosXpgm = (data = []) => {
     }, {}),
   ).sort((a, b) => a.orden - b.orden);
 };
+const agruparxNoFirmadosXidEmpl = (data = []) => {
+  const dataSF = data.filter((f) => f.firma_cli === null);
+  const agrupados = Object.values(
+    dataSF.reduce((acc, item) => {
+      const id_empl = item.tb_ventum.id_empl;
+
+      if (!acc[id_empl]) {
+        acc[id_empl] = {
+          id_empl: id_empl,
+          monto_total: 0,
+          data: [],
+        };
+      }
+
+      acc[id_empl].monto_total += item.tarifa_monto;
+      acc[id_empl].data.push(item);
+
+      return acc;
+    }, {}),
+  );
+  console.log({ agrupados: JSON.stringify(agrupados, null, 2) });
+  return agrupados;
+};
 function calcularEdad(fechaNacimiento, fechaReferencia = new Date()) {
   const nacimiento = new Date(fechaNacimiento);
   const referencia = new Date(fechaReferencia);
@@ -579,4 +627,6 @@ function calcularEdad(fechaNacimiento, fechaReferencia = new Date()) {
 }
 module.exports = {
   enviarReporteVentas,
+  agruparxNoFirmados,
+  agruparxNoFirmadosXidEmpl,
 };

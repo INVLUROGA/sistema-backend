@@ -11,7 +11,7 @@ const Lead = bizSdk.Lead;
 
 const FacturasMeta = async (
   fechaAntes = "2026-07-11",
-  fechaDespues = "2026-07-12",
+  fechaDespues = "2026-07-15",
 ) => {
   const AD_ACCOUNT_ID = env.AD_ACCOUNT_ID_META;
   const TOKEN = accessToken;

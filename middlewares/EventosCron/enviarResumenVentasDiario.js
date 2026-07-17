@@ -9,6 +9,10 @@ const {
 } = require("../../models/ProgramaTraining");
 const { ImagePT } = require("../../models/Image");
 const { Seguimiento } = require("../../models/Seguimientos");
+const {
+  agruparxNoFirmados,
+  agruparxNoFirmadosXidEmpl,
+} = require("./ResumenVentasComparativas");
 function obtenerMesesHasta(fechaInicio = "2024-09") {
   const [anioFin, mesFin] = fechaInicio.split("-").map(Number);
 
@@ -406,7 +410,7 @@ ${((t3.montoCorte / t3.montoTotal) * 100).toFixed(2)}%
   const mensaje = `
 *VENTAS / COMPARATIVO*
 *CUOTA ${NOMBRES_MESES.find((e) => e.value === MesHoy).label}: ${getQuotaParaMes(MesHoy, anioHoy).meta.toLocaleString("es-PE")}*
- 
+
 *1. SOCIOS VIGENTES: ${agruparxUltimaPgm(sociosActivos).reduce((a, b) => a + b.data.length, 0)}*
     ${agruparxUltimaPgm(sociosActivos)
       .map(
@@ -415,7 +419,15 @@ ${((t3.montoCorte / t3.montoTotal) * 100).toFixed(2)}%
       )
       .join("\n    ")}
 
-*2. ASESORES*:
+*2. CONTRATO S/ FIRMAR: ${agruparxNoFirmados(linea.dataFechaCorte_.data).length}*
+    ${agruparxNoFirmadosXidEmpl(linea.dataFechaCorte_.data)
+      .map(
+        ({ id_empl, monto_total, data }) =>
+          `${data[0].tb_ventum.tb_empleado.nombres_apellidos_empl.split(" ")[0]}: ${data.length}`,
+      )
+      .join("\n    ")}
+
+*3. ASESORES*:
     ${agruparxVendedor(linea.dataFechaCorte_.data)
       .map(
         ({ id_empl, monto_total, data }) =>
@@ -424,7 +436,7 @@ ${((t3.montoCorte / t3.montoTotal) * 100).toFixed(2)}%
       )
       .join("\n    ")}
 
-*3. VENTAS AL ${nombreDelActualDia.toLocaleUpperCase()} ${DiaHoy}*
+*4. VENTAS AL ${nombreDelActualDia.toLocaleUpperCase()} ${DiaHoy}*
 ${renderTop3(mesesActualesxDiaInicioYDiaActual, true)}
 *${mesActual.nombreMes} ${mesActual.anio}  :   ${mesActual.lenCorte}  /  ${mesActual.montoCorte.toLocaleString("es-PE")}*
     NUEVOS:  ${mesActual.lenNuevosFechaCorte}  /  ${Number(mesActual.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
@@ -448,7 +460,7 @@ ${renderTop3(mesesActualesxDiaInicioYDiaActual, true)}
       .join("\n    ")}
 
 
-*4. VENTAS AL ${nombreDelActualDiaMas3Dias.toLocaleUpperCase()} ${DiaHoyMas3Dias}*
+*5. VENTAS AL ${nombreDelActualDiaMas3Dias.toLocaleUpperCase()} ${DiaHoyMas3Dias}*
 ${renderTop3_1(mesesActualesxDiaInicioYDiaActualmas3Dias, false)}`;
   const idsUsers = [35, 31, 30, 8, 22];
   await enviarWspUsuario(

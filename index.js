@@ -68,8 +68,8 @@ cron.schedule("* * * * *", () => {
 cron.schedule("0 8 * * *", () => {
   registrarAdsDiario();
 });
-// 9am + 5horas
-cron.schedule("0 14 * * *", () => {
+// 7am + 5horas
+cron.schedule("0 12 * * *", () => {
   enviarResumenVentasDiario();
 });
 // 3pm + 5horas
@@ -79,8 +79,8 @@ cron.schedule("0 20 * * *", () => {
 // 10:30pm + 5horas
 cron.schedule("30 3 * * *", () => {
   enviarResumenVentasDiario();
-  enviarResumenVentasDigitalDiaria();
   enviarReporteVentas();
+  enviarResumenVentasDigitalDiaria();
   FacturasMeta();
 });
 const fileServer = express.static;
