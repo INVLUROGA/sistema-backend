@@ -1103,21 +1103,6 @@ const seccionGET = async (req = request, res = response) => {
           ],
         },
         {
-          key: "reporte-gastos",
-          label: "Reporte Gasto",
-          icon: "uil-home-alt",
-          url: "/reportes-admin",
-          children: [
-            {
-              key: "flujo-caja-aldair",
-              label: "Flujo de caja Aldair",
-              isTitle: false,
-              icon: "uil-calender",
-              url: "/reporte-admin/flujo-caja-aldair",
-            },
-          ],
-        },
-        {
           key: "marketing",
           label: "Marketing",
           icon: "uil-home-alt",
