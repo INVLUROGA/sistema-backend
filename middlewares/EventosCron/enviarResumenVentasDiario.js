@@ -1,5 +1,5 @@
 const { Op, Sequelize } = require("sequelize");
-const { Venta, detalleVenta_membresias } = require("../../models/Venta");
+const { Venta, detalleVenta_membresias, detalle_cambioPrograma } = require("../../models/Venta");
 const { enviarWspUsuario } = require("../../helpers/enviarWspUsuario");
 const { programasIDS } = require("../../types/types");
 const { Cliente, Empleado } = require("../../models/Usuarios");
@@ -136,7 +136,8 @@ const hoy = new Date();
 const anioHoy = hoy.getUTCFullYear();
 const mesHoy = hoy.getUTCMonth() + 1; // 1-12
 const dia = hoy.getUTCDate();
-
+const anio = anioHoy;
+const mes = mesHoy;
 const enviarResumenVentasDiario = async () => {
   const hora = hoy.getHours();
   const fechaHoyMas3Dias = new Date(hoy);
@@ -146,7 +147,24 @@ const enviarResumenVentasDiario = async () => {
     0,
   ).getUTCDate();
   const DiaHoy = hoy.getUTCDate();
-  const sociosActivos = await obtenerSociosActivos();
+  const sociosSeguimiento = await obtenerSociosActivos();
+  const sociosActivos = sociosSeguimiento.filter((f) => {
+    const fecha = new Date(f.fecha_vencimiento);
+    const fechaActual = new Date(
+      `${anio}-${mes.toString().padStart(2, "0")}-${dia.toString().padStart(2, "0")}T12:00:00.000Z`,
+    );
+    return fecha > fechaActual;
+  });
+  const sociosInactivos = sociosSeguimiento.filter((f) => {
+    const fecha = new Date(f.fecha_vencimiento);
+    const fechaActual = new Date(
+      `${anio}-${mes.toString().padStart(2, "0")}-${dia.toString().padStart(2, "0")}T12:00:00.000Z`,
+    );
+    const mesActualPrimero = new Date(
+      `${anio}-${mes.toString().padStart(2, "0")}-01T12:00:00.000Z`,
+    );
+    return fecha <= fechaActual && fecha >= mesActualPrimero;
+  });
   if (DiaHoy + 3 > ultimoDiasDelMesActual) {
     fechaHoyMas3Dias.setDate(ultimoDiasDelMesActual);
   } else {
@@ -436,7 +454,15 @@ ${((t3.montoCorte / t3.montoTotal) * 100).toFixed(2)}%
       )
       .join("\n    ")}
 
-*4. VENTAS AL ${nombreDelActualDia.toLocaleUpperCase()} ${DiaHoy}*
+*4. CHURN: ${agruparxUltimaPgm(sociosInactivos).reduce((a, b) => a + b.data.length, 0)}*
+    ${agruparxUltimaPgm(sociosInactivos)
+      .map(
+        ({ ultimoPgm, data }) =>
+          `*${programasIDS.find((f) => f.value === ultimoPgm)?.label}  :*    ${data.length}  /  ${((data.length / agruparxUltimaPgm(sociosInactivos).reduce((a, b) => a + b.data.length, 0)) * 100).toFixed(2)}%`,
+      )
+      .join("\n    ")}
+
+*5. VENTAS AL ${nombreDelActualDia.toLocaleUpperCase()} ${DiaHoy}*
 ${renderTop3(mesesActualesxDiaInicioYDiaActual, true)}
 *${mesActual.nombreMes} ${mesActual.anio}  :   ${mesActual.lenCorte}  /  ${mesActual.montoCorte.toLocaleString("es-PE")}*
     NUEVOS:  ${mesActual.lenNuevosFechaCorte}  /  ${Number(mesActual.montoNuevosCorte.toFixed(2)).toLocaleString("es-PE")}
@@ -460,7 +486,7 @@ ${renderTop3(mesesActualesxDiaInicioYDiaActual, true)}
       .join("\n    ")}
 
 
-*5. VENTAS AL ${nombreDelActualDiaMas3Dias.toLocaleUpperCase()} ${DiaHoyMas3Dias}*
+*6. VENTAS AL ${nombreDelActualDiaMas3Dias.toLocaleUpperCase()} ${DiaHoyMas3Dias}*
 ${renderTop3_1(mesesActualesxDiaInicioYDiaActualmas3Dias, false)}`;
   const idsUsers = [35, 31, 30, 8, 22];
   await enviarWspUsuario(
@@ -631,6 +657,25 @@ const agruparPorMes = (arr = []) => {
   return resu;
 };
 
+const agruparxUltimaPgm = (data = []) => {
+  return Object.values(
+    data.reduce((acc, item) => {
+      const ultimoPgm = item.ultimoPgm;
+
+      if (!acc[ultimoPgm]) {
+        acc[ultimoPgm] = {
+          ultimoPgm: ultimoPgm,
+          data: [],
+        };
+      }
+
+      acc[ultimoPgm].data.push(item);
+
+      return acc;
+    }, {}),
+  );
+};
+
 const agruparxPgm = (data = []) => {
   return Object.values(
     data.reduce((acc, item) => {
@@ -691,24 +736,6 @@ function calcularEdad(fechaNacimiento, fechaReferencia = new Date()) {
   return edad;
 }
 
-const agruparxUltimaPgm = (data = []) => {
-  return Object.values(
-    data.reduce((acc, item) => {
-      const ultimoPgm = item.ultimoPgm;
-
-      if (!acc[ultimoPgm]) {
-        acc[ultimoPgm] = {
-          ultimoPgm: ultimoPgm,
-          data: [],
-        };
-      }
-
-      acc[ultimoPgm].data.push(item);
-
-      return acc;
-    }, {}),
-  );
-};
 const obtenerSociosActivos = async () => {
   try {
     const dataSeguimiento = await Cliente.findAll({
@@ -735,6 +762,16 @@ const obtenerSociosActivos = async () => {
               as: "venta",
               include: [
                 {
+                  model: detalle_cambioPrograma,
+                  as: "cambio_programa",
+                  include: [
+                    {
+                      model: ProgramaTraining,
+                      as: "pgm",
+                    },
+                  ],
+                },
+                {
                   model: Venta,
                   attributes: ["id", "id_cli", "id_origen", "fecha_venta"],
                   required: true,
@@ -745,6 +782,10 @@ const obtenerSociosActivos = async () => {
                 {
                   model: ProgramaTraining,
                   attributes: ["name_pgm"],
+                },
+                {
+                  model: SemanasTraining,
+                  attributes: ["semanas_st"],
                 },
               ],
             },
@@ -782,13 +823,8 @@ const obtenerSociosActivos = async () => {
         fecha_vencimiento: ultimaMembresia.fecha_vencimiento,
       };
     });
-    return dataSeguimiento2.filter((f) => {
-      const fecha = new Date(f.fecha_vencimiento);
-      const fechaActual = new Date(
-        `${anioHoy}-${mesHoy.toString().padStart(2, "0")}-${dia.toString().padStart(2, "0")}T12:00:00.000Z`,
-      );
-      return fecha > fechaActual;
-    });
+    console.log({ dataSeguimiento2 });
+    return dataSeguimiento2;
   } catch (error) {
     console.log(error);
   }

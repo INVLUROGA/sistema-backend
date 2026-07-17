@@ -214,6 +214,8 @@ const obtenerDataSeguimientos = async () => {
         flag: true,
       };
     });
+    console.log({dataSeguimiento}, 'SEGUIMIENTOSSSS');
+    
     await Seguimiento.bulkCreate(dataSeguimiento);
     return true;
     // EXTRAER CAMBIO DE MEMBRESIA

@@ -979,43 +979,15 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-home-alt",
           children: [
             {
-              key: "ventas-nuevaVenta",
-              label: "Nueva venta",
-              icon: "uil-calender",
-              url: "/nueva-venta",
-              parentKey: "ventas-nueva-venta",
-            },
-            {
-              key: "gestion-ventas",
-              label: "Ventas",
-              icon: "uil-calender",
-              url: "/gestion-ventas",
-              parentKey: "ventas-gestion-ventas",
-            },
-            {
-              key: "gestion-ventas-transferencias",
-              label: "ventas de transferencias",
-              icon: "uil-calender",
-              url: "/ventas-transferencias",
-              parentKey: "ventas-transferencias",
-            },
-            // {
-            //   key: "ventas-seguimiento",
-            //   label: "Seguimiento",
-            //   icon: "uil-calender",
-            //   url: "/seguimiento",
-            //   parentKey: "ventas-seguimiento",
-            // },
-            {
               key: "ventas-seguimiento",
-              label: "reporte de seguimiento",
+              label: "Capacidad instalada",
               icon: "uil-calender",
               url: "/reporte/reporte-seguimiento",
               parentKey: "ventas-ventas-seguimiento",
             },
             {
               key: "ventas-seguimiento",
-              label: "Seguimiento por mes",
+              label: "Historico de ventas por programa",
               icon: "uil-calender",
               url: "/reporte/seguimiento-x-mes",
               parentKey: "ventas-seguimiento-x-mes",
@@ -1131,11 +1103,33 @@ const seccionGET = async (req = request, res = response) => {
           ],
         },
         {
+          key: "reporte-gastos",
+          label: "Reporte Gasto",
+          icon: "uil-home-alt",
+          url: "/reportes-admin",
+          children: [
+            {
+              key: "flujo-caja-aldair",
+              label: "Flujo de caja Aldair",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/reporte-admin/flujo-caja-aldair",
+            },
+          ],
+        },
+        {
           key: "marketing",
           label: "Marketing",
           icon: "uil-home-alt",
           url: "/marketing",
           children: [
+            {
+              key: "informe-gerencia-oficial",
+              label: "informe gerencia oficial",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/informe-gerencia-oficial",
+            },
             {
               key: "gestion-lead",
               label: "gestion de lead e inversion",
