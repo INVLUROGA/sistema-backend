@@ -78,8 +78,8 @@ cron.schedule("0 20 * * *", () => {
 });
 // 10:30pm + 5horas
 cron.schedule("30 3 * * *", () => {
-  enviarResumenVentasDiario();
   enviarReporteVentas();
+  enviarResumenVentasDiario();
   enviarResumenVentasDigitalDiaria();
   FacturasMeta();
 });

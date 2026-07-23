@@ -15,7 +15,14 @@ const { Cliente } = require("../models/Usuarios");
 const getSeguimientos = async (req = request, res = response) => {
   try {
     const dataSeguimiento = await Cliente.findAll({
-      attributes: ["id_cli", "nombre_cli", "apPaterno_cli", "apMaterno_cli"],
+      attributes: [
+        "id_cli",
+        "nombre_cli",
+        "apPaterno_cli",
+        "apMaterno_cli",
+        "email_cli",
+        "tel_cli",
+      ],
       include: [
         {
           model: Seguimiento,
