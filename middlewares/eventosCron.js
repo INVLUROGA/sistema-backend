@@ -1,234 +1,168 @@
-const { Sequelize, Op, where, fn, col } = require("sequelize");
-const { Cliente, Usuario, Empleado } = require("../models/Usuarios");
-const { Venta } = require("../models/Venta");
-const { enviarMensajesWsp } = require("../config/whatssap-web");
-const dayjs = require("dayjs");
-const utc = require("dayjs/plugin/utc");
-const timezone = require("dayjs/plugin/timezone");
-const isSameOrBefore = require("dayjs/plugin/isSameOrBefore");
-const { AlertasUsuario } = require("../models/Auditoria");
-const { Parametros_3 } = require("../models/Parametros");
-require("dayjs/locale/es");
-dayjs.locale("es");
-dayjs.extend(utc);
-dayjs.extend(timezone);
-dayjs.extend(isSameOrBefore);
-const obtenerCumpleaniosCliente = async () => {
-  try {
-    // Obtener la fecha actual (mes y día)
-    const hoy = new Date();
+/**
+ * =============================================================================
+ * Módulo: Procesamiento de Alertas de Usuario
+ * =============================================================================
+ *
+ * CÓMO AGREGAR UN NUEVO TIPO DE ALERTA (para quien mantenga esto a futuro):
+ * Solo agrega una entrada en `CALCULADORES_DE_INCREMENTO` con el id_tipo_alerta
+ * como clave y una función que reciba una fecha (Date en UTC) y la mute,
+ * avanzándola al momento del siguiente disparo. No hace falta tocar nada más.
+ *
+ * Ejemplos:
+ *   9999: (fecha) => fecha.setUTCHours(fecha.getUTCHours() + 6), // cada 6 horas
+ *   8888: (fecha) => avanzarAlSiguienteDiaValido(fecha, [2, 4]), // Mar y Jue
+ * =============================================================================
+ */
 
-    const mesActual = hoy.getMonth() + 1; // Mes (0-11) → (1-12)
-    const diaActual = hoy.getDate(); // Día del mes (1-31)
+const { Op, sequelize } = require("../models"); // ajustar al path real del proyecto
+const AlertasUsuario = require("../models/AlertasUsuario");
+const Parametros_3 = require("../models/Parametros_3");
+const Usuario = require("../models/Usuario");
+const { enviarMensajesWsp } = require("../services/whatsapp");
 
-    // Consultar clientes que cumplen años hoy
-    const ventas = await Venta.findAll({
-      where: { flag: true, id_empresa: 598 },
-      attributes: [
-        "id",
-        "id_cli",
-        "id_empl",
-        "id_tipoFactura",
-        "numero_transac",
-        "fecha_venta",
-      ],
-      order: [["fecha_venta", "DESC"]],
-      raw: true,
-      include: [
+// ---------------------------------------------------------------------------
+// Constantes: evitan "números mágicos" sueltos en el código
+// ---------------------------------------------------------------------------
+const ESTADO_ALERTA = {
+  ACTIVA: 1,
+  PROCESADA: 0,
+};
+
+const VENTANA_BUSQUEDA_MS = 60_000; // +/- 1 minuto respecto a "ahora"
+
+// ---------------------------------------------------------------------------
+// Helper genérico: avanza una fecha al próximo día de semana permitido.
+// diasValidos: días permitidos, 0=Domingo ... 6=Sábado.
+// Reemplaza los cálculos manuales de "si es viernes +3, si no +1", que eran
+// fáciles de romper al agregar/editar un patrón de días.
+// ---------------------------------------------------------------------------
+const avanzarAlSiguienteDiaValido = (fecha, diasValidos) => {
+  for (let i = 1; i <= 7; i++) {
+    const diaCandidato = (fecha.getUTCDay() + i) % 7;
+    if (diasValidos.includes(diaCandidato)) {
+      fecha.setUTCDate(fecha.getUTCDate() + i);
+      return fecha;
+    }
+  }
+  return fecha; // no debería alcanzarse si diasValidos no está vacío
+};
+
+// ---------------------------------------------------------------------------
+// Mapa de incrementos de fecha por tipo de alerta.
+// Cada función recibe la fecha ORIGINAL de la alerta y la muta in-place.
+// ---------------------------------------------------------------------------
+const CALCULADORES_DE_INCREMENTO = {
+  1563: (fecha) => fecha.setUTCFullYear(fecha.getUTCFullYear() + 1), // Anual
+  1566: (fecha) => fecha.setUTCMonth(fecha.getUTCMonth() + 1), // Mensual
+  1425: (fecha) => fecha.setUTCDate(fecha.getUTCDate() + 7), // Semanal
+  1426: (fecha) => fecha.setUTCDate(fecha.getUTCDate() + 1), // Diario
+  1564: (fecha) => fecha.setUTCMinutes(fecha.getUTCMinutes() + 1), // Cada minuto
+
+  1797: (fecha) => avanzarAlSiguienteDiaValido(fecha, [1, 2, 3, 4, 5]), // Lunes a viernes
+  1798: (fecha) => avanzarAlSiguienteDiaValido(fecha, [1, 2, 3, 4, 5, 6]), // Lunes a sábado
+  1799: (fecha) => avanzarAlSiguienteDiaValido(fecha, [1, 3, 5]), // Lunes, Miércoles, Viernes
+};
+
+/**
+ * Calcula la fecha de la próxima ocurrencia de una alerta.
+ *
+ * IMPORTANTE: se calcula a partir de la fecha ORIGINAL de la alerta
+ * (`fechaBase`), nunca a partir de "ahora". Usar la hora actual como base
+ * (como hacía el código original) provoca que el horario de la alerta se
+ * vaya corriendo (drift) cada vez que el cron se ejecuta con algo de retraso.
+ */
+const calcularProximaFecha = (idTipoAlerta, fechaBase) => {
+  const proximaFecha = new Date(fechaBase);
+  const calcularIncremento = CALCULADORES_DE_INCREMENTO[idTipoAlerta];
+
+  if (!calcularIncremento) {
+    console.warn(
+      `[alertaUsuarioUnica] Tipo de alerta ${idTipoAlerta} sin regla de repetición definida. No se generará la siguiente ocurrencia.`,
+    );
+    return null;
+  }
+
+  calcularIncremento(proximaFecha);
+  return proximaFecha;
+};
+
+/**
+ * Envía la alerta (WhatsApp) a todos los teléfonos del grupo asociado,
+ * evitando duplicados y valores vacíos.
+ */
+const notificarUsuariosDelGrupo = async (alerta) => {
+  const telefonos = alerta.alerta_grupo.flatMap((grupo) =>
+    grupo.parametros_id_2.map((usuario) => usuario.telefono_user),
+  );
+
+  const telefonosUnicos = [...new Set(telefonos.filter(Boolean))];
+
+  await Promise.all(
+    telefonosUnicos.map((telefono) =>
+      enviarMensajesWsp(telefono, alerta.mensaje),
+    ),
+  );
+};
+
+/**
+ * Procesa una única alerta:
+ *  1. Notifica a los usuarios del grupo.
+ *  2. Marca la alerta actual como procesada.
+ *  3. Crea la siguiente ocurrencia (si el tipo de alerta define una regla).
+ *
+ * El paso 2 y 3 van en una transacción: si algo falla al crear la siguiente
+ * ocurrencia, la alerta actual NO queda marcada como procesada "en el aire".
+ */
+const procesarAlerta = async (alerta) => {
+  await notificarUsuariosDelGrupo(alerta);
+
+  const proximaFecha = calcularProximaFecha(
+    alerta.id_tipo_alerta,
+    alerta.fecha,
+  );
+
+  await sequelize.transaction(async (transaction) => {
+    await AlertasUsuario.update(
+      { flag: false, id_estado: ESTADO_ALERTA.PROCESADA },
+      { where: { id: alerta.id }, transaction },
+    );
+
+    if (proximaFecha) {
+      await AlertasUsuario.create(
         {
-          model: Cliente,
-          where: {
-            [Sequelize.Op.and]: [
-              Sequelize.where(
-                Sequelize.fn("MONTH", Sequelize.col("fecha_nacimiento")),
-                mesActual,
-              ),
-              Sequelize.where(
-                Sequelize.fn("DAY", Sequelize.col("fecha_nacimiento")),
-                diaActual,
-              ),
-            ],
-          },
-          attributes: [
-            ["nombre_cli", "nombres_apellidos_cli"],
-            "fecha_nacimiento",
-            "email_cli",
-            "tel_cli",
-            "sexo_cli",
-          ],
+          id_grupo_usuarios: alerta.id_grupo_usuarios,
+          id_tipo_alerta: alerta.id_tipo_alerta,
+          mensaje: alerta.mensaje,
+          fecha: proximaFecha,
+          id_estado: ESTADO_ALERTA.ACTIVA,
+          flag: true,
         },
-      ],
-    });
-    // console.log(ventas);
-    // Creamos un Set para ir guardando los teléfonos únicos
-    const seen = new Set();
-    const cumpleanerosUnicos = [];
-
-    // Recorremos cada venta y sólo añadimos si no lo hemos visto aún
-    ventas.forEach((v) => {
-      const tel = v["tb_cliente.tel_cli"];
-      if (!seen.has(tel)) {
-        seen.add(tel);
-        cumpleanerosUnicos.push({
-          nombres_cli: v["tb_cliente.nombres_apellidos_cli"],
-          fecha_nacimiento: v["tb_cliente.fecha_nacimiento"],
-          email_cli: v["tb_cliente.email_cli"],
-          tel_cli: tel,
-          sexo_cli: v["tb_cliente.sexo_cli"],
-        });
-      }
-    });
-
-    // Ahora enviamos uno a uno sin repetir
-    cumpleanerosUnicos.forEach((c) => {
-      enviarMensajesWsp(
-        c.tel_cli,
-        `
-🎉 ¡FELIZ CUMPLEAÑOS, ${c.nombres_cli}! 👋🎂
-
-En CHANGE - The Slim Studio, estamos felices de celebrar contigo este dia tan especial, por este motivo te regalamos 05 SESIONES CONSECUTIVAS para ti o para quien desees.
-
-Recuerda que estamos aquí para seguir cambiando tu vida. ¡Que tengas un día lleno de salud y energía! ✨
-
-¡Disfruta al máximo tu día! 
-CHANGE - The Slim Studio
-        
-        `,
+        { transaction },
       );
-    });
-    enviarMensajesWsp(
-      933102718,
-      `
-            OBTENIENDO LOS CUMPLEANIOS.... ${cumpleanerosUnicos.length}
-            `,
-    );
-    return cumpleaneros;
-  } catch (error) {
-    console.error("Error al obtener los cumpleanieros:", error);
-    return [];
-  }
-};
-const obtenerCumpleaniosDeEmpleados = async () => {
-  try {
-    const hoy = new Date();
-    const mesActual = hoy.getMonth() + 1;
-    const diaActual = hoy.getDate();
-
-    const empleados = await Empleado.findAll({
-      where: {
-        [Op.and]: [
-          where(fn("MONTH", col("fecha_nacimiento")), mesActual),
-          where(fn("DAY", col("fecha_nacimiento")), diaActual),
-          { flag: true }, // Solo empleados activos
-        ],
-      },
-      attributes: [
-        [
-          fn(
-            "CONCAT",
-            col("nombre_empl"),
-            " ",
-            col("apPaterno_empl"),
-            " ",
-            col("apMaterno_empl"),
-          ),
-          "nombres_completos",
-        ],
-        "fecha_nacimiento",
-        "email_empl",
-        "telefono_empl",
-        "sexo_empl",
-      ],
-    });
-    console.log("aqui es empl", empleados, diaActual, mesActual);
-    const seen = new Set();
-    const cumpleanerosUnicos = [];
-
-    empleados.forEach((e) => {
-      const tel = e.telefono_empl;
-      if (!seen.has(tel) && tel) {
-        seen.add(tel);
-        cumpleanerosUnicos.push({
-          nombres_cli: e.get("nombres_completos"),
-          fecha_nacimiento: new Date(e.fecha_nacimiento).setHours(
-            new Date().getHours() + 5,
-          ),
-          email_cli: e.email_empl,
-          tel_cli: tel,
-          sexo_cli: e.sexo_empl,
-        });
-      }
-    });
-
-    cumpleanerosUnicos.forEach((c) => {
-      enviarMensajesWsp(
-        "120363418215042651@g.us",
-        `
-        🎉 ¡FELIZ CUMPLEAÑOS, ${c.nombres_cli.split(" ")[0]}! 👋🎂
-
-        En CHANGE - The Slim Studio, estamos felices de celebrar contigo este día tan especial.
-
-        ¡Que tengas un día lleno de salud y energía! ✨
-        CHANGE - The Slim Studio
-    `,
-      );
-    });
-
-    enviarMensajesWsp(
-      933102718,
-      `OBTENIENDO LOS CUMPLEAÑOS DE EMPLEADOS.... ${cumpleanerosUnicos.length}`,
-    );
-
-    return cumpleanerosUnicos;
-  } catch (error) {
-    console.error("Error al obtener los cumpleanieros:", error);
-    return [];
-  }
-};
-// Mapa de incrementos de fecha por tipo de alerta
-const TIPO_ALERTA_INCREMENTO = {
-  1563: (fecha) => fecha.setUTCFullYear(fecha.getUTCFullYear() + 1),
-  1566: (fecha) => fecha.setUTCMonth(fecha.getUTCMonth() + 1),
-  1425: (fecha) => fecha.setUTCDate(fecha.getUTCDate() + 7),
-  1426: (fecha) => fecha.setUTCDate(fecha.getUTCDate() + 1),
-  1564: (fecha) => fecha.setUTCMinutes(fecha.getUTCMinutes() + 1),
-  // Lunes a viernes: si es viernes avanza 3 días, si no avanza 1
-  1797: (fecha) => {
-    const dia = fecha.getUTCDay(); // 0=Dom, 6=Sab
-    fecha.setUTCDate(fecha.getUTCDate() + (dia === 5 ? 3 : dia === 6 ? 2 : 1));
-  },
-  // Lunes a sábado: si es sábado avanza 2 días, si no avanza 1
-  1798: (fecha) => {
-    const dia = fecha.getUTCDay();
-    fecha.setUTCDate(fecha.getUTCDate() + (dia === 6 ? 2 : 1));
-  },
-  // Lunes, miércoles y viernes: avanza al siguiente día válido
-  1799: (fecha) => {
-    const dia = fecha.getUTCDay();
-    const incrementos = { 1: 2, 3: 2, 5: 3 }; // Lun+2, Mié+2, Vie+3
-    fecha.setUTCDate(fecha.getUTCDate() + (incrementos[dia] ?? 1));
-  },
+    }
+  });
 };
 
-const calcularProximaFecha = (idTipoAlerta) => {
-  const hoy = new Date();
-  const incrementar = TIPO_ALERTA_INCREMENTO[idTipoAlerta];
-  if (incrementar) incrementar(hoy);
-  return hoy;
-};
-
+/**
+ * Punto de entrada: busca las alertas activas cuya fecha cae dentro de la
+ * ventana de +/- 1 minuto respecto a "ahora", y las procesa.
+ *
+ * Cada alerta se procesa de forma independiente (Promise.allSettled): si una
+ * falla (ej. WhatsApp caído), no bloquea ni cancela el resto.
+ */
 const alertaUsuarioUnica = async () => {
-  try {
-    console.log('ALERTAS INICIO');
-    const now = new Date();
-    const haceUnMin = new Date(now.getTime() - 60_000);
-    const masUnMin = new Date(now.getTime() + 60_000);
+  console.log("ALERTAS INICIO");
 
+  const ahora = new Date();
+  const desde = new Date(ahora.getTime() - VENTANA_BUSQUEDA_MS);
+  const hasta = new Date(ahora.getTime() + VENTANA_BUSQUEDA_MS);
+
+  try {
     const alertas = await AlertasUsuario.findAll({
       where: {
         flag: true,
-        id_estado: 1,
-        fecha: { [Op.between]: [haceUnMin, masUnMin] },
+        id_estado: ESTADO_ALERTA.ACTIVA,
+        fecha: { [Op.between]: [desde, hasta] },
       },
       include: [
         {
@@ -239,45 +173,28 @@ const alertaUsuarioUnica = async () => {
       ],
     });
 
-    if (!alertas.length) return;
-
-    for (const alerta of alertas.map((a) => a.toJSON())) {
-      // Enviar mensajes a todos los usuarios del grupo
-      const telefonos = alerta.alerta_grupo.flatMap((grupo) =>
-        grupo.parametros_id_2.map((usuario) => usuario.telefono_user)
-      );
-
-      await Promise.all(
-        telefonos.map((telefono) =>
-          enviarMensajesWsp(telefono, alerta.mensaje)
-        )
-      );
-
-      // Desactivar la alerta actual
-      await AlertasUsuario.update(
-        { flag: false, id_estado: 0 },
-        { where: { id: alerta.id } }
-      );
-
-      // Crear la siguiente alerta según tipo
-      const proximaFecha = calcularProximaFecha(alerta.id_tipo_alerta);
-      await AlertasUsuario.create({
-        id_grupo_usuarios: alerta.id_grupo_usuarios,
-        id_tipo_alerta: alerta.id_tipo_alerta,
-        mensaje: alerta.mensaje,
-        fecha: proximaFecha,
-        id_estado: 1,
-        flag: 1,
-      });
+    if (!alertas.length) {
+      console.log("ALERTAS FIN (sin alertas pendientes)");
+      return;
     }
-    console.log('ALERTAS FIN');
-    
+
+    const resultados = await Promise.allSettled(
+      alertas.map((alerta) => procesarAlerta(alerta.toJSON())),
+    );
+
+    resultados.forEach((resultado, index) => {
+      if (resultado.status === "rejected") {
+        console.error(
+          `[alertaUsuarioUnica] Falló el procesamiento de la alerta id=${alertas[index].id}:`,
+          resultado.reason,
+        );
+      }
+    });
+
+    console.log(`ALERTAS FIN (${alertas.length} procesadas)`);
   } catch (error) {
     console.error("[alertaUsuarioUnica]", error);
   }
 };
-module.exports = {
-  alertaUsuarioUnica,
-  obtenerCumpleaniosCliente,
-  obtenerCumpleaniosDeEmpleados,
-};
+
+module.exports = { alertaUsuarioUnica };

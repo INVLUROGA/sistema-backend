@@ -1026,6 +1026,11 @@ const revalidarToken = async (req, res) => {
         path: "/informe-gerencial",
         key: "mod-informe-gerencial",
       },
+      {
+        name: "MARKETING",
+        path: "/marketing",
+        key: "mod-marketing",
+      },
     ];
   }
 
@@ -1050,6 +1055,11 @@ const revalidarToken = async (req, res) => {
         name: "INFORME GERENCIAL",
         path: "/informe-gerencial",
         key: "mod-informe-gerencial",
+      },
+      {
+        name: "MARKETING",
+        path: "/marketing",
+        key: "mod-marketing",
       },
     ];
   }
@@ -1082,15 +1092,6 @@ const revalidarToken = async (req, res) => {
         name: "INFORME GERENCIAL",
         path: "/informe-gerencial",
         key: "mod-informe-gerencial",
-      },
-    ];
-  }
-  if (user.rol_user === 5) {
-    MODULOS_ITEMS = [
-      {
-        name: "CIRCUS",
-        path: "/inventario",
-        key: "mod-inventario",
       },
     ];
   }

@@ -1276,6 +1276,11 @@ const moduleGET = async (req = request, res = response) => {
           path: "/informe-gerencial",
           key: "mod-informe-gerencial",
         },
+        {
+          name: "MARKETING",
+          path: "/marketing",
+          key: "mod-marketing",
+        },
       ];
     }
     if (usuario.rol_user === 3) {

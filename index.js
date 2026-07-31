@@ -5,10 +5,7 @@ const { urlArchivos, urlArchivoLogos } = require("./config/constant");
 const { db } = require("./database/sequelizeConnection.js");
 const { validarJWT } = require("./middlewares/validarJWT.js");
 const cron = require("node-cron");
-const {
-  obtenerCumpleaniosDeEmpleados,
-  alertaUsuarioUnica,
-} = require("./middlewares/eventosCron.js");
+const { alertaUsuarioUnica } = require("./middlewares/eventosCron.js");
 
 //***********************************************/
 //***********DISPOSITIVOS ZKTECO*****************/
@@ -48,14 +45,6 @@ const {
   registrarAdsDiario,
 } = require("./middlewares/EventosCron/registrarAdsDiario.js");
 const { FacturasMeta } = require("./middlewares/Redes/FacturasMeta.js");
-// Programa una tarea para las 9 AM todos los días
-cron.schedule("0 3 1 * *", () => {
-  reactivarAlertasMensuales();
-});
-
-cron.schedule("0 15 * * *", () => {
-  obtenerCumpleaniosDeEmpleados();
-});
 
 // obtenerDataSeguimientos();
 // enviarResumenVentasDigitalDiaria();
@@ -101,13 +90,9 @@ const getConnectionORM = async () => {
 getConnectionORM();
 const allowedOrigins = [
   "https://change-the-slim-studio-sigma.vercel.app",
-  "https://circus-henna.vercel.app",
-  "https://circus-pi.vercel.app",
   "http://localhost:5173",
   "http://localhost:5174",
   "http://localhost:5175",
-  "https://arrendamiento-tau.vercel.app",
-  "https://changeanalytics.vercel.app",
 ];
 //CORS
 app.use(
