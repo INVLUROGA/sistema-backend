@@ -14,12 +14,11 @@
  * =============================================================================
  */
 
-const { Op, sequelize } = require("../models"); // ajustar al path real del proyecto
-const AlertasUsuario = require("../models/AlertasUsuario");
-const Parametros_3 = require("../models/Parametros_3");
-const Usuario = require("../models/Usuario");
-const { enviarMensajesWsp } = require("../services/whatsapp");
-
+const { Sequelize, Op } = require("sequelize");
+const { AlertasUsuario } = require("../models/Auditoria");
+const { Parametros_3 } = require("../models/Parametros");
+const { Usuario } = require("../models/Usuarios");
+const { enviarMensajesWsp } = require("../config/whatssap-web");
 // ---------------------------------------------------------------------------
 // Constantes: evitan "números mágicos" sueltos en el código
 // ---------------------------------------------------------------------------
@@ -121,7 +120,7 @@ const procesarAlerta = async (alerta) => {
     alerta.fecha,
   );
 
-  await sequelize.transaction(async (transaction) => {
+  await Sequelize.transaction(async (transaction) => {
     await AlertasUsuario.update(
       { flag: false, id_estado: ESTADO_ALERTA.PROCESADA },
       { where: { id: alerta.id }, transaction },
