@@ -14,7 +14,7 @@ const router = Router();
  */
 router.post("/:id_empresa", postigv);
 router.get("/id/:id", getigv);
-router.get("/:id_empresa", getIgvxEmpresa);
+router.get("/empresa/:id_empresa", getIgvxEmpresa);
 router.put("/id/:id", updateIgv);
 router.put("/delete/id/:id", deleteIgv);
 // router.post("");

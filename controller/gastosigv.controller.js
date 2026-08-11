@@ -10,7 +10,11 @@ const { GastosIgv } = require("../models/GastosFyV");
 const postigv = async (req = request, res = response) => {
   try {
     const { id_empresa } = req.params;
-    const gastoIgv = new GastosIgv({ ...req.body, id_empresa });
+    const gastoIgv = new GastosIgv({
+      ...req.body,
+      id_empresa,
+      fecha_comprobante: new Date(req.body.fec_comprobante),
+    });
     await gastoIgv.save();
     res.status(200).json(gastoIgv);
   } catch (error) {
@@ -31,8 +35,8 @@ const getIgvxEmpresa = async (req = request, res = response) => {
         id_empresa: id_empresa,
       },
       order: [["id", "DESC"]],
-    //   include: [
-    //   ],
+      //   include: [
+      //   ],
     });
 
     res.status(200).json({
