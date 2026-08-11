@@ -246,6 +246,13 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           children: [
             {
+              key: "gestion-igv",
+              label: "Gestion igv",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-igv",
+            },
+            {
               key: "gestion-calculo-igv",
               label: "Calculo igv",
               isTitle: false,
