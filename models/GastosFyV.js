@@ -168,6 +168,48 @@ const Gastos = db.define("tb_egresos", {
   },
 });
 
+const GastosIgv = db.define("tb_egresos_igv", {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+    allowNull: false,
+  },
+  moneda: {
+    type: DataTypes.STRING(10),
+  },
+  monto: {
+    type: DataTypes.DECIMAL(10, 2),
+  },
+  id_tipo_comprobante: {
+    type: DataTypes.INTEGER,
+  },
+  n_comprabante: {
+    type: DataTypes.STRING(150),
+  },
+  fec_registro: {
+    type: DataTypes.DATE,
+  },
+  fec_comprobante: {
+    type: DataTypes.STRING(12),
+  },
+  id_empresa: {
+    type: DataTypes.INTEGER,
+  },
+  id_prov: {
+    type: DataTypes.INTEGER,
+  },
+  fecha_comprobante: {
+    type: DataTypes.DATE,
+  },
+  id_facturado_por: {
+    type: DataTypes.INTEGER,
+  },
+  flag: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+});
 Gastos.hasOne(Parametros, {
   foreignKey: "id_param",
   sourceKey: "id_estado_gasto",
@@ -235,7 +277,16 @@ const actualizarLongitudDelCampo = async () => {
     await db.close();
   }
 };
-
+GastosIgv.sync()
+  .then(() => {
+    console.log("La tabla GastosIgv ha sido creada o ya existe.");
+  })
+  .catch((error) => {
+    console.error(
+      "Error al sincronizar el modelo con la base de datos:",
+      error,
+    );
+  });
 ParametroGrupo.sync()
   .then(() => {
     console.log("La tabla ParametroGrupo ha sido creada o ya existe.");
@@ -274,4 +325,5 @@ module.exports = {
   ParametroGastos,
   Gastos,
   ParametroGrupo,
+  GastosIgv,
 };

@@ -143,6 +143,7 @@ app.use("/api/fils", require("./routes/file.router.js"));
 //**************Rutas***** */
 //************************ */
 // app.use('/api/colaborador', require('./routes/colaborador.router.js'))
+app.use("/api/gastosigv", require("./routes/gastosigv.js"));
 app.use("/api/seguimiento", require("./routes/seguimiento.router.js"));
 app.use("/api/movimiento-articulo", require("./routes/kardex.router.js"));
 app.use("/api/articulo", validarJWT, require("./routes/articulo.router.js"));
