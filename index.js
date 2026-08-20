@@ -45,7 +45,6 @@ const {
   registrarAdsDiario,
 } = require("./middlewares/EventosCron/registrarAdsDiario.js");
 const { FacturasMeta } = require("./middlewares/Redes/FacturasMeta.js");
-
 // obtenerDataSeguimientos();
 // enviarResumenVentasDigitalDiaria();
 // obtenerCumpleaniosEmpleadosxDia()

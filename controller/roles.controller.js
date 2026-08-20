@@ -1109,14 +1109,6 @@ const seccionGET = async (req = request, res = response) => {
     if (modulo === "mod-inventario") {
       MENU_ITEMS = [
         {
-          key: "adm-videos-infraestructura",
-          label: "Videos explicativos infraestructura",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/videos-infraestructura",
-        },
-
-        {
           key: "inventario",
           label: "INVENTARIO",
           url: "/inventario",
@@ -1172,28 +1164,6 @@ const seccionGET = async (req = request, res = response) => {
               url: "/generador-fechas-inventario",
             },
           ],
-        },
-
-        {
-          key: "movimiento",
-          label: "Ingresos y Egresos",
-          url: "/movimiento",
-          icon: "uil-calender",
-          children: [
-            {
-              key: "gestion-egresos",
-              label: "Egresos",
-              isTitle: false,
-              icon: "uil-calender",
-              url: "/gestion-egresos",
-            },
-          ],
-        },
-        {
-          label: "TERMINOLOGIAS",
-          isTitle: false,
-          icon: "uil-calender",
-          url: "/configuracion-terminos",
         },
       ];
     }

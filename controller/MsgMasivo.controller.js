@@ -6,7 +6,11 @@ const {
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 const enviarMasivoAlwsp = async () => {
-  const numerosDup = [{ numero: "933102718" }, { numero: "914028922" }];
+  const numerosDup = [
+    { numero: "933102718" },
+    { numero: "986 578 004" },
+    { numero: "914028922" },
+  ];
 
   // Normaliza y deduplica por número
   const numeros = [
@@ -28,18 +32,22 @@ const enviarMasivoAlwsp = async () => {
       console.log({ persona, numero });
 
       try {
-        const imagenResp = await enviarTextConImagenWsp(
+        const imagenResp = await enviarMensajesWsp(
           numero,
-          "https://archivosluroga.blob.core.windows.net/avatar-articulos/julio2026.jpeg",
           `
-🇵🇪 ¡Promoción exclusiva para socios y reinscripciones! 
+GANA SEMANAS DE ENTRENAMIENTO 🎁🔥
 
-*DEL 08 AL 17 DE JULIO*
-Aprovecha nuestra campaña por Fiestas Patrias y entrena todo julio GRATIS al renovar o reinscribirte en un plan de 12 semanas o más.
+Queremos seguir mejorando Change45 y necesitamos conocer tu opinión.
 
- *¡EL MES DE JULIO VA POR NUESTRA CUENTA!* 🇵🇪
+Responde esta breve encuesta de solo 2 preguntas y, si respondes dentro de las próximas 24 horas, participarás en un sorteo para ganar semanas adicionales en tu plan. 
 
-*Pregunta por nuestras promociones*
+📢 Publicaremos a los ganadores este viernes a las 5:00 p. m.
+
+Tu respuesta nos ayudará a construir un Change45 cada vez más efectivo para ti.
+
+¡Gracias por ayudarnos a SEGUIR mejorando! 💪
+
+https://forms.gle/w4fmBzYT7ueqazFM8
 `,
         );
         if (!imagenResp.ok) {
