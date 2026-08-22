@@ -34,10 +34,10 @@ const GetArticulosxEmpresa = async (req = request, res = response) => {
           where: { flag: true },
           required: false,
         },
-        // {
-        //   model: Parametros,
-        //   as: "parametro_marca",
-        // },
+        {
+          model: Parametros,
+          as: "parametro_categoria",
+        },
         {
           model: Parametros_zonas,
           as: "parametro_lugar_encuentro",

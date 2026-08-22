@@ -16,6 +16,7 @@ const getSeguimientos = async (req = request, res = response) => {
   try {
     const dataSeguimiento = await Cliente.findAll({
       attributes: [
+        "uid",
         "id_cli",
         "nombre_cli",
         "apPaterno_cli",

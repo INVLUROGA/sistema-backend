@@ -56,6 +56,10 @@ const obtenerInventario = async (req = request, res = response) => {
           as: "parametro_marca",
         },
         {
+          model: Parametros,
+          as: "parametro_categoria",
+        },
+        {
           model: Parametros_zonas,
           as: "parametro_lugar_encuentro",
           attributes: [

@@ -198,6 +198,7 @@ HisCamArticulos.hasOne(Usuario, {
   foreignKey: "id_user",
   as: "usuario",
 });
+
 // const Kardex_Inventario_Transferencia = db.define("tb_kardex_inventario_transferencia", {
 //   id: {
 //     type: DataTypes.INTEGER,
@@ -256,6 +257,11 @@ Articulos.hasOne(Parametros, {
   foreignKey: "id_param",
   sourceKey: "id_marca",
   as: "parametro_marca",
+});
+Articulos.hasOne(Parametros, {
+  foreignKey: "id_param",
+  sourceKey: "id_categoria",
+  as: "parametro_categoria",
 });
 Articulos.hasOne(Parametros_zonas, {
   foreignKey: "id",
