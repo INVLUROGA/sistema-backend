@@ -5,7 +5,6 @@ const {
   createClienteMF,
   updateClienteMF,
   deleteClienteMF,
-  seedClienteMF,
 } = require("../controller/cliente_mf.controller.js");
 
 const router = Router();
@@ -20,7 +19,5 @@ router.post("/", createClienteMF);
 router.put("/:id", updateClienteMF);
 
 router.put("/delete/:id", deleteClienteMF);
-
-router.post("/seed", seedClienteMF);
 
 module.exports = router;
