@@ -240,6 +240,12 @@ const seccionGET = async (req = request, res = response) => {
     if (modulo === "mod-adm") {
       MENU_ITEMS = [
         {
+          key: "dashboard",
+          label: "Dashboard",
+          url: "/home",
+          icon: "uil-dashboard",
+        },
+        {
           key: "movimiento",
           label: "Ingresos y Egresos",
           url: "/movimiento",
@@ -1169,6 +1175,12 @@ const seccionGET = async (req = request, res = response) => {
     }
     if (modulo === "mod-informe-gerencial") {
       MENU_ITEMS = [
+        {
+          key: "dashboard",
+          label: "Dashboard",
+          url: "/home",
+          icon: "uil-dashboard",
+        },
         {
           //key: "reporte-utilidad-pgm",
           label: "DETALLE REINSCRIPCIONES",
