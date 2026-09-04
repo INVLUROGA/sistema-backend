@@ -29,7 +29,7 @@ const enviarMensajesWsp = async (numberWsp, bodyMsg) => {
 
 const enviarStickerWsp = (numberWsp, sticker) => {
   var data = qs.stringify({
-    token: "xy1mryu3skys910j",
+    token: process.env.TOKEN_ULTRAMSG,
     to: numberWsp,
     sticker: sticker,
   });
@@ -50,7 +50,7 @@ const enviarStickerWsp = (numberWsp, sticker) => {
 
 const enviarImagenWsp = async (numberWsp, image) => {
   const data = qs.stringify({
-    token: "xy1mryu3skys910j",
+    token: process.env.TOKEN_ULTRAMSG,
     to: numberWsp,
     image: image,
   });
@@ -76,7 +76,7 @@ const enviarImagenWsp = async (numberWsp, image) => {
 
 const enviarDocumentoxWsp = async (numberWsp, httpDoc) => {
   const data = qs.stringify({
-    token: "xy1mryu3skys910j",
+    token: process.env.TOKEN_ULTRAMSG,
     to: numberWsp,
     filename: "contrato.pdf",
     document: httpDoc,
@@ -103,7 +103,7 @@ const enviarDocumentoxWsp = async (numberWsp, httpDoc) => {
 
 const enviarTextConImagenWsp = async (numberWsp, image, bodyMsg) => {
   const data = qs.stringify({
-    token: "xy1mryu3skys910j",
+    token: process.env.TOKEN_ULTRAMSG,
     to: numberWsp,
     image: image,
     caption: bodyMsg,
