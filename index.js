@@ -55,6 +55,10 @@ const {
 cron.schedule("* * * * *", () => {
   alertaUsuarioUnica();
 });
+//6pm+5horas
+cron.schedule("0 23 * * *", () => {
+  actualizarSeguimientos();
+});
 //3am + 5horas
 cron.schedule("0 8 * * *", () => {
   registrarAdsDiario();
