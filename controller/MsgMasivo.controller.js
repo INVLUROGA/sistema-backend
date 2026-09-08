@@ -32,22 +32,17 @@ const enviarMasivoAlwsp = async () => {
       console.log({ persona, numero });
 
       try {
-        const imagenResp = await enviarMensajesWsp(
+        const imagenResp = await enviarTextConImagenWsp(
           numero,
+          "https://archivosluroga.blob.core.windows.net/articulos-lugares/27-agosto-2026.jpeg",
           `
-GANA SEMANAS DE ENTRENAMIENTO 🎁🔥
+Tenemos 2 REGALOS PARA TI 🎁
 
-Queremos seguir mejorando Change45 y necesitamos conocer tu opinión.
+Continua con tu proceso en Change, este es un buen momento para hacerlo y prepararse para el Verano 2027.
 
-Responde esta breve encuesta de solo 2 preguntas y, si respondes dentro de las próximas 24 horas, participarás en un sorteo para ganar semanas adicionales en tu plan. 
+IMPORTANTE: SÓLO 8 CUPOS DISNPONIBLES y hasta el 31 de agosto,  para acceder a este beneficio.
 
-📢 Publicaremos a los ganadores este viernes a las 5:00 p. m.
-
-Tu respuesta nos ayudará a construir un Change45 cada vez más efectivo para ti.
-
-¡Gracias por ayudarnos a SEGUIR mejorando! 💪
-
-https://forms.gle/w4fmBzYT7ueqazFM8
+Si quieres tomar uno, responde *“QUIERO MI REGALO”* y te ayudamos a activarlo. 🙌🏽
 `,
         );
         if (!imagenResp.ok) {

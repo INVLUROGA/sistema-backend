@@ -3,6 +3,7 @@ const {
   obtenerInventario,
   registrarArticulo,
   actualizarArticulo,
+  actualizarOrdenArticulo,
   eliminarArticulo,
   obtenerArticuloxID,
   obtenerParametrosLugares,
@@ -29,6 +30,7 @@ router.get("/obtener-inventario/:id_enterprice", obtenerInventario);
 router.post(`/post-articulo/:id_enterprice`, registrarArticulo);
 router.put("/remove-articulo/:id", eliminarArticulo);
 router.put("/update-articulo/:id", actualizarArticulo);
+router.put("/orden-articulo/:id", actualizarOrdenArticulo);
 router.get("/obtener-articulo/:id", obtenerArticuloxID);
 
 router.get("/parametros-lugares", obtenerParametrosLugares);

@@ -78,6 +78,9 @@ const Articulos = db.define("tb_articulos", {
   id_subcategoria: {
     type: DataTypes.INTEGER,
   },
+  orden: {
+    type: DataTypes.INTEGER,
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,

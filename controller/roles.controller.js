@@ -53,10 +53,6 @@ const obtenermoduloxRole = async (req, res) => {
     const { uid } = req.params;
 
     const usuario = await Usuario.findOne({ where: { uid: uid } });
-    console.log(
-      usuario.rol_user,
-      "usuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_userusuario.role_user",
-    );
     // Se consulta el rol e incluye la asociación de módulos (alias: modules)
     const role = await Role.findByPk(usuario.rol_user, {
       include: [
@@ -955,31 +951,18 @@ const seccionGET = async (req = request, res = response) => {
         },
       ];
     }
+    if (modulo === "mod-user-inventario") {
+      MENU_ITEMS=[
+        {
+          key: "checklist-inventario",
+          label: "checklist inventario",
+          icon: "uil-calender",
+          url: "/checklist-inventario",
+        }
+      ]
+    }
     if (modulo === "mod-marketing") {
       MENU_ITEMS = [
-        // {
-        //   key: "inventario",
-        //   label: "INVENTARIO",
-        //   url: "/inventario",
-        //   icon: "uil-calender",
-        //   children: [
-        //     {
-        //       //key: "reporte-utilidad-pgm",
-        //       label: "INVENTARIO TOTALIZADO",
-        //       isTitle: false,
-        //       icon: "uil-calender",
-        //       url: "/totalizado-inventario",
-        //     },
-        //     {
-        //       //key: "reporte-utilidad-pgm",
-        //       label: "GESTION DE INVENTARIO",
-        //       isTitle: false,
-        //       icon: "uil-calender",
-        //       url: "/gestion-inventario",
-        //     },
-        //   ],
-        // },
-
         {
           key: "cantidad-socios-montos",
           label: "Resumen general",
@@ -1016,13 +999,6 @@ const seccionGET = async (req = request, res = response) => {
               icon: "uil-calender",
               url: "/informe-gerencia-oficial",
             },
-            // {
-            //   key: "r-totalVentas",
-            //   label: "Total de ventas",
-            //   url: "/reporte/total-ventas",
-            //   icon: "uil-home-alt",
-            //   parentKey: "reportes-total",
-            // },
             {
               key: "resultado-change",
               label: "RESULTADOS CHANGE",
@@ -1267,6 +1243,11 @@ const moduleGET = async (req = request, res = response) => {
           path: "/venta",
           key: "mod-general-ventas",
         },
+        {
+          name: "Inventario",
+          path: "/user-checklist-inventario",
+          key: "mod-user-inventario",
+        },
       ];
     }
     if (usuario.rol_user === 7) {
@@ -1284,16 +1265,6 @@ const moduleGET = async (req = request, res = response) => {
           name: "RECEPCION",
           path: "/venta",
           key: "mod-recepcion",
-        },
-      ];
-    }
-
-    if (usuario.rol_user === 14) {
-      MODULOS_ITEMS = [
-        {
-          name: "recepcion-mia",
-          path: "/recepcion-mia",
-          key: "mod-recepcion-mia",
         },
       ];
     }

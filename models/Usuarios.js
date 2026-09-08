@@ -156,6 +156,9 @@ const Cliente = db.define("tb_cliente", {
     autoIncrement: true,
     primaryKey: true,
   },
+  code_qr: {
+    type: DataTypes.STRING(10),
+  },
   uid_avatar: {
     type: DataTypes.STRING,
   },

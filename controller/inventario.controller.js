@@ -17,10 +17,19 @@ const { capturarAUDIT } = require("../middlewares/auditoria");
 const { typesCRUD } = require("../types/types");
 const { enviarMensajesWsp } = require("../config/whatssap-web");
 const { Usuario } = require("../models/Usuarios");
-async function obtenerArticulosActivos(id_empresa) {
+
+// Los articulos con "orden" asignado manualmente (ver PUT /inventario/orden-articulo/:id)
+// van primero, respetando ese orden; los que no tienen orden asignado (NULL) van despues,
+// en el orden de siempre (id descendente).
+const ORDEN_POR_ORDEN_MANUAL = [
+  Sequelize.literal("CASE WHEN orden IS NULL THEN 1 ELSE 0 END"),
+  "ASC",
+];
+
+async function obtenerArticulosActivos(id_empresa, transaction) {
   return await Articulos.findAll({
     where: { flag: true, id_empresa },
-    order: [["id", "desc"]],
+    order: [ORDEN_POR_ORDEN_MANUAL, ["orden", "ASC"], ["id", "desc"]],
     include: [
       { model: ImagePT, attributes: ["id", "name_image"] },
       { model: Parametros, as: "parametro_marca" },
@@ -35,6 +44,7 @@ async function obtenerArticulosActivos(id_empresa) {
         include: [{ model: ImagePT, attributes: ["name_image"] }],
       },
     ],
+    transaction,
   });
 }
 
@@ -43,7 +53,7 @@ const obtenerInventario = async (req = request, res = response) => {
   try {
     const articulos = await Articulos.findAll({
       where: { flag: true, id_empresa: id_enterprice },
-      order: [["id", "desc"]],
+      order: [ORDEN_POR_ORDEN_MANUAL, ["orden", "ASC"], ["id", "desc"]],
       include: [
         {
           model: ImagePT,
@@ -182,6 +192,36 @@ const actualizarArticulo = async (req = request, res = response) => {
     });
   }
 };
+
+// Actualiza solo el numero de orden manual de un articulo (usado para ordenar la
+// tabla de inventario y, con el mismo valor, los items del checklist que se generan
+// desde ese inventario). No pasa por HisCamArticulos/auditoria porque es un ajuste
+// de orden de visualizacion, no un cambio de datos del articulo.
+const actualizarOrdenArticulo = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const { orden } = req.body;
+    const articulo = await Articulos.findByPk(id);
+    if (!articulo) {
+      return res.status(404).json({
+        ok: false,
+        msg: "El articulo no existe",
+      });
+    }
+    await articulo.update({ orden });
+    res.status(200).json({
+      ok: true,
+      msg: "ORDEN ACTUALIZADO",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: "Error al actualizar el orden del articulo",
+    });
+  }
+};
+
 const eliminarArticulo = async (req = request, res = response) => {
   try {
     const { id } = req.params;
@@ -634,11 +674,13 @@ const obtenerKardexArticulos = async (req = request, res = response) => {
   }
 };
 module.exports = {
+  obtenerArticulosActivos,
   obtenerKardexArticulos,
   obtenerHistorialCambiosArticuloxIDARTICULO,
   obtenerInventario,
   registrarArticulo,
   actualizarArticulo,
+  actualizarOrdenArticulo,
   eliminarArticulo,
   obtenerArticuloxID,
   obtenerParametrosLugares,

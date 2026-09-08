@@ -45,12 +45,18 @@ const {
   registrarAdsDiario,
 } = require("./middlewares/EventosCron/registrarAdsDiario.js");
 const { FacturasMeta } = require("./middlewares/Redes/FacturasMeta.js");
+const {
+  actualizarSeguimientos,
+} = require("./middlewares/EventosCron/actualizarSeguimientos.js");
 // obtenerDataSeguimientos();
 // enviarResumenVentasDigitalDiaria();
 // obtenerCumpleaniosEmpleadosxDia()
 // Run alerts every minute to checking for specific times
 cron.schedule("* * * * *", () => {
   alertaUsuarioUnica();
+});
+cron.schedule("0 * * * *", () => {
+  actualizarSeguimientos();
 });
 //3am + 5horas
 cron.schedule("0 8 * * *", () => {
@@ -182,6 +188,12 @@ app.use(
   "/api/inventario",
   validarJWT,
   require("./routes/inventario.router.js"),
+);
+app.use("/api/checklist", validarJWT, require("./routes/checklist.router.js"));
+app.use(
+  "/api/checklist-item",
+  validarJWT,
+  require("./routes/checklistItem.router.js"),
 );
 app.use(
   "/api/marcacion" /*, validarJWT,*/,

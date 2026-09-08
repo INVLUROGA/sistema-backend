@@ -132,13 +132,14 @@ const getQuotaParaMes = (monthIndex, year) => {
       };
   }
 };
-const hoy = new Date();
-const anioHoy = hoy.getUTCFullYear();
-const mesHoy = hoy.getUTCMonth() + 1; // 1-12
-const dia = hoy.getUTCDate();
-const anio = anioHoy;
-const mes = mesHoy;
 const enviarResumenVentasDiario = async () => {
+  
+  const hoy = new Date();
+  const anioHoy = hoy.getUTCFullYear();
+  const mesHoy = hoy.getUTCMonth() + 1; // 1-12
+  const dia = hoy.getUTCDate();
+  const anio = anioHoy;
+  const mes = mesHoy;
   const hora = hoy.getHours();
   const fechaHoyMas3Dias = new Date(hoy);
   const ultimoDiasDelMesActual = new Date(
@@ -172,7 +173,7 @@ const enviarResumenVentasDiario = async () => {
   }
   const DiaHoyMas3Dias = fechaHoyMas3Dias.getUTCDate();
   const MesHoy = hoy.getUTCMonth() + 1;
-  const anioHoy = hoy.getUTCFullYear();
+  
   const primerDia = new Date(hoy.getUTCFullYear(), hoy.getUTCMonth(), 1);
 
   const nombreDelPrimerDia = primerDia.toLocaleDateString("es-ES", {
@@ -488,7 +489,7 @@ ${renderTop3(mesesActualesxDiaInicioYDiaActual, true)}
 
 *6. VENTAS AL ${nombreDelActualDiaMas3Dias.toLocaleUpperCase()} ${DiaHoyMas3Dias}*
 ${renderTop3_1(mesesActualesxDiaInicioYDiaActualmas3Dias, false)}`;
-  const idsUsers = [35, 31, 30, 8, 22];
+  const idsUsers = [35, 31, 30, 22];
   await enviarWspUsuario(
     mensaje,
     new Date().setMinutes(new Date().getMinutes() + 1),

@@ -40,8 +40,10 @@ const {
 const { ContactoEmergencia } = require("../models/Modelos");
 const { Parametros } = require("../models/Parametros");
 const { AlertasUsuario } = require("../models/Auditoria");
+const QRCode = require('qrcode')
 const { obtenerUsuariosxCodigo } = require("../helpers/obtenerUsuariosxCodigo");
 const { fechasAnteriores } = require("../helpers/fechasAnteriores");
+const { codigoEnFormatoQr } = require("../middlewares/codigoEnFormatoQr");
 // Función para contar días laborables entre dos fechas
 function contarDiasLaborables(fechaInicio, fechaFin) {
   let inicio = dayjs(fechaInicio);
@@ -129,10 +131,12 @@ const postUsuarioCliente = async (req = request, res = response) => {
   } = req.body;
   const { comentarioUnico_UID, contactoEmerg_UID, avatar_UID } = req;
   const { id_empresa } = req.params;
+  const uid = uuid.v4();
+  const codeQr = uuid.v4().replace(/-/g, '').substring(0, 10).toUpperCase();
   try {
     const cliente = new Cliente({
       uid_avatar: avatar_UID,
-      uid: uuid.v4(),
+      uid: uid,
       nombre_cli,
       apMaterno_cli,
       apPaterno_cli,
@@ -196,9 +200,13 @@ CHANGE - The Slim Studio
         `,
       );
     }
+    
+    // const codigoQr = await codigoEnFormatoQr(codeQr, tel_cli)
+    // await enviarImagenWsp(numeroWsp, codigoQr)
     res.status(200).json({
       msg: "success",
       cliente,
+      codigoQr,
     });
   } catch (error) {
     res.status(500).json({
@@ -236,6 +244,7 @@ const getUsuarioClientes = async (req = request, res = response) => {
       where: { flag: true, id_empresa: id_empresa },
       order: [["id_cli", "desc"]],
     });
+    
     res.status(200).json({
       msg: "success",
       clientes,
@@ -349,6 +358,7 @@ const getUsuarioCliente = async (req = request, res = response) => {
     });
   }
 };
+
 const deleteUsuarioCliente = async (req = request, res = response) => {
   const { uid_cliente } = req.params;
   try {
