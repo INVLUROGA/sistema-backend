@@ -55,8 +55,8 @@ const {
 cron.schedule("* * * * *", () => {
   alertaUsuarioUnica();
 });
-//6pm+5horas
-cron.schedule("0 23 * * *", () => {
+//1am+5horas
+cron.schedule("0 6 * * *", () => {
   actualizarSeguimientos();
 });
 //3am + 5horas
