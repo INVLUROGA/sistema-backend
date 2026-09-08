@@ -183,7 +183,7 @@ app.use(
 
 app.use("/api/meta", validarJWT, require("./routes/meta.route.js"));
 app.use("/api/impuestos", validarJWT, require("./routes/impuestos.router.js"));
-app.use("/api/reporte", require("./routes/reporte.router.js"));
+app.use("/api/reporte", validarJWT, require("./routes/reporte.router.js"));
 app.use(
   "/api/inventario",
   validarJWT,
@@ -200,7 +200,7 @@ app.use(
   require("./routes/marcacion.router.js"),
 );
 app.use("/api/rol", validarJWT, require("./routes/roles.router.js"));
-app.use("/api/venta", require("./routes/venta.router.js"));
+app.use("/api/venta", validarJWT, require("./routes/venta.router.js"));
 app.use("/api/lead", validarJWT, require("./routes/lead.router.js"));
 app.use(
   "/api/reserva_monk_fit",
