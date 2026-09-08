@@ -1,5 +1,8 @@
 const { request, response } = require("express");
 const { ExtensionMembresia } = require("../models/ExtensionMembresia");
+const {
+  actualizarSeguimientos,
+} = require("../middlewares/EventosCron/actualizarSeguimientos");
 
 const obtenerExtensionesPorTipo = async (req = request, res = response) => {
   const { tipo } = req.params;
@@ -41,6 +44,7 @@ const postExtensionPorTipoPorId = async (req = request, res = response) => {
       id_venta: idventa,
     });
     await extension.save();
+    await actualizarSeguimientos();
     res.status(200).json({
       msg: `Extension agregado con exito`,
     });

@@ -46,6 +46,9 @@ const { ExtensionMembresia } = require("../models/ExtensionMembresia");
 const { ServiciosCircus } = require("../models/modelsCircus/Servicios");
 const sumarSemanas = require("../helpers/sumarSemanas");
 const { postFlujoCaja } = require("./flujo-caja.controller");
+const {
+  actualizarSeguimientos,
+} = require("../middlewares/EventosCron/actualizarSeguimientos");
 
 // Cargar el plugin
 dayjs.extend(utc);
@@ -156,6 +159,7 @@ const postVenta = async (req = request, res = response) => {
       observacion: `Se agrego: La venta de id ${req.ventaID}`,
     };
     await capturarAUDIT(formAUDIT);
+    await actualizarSeguimientos();
     res.status(200).json({
       msg: `Venta creada con exito`,
       uid_firma,
