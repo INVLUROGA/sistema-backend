@@ -158,6 +158,7 @@ const Cliente = db.define("tb_cliente", {
   },
   code_qr: {
     type: DataTypes.STRING(10),
+    allowNull: true,
   },
   uid_avatar: {
     type: DataTypes.STRING,

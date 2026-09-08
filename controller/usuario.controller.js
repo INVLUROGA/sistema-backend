@@ -258,6 +258,8 @@ const getUsuarioClientes = async (req = request, res = response) => {
 const getUsuarioCliente = async (req = request, res = response) => {
   try {
     const { uid_cliente } = req.params;
+    console.log({uid_cliente});
+    
     const cliente = await Cliente.findOne({
       where: { flag: true, uid: uid_cliente },
       include: [
@@ -353,6 +355,8 @@ const getUsuarioCliente = async (req = request, res = response) => {
       cliente,
     });
   } catch (error) {
+    console.log({error}, 'aqui el error');
+    
     res.status(500).json({
       error: `Error en el servidor, en controller de getUsuarioCliente, hable con el administrador: ${error}`,
     });

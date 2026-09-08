@@ -960,10 +960,18 @@ const seccionGET = async (req = request, res = response) => {
     if (modulo === "mod-user-inventario") {
       MENU_ITEMS=[
         {
-          key: "checklist-inventario",
-          label: "checklist inventario",
+          key: "checklist",
+          label: "checklist",
           icon: "uil-calender",
-          url: "/checklist-inventario",
+          url: "/checklist",
+          children: [
+            {
+              key: "checklist-inventario",
+              label: "checklist inventario",
+              icon: "uil-calender",
+              url: "/checklist-inventario",
+            }
+          ]
         }
       ]
     }
