@@ -7,8 +7,19 @@ const {
   detalleVenta_Transferencia,
 } = require("../../models/Venta");
 
+// El server corre en UTC y Perú es UTC-5 todo el año (no tiene horario de
+// verano). fecha_inicio/fecha_venta se guardan como el instante real (UTC) en
+// que ocurrió la acción, así que para contar "días" en el calendario de Perú
+// hay que pasar ese instante a hora Perú (restar 5h) antes de leer/mutar el
+// día con los getters/setters UTC*(). Si no se hace, una venta registrada
+// entre ~7pm y medianoche hora Perú (que en UTC ya cae en el día siguiente)
+// arranca a contar desde el día equivocado.
+const OFFSET_PERU_MS = 5 * 60 * 60 * 1000;
+const obtenerFechaPeru = (fecha = new Date()) =>
+  new Date(new Date(fecha).getTime() - OFFSET_PERU_MS);
+
 const sumarDias = (fecha, numero, contarFinDeSemana = true) => {
-  const result = new Date(fecha);
+  const result = obtenerFechaPeru(fecha);
   let diasAgregados = 0;
 
   while (diasAgregados < numero) {
@@ -22,14 +33,15 @@ const sumarDias = (fecha, numero, contarFinDeSemana = true) => {
     diasAgregados++;
   }
 
-  return result; // o result.toISOString()
+  // devolvemos el instante UTC real (revertimos el ajuste a hora Perú)
+  return new Date(result.getTime() + OFFSET_PERU_MS);
 };
 const contarDiasIncluyendoInicio = (fechaInicio, fechaFin) => {
-  const inicio = new Date(fechaInicio);
-  const fin = new Date(fechaFin);
+  const inicio = obtenerFechaPeru(fechaInicio);
+  const fin = obtenerFechaPeru(fechaFin);
 
-  inicio.setHours(0, 0, 0, 0);
-  fin.setHours(0, 0, 0, 0);
+  inicio.setUTCHours(0, 0, 0, 0);
+  fin.setUTCHours(0, 0, 0, 0);
 
   return Math.floor((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
 };

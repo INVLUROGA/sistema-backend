@@ -1305,6 +1305,18 @@ const getVentasxFechaVenta = async (req = request, res = response) => {
             attributes: ["id_venta", "id_servicio", "tarifa_monto"],
           },
           {
+            model: detalleventa_servicios,
+            as: "detalle_ventaservicios",
+            required: false, // Para que no excluya toda la venta si no tiene servicios (ej. CIRCUS)
+            attributes: ["id_venta", "id_servicio", "cantidad", "tarifa_monto"],
+            include: [
+              {
+                model: ServiciosCircus,
+                attributes: ["nombre_servicio", "precio", "id_categoria"],
+              },
+            ],
+          },
+          {
             model: detalleVenta_pagoVenta,
             attributes: ["id_venta", "parcial_monto"],
             include: [

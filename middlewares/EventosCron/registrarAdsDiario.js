@@ -1,23 +1,30 @@
 const { leadsxDia } = require("../../models/Venta");
 const { campaniasMeta } = require("../Redes/Campaniasmeta");
-const hoy = new Date();
-const ayer = new Date(hoy);
-ayer.setDate(hoy.getDate() - 1);
-const hora = ayer.getHours();
-const DiaHoy = ayer.getDate();
-const mesHoy = ayer.getMonth() + 1;
-const anioHoy = ayer.getFullYear();
+
+// El server corre en UTC y Perú es UTC-5 todo el año (no tiene horario de
+// verano). Para que el resultado no dependa de la TZ configurada en la
+// máquina (distinta entre localhost y Azure), "hoy"/"ayer" se calculan
+// restando 5h al UTC actual y siempre se leen con los getters getUTC*().
+const OFFSET_PERU_MS = 5 * 60 * 60 * 1000;
+const obtenerFechaPeru = (fecha = new Date()) =>
+  new Date(new Date(fecha).getTime() - OFFSET_PERU_MS);
+
 const registrarAdsDiario = async () => {
+  const hoy = obtenerFechaPeru();
+  const ayer = new Date(hoy);
+  ayer.setUTCDate(hoy.getUTCDate() - 1);
+  const DiaHoy = ayer.getUTCDate();
+  const mesHoy = ayer.getUTCMonth() + 1;
+  const anioHoy = ayer.getUTCFullYear();
+  const fecha = `${anioHoy}-${mesHoy.toString().padStart(2, "0")}-${DiaHoy.toString().padStart(2, "0")}`;
+
   const {
     conversaciones: conversacionesMeta,
     importeGastado: importeGastoMeta,
-  } = await campaniasMeta(
-    `${anioHoy}-${mesHoy}-${DiaHoy}`,
-    `${anioHoy}-${mesHoy}-${DiaHoy}`,
-  );
+  } = await campaniasMeta(fecha, fecha);
   const postData_Meta = {
     id_red: 1515,
-    fecha: `${anioHoy}-${mesHoy}-${DiaHoy}`,
+    fecha,
     cantidad: conversacionesMeta,
     monto: importeGastoMeta * 1.18,
     id_empresa: 598,

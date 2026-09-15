@@ -13,10 +13,19 @@ const {
   agruparxNoFirmados,
   agruparxNoFirmadosXidEmpl,
 } = require("./ResumenVentasComparativas");
+// El server corre en UTC y Perú es UTC-5 todo el año (no tiene horario de verano),
+// así que "hoy" en Perú se calcula restando 5 horas al UTC actual y leyendo sus
+// componentes con los getters getUTC*(). Este mismo ajuste se usa para agrupar
+// las ventas por fecha_venta (ver agruparPorFecha) y debe usarse siempre que se
+// necesite "el día de hoy" para que ambos cálculos queden en el mismo marco horario.
+const OFFSET_PERU_MS = 5 * 60 * 60 * 1000;
+const obtenerFechaPeru = (fecha = new Date()) =>
+  new Date(fecha.getTime() - OFFSET_PERU_MS);
+
 function obtenerMesesHasta(fechaInicio = "2024-09") {
   const [anioFin, mesFin] = fechaInicio.split("-").map(Number);
 
-  const hoy = new Date();
+  const hoy = obtenerFechaPeru();
   let anio = hoy.getUTCFullYear();
   let mes = hoy.getUTCMonth() + 1; // 1-12
 
@@ -134,18 +143,15 @@ const getQuotaParaMes = (monthIndex, year) => {
 };
 const enviarResumenVentasDiario = async () => {
   
-  const hoy = new Date();
+  const hoy = obtenerFechaPeru();
   const anioHoy = hoy.getUTCFullYear();
   const mesHoy = hoy.getUTCMonth() + 1; // 1-12
   const dia = hoy.getUTCDate();
   const anio = anioHoy;
   const mes = mesHoy;
-  const hora = hoy.getHours();
   const fechaHoyMas3Dias = new Date(hoy);
   const ultimoDiasDelMesActual = new Date(
-    hoy.getUTCFullYear(),
-    hoy.getUTCMonth() + 1,
-    0,
+    Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth() + 1, 0),
   ).getUTCDate();
   const DiaHoy = hoy.getUTCDate();
   const sociosSeguimiento = await obtenerSociosActivos();
@@ -167,26 +173,31 @@ const enviarResumenVentasDiario = async () => {
     return fecha <= fechaActual && fecha >= mesActualPrimero;
   });
   if (DiaHoy + 3 > ultimoDiasDelMesActual) {
-    fechaHoyMas3Dias.setDate(ultimoDiasDelMesActual);
+    fechaHoyMas3Dias.setUTCDate(ultimoDiasDelMesActual);
   } else {
-    fechaHoyMas3Dias.setDate(hoy.getUTCDate() + 3);
+    fechaHoyMas3Dias.setUTCDate(hoy.getUTCDate() + 3);
   }
   const DiaHoyMas3Dias = fechaHoyMas3Dias.getUTCDate();
   const MesHoy = hoy.getUTCMonth() + 1;
   
-  const primerDia = new Date(hoy.getUTCFullYear(), hoy.getUTCMonth(), 1);
+  const primerDia = new Date(
+    Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth(), 1),
+  );
 
   const nombreDelPrimerDia = primerDia.toLocaleDateString("es-ES", {
     weekday: "long",
+    timeZone: "UTC",
   });
   const nombreDelActualDia = hoy.toLocaleDateString("es-ES", {
     weekday: "long",
+    timeZone: "UTC",
   });
 
   const nombreDelActualDiaMas3Dias = fechaHoyMas3Dias.toLocaleDateString(
     "es-ES",
     {
       weekday: "long",
+      timeZone: "UTC",
     },
   );
 
@@ -489,7 +500,7 @@ ${renderTop3(mesesActualesxDiaInicioYDiaActual, true)}
 
 *6. VENTAS AL ${nombreDelActualDiaMas3Dias.toLocaleUpperCase()} ${DiaHoyMas3Dias}*
 ${renderTop3_1(mesesActualesxDiaInicioYDiaActualmas3Dias, false)}`;
-  const idsUsers = [35, 31, 30, 22];
+  const idsUsers = [30];
   await enviarWspUsuario(
     mensaje,
     new Date().setMinutes(new Date().getMinutes() + 1),
@@ -607,9 +618,7 @@ function agruparPorFecha(arr = []) {
   const map = {};
 
   arr.forEach((item) => {
-    const fecha = new Date(
-      new Date(item.tb_ventum.fecha_venta).getTime() - 5 * 60 * 60 * 1000,
-    );
+    const fecha = obtenerFechaPeru(new Date(item.tb_ventum.fecha_venta));
 
     const dia = fecha.getUTCDate();
     const mes = fecha.getUTCMonth() + 1;

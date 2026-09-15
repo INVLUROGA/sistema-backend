@@ -4,6 +4,15 @@ const { detalleVenta_membresias, Venta } = require("../../models/Venta");
 const { campaniasMeta } = require("../Redes/Campaniasmeta");
 const { enviarWspUsuario } = require("../../helpers/enviarWspUsuario");
 
+// El server corre en UTC y Perú es UTC-5 todo el año (no tiene horario de
+// verano). Para que el resultado no dependa de la TZ configurada en la
+// máquina (distinta entre localhost y Azure), "hoy" se calcula restando 5h
+// al UTC actual y siempre se lee con los getters getUTC*(), nunca con los
+// locales (getHours/getDate/getDay/getMonth/getFullYear).
+const OFFSET_PERU_MS = 5 * 60 * 60 * 1000;
+const obtenerFechaPeru = (fecha = new Date()) =>
+  new Date(new Date(fecha).getTime() - OFFSET_PERU_MS);
+
 const getQuotaParaMes = (monthIndex, year) => {
   const y = year;
   const m = monthIndex;
@@ -27,13 +36,11 @@ function agruparPorFecha(arr = []) {
   const map = {};
 
   arr.forEach((item) => {
-    const fecha = new Date(
-      new Date(item.tb_ventum.fecha_venta).getTime() - 5 * 60 * 60 * 1000,
-    );
+    const fecha = obtenerFechaPeru(item.tb_ventum.fecha_venta);
 
-    const dia = fecha.getDate();
-    const mes = fecha.getMonth() + 1;
-    const anio = fecha.getFullYear();
+    const dia = fecha.getUTCDate();
+    const mes = fecha.getUTCMonth() + 1;
+    const anio = fecha.getUTCFullYear();
 
     const key = `${dia}-${mes}-${anio}`;
 
@@ -144,16 +151,26 @@ const ventasProgramasMesActual = async (
   );
 };
 const enviarResumenVentasDigitalDiaria = async () => {
-  const hoy = new Date();
-  const hora = hoy.getHours();
-  const DiaHoy = hoy.getDate();
-  const day = hoy.getDay().toLocaleString("es-PE", { weekday: "long" });
-  const mesHoy = hoy.getMonth() + 1;
-  const anioHoy = hoy.getFullYear();
+  const diasSemana = [
+    "LUNES",
+    "MARTES",
+    "MIÉRCOLES",
+    "JUEVES",
+    "VIERNES",
+    "SÁBADO",
+    "DOMINGO",
+  ];
+  const hoy = obtenerFechaPeru();
+  const DiaHoy = hoy.getUTCDate();
+  const mesHoy = hoy.getUTCMonth() + 1;
+  const anioHoy = hoy.getUTCFullYear();
+  // getUTCDay(): domingo=0 ... sábado=6. El array `diasSemana` empieza en
+  // lunes, así que se rota para que domingo caiga en el último índice (6).
+  const nombreDiaSemana = diasSemana[(hoy.getUTCDay() + 6) % 7];
   const { conversaciones, costoxResultadoxCampanias, importeGastado } =
     await campaniasMeta(
-      `${anioHoy}-${mesHoy}-${1}`,
-      `${anioHoy}-${mesHoy}-${DiaHoy}`,
+      `${anioHoy}-${mesHoy.toString().padStart(2, "0")}-01`,
+      `${anioHoy}-${mesHoy.toString().padStart(2, "0")}-${DiaHoy.toString().padStart(2, "0")}`,
     );
   const ventasMetaH = await ventasxOrigen([694, 693], DiaHoy, DiaHoy);
   const ventasMeta = await ventasxOrigen([694, 693], 1, DiaHoy);
@@ -244,19 +261,10 @@ const enviarResumenVentasDigitalDiaria = async () => {
     "NOVIEMBRE",
     "DICIEMBRE",
   ];
-  const dia = [
-    "LUNES",
-    "MARTES",
-    "MIÉRCOLES",
-    "JUEVES",
-    "VIERNES",
-    "SÁBADO",
-    "DOMINGO",
-  ];
   const inversion = importeGastado * 1.18;
   const mensaje = `
 📊 *REDES VENTAS  /  ${ventasMetaHoy?.tarifa_monto_total.toLocaleString("es-PE") || 0}*
-*${dia[day - 1]?.toUpperCase()} ${DiaHoy} ${meses[mesHoy - 1].toUpperCase()}*
+*${nombreDiaSemana} ${DiaHoy} ${meses[mesHoy - 1].toUpperCase()}*
 *CUOTA: ${(getQuotaParaMes(mesHoy, anioHoy)?.meta || 0).toLocaleString("es-PE")}*
 
 *1. VENTA HOY: ${(ventasMetaHoy_f?.tarifa_monto_total || 0).toLocaleString("es-PE")} / 0* 
