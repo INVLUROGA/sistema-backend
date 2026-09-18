@@ -28,10 +28,23 @@ const { Servicios } = require("../models/Servicios");
 const { Distritos } = require("../models/Distritos");
 const { Marcacion } = require("../models/Marcacion");
 
-// Función para sumar días hábiles (lunes y viernes) a una fecha
+// Función para sumar días hábiles (lunes a viernes) a una fecha
+// Usa getters/setters UTC porque fec_fin_mem llega como fecha "sólo fecha" (ej. "2026-08-24"),
+// que Date interpreta como medianoche UTC; con getters en hora local (America/Lima, UTC-5)
+// esa medianoche UTC cae en el día calendario anterior y desalinea el día de la semana.
 function addBusinessDays(startDate, numberOfDays) {
   const currentDate = new Date(startDate);
-  currentDate.setDate(currentDate.getDate() + numberOfDays);
+  let daysAdded = 0;
+
+  while (daysAdded < numberOfDays) {
+    currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+
+    const dayOfWeek = currentDate.getUTCDay(); // 0 = domingo, 6 = sábado
+    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+      daysAdded++;
+    }
+  }
+
   return currentDate;
 }
 const diasLaborables = (fechaInicio, fechaFin) => {
