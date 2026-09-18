@@ -28,7 +28,7 @@ const { Servicios } = require("../models/Servicios");
 const { Distritos } = require("../models/Distritos");
 const { Marcacion } = require("../models/Marcacion");
 
-// Función para sumar días hábiles (lunes a viernes) a una fecha
+// Función para sumar días hábiles (lunes a sábado, el gimnasio solo cierra domingo) a una fecha
 // Usa getters/setters UTC porque fec_fin_mem llega como fecha "sólo fecha" (ej. "2026-08-24"),
 // que Date interpreta como medianoche UTC; con getters en hora local (America/Lima, UTC-5)
 // esa medianoche UTC cae en el día calendario anterior y desalinea el día de la semana.
@@ -39,8 +39,8 @@ function addBusinessDays(startDate, numberOfDays) {
   while (daysAdded < numberOfDays) {
     currentDate.setUTCDate(currentDate.getUTCDate() + 1);
 
-    const dayOfWeek = currentDate.getUTCDay(); // 0 = domingo, 6 = sábado
-    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+    const dayOfWeek = currentDate.getUTCDay(); // 0 = domingo (único día no hábil)
+    if (dayOfWeek !== 0) {
       daysAdded++;
     }
   }
@@ -77,7 +77,13 @@ const getReporteSeguimiento = async (req, res) => {
   const { isClienteActive } = req.query;
   const { id_empresa } = req.params;
   try {
-    const currentDate = new Date();
+    const now = new Date();
+    // Medianoche UTC del día calendario de HOY (mismo criterio que fec_fin_mem_new, que
+    // viaja como fecha "sólo fecha" en UTC). Un cliente que vence HOY debe seguir activo,
+    // por eso se compara contra el inicio del día y no contra la hora exacta actual.
+    const currentDate = new Date(
+      Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()),
+    );
     let membresias = await detalleVenta_membresias.findAll({
       attributes: ["id", "fec_inicio_mem", "horario", "fec_fin_mem"],
       order: [["id", "DESC"]],
@@ -223,7 +229,19 @@ const getReporteSeguimiento = async (req, res) => {
 
       // Calcular la nueva fecha sumando los días hábiles a 'fec_fin_mem'
       const fecFinMem = new Date(itemJSON.fec_fin_mem);
-      const fecFinMemNew = addBusinessDays(fecFinMem, totalDiasHabiles);
+      const fecFinMemCalculada = addBusinessDays(fecFinMem, totalDiasHabiles);
+
+      // Blindaje: nunca debe quedar antes que el extension_fin ya registrado.
+      // Si el criterio de "día hábil" usado al crear la extensión difiere del de este cálculo
+      // (p.ej. datos históricos calculados con otro criterio), extension_fin manda.
+      const maxExtensionFin = tbExtensionMembresia.reduce((max, ext) => {
+        const fin = new Date(ext.extension_fin);
+        return !max || fin > max ? fin : max;
+      }, null);
+      const fecFinMemNew =
+        maxExtensionFin && maxExtensionFin > fecFinMemCalculada
+          ? maxExtensionFin
+          : fecFinMemCalculada;
 
       return {
         dias: totalDiasHabiles,
@@ -251,10 +269,12 @@ const getReporteSeguimiento = async (req, res) => {
     );
 
     // 3. Filtrado basado en `isClienteActive`
+    // Un cliente que vence HOY (fec_fin_mem_new === hoy) cuenta como activo: por eso "true"
+    // usa >= contra el inicio del día de hoy, en vez de comparar contra la hora exacta actual.
     let filteredMembresias = uniqueMembresias.filter((item) => {
       const fecFinMemNewDate = new Date(item.fec_fin_mem_new);
       if (isClienteActive === "true") {
-        return fecFinMemNewDate > currentDate;
+        return fecFinMemNewDate >= currentDate;
       } else if (isClienteActive === "false") {
         return fecFinMemNewDate < currentDate;
       }
@@ -460,10 +480,12 @@ const getReporteSeguimientoClientes = async (req, res) => {
     );
 
     // 3. Filtrado basado en `isClienteActive`
+    // Un cliente que vence HOY (fec_fin_mem_new === hoy) cuenta como activo: por eso "true"
+    // usa >= contra el inicio del día de hoy, en vez de comparar contra la hora exacta actual.
     let filteredMembresias = uniqueMembresias.filter((item) => {
       const fecFinMemNewDate = new Date(item.fec_fin_mem_new);
       if (isClienteActive === "true") {
-        return fecFinMemNewDate > currentDate;
+        return fecFinMemNewDate >= currentDate;
       } else if (isClienteActive === "false") {
         return fecFinMemNewDate < currentDate;
       }
