@@ -11,6 +11,8 @@ const {
   SemanasTraining,
 } = require("../models/ProgramaTraining");
 const { Cliente } = require("../models/Usuarios");
+const { ImagePT } = require("../models/Image");
+const { ExtensionMembresia } = require("../models/ExtensionMembresia");
 
 const getSeguimientos = async (req = request, res = response) => {
   try {
@@ -114,10 +116,21 @@ const getSeguimientos = async (req = request, res = response) => {
     console.log(error);
   }
 };
-const obtenerSeguimientosxIdCli = async (req = request, res = response) => {
+// Membresías de UN cliente (identificado por uid) tal como están en tb_seguimiento,
+// que es la fuente que ya trae fecha_vencimiento ajustada por congelamientos/regalos
+// (a diferencia de fec_fin_mem, que es la fecha original de la venta).
+const obtenerSeguimientosxUid = async (req = request, res = response) => {
+  const { uid } = req.params;
   try {
-    const dataSeguimiento = await Cliente.findAll({
-      attributes: ["id_cli", "nombre_cli", "apPaterno_cli", "apMaterno_cli"],
+    // findAll (no findOne) a propósito: con findOne el LIMIT 1 implícito, combinado con
+    // subQuery:false y el hasMany de abajo, recorta el join plano a una sola fila total y
+    // se pierden seguimientos del mismo cliente (uid ya filtra a un único cliente igual).
+    const [cliente] = await Cliente.findAll({
+      where: { uid },
+      attributes: ["id_cli", "uid", "nombre_cli", "apPaterno_cli", "apMaterno_cli"],
+      // subQuery:false evita que Sequelize envuelva la consulta en una subconsulta de paginación,
+      // que en SQL Server rompe los JOIN anidados de "venta" hacia adentro (columnas no ligables).
+      subQuery: false,
       include: [
         {
           model: Seguimiento,
@@ -125,35 +138,62 @@ const obtenerSeguimientosxIdCli = async (req = request, res = response) => {
           where: {
             flag: true,
           },
-          order: [["id", "asc"]],
+          required: false,
+          order: [["id", "desc"]],
           include: [
             {
               model: detalleVenta_membresias,
               attributes: [
-                "tarifa_monto",
-                "id_pgm",
                 "id",
                 "id_venta",
+                "id_pgm",
+                "tarifa_monto",
                 "fecha_inicio",
+                "fec_inicio_mem",
+                "fec_fin_mem",
                 "horario",
               ],
               as: "venta",
               include: [
                 {
                   model: Venta,
-                  attributes: ["id", "id_cli", "id_origen", "fecha_venta"],
+                  attributes: ["id", "id_cli", "id_origen", "id_empresa", "fecha_venta"],
                   required: true,
-                  where: {
-                    id_empresa: 598,
-                  },
                 },
                 {
                   model: ProgramaTraining,
-                  attributes: ["name_pgm"],
+                  attributes: ["id_pgm", "name_pgm"],
+                  include: [
+                    {
+                      model: ImagePT,
+                      attributes: ["id", "name_image", "width", "height"],
+                    },
+                  ],
                 },
                 {
                   model: SemanasTraining,
-                  attributes: ["semanas_st"],
+                  attributes: ["semanas_st", "nutricion_st", "congelamiento_st"],
+                },
+                {
+                  model: detalle_cambioPrograma,
+                  as: "cambio_programa",
+                  include: [
+                    {
+                      model: ProgramaTraining,
+                      as: "pgm",
+                    },
+                  ],
+                },
+                {
+                  model: ExtensionMembresia,
+                  attributes: [
+                    "id",
+                    "tipo_extension",
+                    "extension_inicio",
+                    "extension_fin",
+                    "dias_habiles",
+                    "observacion",
+                  ],
                 },
               ],
             },
@@ -162,11 +202,14 @@ const obtenerSeguimientosxIdCli = async (req = request, res = response) => {
       ],
     });
 
-    res.status(201).json({
-      dataSeguimiento,
+    res.status(200).json({
+      seguimientos: cliente?.cli_seguimiento || [],
     });
   } catch (error) {
     console.log(error);
+    res.status(505).json({
+      msg: `Problemas en obtenerSeguimientosxUid: ${error}`,
+    });
   }
 };
 const getSeguimientoxFechaVencimientos = async (
@@ -212,6 +255,6 @@ const getSeguimientoxFechaVencimientos = async (
 };
 module.exports = {
   getSeguimientos,
-  obtenerSeguimientosxIdCli,
+  obtenerSeguimientosxUid,
   getSeguimientoxFechaVencimientos,
 };

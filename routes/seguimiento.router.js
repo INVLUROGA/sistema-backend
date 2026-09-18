@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const {
   getSeguimientos,
-  obtenerSeguimientosxIdCli,
+  obtenerSeguimientosxUid,
   getSeguimientoxFechaVencimientos,
 } = require("../controller/seguimiento.controller");
 const router = Router();
@@ -12,6 +12,6 @@ const router = Router();
 
 router.get("/", getSeguimientos);
 router.get("/rango-fecha-vencimiento", getSeguimientoxFechaVencimientos);
-router.get("/xcliente", obtenerSeguimientosxIdCli);
+router.get("/uid/:uid", obtenerSeguimientosxUid);
 
 module.exports = router;
