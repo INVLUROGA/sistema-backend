@@ -55,6 +55,13 @@ function comandoAltaUsuario(id, { pin, nombre }) {
   return `C:${id}:DATA UPDATE user CardNo=\tPin=${pin}\tPassword=\tGroup=0\tStartTime=0\tEndTime=0\tName=${nombre}\tPrivilege=0`;
 }
 
+// Autorización de acceso: sin ella el equipo reconoce la huella pero responde
+// "Periodo de tiempo no válido". Franja horaria 1 = acceso 24 h (por defecto en los equipos);
+// AuthorizeDoorId es una máscara de puertas (1 = puerta 1).
+function comandoAutorizacion(id, { pin, franjaHoraria = 1, puertas = 1 }) {
+  return `C:${id}:DATA UPDATE userauthorize Pin=${pin}\tAuthorizeTimezoneId=${franjaHoraria}\tAuthorizeDoorId=${puertas}`;
+}
+
 function comandoAltaHuella(id, { pin, dedo, plantilla }) {
   return `C:${id}:DATA UPDATE templatev10 Size=${Buffer.from(plantilla, "base64").length}\tPin=${pin}\tFingerID=${dedo}\tValid=1\tTemplate=${plantilla}\tEndTag=`;
 }
@@ -64,5 +71,6 @@ module.exports = {
   configuracionAcc,
   segmentarTramaRtlog,
   comandoAltaUsuario,
+  comandoAutorizacion,
   comandoAltaHuella,
 };
