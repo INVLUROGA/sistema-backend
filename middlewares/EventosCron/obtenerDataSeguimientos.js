@@ -46,12 +46,36 @@ const contarDiasIncluyendoInicio = (fechaInicio, fechaFin) => {
   return Math.floor((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
 };
 
-const obtenerDataSeguimientos = async () => {
-  try {
+// Dias de calendario de una extension, de extension_inicio a extension_fin
+// (ambos incluidos). Si no tiene un rango valido, usa dias_habiles.
+// extension_inicio/extension_fin son strings: si traen "YYYY-MM-DD" se usa solo
+// esa fecha (sin hora) para no correr un dia por la zona horaria.
+const parsearFechaExtension = (valor) => {
+  if (!valor) return null;
+  const match = String(valor).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const fecha = match
+    ? new Date(Date.UTC(match[1], match[2] - 1, match[3]))
+    : new Date(valor);
+  return isNaN(fecha) ? null : fecha;
+};
+const diasExtension = (ext) => {
+  const inicio = parsearFechaExtension(ext?.extension_inicio);
+  const fin = parsearFechaExtension(ext?.extension_fin);
+  if (inicio && fin && fin >= inicio) {
+    return contarDiasIncluyendoInicio(inicio, fin);
+  }
+  return Number(ext?.dias_habiles || 0);
+};
+
+// Calcula la data de seguimiento. Si se pasa idVenta, solo procesa la
+// membresia de esa venta (usado al crear/editar una extension).
+const calcularDataSeguimientos = async (idVenta = null) => {
+    const whereVenta = { flag: true, id_empresa: 598 };
+    if (idVenta) whereVenta.id = idVenta;
     // MAPEAR MEMBRESIAS CON VENTAS, TRANSFERENCIAS CON MEMBRESIAS Y VENTAS
     //EXTRAER MEMBRESIAS
     const ventasMembresias = await Venta.findAll({
-      where: { flag: true, id_empresa: 598 },
+      where: whereVenta,
       attributes: ["id_cli", "id_empl", "observacion"],
       include: [
         {
@@ -91,6 +115,7 @@ const obtenerDataSeguimientos = async () => {
           model: detalleVenta_Transferencia,
           as: "venta_venta",
           required: true,
+          ...(idVenta && { where: { id_membresia: idVenta } }),
           attributes: [
             "id",
             "id_venta",
@@ -109,6 +134,8 @@ const obtenerDataSeguimientos = async () => {
           ],
         },
       ],
+      // la transferencia mas reciente primero, para que [0] sea el id_cli actual
+      order: [["id", "desc"]],
     });
 
     const VentasTransferencias = ventasTransferencias.map((v) =>
@@ -117,24 +144,30 @@ const obtenerDataSeguimientos = async () => {
 
     // EXTRAER CONGELAMIENTOS, AUMENTO DEPENDIENDO DEL INICIO Y FIN DE LA EXTENSION: AUMENTAR DIAS, LOS DIAS DE CONGELAMIENTOS SE REFLEJAN EN EL INICIO Y FIN DE LA EXTENSION
     const dataCongelamientos = await ExtensionMembresia.findAll({
-      where: { tipo_extension: "CON", flag: true },
+      where: {
+        tipo_extension: "CON",
+        flag: true,
+        ...(idVenta && { id_venta: idVenta }),
+      },
       attributes: [
         "tipo_extension",
-        "fecha_inicio",
-        "fecha_fin",
-        "tipo_extension",
+        "extension_inicio",
+        "extension_fin",
         "dias_habiles",
         "id_venta",
       ],
     });
     // EXTRAER REGALOS, AUMENTO DEPENDIENDO DEL INICIO Y FIN DE LA EXTENSION: AUMENTAR DIAS. LOS DIAS DE REGALO SE REFLEJAN EN LOS ULTIMOS DIAS
     const dataRegalos = await ExtensionMembresia.findAll({
-      where: { tipo_extension: "REG", flag: true },
+      where: {
+        tipo_extension: "REG",
+        flag: true,
+        ...(idVenta && { id_venta: idVenta }),
+      },
       attributes: [
         "tipo_extension",
-        "fecha_inicio",
-        "fecha_fin",
-        "tipo_extension",
+        "extension_inicio",
+        "extension_fin",
         "dias_habiles",
         "id_venta",
       ],
@@ -146,7 +179,10 @@ const obtenerDataSeguimientos = async () => {
         id_cli: v.id_cli,
         id_empl: v.id_empl,
         observacion: v.observacion,
-        semanas: det?.tb_semana_training?.sesiones ?? null,
+        // dias de la membresia (lunes a domingo): semanas del plan * 7
+        dias_membresia: det?.tb_semana_training?.semanas_st
+          ? Number(det.tb_semana_training.semanas_st) * 7
+          : null,
         id_membresia: det?.id ?? null,
         id_tarifa: det?.id_tarifa ?? null,
         id_st: det?.id_st ?? null,
@@ -159,7 +195,7 @@ const obtenerDataSeguimientos = async () => {
       if (
         !membresia.id_venta ||
         !membresia.fecha_inicio ||
-        !membresia.semanas
+        !membresia.dias_membresia
       ) {
         return {
           ...membresia,
@@ -183,18 +219,18 @@ const obtenerDataSeguimientos = async () => {
         (cong) => cong?.id_venta === membresia.id_venta,
       );
       const cantCongelamiento = congelamientosxIdMembresia.reduce(
-        (acc, item) => acc + Number(item.dias_habiles || 0),
+        (acc, item) => acc + diasExtension(item),
         0,
       );
       const cantRegalos = regalosxIdMembresia.reduce(
-        (acc, item) => acc + Number(item.dias_habiles || 0),
+        (acc, item) => acc + diasExtension(item),
         0,
       );
 
       const fecha_vencimiento = sumarDias(
         membresia.fecha_inicio,
-        cantCongelamiento + cantRegalos + membresia.semanas,
-        false,
+        cantCongelamiento + cantRegalos + membresia.dias_membresia,
+        true, // lunes a domingo: cuenta todos los dias
       );
 
       return {
@@ -214,7 +250,7 @@ const obtenerDataSeguimientos = async () => {
         cantRegalos,
       };
     });
-    const dataSeguimiento = ventasMembresiasConTransferencias.map((seg) => {
+    return ventasMembresiasConTransferencias.map((seg) => {
       return {
         id_cli: seg.id_cli,
         id_membresia: seg.id_membresia,
@@ -226,8 +262,13 @@ const obtenerDataSeguimientos = async () => {
         flag: true,
       };
     });
-    console.log({dataSeguimiento}, 'SEGUIMIENTOSSSS');
-    
+};
+
+const obtenerDataSeguimientos = async () => {
+  try {
+    const dataSeguimiento = await calcularDataSeguimientos();
+    console.log({ dataSeguimiento }, "SEGUIMIENTOSSSS");
+
     await Seguimiento.bulkCreate(dataSeguimiento);
     return true;
     // EXTRAER CAMBIO DE MEMBRESIA
@@ -236,6 +277,56 @@ const obtenerDataSeguimientos = async () => {
   }
 };
 
+// Mismo procedimiento que obtenerDataSeguimientos, pero solo para la venta
+// indicada: reemplaza sus registros en tb_seguimiento.
+const obtenerDataSeguimientoPorVenta = async (idVenta) => {
+  try {
+    if (!idVenta) return false;
+    const dataSeguimiento = await calcularDataSeguimientos(Number(idVenta));
+    const idsMembresia = dataSeguimiento
+      .map((seg) => seg.id_membresia)
+      .filter(Boolean);
+    if (idsMembresia.length === 0) return false;
+
+    await Seguimiento.destroy({ where: { id_membresia: idsMembresia } });
+    await Seguimiento.bulkCreate(dataSeguimiento);
+    return true;
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
+};
+
+// Al registrar una transferencia, cambia el id_cli del seguimiento de la
+// membresia transferida (id_membresia de la transferencia = id de la venta
+// original). Solo modifica tb_seguimiento.
+const actualizarClienteSeguimientoPorTransferencia = async (
+  idVentaMembresia,
+  idCliNuevo,
+) => {
+  try {
+    if (!idVentaMembresia || !idCliNuevo) return false;
+    const membresias = await detalleVenta_membresias.findAll({
+      where: { id_venta: idVentaMembresia },
+      attributes: ["id"],
+      raw: true,
+    });
+    const idsMembresia = membresias.map((m) => m.id);
+    if (idsMembresia.length === 0) return false;
+
+    await Seguimiento.update(
+      { id_cli: idCliNuevo },
+      { where: { id_membresia: idsMembresia } },
+    );
+    return true;
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
+};
+
 module.exports = {
   obtenerDataSeguimientos,
+  obtenerDataSeguimientoPorVenta,
+  actualizarClienteSeguimientoPorTransferencia,
 };

@@ -15,7 +15,7 @@ router.put("/get-extension/:id", obtenerExtensionPorId);
 router.post("/post-extension/:tipo/:idventa", postExtensionPorTipoPorId);
 // router.get("/get-extension-mem/:idVenta", obtenerExtension)
 
-// router.put("/update-extension/:id", putExtension);
+router.put("/update-extension/:id", putExtension);
 // router.put("/remove-extension/:id", removeExtension);
 
 module.exports = router;

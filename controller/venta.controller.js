@@ -47,8 +47,9 @@ const { ServiciosCircus } = require("../models/modelsCircus/Servicios");
 const sumarSemanas = require("../helpers/sumarSemanas");
 const { postFlujoCaja } = require("./flujo-caja.controller");
 const {
-  actualizarSeguimientos,
-} = require("../middlewares/EventosCron/actualizarSeguimientos");
+  actualizarClienteSeguimientoPorTransferencia,
+  obtenerDataSeguimientoPorVenta,
+} = require("../middlewares/EventosCron/obtenerDataSeguimientos");
 
 // Cargar el plugin
 dayjs.extend(utc);
@@ -112,6 +113,8 @@ const postVenta = async (req = request, res = response) => {
       );
 
       await detalleVenta_membresias.bulkCreate(ventasMembresiasConIdVenta);
+      // crea el seguimiento solo de esta venta
+      await obtenerDataSeguimientoPorVenta(req.ventaID);
       // await postFlujoCaja({
       //   id_empresa: 598,
       //   id_estado: 1423,
@@ -143,6 +146,16 @@ const postVenta = async (req = request, res = response) => {
       await detalleVenta_Transferencia.bulkCreate(
         ventasTransferenciaConIdVenta,
       );
+      // cambia el id_cli del seguimiento de la membresia transferida
+      const ventaTransferencia = await Venta.findByPk(req.ventaID, {
+        attributes: ["id_cli"],
+      });
+      for (const transferencia of ventasTransferenciaConIdVenta) {
+        await actualizarClienteSeguimientoPorTransferencia(
+          transferencia.id_membresia,
+          ventaTransferencia?.id_cli,
+        );
+      }
     }
     if (req.pagosExtraidos && req.pagosExtraidos.length > 0) {
       const pagosVentasConIdVenta = await req.pagosExtraidos.map((pagos) => ({
@@ -159,7 +172,6 @@ const postVenta = async (req = request, res = response) => {
       observacion: `Se agrego: La venta de id ${req.ventaID}`,
     };
     await capturarAUDIT(formAUDIT);
-    await actualizarSeguimientos();
     res.status(200).json({
       msg: `Venta creada con exito`,
       uid_firma,

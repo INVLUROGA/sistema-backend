@@ -4,6 +4,7 @@ const {
   registrarArticulo,
   actualizarArticulo,
   actualizarOrdenArticulo,
+  actualizarCheckingRoyArticulo,
   eliminarArticulo,
   obtenerArticuloxID,
   obtenerParametrosLugares,
@@ -31,6 +32,7 @@ router.post(`/post-articulo/:id_enterprice`, registrarArticulo);
 router.put("/remove-articulo/:id", eliminarArticulo);
 router.put("/update-articulo/:id", actualizarArticulo);
 router.put("/orden-articulo/:id", actualizarOrdenArticulo);
+router.put("/checking-roy-articulo/:id", actualizarCheckingRoyArticulo);
 router.get("/obtener-articulo/:id", obtenerArticuloxID);
 
 router.get("/parametros-lugares", obtenerParametrosLugares);

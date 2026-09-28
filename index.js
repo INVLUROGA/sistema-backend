@@ -48,6 +48,10 @@ const { FacturasMeta } = require("./middlewares/Redes/FacturasMeta.js");
 const {
   actualizarSeguimientos,
 } = require("./middlewares/EventosCron/actualizarSeguimientos.js");
+const {
+  enviarMensajeMembresiaPorFinalizar1SemanaAntes,
+  enviarMensajeMembresiaPorFinalizar1diaAntes,
+} = require("./middlewares/EventosCron/mensajeMembresiaPorFinalizarSeguimientoActivos.js");
 // obtenerDataSeguimientos();
 // enviarResumenVentasDigitalDiaria();
 // obtenerCumpleaniosEmpleadosxDia()
@@ -56,10 +60,15 @@ cron.schedule("* * * * *", () => {
   alertaUsuarioUnica();
 });
 //5:30pm+5horas
-cron.schedule('30 21 * * *', ()=>{
-  enviarMensajeMembresiaPorFinalizar1diaAntes()
-  enviarMensajeMembresiaPorFinalizar1SemanaAntes()
-})
+cron.schedule("30 21 * * *", () => {
+  enviarMensajeMembresiaPorFinalizar1diaAntes();
+  enviarMensajeMembresiaPorFinalizar1SemanaAntes();
+});
+//12:30pm+5horas
+// cron.schedule("30 17 * * *", () => {
+//   enviarMensajeMembresiaPorFinalizar1SemanaAntes();
+//   enviarMensajeMembresiaPorFinalizar1diaAntes();
+// });
 //1am+5horas
 cron.schedule("0 6 * * *", () => {
   actualizarSeguimientos();

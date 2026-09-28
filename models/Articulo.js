@@ -81,6 +81,10 @@ const Articulos = db.define("tb_articulos", {
   orden: {
     type: DataTypes.INTEGER,
   },
+  is_checking_roy: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
@@ -291,8 +295,15 @@ HisCamArticulos.hasOne(Parametros_zonas, {
   as: "parametro_lugar_encuentro",
 });
 Articulos.sync()
-  .then(() => {
+  .then(async () => {
     console.log("La tabla Articulos ha sido sync o ya existe.");
+    // sync() no agrega columnas nuevas a una tabla existente: se agrega is_checking_roy si falta
+    const tabla = Articulos.getTableName();
+    await db.query(
+      `IF COL_LENGTH('${tabla}', 'is_checking_roy') IS NULL
+         ALTER TABLE ${tabla} ADD is_checking_roy BIT NOT NULL
+           CONSTRAINT DF_${tabla}_is_checking_roy DEFAULT 0;`,
+    );
   })
   .catch((error) => {
     console.error(

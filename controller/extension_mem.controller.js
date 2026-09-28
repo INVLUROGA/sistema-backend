@@ -1,8 +1,8 @@
 const { request, response } = require("express");
 const { ExtensionMembresia } = require("../models/ExtensionMembresia");
 const {
-  actualizarSeguimientos,
-} = require("../middlewares/EventosCron/actualizarSeguimientos");
+  obtenerDataSeguimientoPorVenta,
+} = require("../middlewares/EventosCron/obtenerDataSeguimientos");
 
 const obtenerExtensionesPorTipo = async (req = request, res = response) => {
   const { tipo } = req.params;
@@ -44,7 +44,7 @@ const postExtensionPorTipoPorId = async (req = request, res = response) => {
       id_venta: idventa,
     });
     await extension.save();
-    await actualizarSeguimientos();
+    await obtenerDataSeguimientoPorVenta(idventa);
     res.status(200).json({
       msg: `Extension agregado con exito`,
     });
@@ -57,7 +57,40 @@ const postExtensionPorTipoPorId = async (req = request, res = response) => {
 };
 
 const obtenerExtensionPorId = (req = request, res = response) => {};
-const putExtension = (req = request, res = response) => {};
+const putExtension = async (req = request, res = response) => {
+  const { id } = req.params;
+  const { observacion, dias_habiles, extension_inicio, extension_fin, flag } =
+    req.body;
+  try {
+    const extension = await ExtensionMembresia.findByPk(id);
+    if (!extension) {
+      return res.status(404).json({
+        msg: `No existe la extension con id ${id}`,
+      });
+    }
+    const campos = {
+      observacion,
+      dias_habiles,
+      extension_inicio,
+      extension_fin,
+      flag,
+    };
+    // solo actualiza los campos enviados
+    Object.keys(campos).forEach(
+      (key) => campos[key] === undefined && delete campos[key],
+    );
+    await extension.update(campos);
+    await obtenerDataSeguimientoPorVenta(extension.id_venta);
+    res.status(200).json({
+      msg: `Extension actualizada con exito`,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(505).json({
+      msg: `Problemas en putExtension: ${error}`,
+    });
+  }
+};
 const removeExtension = (req = request, res = response) => {};
 
 module.exports = {

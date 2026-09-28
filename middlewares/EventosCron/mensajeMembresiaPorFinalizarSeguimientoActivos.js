@@ -3,14 +3,10 @@ const { Seguimiento } = require("../../models/Seguimientos");
 const { enviarMensajesWsp } = require("../../config/whatssap-web");
 
 // El server corre en UTC y Perú es UTC-5 todo el año (sin horario de verano).
-// "mes" y "año" son unidades de largo variable (28-31 días, 365-366 días), así
-// que para sumarlas hay que hacerlo sobre el calendario de Perú: si no,
-// cuando el cron corre entre 00:00 y 05:00 UTC (7pm-11:59pm del día anterior
-// en Perú) el día-del-mes usado como base sería el de UTC, no el de Perú, y
-// el resultado puede desfasarse varios días alrededor de fin de mes.
-// "dia" y "semana" no tienen este problema (sumar N días es un desplazamiento
-// fijo en el tiempo, sin importar la zona horaria), pero se calculan igual
-// para mantener consistencia con obtenerDataSeguimientos.js.
+// Se busca a los clientes cuya fecha_vencimiento cae EXACTAMENTE en el día
+// (calendario de Perú, lunes a domingo) que resulta de sumar numero/tiempo a
+// hoy: "1 semana" = los que vencen dentro de 7 días naturales, no todos los que
+// vencen entre hoy y 7 días.
 const OFFSET_PERU_MS = 5 * 60 * 60 * 1000;
 const obtenerFechaPeru = (fecha = new Date()) =>
   new Date(new Date(fecha).getTime() - OFFSET_PERU_MS);
@@ -22,7 +18,8 @@ const CALCULADORES_DE_TIEMPO = {
   año: (fecha, numero) => fecha.setUTCFullYear(fecha.getUTCFullYear() + numero),
 };
 
-const calcularFechaLimite = (numero, tiempo) => {
+// Devuelve [inicio, fin) del día de Perú hoy + numero/tiempo, como instantes UTC.
+const calcularRangoDiaObjetivo = (numero, tiempo) => {
   const calcularIncremento = CALCULADORES_DE_TIEMPO[tiempo];
 
   if (!calcularIncremento) {
@@ -31,9 +28,13 @@ const calcularFechaLimite = (numero, tiempo) => {
     );
   }
 
-  const fechaLimite = obtenerFechaPeru();
-  calcularIncremento(fechaLimite, numero);
-  return new Date(fechaLimite.getTime() + OFFSET_PERU_MS);
+  const diaObjetivo = obtenerFechaPeru();
+  diaObjetivo.setUTCHours(0, 0, 0, 0);
+  calcularIncremento(diaObjetivo, numero);
+
+  const inicio = new Date(diaObjetivo.getTime() + OFFSET_PERU_MS);
+  const fin = new Date(inicio.getTime() + 24 * 60 * 60 * 1000);
+  return { inicio, fin };
 };
 
 const mensajeMembresiaPorFinalizarSeguimientoActivos = async (
@@ -42,20 +43,21 @@ const mensajeMembresiaPorFinalizarSeguimientoActivos = async (
   mensaje,
 ) => {
   try {
-    const ahora = new Date();
-    const fechaLimite = calcularFechaLimite(numero, tiempo);
+    const { inicio, fin } = calcularRangoDiaObjetivo(numero, tiempo);
 
     const seguimientos = await Seguimiento.findAll({
       where: {
         flag: true,
-        fecha_vencimiento: { [Op.between]: [ahora, fechaLimite] },
+        fecha_vencimiento: { [Op.gte]: inicio, [Op.lt]: fin },
       },
       include: [{ association: "cli" }],
     });
     const resultados = await Promise.allSettled(
       seguimientos
         .filter((seg) => seg.cli?.tel_cli)
-        .map((seg) => enviarMensajesWsp(seg.cli.tel_cli, mensaje)),
+        .map((seg) =>
+          enviarMensajesWsp(933102718, `${seg.cli.tel_cli} <br/>- ${mensaje}`),
+        ),
     );
 
     resultados.forEach((resultado, index) => {

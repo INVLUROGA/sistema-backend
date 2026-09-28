@@ -222,6 +222,33 @@ const actualizarOrdenArticulo = async (req = request, res = response) => {
   }
 };
 
+// Marca/desmarca un articulo como revisado por Roy (is_checking_roy).
+// Igual que el orden, es un ajuste puntual: no pasa por HisCamArticulos/auditoria.
+const actualizarCheckingRoyArticulo = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const { is_checking_roy } = req.body;
+    const articulo = await Articulos.findByPk(id);
+    if (!articulo) {
+      return res.status(404).json({
+        ok: false,
+        msg: "El articulo no existe",
+      });
+    }
+    await articulo.update({ is_checking_roy: !!is_checking_roy });
+    res.status(200).json({
+      ok: true,
+      msg: "CHECK ROY ACTUALIZADO",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: "Error al actualizar el check de Roy del articulo",
+    });
+  }
+};
+
 const eliminarArticulo = async (req = request, res = response) => {
   try {
     const { id } = req.params;
@@ -681,6 +708,7 @@ module.exports = {
   registrarArticulo,
   actualizarArticulo,
   actualizarOrdenArticulo,
+  actualizarCheckingRoyArticulo,
   eliminarArticulo,
   obtenerArticuloxID,
   obtenerParametrosLugares,
