@@ -42,3 +42,13 @@ test("broadCastCommand envía el comando como parámetro, no concatenado en el S
   assert.match(consultas[0].query, /SELECT DeviceSN, @CMD/);
   assert.match(consultas[0].query, /WHERE IsActive = 1/);
 });
+
+test("getrequest entrega un comando por petición, el más antiguo, desempatando por Id", async () => {
+  consultas.length = 0;
+  await commandService.getRecentCommandByDeviceSN("CRJP230860129");
+
+  assert.equal(consultas.length, 1);
+  assert.match(consultas[0].query, /SELECT TOP \(1\) Id, CMD/);
+  assert.match(consultas[0].query, /ORDER BY CreationTime ASC, Id ASC/);
+  assert.equal(consultas[0].inputs.DeviceSN, "CRJP230860129");
+});

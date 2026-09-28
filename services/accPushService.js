@@ -50,9 +50,12 @@ function segmentarTramaRtlog(trama) {
 }
 
 // Comandos para dar de alta una persona en el equipo (PUSH acc).
-// Los campos van separados por tabulador; el nombre no puede tener tabuladores ni saltos de línea.
-function comandoAltaUsuario(id, { pin, nombre }) {
-  return `C:${id}:DATA UPDATE user CardNo=\tPin=${pin}\tPassword=\tGroup=0\tStartTime=0\tEndTime=0\tName=${nombre}\tPrivilege=0`;
+// Los campos van separados por tabulador: se quitan tabuladores y saltos de línea de los valores.
+// tarjeta, password y privilegio: al reenviar una persona importada del equipo se mandan los que
+// tenía, para no borrarle la tarjeta, la contraseña ni el rol de administrador.
+const valorCampo = (valor) => String(valor ?? "").replace(/[\t\r\n]+/g, " ").trim();
+function comandoAltaUsuario(id, { pin, nombre, tarjeta = "", password = "", privilegio = 0 }) {
+  return `C:${id}:DATA UPDATE user CardNo=${valorCampo(tarjeta)}\tPin=${pin}\tPassword=${valorCampo(password)}\tGroup=0\tStartTime=0\tEndTime=0\tName=${valorCampo(nombre)}\tPrivilege=${Number(privilegio) || 0}`;
 }
 
 // Autorización de acceso: sin ella el equipo reconoce la huella pero responde
@@ -66,8 +69,24 @@ function comandoAltaHuella(id, { pin, dedo, plantilla }) {
   return `C:${id}:DATA UPDATE templatev10 Size=${Buffer.from(plantilla, "base64").length}\tPin=${pin}\tFingerID=${dedo}\tValid=1\tTemplate=${plantilla}\tEndTag=`;
 }
 
+// Borra del equipo la huella de un dedo (FingerID 0-9) de la persona
+function comandoEliminarHuella(id, { pin, dedo }) {
+  return `C:${id}:DATA DELETE templatev10 Pin=${pin}\tFingerID=${dedo}`;
+}
+
+// Borra a la persona del equipo: primero su autorización y todas sus huellas, al final el usuario
+function comandosEliminarPersona(id, { pin }) {
+  return [
+    `C:${id}:DATA DELETE userauthorize Pin=${pin}`,
+    `C:${id + 1}:DATA DELETE templatev10 Pin=${pin}`,
+    `C:${id + 2}:DATA DELETE user Pin=${pin}`,
+  ];
+}
+
 module.exports = {
   registryCode,
+  comandoEliminarHuella,
+  comandosEliminarPersona,
   configuracionAcc,
   segmentarTramaRtlog,
   comandoAltaUsuario,

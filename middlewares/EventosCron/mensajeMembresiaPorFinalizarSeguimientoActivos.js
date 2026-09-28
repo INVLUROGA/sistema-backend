@@ -1,5 +1,6 @@
-const { Op } = require("sequelize");
+const { Op, UniqueConstraintError } = require("sequelize");
 const { Seguimiento } = require("../../models/Seguimientos");
+const { MensajeMembresia } = require("../../models/MensajeMembresia");
 const { enviarMensajesWsp } = require("../../config/whatssap-web");
 
 // El server corre en UTC y Perú es UTC-5 todo el año (sin horario de verano).
@@ -18,8 +19,9 @@ const CALCULADORES_DE_TIEMPO = {
   año: (fecha, numero) => fecha.setUTCFullYear(fecha.getUTCFullYear() + numero),
 };
 
-// Devuelve [inicio, fin) del día de Perú hoy + numero/tiempo, como instantes UTC.
-const calcularRangoDiaObjetivo = (numero, tiempo) => {
+// Devuelve [inicio, fin) del día de Perú hoy + numero/tiempo, como instantes UTC,
+// y ese día en formato YYYY-MM-DD.
+const calcularRangoDiaObjetivo = (numero, tiempo, ahora = new Date()) => {
   const calcularIncremento = CALCULADORES_DE_TIEMPO[tiempo];
 
   if (!calcularIncremento) {
@@ -28,55 +30,107 @@ const calcularRangoDiaObjetivo = (numero, tiempo) => {
     );
   }
 
-  const diaObjetivo = obtenerFechaPeru();
+  const diaObjetivo = obtenerFechaPeru(ahora);
   diaObjetivo.setUTCHours(0, 0, 0, 0);
   calcularIncremento(diaObjetivo, numero);
 
   const inicio = new Date(diaObjetivo.getTime() + OFFSET_PERU_MS);
   const fin = new Date(inicio.getTime() + 24 * 60 * 60 * 1000);
-  return { inicio, fin };
+  return { inicio, fin, dia: diaObjetivo.toISOString().slice(0, 10) };
 };
 
+// Teléfono normalizado (solo dígitos) para no duplicar "966 713 466" y "966713466"
+const normalizarTelefono = (telefono) => String(telefono ?? "").replace(/\D/g, "");
+
+/// Clientes con seguimiento activo que vencen en el día objetivo, uno por teléfono.
+const obtenerDestinatarios = async (numero, tiempo, ahora = new Date()) => {
+  const { inicio, fin, dia } = calcularRangoDiaObjetivo(numero, tiempo, ahora);
+
+  const seguimientos = await Seguimiento.findAll({
+    where: {
+      flag: true,
+      fecha_vencimiento: { [Op.gte]: inicio, [Op.lt]: fin },
+    },
+    include: [{ association: "cli" }],
+  });
+
+  // Un mensaje por teléfono: dos seguimientos del mismo cliente, o dos clientes
+  // que comparten teléfono, reciben un solo aviso.
+  const porTelefono = new Map();
+  for (const seg of seguimientos) {
+    const telefono = normalizarTelefono(seg.cli?.tel_cli);
+    if (telefono && !porTelefono.has(telefono)) {
+      porTelefono.set(telefono, { telefono, id_cli: seg.id_cli });
+    }
+  }
+  return { dia, destinatarios: [...porTelefono.values()] };
+};
+
+/// Envía el aviso UNA sola vez por (tipo, teléfono, día de vencimiento).
+/// Antes de enviar se reserva el envío en tb_mensaje_membresia (índice único):
+/// si ya existe (otro servidor, un reinicio, una segunda ejecución), se omite.
 const mensajeMembresiaPorFinalizarSeguimientoActivos = async (
   numero,
   tiempo,
   mensaje,
 ) => {
+  const tipo = `${numero}-${tiempo}`;
+  const resumen = { tipo, enviados: 0, omitidos: 0, errores: 0 };
   try {
-    const { inicio, fin } = calcularRangoDiaObjetivo(numero, tiempo);
+    const { dia, destinatarios } = await obtenerDestinatarios(numero, tiempo);
 
-    const seguimientos = await Seguimiento.findAll({
-      where: {
-        flag: true,
-        fecha_vencimiento: { [Op.gte]: inicio, [Op.lt]: fin },
-      },
-      include: [{ association: "cli" }],
-    });
-    const resultados = await Promise.allSettled(
-      seguimientos
-        .filter((seg) => seg.cli?.tel_cli)
-        .map((seg) =>
-          enviarMensajesWsp(933102718, `${seg.cli.tel_cli} <br/>- ${mensaje}`),
-        ),
-    );
-
-    resultados.forEach((resultado, index) => {
-      if (resultado.status === "rejected") {
-        console.error(
-          `[mensajeMembresiaPorFinalizarSeguimientoActivos] Falló el envío id_cli=${seguimientos[index]?.id_cli}:`,
-          resultado.reason,
-        );
+    // Envíos uno por uno para no saturar la API de WhatsApp
+    for (const { telefono, id_cli } of destinatarios) {
+      let registro;
+      try {
+        registro = await MensajeMembresia.create({
+          tipo,
+          telefono,
+          fecha_vencimiento: dia,
+          id_cli,
+        });
+      } catch (error) {
+        if (error instanceof UniqueConstraintError) {
+          resumen.omitidos++; // ya se envió (o se está enviando) este aviso
+          continue;
+        }
+        throw error;
       }
-    });
 
-    return true;
+      const respuesta = await enviarMensajesWsp(telefono, `${mensaje}`);
+      const errorEnvio = !respuesta?.ok
+        ? respuesta?.msg || "Error desconocido"
+        : respuesta.data?.error
+          ? JSON.stringify(respuesta.data.error)
+          : null;
+
+      // No se reintenta automáticamente: un error de red puede haber enviado igual
+      await registro.update({
+        estado: errorEnvio ? "error" : "enviado",
+        detalle: errorEnvio ? String(errorEnvio).slice(0, 500) : null,
+      });
+      if (errorEnvio) {
+        resumen.errores++;
+        console.error(
+          `[mensajeMembresiaPorFinalizar ${tipo}] Falló el envío id_cli=${id_cli} tel=${telefono}: ${errorEnvio}`,
+        );
+      } else {
+        resumen.enviados++;
+      }
+    }
+
+    console.log(
+      `[mensajeMembresiaPorFinalizar ${tipo}] vencen el ${dia}: ${resumen.enviados} enviados, ${resumen.omitidos} ya enviados antes, ${resumen.errores} con error`,
+    );
+    return resumen;
   } catch (error) {
-    console.log(error);
+    console.error(`[mensajeMembresiaPorFinalizar ${tipo}] Error`, error);
+    return { ...resumen, error: error.message };
   }
 };
 const enviarMensajeMembresiaPorFinalizar1diaAntes = async () => {
   try {
-    await mensajeMembresiaPorFinalizarSeguimientoActivos(
+    return await mensajeMembresiaPorFinalizarSeguimientoActivos(
       1,
       "dia",
       `
@@ -91,7 +145,7 @@ Puedes escribirnos por aquí o acercarte a uno de nuestros asesores fitness para
 };
 const enviarMensajeMembresiaPorFinalizar1SemanaAntes = async () => {
   try {
-    await mensajeMembresiaPorFinalizarSeguimientoActivos(
+    return await mensajeMembresiaPorFinalizarSeguimientoActivos(
       1,
       "semana",
       `
@@ -105,6 +159,8 @@ El camino hacia tus objetivos continúa. Si quieres renovar, puedes escribirnos 
   }
 };
 module.exports = {
+  calcularRangoDiaObjetivo,
+  obtenerDestinatarios,
   mensajeMembresiaPorFinalizarSeguimientoActivos,
   enviarMensajeMembresiaPorFinalizar1diaAntes,
   enviarMensajeMembresiaPorFinalizar1SemanaAntes,

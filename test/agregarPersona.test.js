@@ -38,7 +38,7 @@ const fakePool = {
           return { recordset: DISPOSITIVOS.map((DeviceSN) => ({ DeviceSN })) };
         }
         if (/INSERT INTO dbo\.zk_QueueCMD/.test(query)) {
-          for (const DeviceSN of DISPOSITIVOS) cola.push({ DeviceSN, CMD: inputs.CMD });
+          for (const DeviceSN of DISPOSITIVOS) cola.push({ DeviceSN, CMD: inputs.CMD, orden: inputs.orden });
           assert.doesNotMatch(query, /Pin=/); // el comando nunca va concatenado en el SQL
           return { rowsAffected: [DISPOSITIVOS.length] };
         }
@@ -99,9 +99,13 @@ test("agrega la persona, guarda su huella y la envía a los huelleros activos", 
   assert.equal(usuarios.get(41235478), "Juan Perez");
   assert.deepEqual(huellas.get("41235478|6"), Buffer.from(HUELLA, "base64"));
 
-  // 3 comandos (usuario + autorización de acceso + huella) por cada huellero activo, en ese orden
+  // 3 comandos por huellero, en orden: usuario -> huella -> autorización de acceso.
+  // La huella necesita que el usuario ya exista en el equipo; si llega antes, se descarta.
   assert.equal(cola.length, 6);
-  const [alta, autorizacion, huella] = cola.filter((c) => c.DeviceSN === "CRJP230860129").map((c) => c.CMD);
+  const delEquipo = cola.filter((c) => c.DeviceSN === "CRJP230860129");
+  const [alta, huella, autorizacion] = delEquipo.map((c) => c.CMD);
+  // Cada comando 1 s después del anterior (CreationTime se guarda al segundo)
+  assert.deepEqual(delEquipo.map((c) => c.orden), [0, 1, 2]);
   assert.match(alta, /^C:\d+:DATA UPDATE user CardNo=\tPin=41235478\t.*\tName=Juan Perez\tPrivilege=0$/);
   // Sin autorización el equipo reconoce la huella pero dice "Periodo de tiempo no válido"
   assert.match(autorizacion, /^C:\d+:DATA UPDATE userauthorize Pin=41235478\tAuthorizeTimezoneId=1\tAuthorizeDoorId=1$/);

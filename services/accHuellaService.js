@@ -97,11 +97,14 @@ async function guardarHuellas(huellas) {
 }
 
 /// Encola el comando para que el equipo envíe todas sus huellas.
-async function solicitarHuellas(DeviceSN, ahora = Date.now()) {
-  const id = Math.floor(ahora / 1000) % 1000000000;
+/// segundosDespues: para que llegue después de otro comando (ej. la lista de usuarios, que debe
+/// importarse antes porque cada huella exige que su usuario exista en dbo.zk_Users).
+async function solicitarHuellas(DeviceSN, ahora = Date.now(), segundosDespues = 0) {
+  const id = (Math.floor(ahora / 1000) + segundosDespues) % 1000000000;
   await commandService.insertCommand(
     DeviceSN,
-    `C:${id}:DATA QUERY tablename=${TABLA_HUELLAS},fielddesc=*,filter=*`
+    `C:${id}:DATA QUERY tablename=${TABLA_HUELLAS},fielddesc=*,filter=*`,
+    segundosDespues
   );
   console.log(`[zk-huellas] Huellas solicitadas al equipo ${DeviceSN}`);
 }

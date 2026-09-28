@@ -60,11 +60,18 @@ const {
 cron.schedule("* * * * *", () => {
   alertaUsuarioUnica();
 });
-//5:30pm+5horas
-cron.schedule("30 21 * * *", () => {
-  enviarMensajeMembresiaPorFinalizar1diaAntes();
-  enviarMensajeMembresiaPorFinalizar1SemanaAntes();
-});
+// 4:30 pm hora de Perú (antes "30 21 * * *" en UTC: sin zona horaria, un servidor
+// local en hora de Perú lo ejecutaba a las 9:30 pm y enviaba los avisos otra vez).
+// Aunque el cron corra en varios servidores, cada aviso se envía una sola vez
+// (ver tb_mensaje_membresia).
+cron.schedule(
+  "30 16 * * *",
+  () => {
+    enviarMensajeMembresiaPorFinalizar1diaAntes();
+    enviarMensajeMembresiaPorFinalizar1SemanaAntes();
+  },
+  { timezone: "America/Lima" },
+);
 //12:30pm+5horas
 // cron.schedule("30 17 * * *", () => {
 //   enviarMensajeMembresiaPorFinalizar1SemanaAntes();

@@ -108,6 +108,33 @@ async function verificarUsuariosDesconocidos(DeviceSN, pins) {
   return solicitarUsuarios(DeviceSN);
 }
 
+/// Personas registradas para los huelleros (dbo.zk_Users) con los dedos que tienen huella.
+async function listarPersonas() {
+  const pool = await poolPromise;
+  const result = await pool.request().query(`
+    SELECT u.UserCode, RTRIM(u.Name) AS Name, u.IsActive, u.CreationTime,
+           STRING_AGG(CAST(h.DataIndex AS VARCHAR(2)), ',') WITHIN GROUP (ORDER BY h.DataIndex) AS Dedos
+    FROM dbo.zk_Users u
+    LEFT JOIN dbo.zk_UserData64 h ON h.UserCode = u.UserCode AND h.DataLabel = 'FP'
+    GROUP BY u.UserCode, u.Name, u.IsActive, u.CreationTime
+    ORDER BY u.CreationTime DESC, u.UserCode
+  `);
+
+  return result.recordset.map((u) => {
+    const dedos = u.Dedos ? [...new Set(u.Dedos.split(",").map(Number))] : [];
+    return {
+      pin: u.UserCode,
+      nombre: u.Name,
+      activo: u.IsActive !== false,
+      dedos,
+      huellas: dedos.length,
+      registrado: u.CreationTime
+        ? new Date(u.CreationTime).toLocaleDateString("en-CA", { timeZone: "America/Lima" })
+        : null,
+    };
+  });
+}
+
 function limpiarSolicitudes() {
   ultimaSolicitud.clear();
 }
@@ -117,5 +144,6 @@ module.exports = {
   guardarUsuarios,
   solicitarUsuarios,
   verificarUsuariosDesconocidos,
+  listarPersonas,
   limpiarSolicitudes,
 };

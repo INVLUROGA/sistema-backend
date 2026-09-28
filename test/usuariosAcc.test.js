@@ -136,3 +136,31 @@ test("usuario enrolado en el equipo (table=tabledata) se registra automáticamen
   assert.equal(res.body, "user=2");
   assert.equal(usuariosBD.size, 2);
 });
+
+test("listarPersonas devuelve DNI, nombre, dedos con huella y fecha de registro en Perú", async () => {
+  const pool = await require("../database/connectionSQLserver").poolPromise;
+  const requestOriginal = pool.request;
+  let consulta = "";
+  pool.request = () => ({
+    async query(q) {
+      consulta = q;
+      return {
+        recordset: [
+          { UserCode: 123222240, Name: "alejandro", IsActive: true, CreationTime: new Date("2026-09-29T03:23:20Z"), Dedos: "2,6" },
+          { UserCode: 44355840, Name: "JANETT", IsActive: false, CreationTime: null, Dedos: null },
+        ],
+      };
+    },
+  });
+  try {
+    const personas = await accUserService.listarPersonas();
+    assert.match(consulta, /LEFT JOIN dbo\.zk_UserData64 h ON h\.UserCode = u\.UserCode AND h\.DataLabel = 'FP'/);
+    assert.deepEqual(personas, [
+      // 03:23 UTC del 29/09 = 22:23 del 28/09 en Perú
+      { pin: 123222240, nombre: "alejandro", activo: true, dedos: [2, 6], huellas: 2, registrado: "2026-09-28" },
+      { pin: 44355840, nombre: "JANETT", activo: false, dedos: [], huellas: 0, registrado: null },
+    ]);
+  } finally {
+    pool.request = requestOriginal;
+  }
+});

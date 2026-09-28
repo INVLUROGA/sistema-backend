@@ -1,12 +1,14 @@
 // services/commandService.js
 const { sql, poolPromise } = require("../database/connectionSQLserver");
 
-// Función para insertar un comando en dbo.zk_QueueCMD
-async function insertCommand(DeviceSN, CMD) {
+// Función para insertar un comando en dbo.zk_QueueCMD.
+// segundosDespues: fecha el comando unos segundos más tarde para que la cola lo entregue
+// después de otro comando insertado en el mismo segundo (CreationTime se guarda al segundo).
+async function insertCommand(DeviceSN, CMD, segundosDespues = 0) {
   const pool = await poolPromise;
   const query = `
         INSERT INTO dbo.zk_QueueCMD (DeviceSN, CMD, CreationTime)
-        VALUES (@DeviceSN, @CMD, FORMAT(SYSDATETIMEOFFSET(), 'yyyy-MM-dd HH:mm:ss zzz'))
+        VALUES (@DeviceSN, @CMD, FORMAT(DATEADD(second, @segundosDespues, SYSDATETIMEOFFSET()), 'yyyy-MM-dd HH:mm:ss zzz'))
     `;
 
   // Ejecutar la consulta para insertar el comando
@@ -14,17 +16,38 @@ async function insertCommand(DeviceSN, CMD) {
     .request()
     .input("DeviceSN", sql.VarChar(20), DeviceSN)
     .input("CMD", sql.VarChar(sql.MAX), CMD)
+    .input("segundosDespues", sql.Int, segundosDespues)
     .query(query);
 }
 
-// Función para obtener el comando más reciente por DeviceSN
+/// ¿Hay una consulta de datos (DATA QUERY) pendiente para el equipo? (sincronización en curso)
+async function hayConsultaPendiente(DeviceSN) {
+  const pool = await poolPromise;
+  const result = await pool
+    .request()
+    .input("DeviceSN", sql.VarChar(20), DeviceSN)
+    .query(`
+        SELECT COUNT(*) AS n
+        FROM dbo.zk_QueueCMD
+        WHERE DeviceSN = @DeviceSN AND CMD LIKE 'C:%:DATA QUERY %'
+    `);
+  return result.recordset[0].n > 0;
+}
+
+// Comandos que se entregan por cada /iclock/getrequest. Con varios comandos en una sola
+// respuesta el SpeedFace descartaba algunos (ej. la huella de un usuario recién creado);
+// uno por petición es lo probado. El equipo pregunta cada ~2 s (RequestDelay).
+const COMANDOS_POR_PETICION = 1;
+
+// Función para obtener el comando más antiguo pendiente por DeviceSN
 async function getRecentCommandByDeviceSN(DeviceSN) {
   const pool = await poolPromise;
+  // CreationTime se guarda al segundo: se desempata por Id (orden de inserción)
   const query = `
-        SELECT TOP 10 Id, CMD
+        SELECT TOP (${COMANDOS_POR_PETICION}) Id, CMD
         FROM dbo.zk_QueueCMD
         WHERE DeviceSN = @DeviceSN
-        ORDER BY CreationTime ASC
+        ORDER BY CreationTime ASC, Id ASC
     `;
 
   const result = await pool
@@ -85,7 +108,61 @@ async function broadCastCommand(broadcast_cmd) {
   }
 }
 
+// Qué hace un comando de la cola y para qué persona (PIN). Retorna null si no es de una persona
+// (ej. DATA QUERY). Acepta el formato de control de acceso (Pin=) y el de asistencia (PIN=).
+const OPERACIONES = {
+  "UPDATE user": "alta del usuario",
+  "UPDATE userinfo": "alta del usuario",
+  "UPDATE templatev10": "envío de huella",
+  "UPDATE fingertmp": "envío de huella",
+  "UPDATE biodata": "envío de huella",
+  "UPDATE userauthorize": "autorización de acceso",
+  "DELETE user": "borrado del usuario",
+  "DELETE userinfo": "borrado del usuario",
+  "DELETE templatev10": "borrado de huella",
+  "DELETE fingertmp": "borrado de huella",
+  "DELETE biodata": "borrado de huella",
+  "DELETE userauthorize": "borrado de autorización",
+};
+function describirComando(CMD) {
+  const m = /^C:\d+:DATA (UPDATE|DELETE) (\w+)\s[^]*?\bPIN=(\d+)/i.exec(String(CMD));
+  if (!m) return null;
+  const tipo = `${m[1].toUpperCase()} ${m[2].toLowerCase()}`;
+  return {
+    pin: parseInt(m[3], 10),
+    operacion: OPERACIONES[tipo] || tipo.toLowerCase(),
+    esBorrado: m[1].toUpperCase() === "DELETE",
+  };
+}
+
+/// Comandos pendientes en la cola, agrupados por persona (PIN):
+/// Map pin -> { huelleros: [SN...], operaciones: [...], esBorrado }
+async function listarPendientesPorPersona() {
+  const pool = await poolPromise;
+  // El PIN va al inicio del comando: no hace falta traer la plantilla completa de la huella
+  const result = await pool.request().query(`
+        SELECT DeviceSN, LEFT(CMD, 300) AS CMD
+        FROM dbo.zk_QueueCMD
+        ORDER BY CreationTime ASC, Id ASC
+    `);
+
+  const pendientes = new Map();
+  for (const { DeviceSN, CMD } of result.recordset) {
+    const comando = describirComando(CMD);
+    if (!comando) continue;
+    const actual = pendientes.get(comando.pin) || { huelleros: [], operaciones: [], esBorrado: false };
+    if (!actual.huelleros.includes(DeviceSN)) actual.huelleros.push(DeviceSN);
+    if (!actual.operaciones.includes(comando.operacion)) actual.operaciones.push(comando.operacion);
+    actual.esBorrado = actual.esBorrado || comando.esBorrado;
+    pendientes.set(comando.pin, actual);
+  }
+  return pendientes;
+}
+
 module.exports = {
+  hayConsultaPendiente,
+  describirComando,
+  listarPendientesPorPersona,
   getRecentCommandByDeviceSN,
   deleteCommandById,
   insertCommand,

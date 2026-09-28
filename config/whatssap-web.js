@@ -20,7 +20,8 @@ const enviarMensajesWsp = async (numberWsp, bodyMsg) => {
   try {
     const response = await axios(config);
     console.log(JSON.stringify(response.data), numberWsp);
-    return { ok: true };
+    // data: respuesta de UltraMsg (puede traer { error } aunque el HTTP sea 200)
+    return { ok: true, data: response.data };
   } catch (error) {
     console.error(error.message || error, numberWsp);
     return { ok: false, msg: error.message || "Error desconocido" };

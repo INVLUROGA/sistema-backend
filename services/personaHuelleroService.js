@@ -8,6 +8,8 @@ const accUserService = require("./accUserService");
 const accHuellaService = require("./accHuellaService");
 const accPushService = require("./accPushService");
 const userService = require("./userService");
+const deviceService = require("./deviceService");
+const commandService = require("./commandService");
 
 const MAX_LONGITUD_HUELLA = 20000; // una plantilla v10 ocupa ~1.5 KB en base64
 
@@ -106,7 +108,9 @@ function autorizacionPorDefecto() {
   };
 }
 
-/// Encola el alta (usuario + autorización + huella) en todos los huelleros activos. Retorna los SN.
+/// Encola el alta en todos los huelleros activos, en este orden: usuario -> huella -> autorización.
+/// La huella exige que el usuario ya exista en el equipo: si llega antes, el equipo la descarta.
+/// Retorna los SN.
 async function enviarAHuelleros({ pin, nombre, dedo, plantilla }, ahora = Date.now()) {
   const pool = await poolPromise;
   const { recordset } = await pool
@@ -114,25 +118,98 @@ async function enviarAHuelleros({ pin, nombre, dedo, plantilla }, ahora = Date.n
     .query("SELECT DeviceSN FROM dbo.zk_Devices WHERE IsActive = 1");
 
   const id = Math.floor(ahora / 1000) % 1000000000;
-  const comandos = [
+  await encolarEnOrden(pool, [
     accPushService.comandoAltaUsuario(id, { pin, nombre }),
-    accPushService.comandoAutorizacion(id + 1, { pin, ...autorizacionPorDefecto() }),
-    accPushService.comandoAltaHuella(id + 2, { pin, dedo, plantilla }),
-  ];
+    accPushService.comandoAltaHuella(id + 1, { pin, dedo, plantilla }),
+    accPushService.comandoAutorizacion(id + 2, { pin, ...autorizacionPorDefecto() }),
+  ]);
+  return recordset.map((d) => d.DeviceSN);
+}
 
-  // Mismo patrón que broadCastCommand: el comando va como parámetro, nunca concatenado
-  for (const CMD of comandos) {
+/// Encola los comandos para todos los huelleros activos, en el orden dado.
+/// CreationTime se guarda al segundo: cada comando va 1 s después del anterior para que
+/// la cola los entregue siempre en este orden (si empatan, SQL puede devolverlos en cualquiera).
+/// Mismo patrón que broadCastCommand: el comando va como parámetro, nunca concatenado.
+async function encolarEnOrden(pool, comandos) {
+  for (const [orden, CMD] of comandos.entries()) {
     await pool
       .request()
       .input("CMD", sql.VarChar(sql.MAX), CMD)
+      .input("orden", sql.Int, orden)
       .query(`
         INSERT INTO dbo.zk_QueueCMD (DeviceSN, CMD, CreationTime)
-        SELECT DeviceSN, @CMD, FORMAT(SYSDATETIMEOFFSET(), 'yyyy-MM-dd HH:mm:ss zzz')
+        SELECT DeviceSN, @CMD, FORMAT(DATEADD(second, @orden, SYSDATETIMEOFFSET()), 'yyyy-MM-dd HH:mm:ss zzz')
         FROM dbo.zk_Devices
         WHERE IsActive = 1
       `);
   }
-  return recordset.map((d) => d.DeviceSN);
+}
+
+/// Sistema -> huellero: reenvía una persona a todos los huelleros activos con todas sus huellas y
+/// acceso 24 h, en orden: usuario -> huellas -> autorización. El usuario va con la tarjeta,
+/// contraseña y privilegio guardados, para no borrárselos en el equipo.
+/// Retorna { ok, status, msg, persona, huellas, huelleros }.
+async function reenviarPersona(pinTexto, ahora = Date.now()) {
+  const pin = Number(pinTexto);
+  if (!Number.isInteger(pin) || pin <= 0 || pin > 999999999) {
+    return { ok: false, status: 400, msg: "El DNI no es válido" };
+  }
+
+  const pool = await poolPromise;
+  const persona = await pool
+    .request()
+    .input("UserCode", sql.Int, pin)
+    .query("SELECT RTRIM(Name) AS Name, Card, Password, Role FROM dbo.zk_Users WHERE UserCode = @UserCode");
+  if (persona.recordset.length === 0) {
+    return { ok: false, status: 404, msg: `No existe una persona con el DNI ${pin}` };
+  }
+  const { Name, Card, Password, Role } = persona.recordset[0];
+
+  const { recordset: huellas } = await pool
+    .request()
+    .input("UserCode", sql.Int, pin)
+    .query(
+      "SELECT DataIndex, BinaryData FROM dbo.zk_UserData64 WHERE UserCode = @UserCode AND DataLabel = 'FP' ORDER BY DataIndex"
+    );
+
+  const { recordset: dispositivos } = await pool
+    .request()
+    .query("SELECT DeviceSN FROM dbo.zk_Devices WHERE IsActive = 1");
+  if (dispositivos.length === 0) {
+    return { ok: false, status: 409, msg: "No hay huelleros activos" };
+  }
+
+  let id = Math.floor(ahora / 1000) % 1000000000;
+  await encolarEnOrden(pool, [
+    accPushService.comandoAltaUsuario(id++, {
+      pin,
+      nombre: Name,
+      tarjeta: Card,
+      password: Password,
+      privilegio: Role,
+    }),
+    ...huellas.map((h) =>
+      accPushService.comandoAltaHuella(id++, {
+        pin,
+        dedo: h.DataIndex,
+        plantilla: quitarRelleno(h.BinaryData.toString("base64")),
+      })
+    ),
+    accPushService.comandoAutorizacion(id++, { pin, ...autorizacionPorDefecto() }),
+  ]);
+
+  const huelleros = dispositivos.map((d) => d.DeviceSN);
+  console.log(
+    `[zk-personas] ${Name} (DNI ${pin}) reenviada con ${huellas.length} huella(s) a: ${huelleros.join(", ")}`
+  );
+  return {
+    ok: true,
+    status: 200,
+    msg: "Persona reenviada",
+    persona: { pin, nombre: Name },
+    huellas: huellas.length,
+    huelleros,
+  };
 }
 
 /// Registra a la persona. Retorna { ok, status, msg, huelleros }.
@@ -180,10 +257,163 @@ async function agregarPersona(body) {
   };
 }
 
+/// Elimina la huella de un dedo de la persona en la BD y en todos los huelleros activos.
+/// El borrado y el encolado del comando van en una sola transacción: o se hacen ambos o ninguno,
+/// para que la BD y los huelleros no queden desincronizados.
+/// Retorna { ok, status, msg, huelleros }.
+async function eliminarHuella(pinTexto, dedoTexto, ahora = Date.now()) {
+  const pin = Number(pinTexto);
+  const dedo = Number(dedoTexto);
+  if (!Number.isInteger(pin) || pin <= 0 || pin > 999999999) {
+    return { ok: false, status: 400, msg: "El DNI no es válido" };
+  }
+  if (!Number.isInteger(dedo) || dedo < 0 || dedo > 9) {
+    return { ok: false, status: 400, msg: "El dedo debe ser un número del 0 al 9" };
+  }
+
+  const pool = await poolPromise;
+  const transaccion = new sql.Transaction(pool);
+  await transaccion.begin();
+  try {
+    const borrado = await new sql.Request(transaccion)
+      .input("UserCode", sql.Int, pin)
+      .input("DataIndex", sql.Int, dedo)
+      .query(
+        "DELETE FROM dbo.zk_UserData64 WHERE UserCode = @UserCode AND DataLabel = 'FP' AND DataIndex = @DataIndex"
+      );
+    if (borrado.rowsAffected[0] === 0) {
+      await transaccion.rollback();
+      return { ok: false, status: 404, msg: `La persona ${pin} no tiene huella registrada en ese dedo` };
+    }
+
+    const id = Math.floor(ahora / 1000) % 1000000000;
+    const encolado = await new sql.Request(transaccion)
+      .input("CMD", sql.VarChar(sql.MAX), accPushService.comandoEliminarHuella(id, { pin, dedo }))
+      .query(`
+        INSERT INTO dbo.zk_QueueCMD (DeviceSN, CMD, CreationTime)
+        OUTPUT inserted.DeviceSN
+        SELECT DeviceSN, @CMD, FORMAT(SYSDATETIMEOFFSET(), 'yyyy-MM-dd HH:mm:ss zzz')
+        FROM dbo.zk_Devices
+        WHERE IsActive = 1
+      `);
+
+    await transaccion.commit();
+    const huelleros = encolado.recordset.map((d) => d.DeviceSN);
+    console.log(
+      `[zk-personas] Huella del dedo ${dedo} de ${pin} eliminada y enviada a: ${huelleros.join(", ") || "ningún huellero activo"}`
+    );
+    return { ok: true, status: 200, msg: "Huella eliminada", huelleros };
+  } catch (error) {
+    await transaccion.rollback().catch(() => {});
+    throw error;
+  }
+}
+
+/// Elimina a la persona (y todas sus huellas) de la BD y de todos los huelleros activos.
+/// Sus marcaciones (dbo.zk_Transactions) se conservan como historial de asistencia.
+/// Todo va en una sola transacción: o se borra y se envía a los huelleros, o no se hace nada.
+/// Retorna { ok, status, msg, huelleros }.
+async function eliminarPersona(pinTexto, ahora = Date.now()) {
+  const pin = Number(pinTexto);
+  if (!Number.isInteger(pin) || pin <= 0 || pin > 999999999) {
+    return { ok: false, status: 400, msg: "El DNI no es válido" };
+  }
+
+  const pool = await poolPromise;
+  const transaccion = new sql.Transaction(pool);
+  await transaccion.begin();
+  try {
+    const persona = await new sql.Request(transaccion)
+      .input("UserCode", sql.Int, pin)
+      .query("SELECT RTRIM(Name) AS Name FROM dbo.zk_Users WHERE UserCode = @UserCode");
+    if (persona.recordset.length === 0) {
+      await transaccion.rollback();
+      return { ok: false, status: 404, msg: `No existe una persona con el DNI ${pin}` };
+    }
+
+    // Las huellas primero: dbo.zk_UserData64 tiene FOREIGN KEY hacia dbo.zk_Users
+    await new sql.Request(transaccion)
+      .input("UserCode", sql.Int, pin)
+      .query("DELETE FROM dbo.zk_UserData64 WHERE UserCode = @UserCode");
+    await new sql.Request(transaccion)
+      .input("UserCode", sql.Int, pin)
+      .query("DELETE FROM dbo.zk_Users WHERE UserCode = @UserCode");
+
+    // Cada comando 1 s después del anterior para que la cola respete el orden
+    const id = Math.floor(ahora / 1000) % 1000000000;
+    let huelleros = [];
+    for (const [orden, CMD] of accPushService.comandosEliminarPersona(id, { pin }).entries()) {
+      const encolado = await new sql.Request(transaccion)
+        .input("CMD", sql.VarChar(sql.MAX), CMD)
+        .input("orden", sql.Int, orden)
+        .query(`
+          INSERT INTO dbo.zk_QueueCMD (DeviceSN, CMD, CreationTime)
+          OUTPUT inserted.DeviceSN
+          SELECT DeviceSN, @CMD, FORMAT(DATEADD(second, @orden, SYSDATETIMEOFFSET()), 'yyyy-MM-dd HH:mm:ss zzz')
+          FROM dbo.zk_Devices
+          WHERE IsActive = 1
+        `);
+      huelleros = encolado.recordset.map((d) => d.DeviceSN);
+    }
+
+    await transaccion.commit();
+    const nombre = persona.recordset[0].Name;
+    console.log(
+      `[zk-personas] ${nombre} (DNI ${pin}) eliminada y enviada a: ${huelleros.join(", ") || "ningún huellero activo"}`
+    );
+    return { ok: true, status: 200, msg: "Persona eliminada", persona: { pin, nombre }, huelleros };
+  } catch (error) {
+    await transaccion.rollback().catch(() => {});
+    throw error;
+  }
+}
+
+/// Sincroniza el huellero -> sistema: pide a cada huellero activo EN LÍNEA todas sus personas
+/// y huellas, que se importan a dbo.zk_Users y dbo.zk_UserData64 (sin duplicar).
+/// Las personas primero y las huellas 1 s después (cada huella exige que su persona exista).
+/// Retorna { ok, status, msg, solicitados, omitidos }.
+async function sincronizarDesdeHuelleros(ahora = Date.now()) {
+  const huelleros = (await deviceService.listarDispositivosConEstado()).filter((h) => h.IsActive);
+  const solicitados = [];
+  const omitidos = [];
+
+  for (const h of huelleros) {
+    if (h.estado !== "online") {
+      omitidos.push({ DeviceSN: h.DeviceSN, motivo: "fuera de línea" });
+      continue;
+    }
+    if (await commandService.hayConsultaPendiente(h.DeviceSN)) {
+      omitidos.push({ DeviceSN: h.DeviceSN, motivo: "ya hay una sincronización en curso" });
+      continue;
+    }
+    await accUserService.solicitarUsuarios(h.DeviceSN, true, ahora);
+    await accHuellaService.solicitarHuellas(h.DeviceSN, ahora, 1);
+    solicitados.push(h.DeviceSN);
+  }
+
+  if (solicitados.length === 0) {
+    return {
+      ok: false,
+      status: 409,
+      msg: omitidos.length
+        ? `No se pudo sincronizar: ${omitidos.map((o) => `${o.DeviceSN} (${o.motivo})`).join(", ")}`
+        : "No hay huelleros activos",
+      solicitados,
+      omitidos,
+    };
+  }
+  console.log(`[zk-sincronizar] Personas y huellas solicitadas a: ${solicitados.join(", ")}`);
+  return { ok: true, status: 200, msg: "Sincronización iniciada", solicitados, omitidos };
+}
+
 module.exports = {
+  reenviarPersona,
+  sincronizarDesdeHuelleros,
   autorizacionPorDefecto,
   normalizarBase64,
   quitarRelleno,
   validarPersona,
   agregarPersona,
+  eliminarHuella,
+  eliminarPersona,
 };
