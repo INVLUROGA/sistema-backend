@@ -12,11 +12,12 @@ const { alertaUsuarioUnica } = require("./middlewares/eventosCron.js");
 //***********************************************/
 
 // Importa y usa las rutas
-const cdataRoutes = require("./routes/ZkTeco/iclock/cdataRoutes");
-const devicecmdRoutes = require("./routes/ZkTeco/iclock/devicecmdRoutes");
-const getrequestRoutes = require("./routes/ZkTeco/iclock/getrequestRoutes");
-const pingRoutes = require("./routes/ZkTeco/iclock/pingRoutes");
-const registryRoutes = require("./routes/ZkTeco/iclock/registryRoutes");
+const cdataRoutes = require("./routes/ZkTeco/iClock/cdataRoutes");
+const devicecmdRoutes = require("./routes/ZkTeco/iClock/devicecmdRoutes");
+const getrequestRoutes = require("./routes/ZkTeco/iClock/getrequestRoutes");
+const pingRoutes = require("./routes/ZkTeco/iClock/pingRoutes");
+const registryRoutes = require("./routes/ZkTeco/iClock/registryRoutes");
+const querydataRoutes = require("./routes/ZkTeco/iClock/querydataRoutes");
 
 const cmdqueueRoutes = require("./routes/ZkTeco/bd/cmdqueueRoutes");
 const transactionRoutes = require("./routes/ZkTeco/bd/transactionRoutes");
@@ -131,6 +132,9 @@ app.use(morgan("dev")); // Usa "dev" o cualquier otro formato que prefieras
 //Directorio publico
 app.use(express.static("public"));
 //Lectura y parseo del body
+// Los huelleros ZKTeco envían las tramas (ATTLOG, OPERLOG...) como texto plano.
+// Va antes de json/urlencoded para que /iclock siempre reciba el texto crudo.
+app.use("/iclock", express.text({ type: "*/*", limit: "50mb" }));
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(require("./routes/zk.router.js"));
@@ -141,6 +145,7 @@ app.use(devicecmdRoutes);
 app.use(getrequestRoutes);
 app.use(pingRoutes);
 app.use(registryRoutes);
+app.use(querydataRoutes);
 
 app.use(cmdqueueRoutes);
 app.use(transactionRoutes);

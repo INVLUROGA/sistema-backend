@@ -30,3 +30,18 @@ exports.insertDevice = async (req, res) => {
     res.status(500).send("Error en el servidor");
   }
 };
+
+exports.estadoDispositivos = async (req, res) => {
+  console.log("-GET BD ESTADO DEVICES-");
+
+  try {
+    const dispositivos = await deviceService.listarDispositivosConEstado();
+    res.status(200).json({
+      minutosOffline: deviceService.obtenerMinutosOffline(),
+      dispositivos,
+    });
+  } catch (err) {
+    console.error("Error en el controlador al listar el estado de dispositivos", err);
+    res.status(500).send("Error en el servidor");
+  }
+};

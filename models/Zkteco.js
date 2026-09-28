@@ -25,6 +25,13 @@ const Device = db.define("zk_Devices", {
   IsActive: {
     type: DataTypes.BOOLEAN,
   },
+  // Latido /iclock/ping (ver database/migrations/20260928_zk_devices_heartbeat.sql)
+  ultima_conexion: {
+    type: DataTypes.DATE(),
+  },
+  ultima_ip: {
+    type: DataTypes.STRING(45),
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,

@@ -3,9 +3,15 @@ deviceService = require("../../../services/deviceService");
 userService = require("../../../services/userService");
 commandService = require("../../../services/commandService");
 userdata64Service = require("../../../services/userdata64Service");
+const heartbeatService = require("../../../services/heartbeatService");
+const accPushService = require("../../../services/accPushService");
+const accUserService = require("../../../services/accUserService");
+const accHuellaService = require("../../../services/accHuellaService");
 
 // Controlador para /iclock/cdata
 exports.fxget = async (req, res) => {
+  // Latido del equipo en segundo plano (no bloquea ni altera la respuesta)
+  heartbeatService.registrarLatidoDesdeRequest(req, "iclock/cdata");
   try {
     console.log("-GET DATA-");
     const serial = req.query.SN;
@@ -14,7 +20,13 @@ exports.fxget = async (req, res) => {
     if (serial !== "") {
       console.log(await deviceService.checkDeviceStatus(serial), "problema?");
 
-      if (await deviceService.checkDeviceStatus(serial)) {
+      if (
+        req.query.DeviceType === "acc" &&
+        (await deviceService.checkDeviceStatus(serial))
+      ) {
+        // Equipo de CONTROL DE ACCESO (PUSH acc): responde su configuración
+        res.type("text/plain").send(accPushService.configuracionAcc(serial));
+      } else if (await deviceService.checkDeviceStatus(serial)) {
         const respuesta = `GET OPTION FROM: ${serial}
 ATTLOGStamp=0
 OPERLOGStamp=0
@@ -49,6 +61,8 @@ Encrypt=None`;
 
 // Ruta /iclock/cdata
 exports.fxpost = async (req, res) => {
+  // Latido del equipo en segundo plano (no bloquea ni altera la respuesta)
+  heartbeatService.registrarLatidoDesdeRequest(req, "iclock/cdata");
   try {
     console.log("-POST cdata-");
     const serial = req.query.SN;
@@ -64,6 +78,45 @@ exports.fxpost = async (req, res) => {
       // Llamar a la función del servicio para insertar la transacción
       await transactionService.insertTransaction(trans, serial);
       console.log("Transacción guardada satisfactoriamente");
+    }
+
+    // EVENTOS EN TIEMPO REAL DE EQUIPOS DE CONTROL DE ACCESO (PUSH acc)
+    else if (table === "rtlog") {
+      const eventos = accPushService.segmentarTramaRtlog(req.body);
+      for (const e of eventos) {
+        console.log(
+          `[iclock/cdata] Evento -> SN: ${serial} | PIN: ${e.UserCode} | Hora: ${e.timestamp} | event: ${e.event} | verifytype: ${e.verifytype}`
+        );
+      }
+      // Solo se guardan como marcación los eventos con usuario identificado
+      const marcaciones = eventos.filter((e) => e.UserCode > 0 && e.timestamp);
+      if (marcaciones.length > 0) {
+        await transactionService.insertTransaction(marcaciones, serial);
+        // Si el PIN no está en zk_Users, pide sus datos al equipo (en segundo plano)
+        accUserService
+          .verificarUsuariosDesconocidos(serial, marcaciones.map((e) => e.UserCode))
+          .catch((err) => console.error("[zk-usuarios] Error al verificar PIN", err));
+      }
+      return res.type("text/plain").send("OK");
+    }
+
+    // USUARIOS ENROLADOS EN EQUIPOS DE CONTROL DE ACCESO (PUSH acc)
+    else if (table === "tabledata" && req.query.tablename === "user") {
+      const usuarios = accUserService.segmentarTramaUsuarios(req.body);
+      const guardados = await accUserService.guardarUsuarios(usuarios);
+      console.log(`[zk-usuarios] ${guardados} usuarios recibidos de ${serial}`);
+      return res.type("text/plain").send(`user=${usuarios.length}`);
+    }
+
+    // HUELLAS ENROLADAS EN EQUIPOS DE CONTROL DE ACCESO (PUSH acc)
+    else if (table === "tabledata" && accHuellaService.TABLAS_HUELLAS.includes(req.query.tablename)) {
+      const huellas = accHuellaService.segmentarTramaHuellas(req.body);
+      const r = await accHuellaService.guardarHuellas(huellas);
+      console.log(`[zk-huellas] ${serial}: ${r.nuevas} nuevas, ${r.actualizadas} actualizadas`);
+      // Se confirma todo lo recibido (incluye rostros u otros tipos que no se guardan)
+      return res
+        .type("text/plain")
+        .send(`${req.query.tablename}=${accHuellaService.contarRegistros(req.body)}`);
     }
 
     // TABLA DE OPERACIONES

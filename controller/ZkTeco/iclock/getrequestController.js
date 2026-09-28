@@ -1,7 +1,10 @@
 // Ruta /iclock/getrequest
 const commandService = require("../../../services/commandService");
+const heartbeatService = require("../../../services/heartbeatService");
 
 exports.fxget = async (req, res) => {
+  // Latido del equipo en segundo plano (no bloquea ni altera la respuesta)
+  heartbeatService.registrarLatidoDesdeRequest(req, "iclock/getrequest");
   try {
     console.log("-GET getrequest-");
     const DeviceSN = req.query.SN;

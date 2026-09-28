@@ -57,37 +57,28 @@ async function broadCastCommand(broadcast_cmd) {
     // Conectarse a la base de datos
     const pool = await poolPromise;
 
-    // Consulta para obtener todos los DeviceSN de la tabla dbo.zk_Devices
+    // Inserta el comando para todos los dispositivos activos en una sola operación.
+    // El comando va como parámetro (nunca concatenado): los nombres con comillas
+    // (ej. D'Angelo) no rompen la consulta ni permiten inyección SQL.
+    const insertQuery = `
+            INSERT INTO dbo.zk_QueueCMD (DeviceSN, CMD, CreationTime)
+            SELECT DeviceSN, @CMD, FORMAT(SYSDATETIMEOFFSET(), 'yyyy-MM-dd HH:mm:ss zzz')
+            FROM dbo.zk_Devices
+            WHERE IsActive = 1
+        `;
+
     const result = await pool
       .request()
-      .query("SELECT DeviceSN FROM dbo.zk_Devices WHERE IsActive = 1");
+      .input("CMD", sql.VarChar(sql.MAX), broadcast_cmd)
+      .query(insertQuery);
 
     // Verificar si se han encontrado dispositivos
-    if (result.recordset.length === 0) {
+    const insertados = result.rowsAffected[0];
+    if (insertados === 0) {
       console.log("No se encontraron dispositivos activos.");
       return;
     }
-
-    // Construir los valores para el INSERT masivo
-    let insertValues = result.recordset
-      .map((device) => {
-        const DeviceSN = device.DeviceSN;
-        const CMD = broadcast_cmd;
-        return `('${DeviceSN}', '${CMD}', FORMAT(SYSDATETIMEOFFSET(), \'yyyy-MM-dd HH:mm:ss zzz\'))`;
-      })
-      .join(",");
-
-    // Consulta para insertar todos los comandos en una sola operación
-    const insertQuery = `
-            INSERT INTO dbo.zk_QueueCMD (DeviceSN, CMD, CreationTime)
-            VALUES ${insertValues}
-        `;
-
-    // Ejecutar la consulta
-    await pool.request().query(insertQuery);
-    console.log(
-      `Comandos insertados para ${result.recordset.length} dispositivos.`
-    );
+    console.log(`Comandos insertados para ${insertados} dispositivos.`);
   } catch (err) {
     console.error("Error al procesar dispositivos e insertar comandos:", err);
     throw new Error("Error en el servicio");

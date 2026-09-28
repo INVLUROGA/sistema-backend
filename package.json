@@ -4,8 +4,12 @@
   "description": "dashboard backend de change y circus",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Running tests...\"",
+    "test": "node --test test/*.test.js",
     "dev": "nodemon index.js",
+    "huelleros": "node scripts/huelleros.js",
+    "marcaciones": "node scripts/marcaciones.js",
+    "usuarios-huellero": "node scripts/usuariosHuellero.js",
+    "huellas-huellero": "node scripts/huellasHuellero.js",
     "start": "node index.js"
   },
   "repository": {

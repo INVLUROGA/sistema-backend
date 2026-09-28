@@ -2,29 +2,43 @@
 const { sql, poolPromise } = require("../database/connectionSQLserver");
 
 // Función para insertar una transacción en dbo.zk_Transactions
+// Ignora las marcaciones ya guardadas (el equipo reenvía su historial al reiniciarse).
+// Retorna cuántas marcaciones nuevas se insertaron.
 async function insertTransaction(data, deviceSN) {
   const pool = await poolPromise;
   const query = `
+        IF NOT EXISTS (
+            SELECT 1 FROM dbo.zk_Transactions
+            WHERE UserCode = @UserCode AND Device = @Device AND PunchTime = @PunchTime
+        )
         INSERT INTO dbo.zk_Transactions (UserCode, Device, PunchTime, UploadTime)
         VALUES (@UserCode, @Device, @PunchTime, FORMAT(SYSDATETIMEOFFSET(), 'yyyy-MM-dd HH:mm:ss zzz'))
     `;
 
+  let insertadas = 0;
   // Ejecutar la inserción para cada registro en "data"
   for (let i = 0; i < data.length; i++) {
     let record = data[i];
     try {
-      await pool
+      const result = await pool
         .request()
         .input("UserCode", sql.Int, record.UserCode) // El valor de UserId viene del record
         .input("Device", sql.VarChar(20), deviceSN)
-        .input("PunchTime", sql.DateTimeOffset, record.timestamp)
+        // La hora del equipo viene sin zona horaria: es hora de Perú (TimeZone=-5)
+        .input("PunchTime", sql.DateTimeOffset, agregarOffsetManual(record.timestamp))
         .query(query);
+      const nueva = result.rowsAffected.some((n) => n > 0);
+      if (nueva) insertadas++;
+      console.log(
+        `[iclock/cdata] Marcación ${nueva ? "nueva" : "repetida"} -> SN: ${deviceSN} | PIN: ${record.UserCode} | Hora: ${record.timestamp}`
+      );
     } catch (error) {
       console.error(
         `Error inesperado al insertar el registro ${record.UserCode}: ${error.message}`
       );
     }
   }
+  return insertadas;
 }
 
 function segmentarTramaTrans(trama) {
@@ -60,7 +74,7 @@ function segmentarTramaTrans(trama) {
 
 function agregarOffsetManual(fechaSinOffset, offset = "-05:00") {
   // Combinar la fecha sin offset con el offset fijo
-  const fechaConOffset = `${fechaSinOffset}${offset}`;
+  const fechaConOffset = `${fechaSinOffset.replace(" ", "T")}${offset}`;
 
   // Crear un nuevo objeto Date con la cadena modificada
   const fecha = new Date(fechaConOffset);

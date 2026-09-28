@@ -1,16 +1,16 @@
 // Controlador para /iclock/ping
+// Latido (heartbeat) de los equipos ZKTeco (protocolo PUSH/ADMS).
+// El firmware exige SIEMPRE 200 "OK" en text/plain, así que la respuesta
+// se envía de inmediato y el registro en BD se hace después, sin bloquear.
+const heartbeatService = require("../../../services/heartbeatService");
+
 exports.fxget = (req, res) => {
-  // DESCOMENTAR SI DESEA EXPANDIR EL DESARROLLO
+  res.status(200).type("text/plain").send("OK");
 
-  // console.log('-GET PING-');
+  const DeviceSN = heartbeatService.obtenerSN(req);
+  const ip = heartbeatService.obtenerIp(req);
+  console.log(`[iclock/ping] OK -> SN: ${DeviceSN || "(sin SN)"} | IP: ${ip}`);
 
-  // const serial = req.query.SN;
-  // const datos = req.body ? req.body : '';
-  // console.log('Cuerpo de la solicitud POST:', datos);
-  // const host = '8.8.8.8'; // Cambia por la IP que desees
-  // ping.sys.probe(host, function(isAlive){
-  //     const msg = isAlive ? `La IP ${host} está activa.` : `La IP ${host} no responde.`;
-  //     console.log(msg);
-  // });
-  res.send("ok");
+  // Se retorna la promesa solo para facilitar los tests; Express la ignora
+  return heartbeatService.registrarLatidoDesdeRequest(req, "iclock/ping");
 };

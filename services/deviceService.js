@@ -47,7 +47,67 @@ async function checkDeviceStatus(DeviceSN) {
   return IsActive;
 }
 
+// Minutos sin latido para considerar un dispositivo fuera de línea
+function obtenerMinutosOffline() {
+  const minutos = Number(process.env.ZK_OFFLINE_MINUTES);
+  return Number.isFinite(minutos) && minutos > 0 ? minutos : 3;
+}
+
+/// Servicio para registrar el latido de /iclock/ping.
+/// Retorna true si el SN existe en dbo.zk_Devices, false si es desconocido.
+async function registrarLatido(DeviceSN, ip) {
+  // Conectar a la base de datos
+  const pool = await poolPromise;
+
+  const query = `
+                UPDATE dbo.zk_Devices
+                SET ultima_conexion = SYSUTCDATETIME(), ultima_ip = @ip
+                WHERE DeviceSN = @DeviceSN
+            `;
+
+  const result = await pool
+    .request()
+    .input("DeviceSN", sql.VarChar(20), DeviceSN)
+    .input("ip", sql.VarChar(45), ip)
+    .query(query);
+
+  return result.rowsAffected[0] > 0;
+}
+
+/// Calcula el estado de un dispositivo a partir de su ultima_conexion (UTC).
+/// No se guarda en BD: un dispositivo está offline si no hay latido en X minutos.
+function calcularEstado(ultimaConexion, ahora = new Date(), minutosOffline = obtenerMinutosOffline()) {
+  if (!ultimaConexion) return "offline";
+  const transcurridoMs = ahora.getTime() - new Date(ultimaConexion).getTime();
+  return transcurridoMs <= minutosOffline * 60 * 1000 ? "online" : "offline";
+}
+
+/// Lista los dispositivos con su estado calculado (para el panel de administración)
+async function listarDispositivosConEstado() {
+  // Conectar a la base de datos
+  const pool = await poolPromise;
+
+  const query = `
+                SELECT Id, DeviceSN, IsActive, ultima_conexion, ultima_ip
+                FROM dbo.zk_Devices
+                ORDER BY DeviceSN
+            `;
+
+  const result = await pool.request().query(query);
+  const ahora = new Date();
+  const minutosOffline = obtenerMinutosOffline();
+
+  return result.recordset.map((device) => ({
+    ...device,
+    estado: calcularEstado(device.ultima_conexion, ahora, minutosOffline),
+  }));
+}
+
 module.exports = {
   insertDevice,
   checkDeviceStatus,
+  registrarLatido,
+  calcularEstado,
+  listarDispositivosConEstado,
+  obtenerMinutosOffline,
 };
