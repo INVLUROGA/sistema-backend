@@ -83,8 +83,68 @@ function agregarOffsetManual(fechaSinOffset, offset = "-05:00") {
   return fecha.toISOString(); // Esto te devuelve en formato UTC
 }
 
+// Fecha y hora de Perú (America/Lima) de un Date: { fecha: "2026-09-28", hora: "11:46:13" }
+function fechaHoraLima(fecha) {
+  if (!fecha) return { fecha: null, hora: null };
+  const partes = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Lima",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(new Date(fecha))
+      .map((p) => [p.type, p.value])
+  );
+  return {
+    fecha: `${partes.year}-${partes.month}-${partes.day}`,
+    hora: `${partes.hour}:${partes.minute}:${partes.second}`,
+  };
+}
+
+/// Marcaciones entre dos fechas de Perú (YYYY-MM-DD, ambas incluidas), con el nombre del usuario.
+async function listarMarcaciones(desde, hasta) {
+  const pool = await poolPromise;
+  const inicio = new Date(`${desde}T00:00:00-05:00`);
+  const fin = new Date(`${hasta}T00:00:00-05:00`);
+  fin.setUTCDate(fin.getUTCDate() + 1); // hasta el final del día "hasta"
+
+  const result = await pool
+    .request()
+    .input("inicio", sql.DateTimeOffset, inicio)
+    .input("fin", sql.DateTimeOffset, fin)
+    .query(`
+      SELECT t.Id, t.UserCode, RTRIM(u.Name) AS Name, t.Device, t.PunchTime, t.UploadTime
+      FROM dbo.zk_Transactions t
+      LEFT JOIN dbo.zk_Users u ON u.UserCode = t.UserCode
+      WHERE t.PunchTime >= @inicio AND t.PunchTime < @fin
+      ORDER BY t.PunchTime DESC, t.Id DESC
+    `);
+
+  return result.recordset.map((m) => {
+    const marcacion = fechaHoraLima(m.PunchTime);
+    const recibida = fechaHoraLima(m.UploadTime);
+    return {
+      id: m.Id,
+      pin: m.UserCode,
+      nombre: m.Name || null,
+      huellero: m.Device,
+      fecha: marcacion.fecha,
+      hora: marcacion.hora,
+      marcacion: m.PunchTime,
+      recibida: recibida.fecha ? `${recibida.fecha} ${recibida.hora}` : null,
+    };
+  });
+}
+
 module.exports = {
   insertTransaction,
   segmentarTramaTrans,
   agregarOffsetManual,
+  fechaHoraLima,
+  listarMarcaciones,
 };

@@ -49,8 +49,20 @@ function segmentarTramaRtlog(trama) {
     });
 }
 
+// Comandos para dar de alta una persona en el equipo (PUSH acc).
+// Los campos van separados por tabulador; el nombre no puede tener tabuladores ni saltos de línea.
+function comandoAltaUsuario(id, { pin, nombre }) {
+  return `C:${id}:DATA UPDATE user CardNo=\tPin=${pin}\tPassword=\tGroup=0\tStartTime=0\tEndTime=0\tName=${nombre}\tPrivilege=0`;
+}
+
+function comandoAltaHuella(id, { pin, dedo, plantilla }) {
+  return `C:${id}:DATA UPDATE templatev10 Size=${Buffer.from(plantilla, "base64").length}\tPin=${pin}\tFingerID=${dedo}\tValid=1\tTemplate=${plantilla}\tEndTag=`;
+}
+
 module.exports = {
   registryCode,
   configuracionAcc,
   segmentarTramaRtlog,
+  comandoAltaUsuario,
+  comandoAltaHuella,
 };

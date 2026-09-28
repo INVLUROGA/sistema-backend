@@ -200,6 +200,11 @@ app.use(
   "/api/extension-membresia",
   require("./routes/extension_mem.router.js"),
 );
+app.use(
+  "/api/eventos-asistencia",
+  validarJWT,
+  require("./routes/eventosAsistencia.router.js"),
+);
 
 app.use("/api/meta", validarJWT, require("./routes/meta.route.js"));
 app.use("/api/impuestos", validarJWT, require("./routes/impuestos.router.js"));

@@ -697,6 +697,12 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           url: "/gestion-tardanzas",
         },
+        {
+          label: "Eventos de asistencia (huellero)",
+          isTitle: false,
+          icon: "uil-calender",
+          url: "/gestion-eventos-asistencia",
+        },
         // {
         //   //key: "reporte-utilidad-pgm",
         //   label: "Horas extras",
@@ -861,6 +867,13 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-home-alt",
           children: [
             {
+              key: "gestion-eventos-asistencia",
+              label: "Eventos asistencia",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-eventos-asistencia",
+            },
+            {
               key: "cliente-gestion-socios",
               label: "Gestion de socios",
               isTitle: false,
@@ -958,7 +971,7 @@ const seccionGET = async (req = request, res = response) => {
       ];
     }
     if (modulo === "mod-user-inventario") {
-      MENU_ITEMS=[
+      MENU_ITEMS = [
         {
           key: "checklist",
           label: "checklist",
@@ -970,10 +983,10 @@ const seccionGET = async (req = request, res = response) => {
               label: "checklist inventario",
               icon: "uil-calender",
               url: "/checklist-inventario",
-            }
-          ]
-        }
-      ]
+            },
+          ],
+        },
+      ];
     }
     if (modulo === "mod-marketing") {
       MENU_ITEMS = [
