@@ -83,6 +83,10 @@ const Gastos = db.define("tb_egresos", {
     primaryKey: true,
     allowNull: false,
   },
+  id_porCuenta: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
   id_gasto: {
     type: DataTypes.INTEGER,
   },

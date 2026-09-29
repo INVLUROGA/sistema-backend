@@ -70,6 +70,8 @@ const getGastos = async (req = request, res = response) => {
       order: [["updatedAt", "desc"]],
       attributes: [
         "id",
+        "id_porCuenta",
+        "updatedAt",
         "moneda",
         "monto",
         "fec_pago",
@@ -343,6 +345,32 @@ const deleteGasto = async (req = request, res = response) => {
     });
   }
 };
+// Enlaza (o desenlaza con 0) un gasto a una cuenta balance, solo actualiza id_porCuenta
+const putGastoPorCuenta = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const id_porCuenta = Number(req.body?.id_porCuenta) || 0;
+    const gasto = await Gastos.findOne({ where: { flag: true, id } });
+    if (!gasto) {
+      return res.status(404).json({ msg: `No existe el gasto de id ${id}` });
+    }
+    await gasto.update({ id_porCuenta });
+    let formAUDIT = {
+      id_user: req.id_user,
+      ip_user: req.ip_user,
+      accion: typesCRUD.PUT,
+      observacion: `Se actualizo: El gasto de id ${gasto.id}, id_porCuenta = ${id_porCuenta}`,
+    };
+    await capturarAUDIT(formAUDIT);
+    res.status(200).json({
+      msg: "success",
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: `Error en el servidor, en controller de putGastoPorCuenta, hable con el administrador: ${error}`,
+    });
+  }
+};
 const obtenerOrdenCompra = async (req = request, res = response) => {
   const { id_enterp } = req.params;
   try {
@@ -511,6 +539,7 @@ const obtenerGastosxFechasPago = async (req = request, res = response) => {
       order: [["fec_registro", "desc"]],
       attributes: [
         "id",
+        "id_porCuenta",
         "moneda",
         "monto",
         "fec_pago",
@@ -603,6 +632,7 @@ const obtenerGastosxFechasComprobante = async (
       attributes: [
         "id_gasto",
         "id",
+        "id_porCuenta",
         "moneda",
         "monto",
         "fec_pago",
@@ -904,6 +934,7 @@ module.exports = {
   getGasto,
   obtenerOrdenCompra,
   putGasto,
+  putGastoPorCuenta,
   deleteGasto,
   getProveedoresGastos_SinRep,
   obtenerPagosContratos,

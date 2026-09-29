@@ -58,6 +58,7 @@ const {
   updateVentasPagosxID,
   obtenerContrato,
   getVentasxFechaMembresia,
+  putFechaInicioMembresia,
 } = require("../controller/venta.controller");
 
 const {
@@ -101,6 +102,8 @@ router.post(
   postVenta,
 );
 router.put("/put-venta/:id", putVentaxId);
+// Cambia la fecha de inicio de una membresía (venta + seguimiento)
+router.put("/membresia/:id/fecha-inicio", putFechaInicioMembresia);
 router.post("/cambio-programa", postCambioPrograma);
 router.get("/cliente-ventas", obtenerClientesVentas);
 router.get(

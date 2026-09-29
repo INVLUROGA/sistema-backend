@@ -6,6 +6,7 @@ const {
   getGastos,
   getGasto,
   putGasto,
+  putGastoPorCuenta,
   deleteGasto,
   getGastoxGrupo,
   obtenerOrdenCompra,
@@ -26,6 +27,7 @@ router.get("/empresa/:id_empresa", getGastos);
 router.get("/facturado/:id_facturado_por", getFacturas);
 router.get("/id/:id", getgastoxID);
 router.put("/id/:id", putGasto);
+router.put("/por-cuenta/id/:id", putGastoPorCuenta);
 router.put("/delete/id/:id", deleteGasto);
 
 router.get("/orden-compra/:id_enterp", obtenerOrdenCompra);

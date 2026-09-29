@@ -50,6 +50,9 @@ const {
   actualizarClienteSeguimientoPorTransferencia,
   obtenerDataSeguimientoPorVenta,
 } = require("../middlewares/EventosCron/obtenerDataSeguimientos");
+// Al final de los imports: los modelos ya están cargados en el orden de siempre
+// (cargarlo antes cambia ese orden y rompe la dependencia circular Usuarios <-> Parametros)
+const membresiaService = require("../services/membresiaService");
 
 // Cargar el plugin
 dayjs.extend(utc);
@@ -813,6 +816,7 @@ const get_VENTA_ID = async (req = request, res = response) => {
         {
           model: detalleVenta_membresias,
           attributes: [
+            "id", // necesario para editar la fecha de inicio desde el detalle de la venta
             "uid_contrato",
             "id_venta",
             "id_pgm",
@@ -3799,6 +3803,21 @@ const putVentaxId = async (req, res) => {
     });
   }
 };
+// PUT /api/venta/membresia/:id/fecha-inicio  body: { fecha_inicio: "YYYY-MM-DD" }
+// Cambia la fecha de inicio de la membresía (y su fin) y recalcula su seguimiento.
+const putFechaInicioMembresia = async (req, res) => {
+  try {
+    const { status, ...resultado } = await membresiaService.cambiarFechaInicio(
+      req.params.id,
+      req.body?.fecha_inicio,
+      { id_user: req.id_user, ip_user: req.ip_user },
+    );
+    res.status(status).json(resultado);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ ok: false, msg: "Hable con el administrador" });
+  }
+};
 const postVentaProductos = async (req, res) => {
   try {
     const { id_venta } = req.params;
@@ -4309,6 +4328,7 @@ const obtenerVentasPagosxID = async (req = request, res = response) => {
   }
 };
 module.exports = {
+  putFechaInicioMembresia,
   getVentasxFechaMembresia,
   obtenerContrato,
   obtenerVentasPagosxID,
