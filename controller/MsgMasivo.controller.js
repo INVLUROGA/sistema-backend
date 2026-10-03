@@ -7,9 +7,9 @@ const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 const enviarMasivoAlwsp = async () => {
   const numerosDup = [
+    
     { numero: "933102718" },
     { numero: "986 578 004" },
-    { numero: "914028922" },
   ];
 
   // Normaliza y deduplica por número
@@ -34,15 +34,23 @@ const enviarMasivoAlwsp = async () => {
       try {
         const imagenResp = await enviarTextConImagenWsp(
           numero,
-          "https://archivosluroga.blob.core.windows.net/articulos-lugares/27-agosto-2026.jpeg",
+          "https://archivosluroga.blob.core.windows.net/articulos-lugares/30septiembre2026.jpeg",
           `
-Tenemos 2 REGALOS PARA TI 🎁
+*¡OFERTA FLASH CHANGE!*
 
-Continua con tu proceso en Change, este es un buen momento para hacerlo y prepararse para el Verano 2027.
+Este es el momento de *renovar, llevarte más* y continuar con tu objetivo. 
 
-IMPORTANTE: SÓLO 8 CUPOS DISNPONIBLES y hasta el 31 de agosto,  para acceder a este beneficio.
+🎁 Hasta 4 semanas adicionales en tu renovación.
 
-Si quieres tomar uno, responde *“QUIERO MI REGALO”* y te ayudamos a activarlo. 🙌🏽
+🏷️ Precios especiales de renovación por tiempo limitado.
+
+🎉 Sorteamos 4 membresías de *12 semanas*
+
+📅 El sorteo será este lunes 5 a las 7:00 p. m.
+
+*Válida solo por HOY.*
+
+¡Renueva hoy y aprovecha todos estos beneficios!
 `,
         );
         if (!imagenResp.ok) {

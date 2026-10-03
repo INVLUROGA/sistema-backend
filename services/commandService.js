@@ -125,14 +125,151 @@ const OPERACIONES = {
   "DELETE userauthorize": "borrado de autorización",
 };
 function describirComando(CMD) {
-  const m = /^C:\d+:DATA (UPDATE|DELETE) (\w+)\s[^]*?\bPIN=(\d+)/i.exec(String(CMD));
+  const texto = String(CMD);
+  const m = /^C:(\d+):DATA (UPDATE|DELETE) (\w+)\s[^]*?\bPIN=(\d+)/i.exec(texto);
   if (!m) return null;
-  const tipo = `${m[1].toUpperCase()} ${m[2].toLowerCase()}`;
+  const tipo = `${m[2].toUpperCase()} ${m[3].toLowerCase()}`;
+  // Dedo: FingerID= (control de acceso), FID= (asistencia) o No= (biodata)
+  const dedo = /(?:^|\t)(?:FingerID|FID|No)=(\d)(?:\t|$)/i.exec(texto);
   return {
-    pin: parseInt(m[3], 10),
+    cmdId: m[1],
+    pin: parseInt(m[4], 10),
+    dedo: dedo ? parseInt(dedo[1], 10) : null,
     operacion: OPERACIONES[tipo] || tipo.toLowerCase(),
-    esBorrado: m[1].toUpperCase() === "DELETE",
+    esBorrado: m[2].toUpperCase() === "DELETE",
   };
+}
+
+const operacionDe = (CMD, comando = describirComando(CMD)) =>
+  (comando?.operacion || (/:DATA QUERY /.test(CMD) ? "consulta de datos" : "otro comando")).slice(0, 40);
+
+/// Registra en dbo.zk_CommandLog los comandos que /iclock/getrequest acaba de entregar al equipo,
+/// para luego guardar el resultado que el equipo informa en /iclock/devicecmd.
+/// Si el comando ya se había registrado al pedirlo (borrados), solo marca la entrega.
+async function registrarEntregados(DeviceSN, comandos) {
+  const pool = await poolPromise;
+  for (const CMD of comandos) {
+    const cmdId = /^C:(\d+):/.exec(String(CMD))?.[1];
+    if (!cmdId) continue;
+    const comando = describirComando(CMD);
+    const marcado = await pool
+      .request()
+      .input("DeviceSN", sql.VarChar(20), DeviceSN)
+      .input("CmdId", sql.VarChar(20), cmdId)
+      .query(`
+        WITH registrado AS (
+          SELECT TOP (1) EntregadoEn
+          FROM dbo.zk_CommandLog
+          WHERE DeviceSN = @DeviceSN AND CmdId = @CmdId AND EntregadoEn IS NULL
+          ORDER BY Id DESC
+        )
+        UPDATE registrado SET EntregadoEn = SYSUTCDATETIME()
+      `);
+    if (marcado.rowsAffected[0] > 0) continue;
+
+    await pool
+      .request()
+      .input("DeviceSN", sql.VarChar(20), DeviceSN)
+      .input("CmdId", sql.VarChar(20), cmdId)
+      .input("Pin", sql.Int, comando?.pin ?? null)
+      .input("Dedo", sql.Int, comando?.dedo ?? null)
+      .input("Operacion", sql.VarChar(40), operacionDe(CMD, comando))
+      .query(`
+        INSERT INTO dbo.zk_CommandLog (DeviceSN, CmdId, Pin, Dedo, Operacion, EntregadoEn)
+        VALUES (@DeviceSN, @CmdId, @Pin, @Dedo, @Operacion, SYSUTCDATETIME())
+      `);
+  }
+}
+
+/// Registra en dbo.zk_CommandLog los comandos recién encolados (sin marca de entrega), dentro de
+/// la transacción del borrado. Así se puede seguir el estado del borrado aunque la persona o la
+/// huella ya no estén en la BD. filas: [{ DeviceSN, CMD }]
+async function registrarPedidos(transaccion, filas, nombre = null) {
+  for (const { DeviceSN, CMD } of filas) {
+    const cmdId = /^C:(\d+):/.exec(String(CMD))?.[1];
+    if (!cmdId) continue;
+    const comando = describirComando(CMD);
+    await new sql.Request(transaccion)
+      .input("DeviceSN", sql.VarChar(20), DeviceSN)
+      .input("CmdId", sql.VarChar(20), cmdId)
+      .input("Pin", sql.Int, comando?.pin ?? null)
+      .input("Dedo", sql.Int, comando?.dedo ?? null)
+      .input("Operacion", sql.VarChar(40), operacionDe(CMD, comando))
+      .input("Nombre", sql.VarChar(40), nombre ? String(nombre).slice(0, 40) : null)
+      .query(`
+        INSERT INTO dbo.zk_CommandLog (DeviceSN, CmdId, Pin, Dedo, Operacion, Nombre)
+        VALUES (@DeviceSN, @CmdId, @Pin, @Dedo, @Operacion, @Nombre)
+      `);
+  }
+}
+
+/// Guarda el Return que el equipo informó para un comando (el último entregado con ese ID).
+async function registrarResultado(DeviceSN, cmdId, resultado) {
+  const pool = await poolPromise;
+  const result = await pool
+    .request()
+    .input("DeviceSN", sql.VarChar(20), DeviceSN)
+    .input("CmdId", sql.VarChar(20), String(cmdId))
+    .input("Resultado", sql.Int, resultado)
+    .query(`
+      WITH ultimo AS (
+        SELECT TOP (1) Resultado, ResultadoEn
+        FROM dbo.zk_CommandLog
+        WHERE DeviceSN = @DeviceSN AND CmdId = @CmdId AND Resultado IS NULL
+        ORDER BY Id DESC
+      )
+      UPDATE ultimo SET Resultado = @Resultado, ResultadoEn = SYSUTCDATETIME()
+    `);
+  return result.rowsAffected[0] > 0;
+}
+
+// Tiempo máximo razonable para que el equipo responda un comando entregado
+const SEGUNDOS_ESPERA_CONFIRMACION = 120;
+
+/// Último resultado de cada operación (por persona, huellero y dedo) en los últimos 30 días.
+/// Map pin -> [{ DeviceSN, dedo, operacion, estado, codigo, nombre, segundosDesdePedido }]
+/// estado: 'esperando' | 'sin_confirmar' | 'error' | 'confirmado', o 'registrado' si se registró
+/// al pedirlo y no tiene marca de entrega (si ya no está en la cola, el huellero lo recogió).
+async function listarResultadosPorPersona() {
+  const pool = await poolPromise;
+  const result = await pool.request().query(`
+    WITH ultimos AS (
+      SELECT DeviceSN, Pin, Dedo, Operacion, Resultado, Nombre, EntregadoEn,
+             DATEDIFF(second, EntregadoEn, SYSUTCDATETIME()) AS Segundos,
+             DATEDIFF(second, CreadoEn, SYSUTCDATETIME()) AS SegundosDesdePedido,
+             ROW_NUMBER() OVER (PARTITION BY Pin, DeviceSN, ISNULL(Dedo, -1), Operacion ORDER BY Id DESC) AS n
+      FROM dbo.zk_CommandLog
+      WHERE Pin IS NOT NULL AND CreadoEn >= DATEADD(day, -30, SYSUTCDATETIME())
+    )
+    SELECT DeviceSN, Pin, Dedo, Operacion, Resultado, Nombre, EntregadoEn, Segundos, SegundosDesdePedido
+    FROM ultimos WHERE n = 1
+  `);
+
+  const porPersona = new Map();
+  for (const r of result.recordset) {
+    const estado =
+      r.EntregadoEn === null
+        ? "registrado"
+        : r.Resultado === null
+          ? r.Segundos <= SEGUNDOS_ESPERA_CONFIRMACION
+            ? "esperando"
+            : "sin_confirmar"
+          : r.Resultado < 0
+            ? "error"
+            : "confirmado";
+    const lista = porPersona.get(r.Pin) || [];
+    lista.push({
+      DeviceSN: r.DeviceSN,
+      dedo: r.Dedo,
+      operacion: r.Operacion,
+      estado,
+      codigo: r.Resultado,
+      nombre: r.Nombre,
+      segundosDesdePedido: r.SegundosDesdePedido,
+    });
+    porPersona.set(r.Pin, lista);
+  }
+  return porPersona;
 }
 
 /// Comandos pendientes en la cola, agrupados por persona (PIN):
@@ -150,9 +287,13 @@ async function listarPendientesPorPersona() {
   for (const { DeviceSN, CMD } of result.recordset) {
     const comando = describirComando(CMD);
     if (!comando) continue;
-    const actual = pendientes.get(comando.pin) || { huelleros: [], operaciones: [], esBorrado: false };
+    const actual =
+      pendientes.get(comando.pin) || { huelleros: [], operaciones: [], dedos: [], dedosBorrando: [], esBorrado: false };
     if (!actual.huelleros.includes(DeviceSN)) actual.huelleros.push(DeviceSN);
     if (!actual.operaciones.includes(comando.operacion)) actual.operaciones.push(comando.operacion);
+    // dedos: huellas que se están enviando; dedosBorrando: huellas que se están borrando
+    const lista = comando.esBorrado ? actual.dedosBorrando : actual.dedos;
+    if (comando.dedo !== null && !lista.includes(comando.dedo)) lista.push(comando.dedo);
     actual.esBorrado = actual.esBorrado || comando.esBorrado;
     pendientes.set(comando.pin, actual);
   }
@@ -160,6 +301,10 @@ async function listarPendientesPorPersona() {
 }
 
 module.exports = {
+  registrarPedidos,
+  registrarEntregados,
+  registrarResultado,
+  listarResultadosPorPersona,
   hayConsultaPendiente,
   describirComando,
   listarPendientesPorPersona,

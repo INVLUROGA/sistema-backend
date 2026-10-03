@@ -118,7 +118,7 @@ async function listarMarcaciones(desde, hasta) {
     .input("inicio", sql.DateTimeOffset, inicio)
     .input("fin", sql.DateTimeOffset, fin)
     .query(`
-      SELECT t.Id, t.UserCode, RTRIM(u.Name) AS Name, t.Device, t.PunchTime, t.UploadTime
+      SELECT t.Id, t.UserCode, RTRIM(u.Name) AS Name, LTRIM(RTRIM(u.dni)) AS Dni, t.Device, t.PunchTime, t.UploadTime
       FROM dbo.zk_Transactions t
       LEFT JOIN dbo.zk_Users u ON u.UserCode = t.UserCode
       WHERE t.PunchTime >= @inicio AND t.PunchTime < @fin
@@ -131,6 +131,7 @@ async function listarMarcaciones(desde, hasta) {
     return {
       id: m.Id,
       pin: m.UserCode,
+      dni: m.Dni || null,
       nombre: m.Name || null,
       huellero: m.Device,
       fecha: marcacion.fecha,

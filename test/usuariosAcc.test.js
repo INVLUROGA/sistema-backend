@@ -146,8 +146,9 @@ test("listarPersonas devuelve DNI, nombre, dedos con huella y fecha de registro 
       consulta = q;
       return {
         recordset: [
-          { UserCode: 123222240, Name: "alejandro", IsActive: true, CreationTime: new Date("2026-09-29T03:23:20Z"), Dedos: "2,6" },
-          { UserCode: 44355840, Name: "JANETT", IsActive: false, CreationTime: null, Dedos: null },
+          { UserCode: 123222240, Name: "alejandro", Dni: "70123456", IsActive: true, CreationTime: new Date("2026-09-29T03:23:20Z"), Dedos: "2,6" },
+          // DNI vacío (aún no cargado): se devuelve null
+          { UserCode: 44355840, Name: "JANETT", Dni: "", IsActive: false, CreationTime: null, Dedos: null },
         ],
       };
     },
@@ -155,12 +156,23 @@ test("listarPersonas devuelve DNI, nombre, dedos con huella y fecha de registro 
   try {
     const personas = await accUserService.listarPersonas();
     assert.match(consulta, /LEFT JOIN dbo\.zk_UserData64 h ON h\.UserCode = u\.UserCode AND h\.DataLabel = 'FP'/);
+    assert.match(consulta, /LTRIM\(RTRIM\(u\.dni\)\) AS Dni/);
+    assert.match(consulta, /GROUP BY u\.UserCode, u\.Name, u\.dni,/);
     assert.deepEqual(personas, [
       // 03:23 UTC del 29/09 = 22:23 del 28/09 en Perú
-      { pin: 123222240, nombre: "alejandro", activo: true, dedos: [2, 6], huellas: 2, registrado: "2026-09-28" },
-      { pin: 44355840, nombre: "JANETT", activo: false, dedos: [], huellas: 0, registrado: null },
+      { pin: 123222240, dni: "70123456", nombre: "alejandro", activo: true, dedos: [2, 6], huellas: 2, registrado: "2026-09-28" },
+      { pin: 44355840, dni: null, nombre: "JANETT", activo: false, dedos: [], huellas: 0, registrado: null },
     ]);
   } finally {
     pool.request = requestOriginal;
   }
+});
+
+test("al importar del huellero (sin DNI) no se borra el DNI ya guardado", async () => {
+  const restaurar = silenciar();
+  await accUserService.guardarUsuarios(accUserService.segmentarTramaUsuarios(TRAMA_USUARIOS));
+  restaurar();
+
+  // Sin DNI se envía null y el MERGE conserva el valor existente con COALESCE
+  assert.equal(usuariosBD.get(41235478).Dni, null);
 });

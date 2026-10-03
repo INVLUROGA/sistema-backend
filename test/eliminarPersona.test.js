@@ -6,6 +6,7 @@ const path = require("node:path");
 
 // BD falsa con transacciones: los cambios solo se aplican con commit()
 let usuarios, huellas, marcaciones, cola, fallarEncolado, ultimaTransaccion;
+let pedidos; // zk_CommandLog: borrados registrados al pedirlos
 const DISPOSITIVOS = ["CRJP230860129", "CRJP230860136"];
 
 class FakeTransaction {
@@ -60,6 +61,12 @@ class FakeRequest {
       this.transaccion.pendientes.push(() => cola.push(...filas));
       return { recordset: filas.map(({ DeviceSN }) => ({ DeviceSN })) };
     }
+    if (/INSERT INTO dbo\.zk_CommandLog/.test(query)) {
+      assert.doesNotMatch(query, /EntregadoEn/); // se registra sin marca de entrega
+      const fila = { ...this.inputs };
+      this.transaccion.pendientes.push(() => pedidos.push(fila));
+      return { rowsAffected: [1] };
+    }
     throw new Error(`Consulta inesperada: ${query}`);
   }
 }
@@ -107,6 +114,7 @@ beforeEach(() => {
   ]);
   marcaciones = [{ pin: 123222240, hora: "17:00" }];
   cola = [];
+  pedidos = [];
   fallarEncolado = false;
   ultimaTransaccion = null;
 });
@@ -132,6 +140,24 @@ test("borra a la persona y todas sus huellas, y lo envía a los huelleros en ord
   assert.match(delEquipo[1].CMD, /^C:\d+:DATA DELETE templatev10 Pin=123222240$/);
   assert.match(delEquipo[2].CMD, /^C:\d+:DATA DELETE user Pin=123222240$/);
   assert.equal(ultimaTransaccion.estado, "confirmada");
+
+  // Los 3 borrados quedan registrados por huellero, con el nombre (la persona ya no está en la BD)
+  assert.equal(pedidos.length, 6);
+  const delEquipoPedidos = pedidos.filter((p) => p.DeviceSN === "CRJP230860129");
+  assert.deepEqual(
+    delEquipoPedidos.map((p) => p.Operacion),
+    ["borrado de autorización", "borrado de huella", "borrado del usuario"]
+  );
+  assert.equal(delEquipoPedidos.every((p) => p.Pin === 123222240 && p.Nombre === "alejandro dedo medio"), true);
+});
+
+test("si la persona no se elimina, tampoco queda registrado ningún borrado", async () => {
+  fallarEncolado = true;
+  const restaurar = silenciar();
+  await eliminarPersona({ params: { pin: "123222240" } }, crearRes());
+  restaurar();
+
+  assert.equal(pedidos.length, 0);
 });
 
 test("si la persona no existe responde 404 y no envía nada", async () => {

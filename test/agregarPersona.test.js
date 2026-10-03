@@ -5,6 +5,7 @@ const path = require("node:path");
 
 // BD falsa: usuarios, huellas y cola de comandos en memoria
 const usuarios = new Map();
+const dnis = new Map(); // columna dni de zk_Users
 const huellas = new Map();
 const cola = [];
 let fallarHuella = false;
@@ -23,6 +24,7 @@ const fakePool = {
         }
         if (/MERGE dbo\.zk_Users/.test(query)) {
           usuarios.set(inputs.UserCode, inputs.Name);
+          dnis.set(inputs.UserCode, inputs.Dni);
           return { rowsAffected: [1] };
         }
         if (/MERGE dbo\.zk_UserData64/.test(query)) {
@@ -83,6 +85,7 @@ const silenciar = () => {
 
 beforeEach(() => {
   usuarios.clear();
+  dnis.clear();
   huellas.clear();
   cola.length = 0;
   fallarHuella = false;
@@ -97,6 +100,7 @@ test("agrega la persona, guarda su huella y la envía a los huelleros activos", 
   assert.equal(res.statusCode, 201);
   assert.deepEqual(res.body.huelleros, DISPOSITIVOS);
   assert.equal(usuarios.get(41235478), "Juan Perez");
+  assert.equal(dnis.get(41235478), "41235478"); // el PIN registrado se guarda también como DNI
   assert.deepEqual(huellas.get("41235478|6"), Buffer.from(HUELLA, "base64"));
 
   // 3 comandos por huellero, en orden: usuario -> huella -> autorización de acceso.
@@ -231,4 +235,15 @@ test("la franja horaria y las puertas se pueden configurar por variables de ento
     if (v === undefined) delete process.env[k];
     else process.env[k] = v;
   }
+});
+
+test("un DNI que empieza con 0 se guarda tal cual (el PIN numérico pierde el 0)", async () => {
+  const restaurar = silenciar();
+  const res = crearRes();
+  await agregarPersona({ body: { nombre: "Rosa", dni: "04123456", binaryData: HUELLA } }, res);
+  restaurar();
+
+  assert.equal(res.statusCode, 201);
+  assert.equal(usuarios.has(4123456), true); // PIN
+  assert.equal(dnis.get(4123456), "04123456"); // DNI
 });

@@ -8,11 +8,12 @@ const path = require("node:path");
 let huellas = new Map();
 let cola = [];
 let fallarEncolado = false;
+let pedidos = []; // zk_CommandLog: borrados registrados al pedirlos
 const DISPOSITIVOS = ["CRJP230860129", "CRJP230860136"];
 
 class FakeTransaction {
   constructor() {
-    this.pendientes = { borrar: [], encolar: [] };
+    this.pendientes = { borrar: [], encolar: [], pedidos: [] };
     this.estado = "nueva";
   }
   async begin() {
@@ -21,6 +22,7 @@ class FakeTransaction {
   async commit() {
     for (const clave of this.pendientes.borrar) huellas.delete(clave);
     cola.push(...this.pendientes.encolar);
+    pedidos.push(...this.pendientes.pedidos);
     this.estado = "confirmada";
   }
   async rollback() {
@@ -53,6 +55,11 @@ class FakeRequest {
       const filas = DISPOSITIVOS.map((DeviceSN) => ({ DeviceSN, CMD }));
       this.transaccion.pendientes.encolar.push(...filas);
       return { recordset: filas.map(({ DeviceSN }) => ({ DeviceSN })), rowsAffected: [filas.length] };
+    }
+    if (/INSERT INTO dbo\.zk_CommandLog/.test(query)) {
+      assert.doesNotMatch(query, /EntregadoEn/); // se registra sin marca de entrega
+      this.transaccion.pendientes.pedidos.push({ ...this.inputs });
+      return { rowsAffected: [1] };
     }
     throw new Error(`Consulta inesperada: ${query}`);
   }
@@ -95,6 +102,7 @@ beforeEach(() => {
     ["123222240|6", Buffer.from("b")],
   ]);
   cola = [];
+  pedidos = [];
   fallarEncolado = false;
   ultimaTransaccion = null;
 });
@@ -112,6 +120,13 @@ test("borra la huella de la BD y envía el borrado a todos los huelleros activos
   assert.equal(cola.length, 2);
   assert.match(cola[0].CMD, /^C:\d+:DATA DELETE templatev10 Pin=123222240\tFingerID=2$/);
   assert.equal(ultimaTransaccion.estado, "confirmada");
+
+  // El borrado queda registrado por huellero para seguir su estado (pendiente -> sincronizado)
+  assert.deepEqual(
+    pedidos.map((p) => ({ DeviceSN: p.DeviceSN, Pin: p.Pin, Dedo: p.Dedo, Operacion: p.Operacion })),
+    DISPOSITIVOS.map((DeviceSN) => ({ DeviceSN, Pin: 123222240, Dedo: 2, Operacion: "borrado de huella" }))
+  );
+  assert.equal(pedidos[0].CmdId, cola[0].CMD.split(":")[1]);
 });
 
 test("si la huella no existe responde 404 y no envía nada", async () => {

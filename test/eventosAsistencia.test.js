@@ -20,6 +20,7 @@ const fakePool = {
               Id: 7,
               UserCode: 41235478,
               Name: "Juan Perez",
+              Dni: "41235478",
               Device: "CRJP230860129",
               PunchTime: new Date("2026-09-28T16:46:13Z"),
               UploadTime: new Date("2026-09-28T16:53:44Z"),
@@ -67,6 +68,7 @@ test("devuelve las marcaciones con fecha y hora de Perú", async () => {
   assert.deepEqual(res.body.eventos[0], {
     id: 7,
     pin: 41235478,
+    dni: "41235478",
     nombre: "Juan Perez",
     huellero: "CRJP230860129",
     fecha: "2026-09-28",

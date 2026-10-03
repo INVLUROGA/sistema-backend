@@ -34,6 +34,8 @@ function segmentarTramaUsuarios(trama) {
 }
 
 /// Inserta o actualiza los usuarios en dbo.zk_Users. Retorna cuántos se guardaron.
+/// Dni es opcional: si no se envía (ej. al importar del huellero, que no lo tiene) se conserva
+/// el DNI ya guardado.
 async function guardarUsuarios(usuarios) {
   const pool = await poolPromise;
   const query = `
@@ -42,11 +44,12 @@ async function guardarUsuarios(usuarios) {
         ON destino.UserCode = origen.UserCode
         WHEN MATCHED THEN
             UPDATE SET Name = @Name, Password = @Password, Card = @Card, IsActive = @IsActive, Role = @Role,
+                       dni = COALESCE(@Dni, destino.dni),
                        UpdateTime = FORMAT(SYSDATETIMEOFFSET(), 'yyyy-MM-dd HH:mm:ss zzz')
         WHEN NOT MATCHED THEN
-            INSERT (UserCode, Name, Password, Card, CreationTime, UpdateTime, IsActive, Role)
+            INSERT (UserCode, Name, Password, Card, CreationTime, UpdateTime, IsActive, Role, dni)
             VALUES (@UserCode, @Name, @Password, @Card, FORMAT(SYSDATETIMEOFFSET(), 'yyyy-MM-dd HH:mm:ss zzz'),
-                    FORMAT(SYSDATETIMEOFFSET(), 'yyyy-MM-dd HH:mm:ss zzz'), @IsActive, @Role);
+                    FORMAT(SYSDATETIMEOFFSET(), 'yyyy-MM-dd HH:mm:ss zzz'), @IsActive, @Role, @Dni);
     `;
 
   let guardados = 0;
@@ -60,6 +63,7 @@ async function guardarUsuarios(usuarios) {
         .input("Card", sql.VarChar(20), usuario.Card)
         .input("IsActive", sql.Bit, usuario.IsActive)
         .input("Role", sql.Int, usuario.Role)
+        .input("Dni", sql.VarChar(30), usuario.Dni ? String(usuario.Dni).trim().slice(0, 30) : null)
         .query(query);
       guardados++;
     } catch (error) {
@@ -112,11 +116,11 @@ async function verificarUsuariosDesconocidos(DeviceSN, pins) {
 async function listarPersonas() {
   const pool = await poolPromise;
   const result = await pool.request().query(`
-    SELECT u.UserCode, RTRIM(u.Name) AS Name, u.IsActive, u.CreationTime,
+    SELECT u.UserCode, RTRIM(u.Name) AS Name, LTRIM(RTRIM(u.dni)) AS Dni, u.IsActive, u.CreationTime,
            STRING_AGG(CAST(h.DataIndex AS VARCHAR(2)), ',') WITHIN GROUP (ORDER BY h.DataIndex) AS Dedos
     FROM dbo.zk_Users u
     LEFT JOIN dbo.zk_UserData64 h ON h.UserCode = u.UserCode AND h.DataLabel = 'FP'
-    GROUP BY u.UserCode, u.Name, u.IsActive, u.CreationTime
+    GROUP BY u.UserCode, u.Name, u.dni, u.IsActive, u.CreationTime
     ORDER BY u.CreationTime DESC, u.UserCode
   `);
 
@@ -124,6 +128,7 @@ async function listarPersonas() {
     const dedos = u.Dedos ? [...new Set(u.Dedos.split(",").map(Number))] : [];
     return {
       pin: u.UserCode,
+      dni: u.Dni || null,
       nombre: u.Name,
       activo: u.IsActive !== false,
       dedos,

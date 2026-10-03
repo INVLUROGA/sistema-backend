@@ -83,6 +83,8 @@ function validarPersona({ nombre, dni, binaryData, dedo }) {
     datos: {
       nombre: nombreLimpio,
       pin: parseInt(dniTexto, 10),
+      // Tal como se escribió: un DNI puede empezar con 0 (el PIN, numérico, pierde ese 0)
+      dni: dniTexto,
       plantilla,
       dedo: dedoNumero,
     },
@@ -222,7 +224,8 @@ async function agregarPersona(body) {
   }
 
   const guardados = await accUserService.guardarUsuarios([
-    { UserCode: datos.pin, Name: datos.nombre, Password: null, Card: null, IsActive: true, Role: 0 },
+    // El PIN que se registra es el DNI de la persona: se guarda también como su DNI
+    { UserCode: datos.pin, Name: datos.nombre, Password: null, Card: null, IsActive: true, Role: 0, Dni: datos.dni },
   ]);
   if (guardados !== 1) {
     return { ok: false, status: 500, msg: "No se pudo guardar la persona" };
@@ -287,8 +290,9 @@ async function eliminarHuella(pinTexto, dedoTexto, ahora = Date.now()) {
     }
 
     const id = Math.floor(ahora / 1000) % 1000000000;
+    const CMD = accPushService.comandoEliminarHuella(id, { pin, dedo });
     const encolado = await new sql.Request(transaccion)
-      .input("CMD", sql.VarChar(sql.MAX), accPushService.comandoEliminarHuella(id, { pin, dedo }))
+      .input("CMD", sql.VarChar(sql.MAX), CMD)
       .query(`
         INSERT INTO dbo.zk_QueueCMD (DeviceSN, CMD, CreationTime)
         OUTPUT inserted.DeviceSN
@@ -296,9 +300,14 @@ async function eliminarHuella(pinTexto, dedoTexto, ahora = Date.now()) {
         FROM dbo.zk_Devices
         WHERE IsActive = 1
       `);
+    const huelleros = encolado.recordset.map((d) => d.DeviceSN);
+    // Para seguir el borrado en la página (pendiente -> sincronizado) aunque la huella ya no esté en la BD
+    await commandService.registrarPedidos(
+      transaccion,
+      huelleros.map((DeviceSN) => ({ DeviceSN, CMD }))
+    );
 
     await transaccion.commit();
-    const huelleros = encolado.recordset.map((d) => d.DeviceSN);
     console.log(
       `[zk-personas] Huella del dedo ${dedo} de ${pin} eliminada y enviada a: ${huelleros.join(", ") || "ningún huellero activo"}`
     );
@@ -354,6 +363,12 @@ async function eliminarPersona(pinTexto, ahora = Date.now()) {
           WHERE IsActive = 1
         `);
       huelleros = encolado.recordset.map((d) => d.DeviceSN);
+      // Para seguir el borrado en la página aunque la persona ya no esté en la BD
+      await commandService.registrarPedidos(
+        transaccion,
+        huelleros.map((DeviceSN) => ({ DeviceSN, CMD })),
+        persona.recordset[0].Name
+      );
     }
 
     await transaccion.commit();
@@ -406,7 +421,87 @@ async function sincronizarDesdeHuelleros(ahora = Date.now()) {
   return { ok: true, status: 200, msg: "Sincronización iniciada", solicitados, omitidos };
 }
 
+/// Agrega la huella de otro dedo a una persona existente: la guarda en dbo.zk_UserData64 y la
+/// envía a todos los huelleros activos, en una sola transacción (o se hacen ambas o ninguna).
+/// Retorna { ok, status, msg, persona, dedo, huelleros }.
+async function agregarHuella(pinTexto, { dedo: dedoTexto, binaryData } = {}) {
+  const pin = Number(pinTexto);
+  if (!Number.isInteger(pin) || pin <= 0 || pin > 999999999) {
+    return { ok: false, status: 400, msg: "El DNI no es válido" };
+  }
+  const dedo = Number(dedoTexto);
+  if (dedoTexto === undefined || dedoTexto === "" || !Number.isInteger(dedo) || dedo < 0 || dedo > 9) {
+    return { ok: false, status: 400, msg: "El dedo debe ser un número del 0 al 9" };
+  }
+  if (typeof binaryData !== "string" || !binaryData.trim()) {
+    return { ok: false, status: 400, msg: "El BinaryData es obligatorio" };
+  }
+  const { base64, error } = normalizarBase64(binaryData);
+  if (error) return { ok: false, status: 400, msg: error };
+  if (base64.length > MAX_LONGITUD_HUELLA) return { ok: false, status: 400, msg: "El BinaryData es demasiado largo" };
+  const plantilla = quitarRelleno(base64);
+  if (!plantilla) return { ok: false, status: 400, msg: "El BinaryData está vacío (solo contiene ceros)" };
+  const bytes = Buffer.from(plantilla, "base64");
+
+  const pool = await poolPromise;
+  const transaccion = new sql.Transaction(pool);
+  await transaccion.begin();
+  try {
+    const persona = await new sql.Request(transaccion)
+      .input("UserCode", sql.Int, pin)
+      .query("SELECT RTRIM(Name) AS Name FROM dbo.zk_Users WHERE UserCode = @UserCode");
+    if (persona.recordset.length === 0) {
+      await transaccion.rollback();
+      return { ok: false, status: 404, msg: `No existe una persona con el DNI ${pin}` };
+    }
+    const existente = await new sql.Request(transaccion)
+      .input("UserCode", sql.Int, pin)
+      .input("DataIndex", sql.Int, dedo)
+      .query(
+        "SELECT 1 AS existe FROM dbo.zk_UserData64 WHERE UserCode = @UserCode AND DataLabel = 'FP' AND DataIndex = @DataIndex"
+      );
+    if (existente.recordset.length > 0) {
+      await transaccion.rollback();
+      return { ok: false, status: 409, msg: "Esa persona ya tiene huella en ese dedo. Elimínala primero para reemplazarla." };
+    }
+
+    await new sql.Request(transaccion)
+      .input("UserCode", sql.Int, pin)
+      .input("DataIndex", sql.Int, dedo)
+      .input("SizeData", sql.Int, bytes.length)
+      .input("BinaryData", sql.VarBinary(sql.MAX), bytes)
+      .query(`
+        INSERT INTO dbo.zk_UserData64 (UserCode, DataLabel, DataIndex, SizeData, BinaryData, HashData, CreationTime)
+        VALUES (@UserCode, 'FP', @DataIndex, @SizeData, @BinaryData, HASHBYTES('SHA2_256', @BinaryData),
+                FORMAT(SYSDATETIMEOFFSET(), 'yyyy-MM-dd HH:mm:ss zzz'))
+      `);
+
+    const id = Math.floor(Date.now() / 1000) % 1000000000;
+    const encolado = await new sql.Request(transaccion)
+      .input("CMD", sql.VarChar(sql.MAX), accPushService.comandoAltaHuella(id, { pin, dedo, plantilla }))
+      .query(`
+        INSERT INTO dbo.zk_QueueCMD (DeviceSN, CMD, CreationTime)
+        OUTPUT inserted.DeviceSN
+        SELECT DeviceSN, @CMD, FORMAT(SYSDATETIMEOFFSET(), 'yyyy-MM-dd HH:mm:ss zzz')
+        FROM dbo.zk_Devices
+        WHERE IsActive = 1
+      `);
+
+    await transaccion.commit();
+    const huelleros = encolado.recordset.map((d) => d.DeviceSN);
+    const nombre = persona.recordset[0].Name;
+    console.log(
+      `[zk-personas] Huella del dedo ${dedo} agregada a ${nombre} (DNI ${pin}) y enviada a: ${huelleros.join(", ") || "ningún huellero activo"}`
+    );
+    return { ok: true, status: 201, msg: "Huella agregada", persona: { pin, nombre }, dedo, huelleros };
+  } catch (error) {
+    await transaccion.rollback().catch(() => {});
+    throw error;
+  }
+}
+
 module.exports = {
+  agregarHuella,
   reenviarPersona,
   sincronizarDesdeHuelleros,
   autorizacionPorDefecto,

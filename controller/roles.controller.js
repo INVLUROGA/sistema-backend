@@ -703,6 +703,12 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           url: "/gestion-eventos-asistencia",
         },
+        {
+          label: "Reporte de asistencia (huellero)",
+          isTitle: false,
+          icon: "uil-chart-line",
+          url: "/reporte-asistencia-huellero",
+        },
         // {
         //   //key: "reporte-utilidad-pgm",
         //   label: "Horas extras",
@@ -872,6 +878,13 @@ const seccionGET = async (req = request, res = response) => {
               isTitle: false,
               icon: "uil-calender",
               url: "/gestion-eventos-asistencia",
+            },
+            {
+              key: "reporte-asistencia-huellero",
+              label: "Reporte de asistencia",
+              isTitle: false,
+              icon: "uil-chart-line",
+              url: "/reporte-asistencia-huellero",
             },
             {
               key: "cliente-gestion-socios",

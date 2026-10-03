@@ -24,6 +24,13 @@ exports.fxget = async (req, res) => {
         await commandService.deleteCommandById(recentCommand[i].Id);
         listCMD = listCMD + recentCommand[i].CMD + "\n";
       }
+      // Historial de entregas (para mostrar si el huellero aplicó el cambio). Si falla, no
+      // afecta la respuesta al equipo.
+      try {
+        await commandService.registrarEntregados(DeviceSN, recentCommand.map((c) => c.CMD));
+      } catch (err) {
+        console.error("[iclock/getrequest] No se pudo registrar la entrega de comandos", err.message);
+      }
       res.send(listCMD);
     } else {
       res.send("OK");
