@@ -161,11 +161,12 @@ async function reenviarPersona(pinTexto, ahora = Date.now()) {
   const persona = await pool
     .request()
     .input("UserCode", sql.Int, pin)
-    .query("SELECT RTRIM(Name) AS Name, Card, Password, Role FROM dbo.zk_Users WHERE UserCode = @UserCode");
+    .query("SELECT RTRIM(Name) AS Name, Card, Password, Role, IsActive FROM dbo.zk_Users WHERE UserCode = @UserCode");
   if (persona.recordset.length === 0) {
     return { ok: false, status: 404, msg: `No existe una persona con el DNI ${pin}` };
   }
-  const { Name, Card, Password, Role } = persona.recordset[0];
+  const { Name, Card, Password, Role, IsActive } = persona.recordset[0];
+  const activo = IsActive !== false;
 
   const { recordset: huellas } = await pool
     .request()
@@ -197,7 +198,10 @@ async function reenviarPersona(pinTexto, ahora = Date.now()) {
         plantilla: quitarRelleno(h.BinaryData.toString("base64")),
       })
     ),
-    accPushService.comandoAutorizacion(id++, { pin, ...autorizacionPorDefecto() }),
+    // Inactiva (membresía vencida o desactivada a mano): sin autorización no puede entrar
+    activo
+      ? accPushService.comandoAutorizacion(id++, { pin, ...autorizacionPorDefecto() })
+      : accPushService.comandoQuitarAutorizacion(id++, { pin }),
   ]);
 
   const huelleros = dispositivos.map((d) => d.DeviceSN);
@@ -500,7 +504,77 @@ async function agregarHuella(pinTexto, { dedo: dedoTexto, binaryData } = {}) {
   }
 }
 
+/// Activa o desactiva a una persona (botón Activo/Inactivo): cambia zk_Users.IsActive y lo envía a
+/// los huelleros activos en una sola transacción. Inactiva = sin autorización de acceso (el equipo
+/// la reconoce pero no la deja entrar); activa = acceso según la franja horaria configurada.
+/// Retorna { ok, status, msg, persona, activo, huelleros }.
+async function cambiarEstadoPersona(pinTexto, activoBody, ahora = Date.now()) {
+  const pin = Number(pinTexto);
+  if (!Number.isInteger(pin) || pin <= 0 || pin > 999999999) {
+    return { ok: false, status: 400, msg: "El DNI no es válido" };
+  }
+  if (typeof activoBody !== "boolean") {
+    return { ok: false, status: 400, msg: "Indica si la persona queda activa (true) o inactiva (false)" };
+  }
+
+  const pool = await poolPromise;
+  const transaccion = new sql.Transaction(pool);
+  await transaccion.begin();
+  try {
+    const persona = await new sql.Request(transaccion)
+      .input("UserCode", sql.Int, pin)
+      .query("SELECT RTRIM(Name) AS Name, IsActive FROM dbo.zk_Users WHERE UserCode = @UserCode");
+    if (persona.recordset.length === 0) {
+      await transaccion.rollback();
+      return { ok: false, status: 404, msg: `No existe una persona con el DNI ${pin}` };
+    }
+    const { Name } = persona.recordset[0];
+
+    await new sql.Request(transaccion)
+      .input("UserCode", sql.Int, pin)
+      .input("IsActive", sql.Bit, activoBody)
+      .query(`
+        UPDATE dbo.zk_Users
+        SET IsActive = @IsActive, UpdateTime = FORMAT(SYSDATETIMEOFFSET(), 'yyyy-MM-dd HH:mm:ss zzz')
+        WHERE UserCode = @UserCode
+      `);
+
+    // Se envía siempre (aunque ya tuviera ese estado), así el botón también sirve para corregir el equipo
+    const id = Math.floor(ahora / 1000) % 1000000000;
+    const CMD = activoBody
+      ? accPushService.comandoAutorizacion(id, { pin, ...autorizacionPorDefecto() })
+      : accPushService.comandoQuitarAutorizacion(id, { pin });
+    const encolado = await new sql.Request(transaccion)
+      .input("CMD", sql.VarChar(sql.MAX), CMD)
+      .query(`
+        INSERT INTO dbo.zk_QueueCMD (DeviceSN, CMD, CreationTime)
+        OUTPUT inserted.DeviceSN
+        SELECT DeviceSN, @CMD, FORMAT(SYSDATETIMEOFFSET(), 'yyyy-MM-dd HH:mm:ss zzz')
+        FROM dbo.zk_Devices
+        WHERE IsActive = 1
+      `);
+
+    await transaccion.commit();
+    const huelleros = encolado.recordset.map((d) => d.DeviceSN);
+    console.log(
+      `[zk-personas] ${Name} (DNI ${pin}) ${activoBody ? "activada" : "desactivada"}; enviado a: ${huelleros.join(", ") || "ningún huellero activo"}`
+    );
+    return {
+      ok: true,
+      status: 200,
+      msg: activoBody ? "Persona activada" : "Persona desactivada",
+      persona: { pin, nombre: Name },
+      activo: activoBody,
+      huelleros,
+    };
+  } catch (error) {
+    await transaccion.rollback().catch(() => {});
+    throw error;
+  }
+}
+
 module.exports = {
+  cambiarEstadoPersona,
   agregarHuella,
   reenviarPersona,
   sincronizarDesdeHuelleros,

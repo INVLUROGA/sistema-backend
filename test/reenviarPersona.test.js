@@ -14,7 +14,7 @@ const fakePool = {
         return this;
       },
       async query(query) {
-        if (/SELECT RTRIM\(Name\) AS Name, Card, Password, Role FROM dbo\.zk_Users/.test(query)) {
+        if (/SELECT RTRIM\(Name\) AS Name, Card, Password, Role, IsActive FROM dbo\.zk_Users/.test(query)) {
           const u = usuarios.get(inputs.UserCode);
           return { recordset: u ? [u] : [] };
         }
@@ -107,4 +107,17 @@ test("persona inexistente, DNI inválido o sin huelleros activos: no envía nada
   dispositivos = [];
   assert.equal((await llamar("41235478")).status, 409);
   assert.equal(cola.length, 0);
+});
+
+test("persona inactiva: se reenvía sin acceso (se borra su autorización, no puede entrar)", async () => {
+  usuarios.set(55555555, { Name: "Vencido", Card: null, Password: null, Role: 0, IsActive: false });
+  huellas.push({ UserCode: 55555555, DataIndex: 1, BinaryData: Buffer.from("h") });
+  const { status } = await llamar("55555555");
+
+  assert.equal(status, 200);
+  const cmds = cola.filter((c) => c.DeviceSN === "CRJP230860129").map((c) => c.CMD);
+  assert.match(cmds[0], /DATA UPDATE user /);
+  assert.match(cmds[1], /DATA UPDATE templatev10 /);
+  assert.match(cmds[2], /^C:\d+:DATA DELETE userauthorize Pin=55555555$/);
+  assert.equal(cmds.some((c) => /DATA UPDATE userauthorize/.test(c)), false);
 });

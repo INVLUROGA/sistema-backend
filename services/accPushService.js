@@ -65,6 +65,12 @@ function comandoAutorizacion(id, { pin, franjaHoraria = 1, puertas = 1 }) {
   return `C:${id}:DATA UPDATE userauthorize Pin=${pin}\tAuthorizeTimezoneId=${franjaHoraria}\tAuthorizeDoorId=${puertas}`;
 }
 
+// Quita la autorización de acceso: el equipo reconoce a la persona pero no la deja entrar
+// (persona inactiva: membresía vencida o desactivada desde el sistema)
+function comandoQuitarAutorizacion(id, { pin }) {
+  return `C:${id}:DATA DELETE userauthorize Pin=${pin}`;
+}
+
 function comandoAltaHuella(id, { pin, dedo, plantilla }) {
   return `C:${id}:DATA UPDATE templatev10 Size=${Buffer.from(plantilla, "base64").length}\tPin=${pin}\tFingerID=${dedo}\tValid=1\tTemplate=${plantilla}\tEndTag=`;
 }
@@ -91,5 +97,6 @@ module.exports = {
   segmentarTramaRtlog,
   comandoAltaUsuario,
   comandoAutorizacion,
+  comandoQuitarAutorizacion,
   comandoAltaHuella,
 };

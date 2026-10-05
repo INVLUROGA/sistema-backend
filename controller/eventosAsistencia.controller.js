@@ -292,7 +292,25 @@ const obtenerReporteAsistencia = async (req = request, res = response) => {
   }
 };
 
+/**
+ * PUT /api/eventos-asistencia/personas/:pin/estado   body: { activo: true | false }
+ * Activa o desactiva a la persona en la BD y en los huelleros (inactiva = no puede entrar).
+ */
+const cambiarEstadoPersona = async (req = request, res = response) => {
+  try {
+    const { status, ...resultado } = await personaHuelleroService.cambiarEstadoPersona(
+      req.params.pin,
+      req.body?.activo,
+    );
+    res.status(status).json(resultado);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ ok: false, msg: "Hable con el administrador" });
+  }
+};
+
 module.exports = {
+  cambiarEstadoPersona,
   obtenerReporteAsistencia,
   calcularSincronizacion,
   agregarHuella,

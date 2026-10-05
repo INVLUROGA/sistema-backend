@@ -36,6 +36,8 @@ function segmentarTramaUsuarios(trama) {
 /// Inserta o actualiza los usuarios en dbo.zk_Users. Retorna cuántos se guardaron.
 /// Dni es opcional: si no se envía (ej. al importar del huellero, que no lo tiene) se conserva
 /// el DNI ya guardado.
+/// IsActive solo se usa al crear: en una persona que ya existe se conserva el guardado, porque lo
+/// administra el sistema (membresía vencida / botón Activo-Inactivo) y no el huellero.
 async function guardarUsuarios(usuarios) {
   const pool = await poolPromise;
   const query = `
@@ -43,7 +45,7 @@ async function guardarUsuarios(usuarios) {
         USING (SELECT @UserCode AS UserCode) AS origen
         ON destino.UserCode = origen.UserCode
         WHEN MATCHED THEN
-            UPDATE SET Name = @Name, Password = @Password, Card = @Card, IsActive = @IsActive, Role = @Role,
+            UPDATE SET Name = @Name, Password = @Password, Card = @Card, Role = @Role,
                        dni = COALESCE(@Dni, destino.dni),
                        UpdateTime = FORMAT(SYSDATETIMEOFFSET(), 'yyyy-MM-dd HH:mm:ss zzz')
         WHEN NOT MATCHED THEN

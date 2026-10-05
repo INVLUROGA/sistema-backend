@@ -50,6 +50,9 @@ const {
   actualizarSeguimientos,
 } = require("./middlewares/EventosCron/actualizarSeguimientos.js");
 const {
+  actualizarClientesSeguimiento,
+} = require("./middlewares/EventosCron/actualizarClientesSeguimiento.js");
+const {
   enviarMensajeMembresiaPorFinalizar1SemanaAntes,
   enviarMensajeMembresiaPorFinalizar1diaAntes,
 } = require("./middlewares/EventosCron/mensajeMembresiaPorFinalizarSeguimientoActivos.js");
@@ -78,8 +81,11 @@ cron.schedule(
 //   enviarMensajeMembresiaPorFinalizar1diaAntes();
 // });
 //1am+5horas
-cron.schedule("0 6 * * *", () => {
-  actualizarSeguimientos();
+// Primero reconstruye tb_seguimientos y, con esos datos, desactiva en zk_Users a los clientes con la
+// membresía vencida (y reactiva a los que renovaron)
+cron.schedule("0 6 * * *", async () => {
+  await actualizarSeguimientos();
+  await actualizarClientesSeguimiento();
 });
 //3am + 5horas
 cron.schedule("0 8 * * *", () => {

@@ -10,6 +10,7 @@ const {
   reenviarPersona,
   agregarHuella,
   obtenerReporteAsistencia,
+  cambiarEstadoPersona,
 } = require("../controller/eventosAsistencia.controller");
 const router = Router();
 /**
@@ -25,5 +26,6 @@ router.delete("/personas/:pin", eliminarPersona);
 router.post("/sincronizar", sincronizarHuelleros);
 router.post("/personas/:pin/reenviar", reenviarPersona);
 router.post("/personas/:pin/huellas", agregarHuella);
+router.put("/personas/:pin/estado", cambiarEstadoPersona);
 
 module.exports = router;
