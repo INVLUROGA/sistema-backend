@@ -12,6 +12,9 @@ const dayjs = require("dayjs");
 const es = require("dayjs/locale/es");
 const { typesCRUD, messageWSP } = require("../types/types");
 const { EtiquetasxIds, Parametros } = require("../models/Parametros");
+const {
+  recalcularSeguimientosPorCliente,
+} = require("../middlewares/EventosCron/obtenerDataSeguimientos");
 const { ServiciosCircus } = require("../models/modelsCircus/Servicios");
 dayjs.locale("es");
 
@@ -312,6 +315,7 @@ const postCita = async (req = request, res = response) => {
       id_empl,
     });
     await cita.save();
+    await recalcularSeguimientosPorCliente(id_cli);
     const cliente = await Cliente.findOne({ where: { id_cli: id_cli } });
     const objSexoTst = {
       masculino: 8,
@@ -383,6 +387,7 @@ const deleteCita = async (req = request, res = response) => {
     const cita = await Cita.findOne({ where: { flag: true, id } });
 
     await cita.update({ flag: false });
+    await recalcularSeguimientosPorCliente(cita.id_cli);
     res.status(200).json({
       ok: true,
       cita,
@@ -402,6 +407,7 @@ const putCita = async (req = request, res = response) => {
   try {
     const cita = await Cita.findOne({ where: { flag: true, id } });
     await cita.update(req.body);
+    await recalcularSeguimientosPorCliente(cita.id_cli);
     const cliente = await Cliente.findOne({ where: { id_cli: cita.id_cli } });
     if (isUpdateTime) {
       const dayjsTest = dayjs

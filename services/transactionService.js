@@ -1,8 +1,13 @@
 // services/transactionService.js
 const { sql, poolPromise } = require("../database/connectionSQLserver");
 
+// Estado de la marcación cuando la persona está inactiva (membresía vencida o desactivada):
+// el huellero la reconoce pero no la deja entrar
+const LABEL_MEMBRESIA_INACTIVA = "membresia inactiva";
+
 // Función para insertar una transacción en dbo.zk_Transactions
 // Ignora las marcaciones ya guardadas (el equipo reenvía su historial al reiniciarse).
+// label_estado se fija con el estado de la persona al recibir la marcación.
 // Retorna cuántas marcaciones nuevas se insertaron.
 async function insertTransaction(data, deviceSN) {
   const pool = await poolPromise;
@@ -11,8 +16,10 @@ async function insertTransaction(data, deviceSN) {
             SELECT 1 FROM dbo.zk_Transactions
             WHERE UserCode = @UserCode AND Device = @Device AND PunchTime = @PunchTime
         )
-        INSERT INTO dbo.zk_Transactions (UserCode, Device, PunchTime, UploadTime)
-        VALUES (@UserCode, @Device, @PunchTime, FORMAT(SYSDATETIMEOFFSET(), 'yyyy-MM-dd HH:mm:ss zzz'))
+        INSERT INTO dbo.zk_Transactions (UserCode, Device, PunchTime, UploadTime, label_estado)
+        VALUES (@UserCode, @Device, @PunchTime, FORMAT(SYSDATETIMEOFFSET(), 'yyyy-MM-dd HH:mm:ss zzz'),
+                (SELECT TOP (1) CASE WHEN u.IsActive = 0 THEN @LabelInactiva END
+                 FROM dbo.zk_Users u WHERE u.UserCode = @UserCode))
     `;
 
   let insertadas = 0;
@@ -26,6 +33,7 @@ async function insertTransaction(data, deviceSN) {
         .input("Device", sql.VarChar(20), deviceSN)
         // La hora del equipo viene sin zona horaria: es hora de Perú (TimeZone=-5)
         .input("PunchTime", sql.DateTimeOffset, agregarOffsetManual(record.timestamp))
+        .input("LabelInactiva", sql.VarChar(50), LABEL_MEMBRESIA_INACTIVA)
         .query(query);
       const nueva = result.rowsAffected.some((n) => n > 0);
       if (nueva) insertadas++;
@@ -118,7 +126,8 @@ async function listarMarcaciones(desde, hasta) {
     .input("inicio", sql.DateTimeOffset, inicio)
     .input("fin", sql.DateTimeOffset, fin)
     .query(`
-      SELECT t.Id, t.UserCode, RTRIM(u.Name) AS Name, LTRIM(RTRIM(u.dni)) AS Dni, t.Device, t.PunchTime, t.UploadTime
+      SELECT t.Id, t.UserCode, RTRIM(u.Name) AS Name, LTRIM(RTRIM(u.dni)) AS Dni, t.Device, t.PunchTime, t.UploadTime,
+             t.label_estado AS LabelEstado
       FROM dbo.zk_Transactions t
       LEFT JOIN dbo.zk_Users u ON u.UserCode = t.UserCode
       WHERE t.PunchTime >= @inicio AND t.PunchTime < @fin
@@ -132,6 +141,7 @@ async function listarMarcaciones(desde, hasta) {
       id: m.Id,
       pin: m.UserCode,
       dni: m.Dni || null,
+      labelEstado: m.LabelEstado || null, // ej. "membresia inactiva"
       nombre: m.Name || null,
       huellero: m.Device,
       fecha: marcacion.fecha,
@@ -143,6 +153,7 @@ async function listarMarcaciones(desde, hasta) {
 }
 
 module.exports = {
+  LABEL_MEMBRESIA_INACTIVA,
   insertTransaction,
   segmentarTramaTrans,
   agregarOffsetManual,

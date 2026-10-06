@@ -1,3 +1,4 @@
+const { Cita } = require("../../models/Cita");
 const { ExtensionMembresia } = require("../../models/ExtensionMembresia");
 const { SemanasTraining } = require("../../models/ProgramaTraining");
 const { Seguimiento } = require("../../models/Seguimientos");
@@ -66,6 +67,9 @@ const diasExtension = (ext) => {
   }
   return Number(ext?.dias_habiles || 0);
 };
+
+// status_cita de una cita a la que el cliente asistio (502 = no asistio)
+const CITA_ASISTIDA = 501;
 
 // Calcula la data de seguimiento. Si se pasa idVenta, solo procesa la
 // membresia de esa venta (usado al crear/editar una extension).
@@ -250,6 +254,36 @@ const calcularDataSeguimientos = async (idVenta = null) => {
         cantRegalos,
       };
     });
+
+    // CITAS CON NUTRICIONISTA: citas asistidas (status_cita 501) del cliente
+    // dentro del periodo de la membresia (fecha_inicio a fecha_vencimiento)
+    const idsCli = [
+      ...new Set(
+        ventasMembresiasConTransferencias.map((seg) => seg.id_cli).filter(Boolean),
+      ),
+    ];
+    const dataCitas =
+      idsCli.length === 0
+        ? []
+        : await Cita.findAll({
+            where: {
+              status_cita: CITA_ASISTIDA,
+              flag: true,
+              ...(idVenta && { id_cli: idsCli }),
+            },
+            attributes: ["id_cli", "fecha_init"],
+            raw: true,
+          });
+    const contarCitasNutricionista = (seg) => {
+      if (!seg.fecha_inicio || !seg.fecha_vencimiento) return 0;
+      const inicio = new Date(seg.fecha_inicio);
+      const fin = new Date(seg.fecha_vencimiento);
+      return dataCitas.filter((cita) => {
+        const fecha = new Date(cita.fecha_init);
+        return cita.id_cli === seg.id_cli && fecha >= inicio && fecha <= fin;
+      }).length;
+    };
+
     return ventasMembresiasConTransferencias.map((seg) => {
       return {
         id_cli: seg.id_cli,
@@ -258,6 +292,9 @@ const calcularDataSeguimientos = async (idVenta = null) => {
         id_extension: 0,
         sesiones_pendientes: 0,
         fecha_vencimiento: seg.fecha_vencimiento,
+        // dias de las extensiones CON de la venta
+        dias_congelamientos_usados: seg.cantCongelamiento ?? 0,
+        citas_nutricionista_usadas: contarCitasNutricionista(seg),
         status_periodo: "",
         flag: true,
       };
@@ -325,8 +362,37 @@ const actualizarClienteSeguimientoPorTransferencia = async (
   }
 };
 
+// Al crear/editar/eliminar una cita, recalcula los seguimientos del cliente
+// (citas_nutricionista_usadas depende de sus citas asistidas).
+const recalcularSeguimientosPorCliente = async (idCli) => {
+  try {
+    if (!idCli) return false;
+    const seguimientos = await Seguimiento.findAll({
+      where: { id_cli: idCli },
+      attributes: ["id_membresia"],
+      raw: true,
+    });
+    const idsMembresia = seguimientos.map((s) => s.id_membresia).filter(Boolean);
+    if (idsMembresia.length === 0) return false;
+    const membresias = await detalleVenta_membresias.findAll({
+      where: { id: idsMembresia },
+      attributes: ["id_venta"],
+      raw: true,
+    });
+    const idsVenta = [...new Set(membresias.map((m) => m.id_venta))];
+    for (const idVenta of idsVenta) {
+      await obtenerDataSeguimientoPorVenta(idVenta);
+    }
+    return true;
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
+};
+
 module.exports = {
   obtenerDataSeguimientos,
   obtenerDataSeguimientoPorVenta,
+  recalcularSeguimientosPorCliente,
   actualizarClienteSeguimientoPorTransferencia,
 };

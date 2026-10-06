@@ -35,6 +35,14 @@ const Seguimiento = db.define("tb_seguimiento", {
   status_periodo: {
     type: DataTypes.STRING(10),
   },
+  dias_congelamientos_usados: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
+  citas_nutricionista_usadas: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,

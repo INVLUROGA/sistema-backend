@@ -105,3 +105,17 @@ test("POST /iclock/cdata?table=ATTLOG acepta la trama en texto plano y responde 
     restaurar();
   }
 });
+
+test("cada marcación guarda label_estado según el estado de la persona en ese momento", async () => {
+  const restaurar = silenciar();
+  await transactionService.insertTransaction(transactionService.segmentarTramaTrans(TRAMA), "CRJP230860129");
+  restaurar();
+
+  const insert = consultas.find((c) => /INSERT INTO dbo\.zk_Transactions/.test(c.query));
+  assert.match(insert.query, /\(UserCode, Device, PunchTime, UploadTime, label_estado\)/);
+  // Inactiva (IsActive = 0) -> 'membresia inactiva'; activa -> NULL
+  assert.match(insert.query, /CASE WHEN u\.IsActive = 0 THEN @LabelInactiva END/);
+  assert.match(insert.query, /FROM dbo\.zk_Users u WHERE u\.UserCode = @UserCode/);
+  assert.equal(insert.inputs.LabelInactiva, "membresia inactiva");
+  assert.equal(transactionService.LABEL_MEMBRESIA_INACTIVA, "membresia inactiva");
+});
