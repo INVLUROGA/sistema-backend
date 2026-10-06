@@ -34,6 +34,16 @@ require.cache[rutaConexion] = {
   exports: { poolPromise: Promise.resolve(fakePool), sql: require("mssql") },
 };
 
+// WhatsApp falso: los tests nunca envían mensajes reales
+const mensajesWsp = [];
+const rutaWsp = path.resolve(__dirname, "../config/whatssap-web.js");
+require.cache[rutaWsp] = {
+  id: rutaWsp,
+  filename: rutaWsp,
+  loaded: true,
+  exports: { enviarMensajesWsp: async (numero, mensaje) => { mensajesWsp.push({ numero, mensaje }); return { ok: true }; } },
+};
+
 const transactionService = require("../services/transactionService");
 const cdataController = require("../controller/ZkTeco/iclock/cdataController");
 
@@ -49,6 +59,7 @@ const silenciar = () => {
 
 beforeEach(() => {
   guardadas.clear();
+  mensajesWsp.length = 0;
   consultas = [];
 });
 
@@ -106,16 +117,90 @@ test("POST /iclock/cdata?table=ATTLOG acepta la trama en texto plano y responde 
   }
 });
 
-test("cada marcación guarda label_estado según el estado de la persona en ese momento", async () => {
+test("cada marcación guarda label_estado: colaborador, activo para [programa] o cliente sin membresía", async () => {
   const restaurar = silenciar();
   await transactionService.insertTransaction(transactionService.segmentarTramaTrans(TRAMA), "CRJP230860129");
   restaurar();
 
   const insert = consultas.find((c) => /INSERT INTO dbo\.zk_Transactions/.test(c.query));
   assert.match(insert.query, /\(UserCode, Device, PunchTime, UploadTime, label_estado\)/);
-  // Inactiva (IsActive = 0) -> 'membresia inactiva'; activa -> NULL
-  assert.match(insert.query, /CASE WHEN u\.IsActive = 0 THEN @LabelInactiva END/);
-  assert.match(insert.query, /FROM dbo\.zk_Users u WHERE u\.UserCode = @UserCode/);
-  assert.equal(insert.inputs.LabelInactiva, "membresia inactiva");
-  assert.equal(transactionService.LABEL_MEMBRESIA_INACTIVA, "membresia inactiva");
+  assert.match(insert.query, /VALUES \(@UserCode, @Device, @PunchTime, .*, @label\)/s);
+  // El cálculo va dentro del IF NOT EXISTS: las repetidas no se recalculan ni se insertan
+  assert.match(insert.query, /IF NOT EXISTS \([\s\S]*\)\s*BEGIN[\s\S]*INSERT INTO[\s\S]*END/);
+  // Día en hora de Perú y membresía vigente ese día según el seguimiento
+  assert.match(insert.query, /SWITCHOFFSET\(@PunchTime, '-05:00'\)/);
+  assert.match(insert.query, /CAST\(m\.fecha_inicio AS DATE\) <= @dia AND CAST\(s\.fecha_vencimiento AS DATE\) >= @dia/);
+  // Orden de prioridad: colaborador > activo para [programa] > (desactivado a mano) > sin membresía
+  const orden = ["@LabelColaborador", "@LabelActivoPara", "@LabelInactiva", "@LabelSinMembresia"].map((l) => insert.query.indexOf(l));
+  assert.deepEqual([...orden].sort((a, b) => a - b), orden);
+  assert.deepEqual(
+    {
+      colaborador: insert.inputs.LabelColaborador,
+      activoPara: insert.inputs.LabelActivoPara,
+      sinMembresia: insert.inputs.LabelSinMembresia,
+      inactiva: insert.inputs.LabelInactiva,
+    },
+    { colaborador: "Es colaborador", activoPara: "activo para ", sinMembresia: "cliente sin membresia", inactiva: "membresia inactiva" }
+  );
+});
+
+test("cliente sin membresía: log en cada marcación nueva, pero un solo WhatsApp por día", async () => {
+  const requestOriginal = fakePool.request;
+  const reservas = new Set(); // simula el índice único de tb_mensaje_membresia
+  fakePool.request = function () {
+    const r = requestOriginal.call(this);
+    const q = r.query.bind(r);
+    const inputs = {};
+    const input = r.input.bind(r);
+    r.input = (nombre, tipo, valor) => { inputs[nombre] = valor; input(nombre, tipo, valor); return r; };
+    r.query = async (query) => {
+      if (/INSERT INTO dbo.tb_mensaje_membresia/.test(query)) {
+        const clave = `${inputs.tipo}|${inputs.telefono}|${inputs.dia}`;
+        if (reservas.has(clave)) return { rowsAffected: [0], recordset: [] };
+        reservas.add(clave);
+        return { rowsAffected: [1], recordset: [{ id: reservas.size }] };
+      }
+      const res = await q(query);
+      if (/zk_Transactions/.test(query) && res.rowsAffected.length) {
+        const dia = String(inputs.PunchTime).slice(0, 10);
+        res.recordset = [{ label: "cliente sin membresia", dni: "76069670", nombre: "Ana Ruiz", telefono: "951 473 211", id_cli: 5, dia }];
+      }
+      return res;
+    };
+    return r;
+  };
+  const logs = [];
+  const original = console.log;
+  console.log = (m) => logs.push(m);
+  const marcar = async (hora) => {
+    await transactionService.insertTransaction(
+      transactionService.segmentarTramaTrans(`76069670	${hora}	0	1	0	0	0	255	0	0
+`),
+      "CRJP230860129"
+    );
+    for (let i = 0; i < 5; i++) await new Promise((r) => setImmediate(r)); // aviso en segundo plano
+  };
+  try {
+    await marcar("2026-09-28 11:30:05");
+    await marcar("2026-09-28 11:30:05"); // repetida (el huellero reenvía su historial)
+    await marcar("2026-09-28 11:31:40"); // otro intento el mismo día
+    await marcar("2026-09-29 08:00:00"); // al día siguiente
+  } finally {
+    console.log = original;
+    fakePool.request = requestOriginal;
+  }
+  const avisos = logs.filter((l) => /CLIENTE SIN MEMBRESÍA/.test(l));
+  assert.equal(avisos.length, 3, "un log por marcación nueva (la repetida no)");
+  assert.match(avisos[0], /Ana Ruiz | DNI: 76069670 | PIN: 76069670 | WhatsApp: 51951473211/);
+  assert.deepEqual(mensajesWsp.map((m) => m.numero), ["51951473211", "51951473211"], "uno el 28 y otro el 29");
+  assert.match(mensajesWsp[0].mensaje, /HOLA, Ana Ruiz/);
+  assert.ok(logs.some((l) => /WhatsApp a 51951473211 omitido: ya se le avisó el 2026-09-28/.test(l)));
+});
+
+test("telefonoWsp: celular de Perú con 51 delante, o null si no es válido", () => {
+  const { telefonoWsp } = transactionService;
+  assert.equal(telefonoWsp("951473211"), "51951473211");
+  assert.equal(telefonoWsp(" +51 951-473-211 "), "51951473211");
+  assert.equal(telefonoWsp("51951473211"), "51951473211");
+  for (const malo of [null, "", "0", "12345", "014567890", "851473211"]) assert.equal(telefonoWsp(malo), null, String(malo));
 });
