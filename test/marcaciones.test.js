@@ -129,7 +129,9 @@ test("cada marcación guarda label_estado: colaborador, activo para [programa] o
   assert.match(insert.query, /IF NOT EXISTS \([\s\S]*\)\s*BEGIN[\s\S]*INSERT INTO[\s\S]*END/);
   // Día en hora de Perú y membresía vigente ese día según el seguimiento
   assert.match(insert.query, /SWITCHOFFSET\(@PunchTime, '-05:00'\)/);
-  assert.match(insert.query, /CAST\(m\.fecha_inicio AS DATE\) <= @dia AND CAST\(s\.fecha_vencimiento AS DATE\) >= @dia/);
+  // Vigente desde la fecha de venta (hora Perú), aunque la membresía empiece después
+  assert.match(insert.query, /COALESCE\(CAST\(SWITCHOFFSET\(v\.fecha_venta, '-05:00'\) AS DATE\), CAST\(m\.fecha_inicio AS DATE\)\) <= @dia/);
+  assert.match(insert.query, /CAST\(s\.fecha_vencimiento AS DATE\) >= @dia/);
   // Orden de prioridad: colaborador > activo para [programa] > (desactivado a mano) > sin membresía
   const orden = ["@LabelColaborador", "@LabelActivoPara", "@LabelInactiva", "@LabelSinMembresia"].map((l) => insert.query.indexOf(l));
   assert.deepEqual([...orden].sort((a, b) => a - b), orden);

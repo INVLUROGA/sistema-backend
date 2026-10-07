@@ -71,6 +71,7 @@ test("devuelve las marcaciones con fecha y hora de Perú", async () => {
     pin: 41235478,
     dni: "41235478",
     labelEstado: "membresia inactiva",
+    labelColor: null,
     nombre: "Juan Perez",
     huellero: "CRJP230860129",
     fecha: "2026-09-28",
@@ -78,6 +79,15 @@ test("devuelve las marcaciones con fecha y hora de Perú", async () => {
     marcacion: new Date("2026-09-28T16:46:13Z"),
     recibida: "2026-09-28 11:53:44",
   });
+});
+
+test("labelColor: verde para activo para [programa], morado para colaborador", () => {
+  const { colorLabel, LABELS_ESTADO } = require("../services/transactionService");
+  assert.equal(colorLabel("activo para CHANGE 45"), "#22c55e");
+  assert.equal(colorLabel(LABELS_ESTADO.COLABORADOR), "#8b5cf6");
+  assert.equal(colorLabel(LABELS_ESTADO.SIN_MEMBRESIA), null);
+  assert.equal(colorLabel(LABELS_ESTADO.INACTIVA), null);
+  assert.equal(colorLabel(null), null);
 });
 
 test("el rango cubre los días completos en hora de Perú", async () => {

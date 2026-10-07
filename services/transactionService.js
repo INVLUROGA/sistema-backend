@@ -14,7 +14,7 @@ const LABELS_ESTADO = {
 
 // Calcula @label para @UserCode según el día (Perú) de @PunchTime. Por DNI: zk_Users.dni =
 // tb_empleados.numDoc_empl / tb_clientes.numDoc_cli; el programa sale del seguimiento
-// (tb_seguimientos -> membresía -> programa) vigente ese día. NULL si no es cliente ni empleado.
+// (tb_seguimientos -> membresía -> programa) vigente ese día: de la fecha de venta al vencimiento. NULL si no es cliente ni empleado.
 const SQL_CALCULAR_LABEL = `
         DECLARE @dni VARCHAR(30), @usuarioActivo BIT, @programa VARCHAR(100), @tieneMembresia BIT = 0;
         DECLARE @dia DATE = CAST(SWITCHOFFSET(@PunchTime, '-05:00') AS DATE);
@@ -24,9 +24,13 @@ const SQL_CALCULAR_LABEL = `
         FROM dbo.tb_seguimientos s
         JOIN dbo.tb_clientes c ON c.id_cli = s.id_cli
         JOIN dbo.detalle_ventaMembresia m ON m.id = s.id_membresia
+        JOIN dbo.tb_venta v ON v.id = m.id_venta
         LEFT JOIN dbo.tb_ProgramaTraining p ON p.id_pgm = m.id_pgm
         WHERE s.flag = 1 AND LTRIM(RTRIM(c.numDoc_cli)) = @dni
-          AND CAST(m.fecha_inicio AS DATE) <= @dia AND CAST(s.fecha_vencimiento AS DATE) >= @dia
+          -- Vigente desde la fecha de venta (día Perú), no desde fecha_inicio: quien compró una
+          -- membresía que aún no empieza no es un cliente "sin membresía"
+          AND COALESCE(CAST(SWITCHOFFSET(v.fecha_venta, '-05:00') AS DATE), CAST(m.fecha_inicio AS DATE)) <= @dia
+          AND CAST(s.fecha_vencimiento AS DATE) >= @dia
         ORDER BY m.fecha_inicio DESC;
 
         DECLARE @label VARCHAR(50) = CASE
@@ -248,6 +252,18 @@ function fechaHoraLima(fecha) {
   };
 }
 
+// Color con que se muestra cada label_estado en la lista de marcaciones (null = sin color)
+const COLORES_LABEL = {
+  verde: "#22c55e", // activo para [programa]
+  morado: "#8b5cf6", // colaborador
+};
+function colorLabel(label) {
+  if (!label) return null;
+  if (label === LABELS_ESTADO.COLABORADOR) return COLORES_LABEL.morado;
+  if (label.startsWith(LABELS_ESTADO.ACTIVO_PARA)) return COLORES_LABEL.verde;
+  return null;
+}
+
 /// Marcaciones entre dos fechas de Perú (YYYY-MM-DD, ambas incluidas), con el nombre del usuario.
 async function listarMarcaciones(desde, hasta) {
   const pool = await poolPromise;
@@ -276,6 +292,7 @@ async function listarMarcaciones(desde, hasta) {
       pin: m.UserCode,
       dni: m.Dni || null,
       labelEstado: m.LabelEstado || null, // ej. "membresia inactiva"
+      labelColor: colorLabel(m.LabelEstado), // verde: activo para [programa]; morado: colaborador
       nombre: m.Name || null,
       huellero: m.Device,
       fecha: marcacion.fecha,
@@ -288,6 +305,7 @@ async function listarMarcaciones(desde, hasta) {
 
 module.exports = {
   LABELS_ESTADO,
+  colorLabel,
   telefonoWsp,
   avisarSinMembresia,
   SQL_CALCULAR_LABEL,
