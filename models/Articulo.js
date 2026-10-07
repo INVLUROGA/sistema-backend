@@ -85,6 +85,9 @@ const Articulos = db.define("tb_articulos", {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
+  id_color_subrayado: {
+    type: DataTypes.INTEGER,
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
@@ -303,6 +306,15 @@ Articulos.sync()
       `IF COL_LENGTH('${tabla}', 'is_checking_roy') IS NULL
          ALTER TABLE ${tabla} ADD is_checking_roy BIT NOT NULL
            CONSTRAINT DF_${tabla}_is_checking_roy DEFAULT 0;`,
+    );
+    await db.query(
+      `IF COL_LENGTH('${tabla}', 'id_color_subrayado') IS NULL
+         ALTER TABLE ${tabla} ADD id_color_subrayado INT NULL;`,
+    );
+    // Los articulos ya marcados por Roy toman el color de subrayado id=1
+    await db.query(
+      `UPDATE ${tabla} SET id_color_subrayado = 1
+         WHERE is_checking_roy = 1 AND id_color_subrayado IS NULL;`,
     );
   })
   .catch((error) => {

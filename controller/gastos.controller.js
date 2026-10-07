@@ -52,8 +52,11 @@ const postGasto = async (req = request, res = response) => {
     });
   }
 };
+// Sin id_empresa (ruta /todas-empresas) devuelve los gastos de todas las empresas,
+// incluidos los que no tienen concepto (tb_parametros_gasto).
 const getGastos = async (req = request, res = response) => {
   const { id_empresa } = req.params;
+  const filtrarPorEmpresa = id_empresa !== undefined;
   try {
     const gastos = await Gastos.findAll({
       where: {
@@ -101,9 +104,9 @@ const getGastos = async (req = request, res = response) => {
         {
           model: ParametroGastos,
           attributes: ["id_empresa", "nombre_gasto", "grupo", "id_tipoGasto"],
-          where: {
-            id_empresa: id_empresa,
-          },
+          ...(filtrarPorEmpresa
+            ? { where: { id_empresa: id_empresa } }
+            : { required: false }),
         },
         {
           model: Parametros,

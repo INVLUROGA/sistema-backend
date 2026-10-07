@@ -24,6 +24,7 @@ const router = Router();
  */
 router.post("/", postGasto);
 router.get("/empresa/:id_empresa", getGastos);
+router.get("/todas-empresas", getGastos);
 router.get("/facturado/:id_facturado_por", getFacturas);
 router.get("/id/:id", getgastoxID);
 router.put("/id/:id", putGasto);

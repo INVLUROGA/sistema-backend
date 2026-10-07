@@ -1,5 +1,6 @@
 const { request, response } = require("express");
 const { ProspectoLead } = require("../models/ProspectoLead");
+const { TareaProspecto } = require("../models/TareaProspecto");
 const uuid = require("uuid");
 const { Empleado } = require("../models/Usuarios");
 const { Sequelize } = require("sequelize");
@@ -155,10 +156,53 @@ const deleteProspectoLead = async (req = request, res = response) => {
     });
   }
 };
+// Registra una tarea sobre el lead; la fecha es la del momento del registro.
+const postTareaProspectoLead = async (req = request, res = response) => {
+  try {
+    const { id_prospecto, id_tarea, observacion } = req.body;
+    if (!id_prospecto || !id_tarea) {
+      return res.status(400).json({
+        ok: false,
+        msg: "Faltan id_prospecto o id_tarea",
+      });
+    }
+    const tarea = await TareaProspecto.create({
+      id_prospecto,
+      id_tarea,
+      observacion: observacion || null,
+      fecha: new Date(),
+    });
+    res.status(200).json({ ok: true, tarea });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: "Error al registrar la tarea. Hable con el encargado de sistema",
+    });
+  }
+};
+const getTareasProspectoLead = async (req = request, res = response) => {
+  try {
+    const { id_prospecto } = req.params;
+    const tareas = await TareaProspecto.findAll({
+      where: { id_prospecto, flag: true },
+      order: [["fecha", "desc"]],
+    });
+    res.status(200).json({ ok: true, tareas });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: "Error al obtener las tareas. Hable con el encargado de sistema",
+    });
+  }
+};
 module.exports = {
   postProspectoLead,
   getProspectosLead,
   getProspectoLeadPorID,
   putProspectoLead,
   deleteProspectoLead,
+  postTareaProspectoLead,
+  getTareasProspectoLead,
 };

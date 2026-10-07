@@ -222,12 +222,12 @@ const actualizarOrdenArticulo = async (req = request, res = response) => {
   }
 };
 
-// Marca/desmarca un articulo como revisado por Roy (is_checking_roy).
+// Asigna el color de subrayado de la fila (1 = azul RAL, 2 = amarillo Circus, 3 = verde Reducto, null = sin color).
 // Igual que el orden, es un ajuste puntual: no pasa por HisCamArticulos/auditoria.
-const actualizarCheckingRoyArticulo = async (req = request, res = response) => {
+const actualizarColorSubrayadoArticulo = async (req = request, res = response) => {
   try {
     const { id } = req.params;
-    const { is_checking_roy } = req.body;
+    const { id_color_subrayado } = req.body;
     const articulo = await Articulos.findByPk(id);
     if (!articulo) {
       return res.status(404).json({
@@ -235,16 +235,30 @@ const actualizarCheckingRoyArticulo = async (req = request, res = response) => {
         msg: "El articulo no existe",
       });
     }
-    await articulo.update({ is_checking_roy: !!is_checking_roy });
+    const color =
+      id_color_subrayado === "" || id_color_subrayado === null || id_color_subrayado === undefined
+        ? null
+        : Number(id_color_subrayado);
+    if (color !== null && !Number.isInteger(color)) {
+      return res.status(400).json({
+        ok: false,
+        msg: "El color de subrayado debe ser un numero",
+      });
+    }
+    // is_checking_roy se mantiene sincronizado con el color 1 (amarillo)
+    await articulo.update({
+      id_color_subrayado: color,
+      is_checking_roy: color === 1,
+    });
     res.status(200).json({
       ok: true,
-      msg: "CHECK ROY ACTUALIZADO",
+      msg: "COLOR DE SUBRAYADO ACTUALIZADO",
     });
   } catch (error) {
     console.log(error);
     res.status(500).json({
       ok: false,
-      msg: "Error al actualizar el check de Roy del articulo",
+      msg: "Error al actualizar el color de subrayado del articulo",
     });
   }
 };
@@ -708,7 +722,7 @@ module.exports = {
   registrarArticulo,
   actualizarArticulo,
   actualizarOrdenArticulo,
-  actualizarCheckingRoyArticulo,
+  actualizarColorSubrayadoArticulo,
   eliminarArticulo,
   obtenerArticuloxID,
   obtenerParametrosLugares,
