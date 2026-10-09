@@ -54,6 +54,16 @@ function quitarRelleno(base64) {
   return fin === 0 ? "" : bytes.subarray(0, fin).toString("base64");
 }
 
+/// PIN (key del huellero) a partir del DNI. El lector no acepta un PIN que empiece con 0,
+/// así que a esos DNI se les antepone un 1: "01234567" -> 101234567 (9 dígitos, no choca
+/// con ningún DNI de 8). Retorna null si el PIN no entra en 9 dígitos.
+function pinDesdeDni(dniTexto) {
+  const texto = String(dniTexto ?? "").trim();
+  if (!/^\d+$/.test(texto)) return null;
+  const pin = parseInt(texto.startsWith("0") ? `1${texto}` : texto, 10);
+  return pin > 0 && pin <= 999999999 ? pin : null;
+}
+
 /// Valida y normaliza los datos. Retorna { datos } o { error }.
 function validarPersona({ nombre, dni, binaryData, dedo }) {
   const nombreLimpio = typeof nombre === "string" ? nombre.trim() : "";
@@ -64,6 +74,10 @@ function validarPersona({ nombre, dni, binaryData, dedo }) {
   const dniTexto = String(dni ?? "").trim();
   if (!/^\d{1,9}$/.test(dniTexto) || parseInt(dniTexto, 10) === 0) {
     return { error: "El DNI debe ser numérico (hasta 9 dígitos)" };
+  }
+  const pin = pinDesdeDni(dniTexto);
+  if (pin === null) {
+    return { error: "Un DNI que empieza con 0 admite como máximo 8 dígitos" };
   }
 
   if (typeof binaryData !== "string" || !binaryData.trim()) return { error: "El BinaryData es obligatorio" };
@@ -82,8 +96,8 @@ function validarPersona({ nombre, dni, binaryData, dedo }) {
   return {
     datos: {
       nombre: nombreLimpio,
-      pin: parseInt(dniTexto, 10),
-      // Tal como se escribió: un DNI puede empezar con 0 (el PIN, numérico, pierde ese 0)
+      pin,
+      // Tal como se escribió: un DNI puede empezar con 0 (el PIN lleva un 1 delante, ver pinDesdeDni)
       dni: dniTexto,
       plantilla,
       dedo: dedoNumero,
@@ -573,7 +587,18 @@ async function cambiarEstadoPersona(pinTexto, activoBody, ahora = Date.now()) {
   }
 }
 
+// PINs (DNI) que tienen al menos una huella guardada en dbo.zk_UserData64
+async function pinesConHuella() {
+  const pool = await poolPromise;
+  const result = await pool
+    .request()
+    .query("SELECT DISTINCT UserCode AS pin FROM dbo.zk_UserData64 WHERE DataLabel = 'FP'");
+  return result.recordset.map((r) => r.pin);
+}
+
 module.exports = {
+  pinDesdeDni,
+  pinesConHuella,
   cambiarEstadoPersona,
   agregarHuella,
   reenviarPersona,

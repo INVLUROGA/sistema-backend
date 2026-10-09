@@ -1654,6 +1654,7 @@ const obtenerContratosClientes = async (req = request, res = response) => {
               "nombres_apellidos_cli",
             ],
             "uid_avatar",
+            "numDoc_cli",
           ],
         },
         {

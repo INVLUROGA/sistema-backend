@@ -237,13 +237,24 @@ test("la franja horaria y las puertas se pueden configurar por variables de ento
   }
 });
 
-test("un DNI que empieza con 0 se guarda tal cual (el PIN numérico pierde el 0)", async () => {
+test("un DNI que empieza con 0 se guarda tal cual y su PIN lleva un 1 delante", async () => {
   const restaurar = silenciar();
   const res = crearRes();
   await agregarPersona({ body: { nombre: "Rosa", dni: "04123456", binaryData: HUELLA } }, res);
   restaurar();
 
   assert.equal(res.statusCode, 201);
-  assert.equal(usuarios.has(4123456), true); // PIN
-  assert.equal(dnis.get(4123456), "04123456"); // DNI
+  assert.equal(usuarios.has(104123456), true); // PIN: el lector no acepta un PIN que empiece con 0
+  assert.equal(usuarios.has(4123456), false);
+  assert.equal(dnis.get(104123456), "04123456"); // DNI tal cual
+});
+
+test("un DNI que empieza con 0 y tiene 9 dígitos se rechaza (el PIN no entraría en 9)", async () => {
+  const restaurar = silenciar();
+  const res = crearRes();
+  await agregarPersona({ body: { nombre: "Rosa", dni: "041234567", binaryData: HUELLA } }, res);
+  restaurar();
+
+  assert.equal(res.statusCode, 400);
+  assert.equal(usuarios.has(1041234567), false);
 });

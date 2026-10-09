@@ -9,6 +9,7 @@ const {
   sincronizarHuelleros,
   reenviarPersona,
   agregarHuella,
+  obtenerPinesConHuella,
   obtenerReporteAsistencia,
   cambiarEstadoPersona,
 } = require("../controller/eventosAsistencia.controller");
@@ -20,6 +21,7 @@ router.get("/", obtenerEventosAsistencia);
 router.get("/huelleros", obtenerEstadoHuelleros);
 router.get("/reporte", obtenerReporteAsistencia);
 router.get("/personas", obtenerPersonas);
+router.get("/personas/con-huella", obtenerPinesConHuella);
 router.post("/personas", agregarPersona);
 router.delete("/personas/:pin/huellas/:dedo", eliminarHuella);
 router.delete("/personas/:pin", eliminarPersona);

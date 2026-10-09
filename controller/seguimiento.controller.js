@@ -13,6 +13,7 @@ const {
 const { Cliente } = require("../models/Usuarios");
 const { ImagePT } = require("../models/Image");
 const { ExtensionMembresia } = require("../models/ExtensionMembresia");
+const reporteSeguimientoService = require("../services/reporteSeguimientoService");
 
 const getSeguimientos = async (req = request, res = response) => {
   try {
@@ -25,6 +26,7 @@ const getSeguimientos = async (req = request, res = response) => {
         "apMaterno_cli",
         "email_cli",
         "tel_cli",
+        "numDoc_cli",
       ],
       include: [
         {
@@ -44,9 +46,17 @@ const getSeguimientos = async (req = request, res = response) => {
                 "id_venta",
                 "fecha_inicio",
                 "horario",
+                "uid_firma",
               ],
               as: "venta",
               include: [
+                {
+                  // solo para saber si el contrato esta firmado (sin traer la imagen)
+                  model: ImagePT,
+                  as: "firma_cli",
+                  attributes: ["id"],
+                  required: false,
+                },
                 {
                   model: detalle_cambioPrograma,
                   as: "cambio_programa",
@@ -253,7 +263,26 @@ const getSeguimientoxFechaVencimientos = async (
     console.log(error);
   }
 };
+/**
+ * GET /api/seguimiento/reporte?fecha=YYYY-MM-DD
+ * Socios activos a esa fecha (su ultima membresia vence en la fecha o despues), un registro
+ * por cliente, para agrupar por genero, edad, distrito, horario, programa y monto.
+ */
+const getReporteSeguimiento = async (req = request, res = response) => {
+  const { fecha } = req.query;
+  try {
+    const error = reporteSeguimientoService.errorDeFecha(fecha);
+    if (error) return res.status(400).json({ ok: false, msg: error });
+    const clientes = await reporteSeguimientoService.obtenerReporte(fecha);
+    res.status(200).json({ ok: true, fecha, clientes });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ ok: false, msg: "Hable con el administrador" });
+  }
+};
+
 module.exports = {
+  getReporteSeguimiento,
   getSeguimientos,
   obtenerSeguimientosxUid,
   getSeguimientoxFechaVencimientos,

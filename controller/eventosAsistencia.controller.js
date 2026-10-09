@@ -257,6 +257,20 @@ const reenviarPersona = async (req = request, res = response) => {
  * Body: { dedo (0-9), binaryData (huella en base64) }
  * Agrega la huella de otro dedo a la persona y la envía a los huelleros activos.
  */
+/**
+ * GET /api/eventos-asistencia/personas/con-huella
+ * PINs (DNI) que tienen al menos una huella registrada.
+ */
+const obtenerPinesConHuella = async (req = request, res = response) => {
+  try {
+    const pines = await personaHuelleroService.pinesConHuella();
+    res.status(200).json({ ok: true, pines });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ ok: false, msg: "Hable con el administrador" });
+  }
+};
+
 const agregarHuella = async (req = request, res = response) => {
   try {
     const { status, ...resultado } = await personaHuelleroService.agregarHuella(req.params.pin, req.body || {});
@@ -312,6 +326,7 @@ const cambiarEstadoPersona = async (req = request, res = response) => {
 module.exports = {
   cambiarEstadoPersona,
   obtenerReporteAsistencia,
+  obtenerPinesConHuella,
   calcularSincronizacion,
   agregarHuella,
   reenviarPersona,
