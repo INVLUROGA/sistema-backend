@@ -184,7 +184,7 @@ app.use("/api/fils", require("./routes/file.router.js"));
 app.use("/api/gastosigv", require("./routes/gastosigv.js"));
 app.use("/api/seguimiento", require("./routes/seguimiento.router.js"));
 app.use("/api/movimiento-articulo", require("./routes/kardex.router.js"));
-app.use("/api/articulo", validarJWT, require("./routes/articulo.router.js"));
+app.use("/api/articulo", require("./routes/articulo.router.js"));
 app.use("/api/cuenta-balance", require("./routes/cuentaBalance.router.js"));
 app.use("/api/proveedor", validarJWT, require("./routes/proveedor.router.js"));
 app.use(
@@ -224,7 +224,6 @@ app.use("/api/impuestos", validarJWT, require("./routes/impuestos.router.js"));
 app.use("/api/reporte", validarJWT, require("./routes/reporte.router.js"));
 app.use(
   "/api/inventario",
-  validarJWT,
   require("./routes/inventario.router.js"),
 );
 app.use("/api/checklist", validarJWT, require("./routes/checklist.router.js"));
