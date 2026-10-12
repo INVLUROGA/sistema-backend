@@ -46,6 +46,10 @@ const ProspectoLead = db.define(
     id_estado: {
       type: DataTypes.INTEGER,
     },
+    observacion: {
+      type: DataTypes.STRING(500),
+      defaultValue: "",
+    },
     flag: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
