@@ -179,6 +179,13 @@ const seccionGET = async (req = request, res = response) => {
               icon: "uil-calender",
               url: "/contrato-clientes",
             },
+            {
+              key: "cliente-prospecto",
+              label: "Prospectos",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-prospecto",
+            },
           ],
         },
         {

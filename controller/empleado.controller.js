@@ -3,6 +3,7 @@ const { Empleado } = require("../models/Usuarios");
 const { Sequelize } = require("sequelize");
 const { Distritos } = require("../models/Distritos");
 const { ImagePT } = require("../models/Image");
+const uid = require("uuid");
 
 const obtenerEmpleadosxDepartamento = async (req = request, res = response) => {
   try {
@@ -23,18 +24,30 @@ const obtenerEmpleadosxDepartamento = async (req = request, res = response) => {
 };
 const postEmpleado = async (req = request, res = response) => {
   try {
-    const { formState } = req.body;
-    const empleado = await Empleado.create(formState);
+    const { id_estado, distrito_empl, ...formState } = req.body;
+    const uid_image = uid.v4();
+    const empleado = await Empleado.create({
+      ...formState,
+      fecContrato_empl: formState.fecContrato_empl || null,
+      fecNac_empl: formState.fecNac_empl || null,
+      ubigeo_distrito_empl: distrito_empl,
+      estado_empl: id_estado ?? true,
+      uid: uid.v4(),
+      uid_avatar: uid_image,
+      uid_contactsEmergencia: uid.v4(),
+    });
     res.status(201).json({
       empleado,
+      uid_image,
     });
   } catch (error) {
     console.log(error);
+    res.status(500).json({ ok: false, msg: "Error al crear colaborador" });
   }
 };
 const updateEmpleadoxID = async (req = request, res = response) => {
   try {
-    const { formState } = req.body;
+    const formState = req.body;
     const { id } = req.params;
     const empleado = await Empleado.findOne({ where: { id_empl: id } });
     await empleado.update(formState);
@@ -44,6 +57,7 @@ const updateEmpleadoxID = async (req = request, res = response) => {
     });
   } catch (error) {
     console.log(error);
+    res.status(500).json({ ok: false, msg: "Error al actualizar colaborador" });
   }
 };
 const deleteEmpleadoxID = async (req = request, res = response) => {
