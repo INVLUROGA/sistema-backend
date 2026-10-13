@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 const { db } = require("../database/sequelizeConnection");
 const { Parametros } = require("./Parametros");
-const { Empleado } = require("./Usuarios");
+const { Empleado, Cliente } = require("./Usuarios");
 const { Distritos } = require("./Distritos");
 const { Comentario } = require("./Modelos");
 const uuid = require("uuid");
@@ -49,6 +49,11 @@ const ProspectoLead = db.define(
     observacion: {
       type: DataTypes.STRING(500),
       defaultValue: "",
+    },
+    id_cli: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
     },
     flag: {
       type: DataTypes.BOOLEAN,
@@ -133,6 +138,11 @@ ProspectoLead.hasOne(Parametros, {
   foreignKey: "id_param",
   sourceKey: "id_medio_comunicacion",
   as: "parametro_medio_comunicacion",
+});
+ProspectoLead.hasOne(Cliente, {
+  foreignKey: "id_cli",
+  sourceKey: "id_cli",
+  as: "cliente",
 });
 ProspectoLead.hasMany(Comentario, {
   foreignKey: "uid_location",

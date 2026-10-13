@@ -7,6 +7,13 @@ const { Sequelize } = require("sequelize");
 const { Parametros } = require("../models/Parametros");
 const { Distritos } = require("../models/Distritos");
 const { Comentario } = require("../models/Modelos");
+const { Cliente } = require("../models/Usuarios");
+const { Venta, detalleVenta_membresias } = require("../models/Venta");
+const {
+  ProgramaTraining,
+  SemanasTraining,
+  TarifaTraining,
+} = require("../models/ProgramaTraining");
 const postProspectoLead = async (req = request, res = response) => {
   try {
     const uid = uuid.v4();
@@ -67,6 +74,25 @@ const getProspectosLead = async (req = request, res = response) => {
         {
           model: Comentario,
           as: "comentario",
+        },
+        {
+          model: Cliente,
+          as: "cliente",
+          attributes: [
+            "id_cli",
+            "uid",
+            [
+              Sequelize.fn(
+                "CONCAT",
+                Sequelize.col("cliente.nombre_cli"),
+                " ",
+                Sequelize.col("cliente.apPaterno_cli"),
+                " ",
+                Sequelize.col("cliente.apMaterno_cli"),
+              ),
+              "nombres_apellidos_cli",
+            ],
+          ],
         },
       ],
     });
@@ -197,7 +223,68 @@ const getTareasProspectoLead = async (req = request, res = response) => {
     });
   }
 };
+// Membresías compradas por el cliente vinculado al lead (id_cli).
+const getMembresiasClienteLead = async (req = request, res = response) => {
+  try {
+    const { id_cli } = req.params;
+    if (!Number(id_cli)) {
+      return res.status(200).json({ ok: true, membresias: [] });
+    }
+    const membresias = await detalleVenta_membresias.findAll({
+      where: { flag: true },
+      attributes: ["id", "fec_inicio_mem", "fec_fin_mem", "tarifa_monto"],
+      include: [
+        {
+          model: Venta,
+          required: true,
+          where: { id_cli, flag: true },
+          attributes: ["id", "fecha_venta"],
+          include: [
+            {
+              model: Empleado,
+              attributes: [
+                [
+                  Sequelize.fn(
+                    "CONCAT",
+                    Sequelize.col("tb_ventum->tb_empleado.nombre_empl"),
+                    " ",
+                    Sequelize.col("tb_ventum->tb_empleado.apPaterno_empl"),
+                    " ",
+                    Sequelize.col("tb_ventum->tb_empleado.apMaterno_empl"),
+                  ),
+                  "nombres_apellidos_empl",
+                ],
+              ],
+            },
+          ],
+        },
+        {
+          model: ProgramaTraining,
+          attributes: ["name_pgm"],
+        },
+        {
+          model: SemanasTraining,
+          attributes: ["semanas_st"],
+        },
+        {
+          model: TarifaTraining,
+          as: "tarifa_venta",
+          attributes: ["nombreTarifa_tt"],
+        },
+      ],
+      order: [[Venta, "fecha_venta", "desc"]],
+    });
+    res.status(200).json({ ok: true, membresias });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: "Error al obtener las membresias del cliente. Hable con el encargado de sistema",
+    });
+  }
+};
 module.exports = {
+  getMembresiasClienteLead,
   postProspectoLead,
   getProspectosLead,
   getProspectoLeadPorID,
