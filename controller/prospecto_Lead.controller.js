@@ -223,6 +223,22 @@ const getTareasProspectoLead = async (req = request, res = response) => {
     });
   }
 };
+// Todas las tareas activas, para el reporte de tareas por asesor.
+const getTareasReporte = async (req = request, res = response) => {
+  try {
+    const tareas = await TareaProspecto.findAll({
+      where: { flag: true },
+      order: [["fecha", "desc"]],
+    });
+    res.status(200).json({ ok: true, tareas });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: "Error al obtener el reporte de tareas. Hable con el encargado de sistema",
+    });
+  }
+};
 // Membresías compradas por el cliente vinculado al lead (id_cli).
 const getMembresiasClienteLead = async (req = request, res = response) => {
   try {
@@ -285,6 +301,7 @@ const getMembresiasClienteLead = async (req = request, res = response) => {
 };
 module.exports = {
   getMembresiasClienteLead,
+  getTareasReporte,
   postProspectoLead,
   getProspectosLead,
   getProspectoLeadPorID,

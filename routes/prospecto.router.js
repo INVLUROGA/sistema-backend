@@ -15,6 +15,7 @@ const {
   postTareaProspectoLead,
   getTareasProspectoLead,
   getMembresiasClienteLead,
+  getTareasReporte,
 } = require("../controller/prospecto_Lead.controller");
 const router = Router();
 /*
@@ -34,6 +35,7 @@ router.put("/lead/id/:id", putProspectoLead);
 router.put("/lead/delete/id/:id", deleteProspectoLead);
 
 router.post("/lead/tarea", postTareaProspectoLead);
+router.get("/lead/tareas/reporte", getTareasReporte);
 router.get("/lead/tarea/:id_prospecto", getTareasProspectoLead);
 router.get("/lead/cliente/:id_cli/membresias", getMembresiasClienteLead);
 
