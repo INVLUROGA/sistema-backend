@@ -30,7 +30,8 @@ const GetCuentaBalancesxIDEmpresaxTipo = async (
     const { id_empresa, tipo } = req.params;
     const cuentasBalances = await CuentaBalance.findAll({
       where: {
-        id_empresa: id_empresa,
+        // "todas": las cuentas de todas las empresas
+        ...(id_empresa !== "todas" && { id_empresa }),
         flag: true,
         tipo,
       },
