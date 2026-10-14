@@ -61,6 +61,10 @@ const getProspectosLead = async (req = request, res = response) => {
         },
         {
           model: Parametros,
+          as: "parametro_nivel_interes",
+        },
+        {
+          model: Parametros,
           as: "parametro_canal",
         },
         {

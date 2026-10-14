@@ -12,6 +12,7 @@ const {
   obtenerPinesConHuella,
   obtenerReporteAsistencia,
   cambiarEstadoPersona,
+  obtenerAsistenciasCliente,
 } = require("../controller/eventosAsistencia.controller");
 const router = Router();
 /**
@@ -20,6 +21,7 @@ const router = Router();
 router.get("/", obtenerEventosAsistencia);
 router.get("/huelleros", obtenerEstadoHuelleros);
 router.get("/reporte", obtenerReporteAsistencia);
+router.get("/cliente/:uid", obtenerAsistenciasCliente);
 router.get("/personas", obtenerPersonas);
 router.get("/personas/con-huella", obtenerPinesConHuella);
 router.post("/personas", agregarPersona);

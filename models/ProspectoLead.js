@@ -46,6 +46,9 @@ const ProspectoLead = db.define(
     id_estado: {
       type: DataTypes.INTEGER,
     },
+    id_nivel_interes: {
+      type: DataTypes.INTEGER,
+    },
     observacion: {
       type: DataTypes.STRING(500),
       defaultValue: "",
@@ -122,6 +125,11 @@ ProspectoLead.hasOne(Parametros, {
   foreignKey: "id_param",
   sourceKey: "id_estado",
   as: "parametro_estado",
+});
+ProspectoLead.hasOne(Parametros, {
+  foreignKey: "id_param",
+  sourceKey: "id_nivel_interes",
+  as: "parametro_nivel_interes",
 });
 ProspectoLead.hasOne(Parametros, {
   foreignKey: "id_param",

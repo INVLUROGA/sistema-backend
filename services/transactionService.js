@@ -284,26 +284,56 @@ async function listarMarcaciones(desde, hasta) {
       ORDER BY t.PunchTime DESC, t.Id DESC
     `);
 
-  return result.recordset.map((m) => {
-    const marcacion = fechaHoraLima(m.PunchTime);
-    const recibida = fechaHoraLima(m.UploadTime);
-    return {
-      id: m.Id,
-      pin: m.UserCode,
-      dni: m.Dni || null,
-      labelEstado: m.LabelEstado || null, // ej. "membresia inactiva"
-      labelColor: colorLabel(m.LabelEstado), // verde: activo para [programa]; morado: colaborador
-      nombre: m.Name || null,
-      huellero: m.Device,
-      fecha: marcacion.fecha,
-      hora: marcacion.hora,
-      marcacion: m.PunchTime,
-      recibida: recibida.fecha ? `${recibida.fecha} ${recibida.hora}` : null,
-    };
-  });
+  return result.recordset.map(formatearMarcacion);
+}
+
+// Fila de zk_Transactions (+ zk_Users) -> marcación con fecha y hora de Perú
+function formatearMarcacion(m) {
+  const marcacion = fechaHoraLima(m.PunchTime);
+  const recibida = fechaHoraLima(m.UploadTime);
+  return {
+    id: m.Id,
+    pin: m.UserCode,
+    dni: m.Dni || null,
+    labelEstado: m.LabelEstado || null, // ej. "membresia inactiva"
+    labelColor: colorLabel(m.LabelEstado), // verde: activo para [programa]; morado: colaborador
+    nombre: m.Name || null,
+    huellero: m.Device,
+    fecha: marcacion.fecha,
+    hora: marcacion.hora,
+    marcacion: m.PunchTime,
+    recibida: recibida.fecha ? `${recibida.fecha} ${recibida.hora}` : null,
+  };
+}
+
+// Todas las marcaciones del cliente (tb_clientes.uid), vinculadas por DNI: zk_Users.dni = tb_clientes.numDoc_cli.
+// Retorna null si el cliente no existe; { dni, eventos } si existe (eventos vacío si no tiene DNI o no marcó).
+async function listarMarcacionesCliente(uid) {
+  const pool = await poolPromise;
+  const cliente = await pool
+    .request()
+    .input("uid", sql.VarChar(100), uid)
+    .query(`SELECT TOP (1) LTRIM(RTRIM(numDoc_cli)) AS Dni FROM dbo.tb_clientes WHERE uid = @uid`);
+  if (!cliente.recordset.length) return null;
+  const dni = cliente.recordset[0].Dni || null;
+  if (!dni) return { dni: null, eventos: [] };
+
+  const result = await pool
+    .request()
+    .input("dni", sql.VarChar(30), dni)
+    .query(`
+      SELECT t.Id, t.UserCode, RTRIM(u.Name) AS Name, LTRIM(RTRIM(u.dni)) AS Dni, t.Device, t.PunchTime, t.UploadTime,
+             t.label_estado AS LabelEstado
+      FROM dbo.zk_Transactions t
+      JOIN dbo.zk_Users u ON u.UserCode = t.UserCode
+      WHERE LTRIM(RTRIM(u.dni)) = @dni
+      ORDER BY t.PunchTime DESC, t.Id DESC
+    `);
+  return { dni, eventos: result.recordset.map(formatearMarcacion) };
 }
 
 module.exports = {
+  listarMarcacionesCliente,
   LABELS_ESTADO,
   colorLabel,
   telefonoWsp,

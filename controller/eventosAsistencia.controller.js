@@ -307,6 +307,21 @@ const obtenerReporteAsistencia = async (req = request, res = response) => {
 };
 
 /**
+ * GET /api/eventos-asistencia/cliente/:uid
+ * Historial de marcaciones del cliente en los huelleros (por su DNI), para su perfil.
+ */
+const obtenerAsistenciasCliente = async (req = request, res = response) => {
+  try {
+    const resultado = await transactionService.listarMarcacionesCliente(req.params.uid);
+    if (!resultado) return res.status(404).json({ ok: false, msg: "Cliente no encontrado" });
+    res.status(200).json({ ok: true, ...resultado });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ ok: false, msg: "Hable con el administrador" });
+  }
+};
+
+/**
  * PUT /api/eventos-asistencia/personas/:pin/estado   body: { activo: true | false }
  * Activa o desactiva a la persona en la BD y en los huelleros (inactiva = no puede entrar).
  */
@@ -324,6 +339,7 @@ const cambiarEstadoPersona = async (req = request, res = response) => {
 };
 
 module.exports = {
+  obtenerAsistenciasCliente,
   cambiarEstadoPersona,
   obtenerReporteAsistencia,
   obtenerPinesConHuella,
