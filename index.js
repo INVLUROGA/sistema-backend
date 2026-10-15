@@ -87,10 +87,15 @@ cron.schedule("0 6 * * *", async () => {
   await actualizarSeguimientos();
   await actualizarClientesSeguimiento();
 });
-//3am + 5horas
-cron.schedule("0 8 * * *", () => {
-  registrarAdsDiario();
-});
+// 3am hora de Perú en cualquier servidor (antes "0 8 * * *" sin zona horaria: un servidor
+// en hora de Perú lo corría a las 8am y se guardaba el dia dos veces en tb_leadsDia)
+cron.schedule(
+  "0 3 * * *",
+  () => {
+    registrarAdsDiario();
+  },
+  { timezone: "America/Lima" },
+);
 // 7am + 5horas
 cron.schedule("0 12 * * *", () => {
   enviarResumenVentasDiario();
@@ -104,7 +109,7 @@ cron.schedule("30 3 * * *", () => {
   enviarReporteVentas();
   enviarResumenVentasDiario();
   enviarResumenVentasDigitalDiaria();
-  FacturasMeta();
+  // FacturasMeta(); aun en prueba: solo imprime en consola
 });
 const fileServer = express.static;
 require("dotenv").config();
@@ -251,6 +256,11 @@ app.use(
 );
 app.use("/api/cita", validarJWT, require("./routes/cita.router.js"));
 app.use("/api/prospecto", validarJWT, require("./routes/prospecto.router.js"));
+app.use(
+  "/api/prospectos-redes",
+  validarJWT,
+  require("./routes/prospectoRedes.router.js"),
+);
 app.use("/api/auditoria", validarJWT, require("./routes/auditoria.router.js"));
 app.use("/api/ingreso", validarJWT, require("./routes/ingresos.router.js"));
 app.use(

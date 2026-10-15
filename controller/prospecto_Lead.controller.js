@@ -21,7 +21,7 @@ const postProspectoLead = async (req = request, res = response) => {
     const prospecto = new ProspectoLead({
       ...req.body,
       uid_comentario: uid,
-      fecha_registro: new Date(),
+      fecha_registro: req.body.fecha_registro || new Date(),
     });
     await prospecto.save();
     res.status(200).json(prospecto);
