@@ -160,6 +160,7 @@ const postFileCenterInterno = async (req = request, res = response) => {
       titulo,
       observacion,
       id_sub_tipo_doc,
+      nombre_modulo,
     } = req.body;
     const uid_file = uuid.v4();
     const documentoInterno = new DocumentosInternos({
@@ -171,6 +172,7 @@ const postFileCenterInterno = async (req = request, res = response) => {
       observacion,
       id_seccionVisible,
       id_sub_tipo_doc,
+      nombre_modulo,
     });
     await documentoInterno.save();
     res.status(201).json({

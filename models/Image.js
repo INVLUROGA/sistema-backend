@@ -112,6 +112,11 @@ const DocumentosInternos = db.define("tb_documentosInternos", {
   id_user: {
     type: DataTypes.INTEGER,
   },
+  nombre_modulo: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+    defaultValue: "",
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
