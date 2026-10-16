@@ -44,6 +44,10 @@ const Usuario = db.define("auth_user", {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
+  id_colaborador: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,

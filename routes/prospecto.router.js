@@ -1,4 +1,5 @@
 const { Router } = require("express");
+const { validarJWT } = require("../middlewares/validarJWT");
 const {
   postProspecto,
   getProspectos,
@@ -11,6 +12,7 @@ const {
   getProspectosLead,
   getProspectoLeadPorID,
   putProspectoLead,
+  getPuedeEditarProspectoLead,
   deleteProspectoLead,
   postTareaProspectoLead,
   getTareasProspectoLead,
@@ -31,7 +33,8 @@ router.put("/put-prospecto/:id", deleteProspecto);
 router.post("/lead/", postProspectoLead);
 router.get("/lead/", getProspectosLead);
 router.get("/lead/id/:id", getProspectoLeadPorID);
-router.put("/lead/id/:id", putProspectoLead);
+router.put("/lead/id/:id", validarJWT, putProspectoLead);
+router.get("/lead/puede-editar/:id", validarJWT, getPuedeEditarProspectoLead);
 router.put("/lead/delete/id/:id", deleteProspectoLead);
 
 router.post("/lead/tarea", postTareaProspectoLead);

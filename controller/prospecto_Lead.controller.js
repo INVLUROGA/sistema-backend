@@ -151,6 +151,16 @@ const putProspectoLead = async (req = request, res = response) => {
         msg: "No hay ningun prospectoLead con ese id",
       });
     }
+    //Si el lead ya tiene asesor, solo lo puede editar el usuario vinculado a ese colaborador
+    if (
+      prospectoLead.id_empl &&
+      prospectoLead.id_empl !== req.id_colaborador
+    ) {
+      return res.status(403).json({
+        ok: false,
+        msg: "Este lead pertenece a otro asesor, no puedes editarlo",
+      });
+    }
 
     await prospectoLead.update(req.body);
     res.status(200).json({
@@ -160,6 +170,35 @@ const putProspectoLead = async (req = request, res = response) => {
     res.status(500).json({
       ok: true,
       msg: "Error al eliminar el prospecto. Hable con el encargado de sistema",
+      error: error.message,
+    });
+  }
+};
+//Revisa si el usuario logueado puede editar el lead (mismo id_empl que su id_colaborador)
+const getPuedeEditarProspectoLead = async (req = request, res = response) => {
+  try {
+    const { id } = req.params;
+    const prospectoLead = await ProspectoLead.findByPk(id);
+    if (!prospectoLead) {
+      return res.status(404).json({
+        ok: false,
+        msg: "No hay ningun prospectoLead con ese id",
+      });
+    }
+    if (
+      prospectoLead.id_empl &&
+      prospectoLead.id_empl !== req.id_colaborador
+    ) {
+      return res.status(403).json({
+        ok: false,
+        msg: "Este lead pertenece a otro asesor, no puedes editarlo",
+      });
+    }
+    res.status(200).json({ ok: true });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      msg: "Error al validar el lead. Hable con el encargado de sistema",
       error: error.message,
     });
   }
@@ -304,6 +343,7 @@ const getMembresiasClienteLead = async (req = request, res = response) => {
   }
 };
 module.exports = {
+  getPuedeEditarProspectoLead,
   getMembresiasClienteLead,
   getTareasReporte,
   postProspectoLead,

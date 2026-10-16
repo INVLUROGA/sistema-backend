@@ -31,6 +31,7 @@ const validarJWT = async (req, res = response, next) => {
     req.name = name;
     req.rol_user = rol_user;
     req.id_user = id_user;
+    req.id_colaborador = usuario.id_colaborador;
   } catch (error) {
     return res.status(500).json({
       ok: false,

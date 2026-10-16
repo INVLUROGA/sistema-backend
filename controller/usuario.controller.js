@@ -601,7 +601,8 @@ const getUsuarioEmpleados = async (req = request, res = response) => {
         ["estado_empl", "estado"],
       ],
       where: {
-        id_empresa: id_empresa,
+        //Sin id_empresa trae los colaboradores de todas las empresas
+        ...(id_empresa && { id_empresa: id_empresa }),
         estado_empl: id_estado,
         flag: true,
       },
@@ -708,6 +709,7 @@ const postUsuario = async (req = request, res = response) => {
     rol_user,
     notiPush_user,
     estado_user,
+    id_colaborador,
   } = req.body;
   try {
     let usuario = await Usuario.findOne({
@@ -730,6 +732,7 @@ const postUsuario = async (req = request, res = response) => {
       rol_user,
       notiPush_user,
       estado_user,
+      id_colaborador: id_colaborador || 0,
       uid: uid,
     });
 
@@ -764,6 +767,13 @@ const getUsuarios = async (req = request, res = response) => {
         "email_user",
         "usuario_user",
         "uid",
+        "nombres_user",
+        "apellidos_user",
+        "telefono_user",
+        "rol_user",
+        "notiPush_user",
+        "estado_user",
+        "id_colaborador",
       ],
     });
     res.status(200).json({
@@ -831,20 +841,57 @@ const deleteUsuario = async (req = request, res = response) => {
 
 const putUsuario = async (req = request, res = response) => {
   const { id_user } = req.params;
+  const {
+    nombres_user,
+    apellidos_user,
+    usuario_user,
+    password_user,
+    email_user,
+    telefono_user,
+    rol_user,
+    notiPush_user,
+    estado_user,
+    id_colaborador,
+  } = req.body;
   try {
-    const usuario = await Usuario.findByPk(id_user, { flag: true });
+    const usuario = await Usuario.findOne({ where: { id_user, flag: true } });
     if (!usuario) {
       return res.status(404).json({
-        msg: `No existe un programa con el id "${id_user}"`,
+        msg: `No existe un usuario con el id "${id_user}"`,
       });
     }
-    pgm.update(req.body);
+    if (usuario_user && usuario_user !== usuario.usuario_user) {
+      const duplicado = await Usuario.findOne({
+        where: { usuario_user, flag: true },
+      });
+      if (duplicado) {
+        return res.status(400).json({
+          ok: false,
+          msg: `el usuario que ingresaste esta duplicado, ${usuario_user}`,
+        });
+      }
+    }
+    const cambios = {
+      nombres_user,
+      apellidos_user,
+      usuario_user,
+      email_user,
+      telefono_user,
+      rol_user,
+      notiPush_user,
+      estado_user,
+      id_colaborador: id_colaborador || 0,
+    };
+    //Solo cambia la contraseña si se envia una nueva
+    if (password_user) cambios.password_user = password_user;
+    await usuario.update(cambios);
     res.status(200).json({
-      msg: "usuario eliminado con exito",
+      ok: true,
+      msg: "usuario actualizado con exito",
     });
   } catch (error) {
     res.status(500).json({
-      error: `Error en el servidor, en controller de deleteUsuario, hable con el administrador: ${error}`,
+      error: `Error en el servidor, en controller de putUsuario, hable con el administrador: ${error}`,
     });
   }
 };
@@ -976,6 +1023,7 @@ const loginUsuario = async (req = request, res = response) => {
       uid: usuario.uid,
       rol_user: usuario.rol_user,
       name: usuario.nombres_user,
+      id_colaborador: usuario.id_colaborador,
       MODULOS_ITEMS,
       token,
       exp,
@@ -1115,6 +1163,7 @@ const revalidarToken = async (req, res) => {
     rol_user,
     uid,
     name,
+    id_colaborador: user.id_colaborador,
     token,
     MODULOS_ITEMS,
   });
