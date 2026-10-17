@@ -541,6 +541,13 @@ const seccionGET = async (req = request, res = response) => {
               icon: "uil-calender",
               url: "/gestion-comisional",
             },
+            {
+              key: "adm-gestionMetas",
+              label: "Metas",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-metas",
+            },
           ],
         },
         {

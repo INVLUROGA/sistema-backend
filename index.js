@@ -56,6 +56,7 @@ const {
   enviarMensajeMembresiaPorFinalizar1SemanaAntes,
   enviarMensajeMembresiaPorFinalizar1diaAntes,
 } = require("./middlewares/EventosCron/mensajeMembresiaPorFinalizarSeguimientoActivos.js");
+const { cumpleaniosColaboradores } = require("./middlewares/EventosCron/sendWsp/cumpleaniosColaboradores.js");
 // obtenerDataSeguimientos();
 // enviarResumenVentasDigitalDiaria();
 // obtenerCumpleaniosEmpleadosxDia()
@@ -84,8 +85,9 @@ cron.schedule(
 // Primero reconstruye tb_seguimientos y, con esos datos, desactiva en zk_Users a los clientes con la
 // membresía vencida (y reactiva a los que renovaron)
 cron.schedule("0 6 * * *", async () => {
-  await actualizarSeguimientos();
+  // await actualizarSeguimientos();
   await actualizarClientesSeguimiento();
+  await cumpleaniosColaboradores()
 });
 // 3am hora de Perú en cualquier servidor (antes "0 8 * * *" sin zona horaria: un servidor
 // en hora de Perú lo corría a las 8am y se guardaba el dia dos veces en tb_leadsDia)
