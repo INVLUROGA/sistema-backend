@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 const { db } = require("../database/sequelizeConnection");
 
-// Mensajes de WhatsApp que llegan por el webhook de WhatsApp Cloud API (Meta).
+// Mensajes de texto de WhatsApp que llegan por el webhook de WhatsApp Cloud API (Meta).
 // id_mensaje es el wamid de Meta: el índice único evita guardar dos veces el mismo
 // mensaje cuando Meta reintenta el webhook.
 const MensajeWsp = db.define(
@@ -32,22 +32,11 @@ const MensajeWsp = db.define(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
-    // text | image | video | audio | document | sticker | location | contacts |
-    // interactive | button | reaction | saliente (enviado por API: solo se conoce su estado)
     tipo: {
-      type: DataTypes.STRING(30),
+      type: DataTypes.STRING(30), // text
     },
     body: {
       type: DataTypes.TEXT,
-    },
-    id_media: {
-      type: DataTypes.STRING(100), // id del archivo en Meta, se descarga con /api/wsp/media/:id_media
-    },
-    mime_type: {
-      type: DataTypes.STRING(100),
-    },
-    nombre_archivo: {
-      type: DataTypes.STRING(255),
     },
     estado: {
       type: DataTypes.STRING(20), // sent | delivered | read | failed (solo mensajes enviados)

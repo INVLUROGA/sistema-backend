@@ -1,109 +1,44 @@
 const { request, response } = require("express");
 const crypto = require("crypto");
-const axios = require("axios");
 const { Op, QueryTypes } = require("sequelize");
 const { db } = require("../database/sequelizeConnection");
 const { MensajeWsp } = require("../models/MensajeWsp");
 
 /**
- * Webhook de WhatsApp Cloud API (Meta). En la app de Meta > WhatsApp > Configuración:
+ * Webhook de WhatsApp Cloud API (Meta). Solo se guardan los mensajes de texto.
+ * En la app de Meta > WhatsApp > Configuración:
  *  - URL de devolución de llamada: https://<backend>/api/wsp/webhook
  *  - Token de verificación: el valor de WSP_CLOUD_VERIFY_TOKEN
  *  - Campos suscritos: messages (y smb_message_echoes si se usa la app WhatsApp Business)
  * Variables de entorno:
  *  - WSP_CLOUD_VERIFY_TOKEN: token de verificación del webhook
  *  - WSP_CLOUD_APP_SECRET: clave secreta de la app, valida la firma X-Hub-Signature-256
- *  - WSP_CLOUD_TOKEN: token de acceso, para descargar los archivos (media)
  */
-const GRAPH_URL = "https://graph.facebook.com/v24.0";
 
-const TIPOS_MEDIA = ["image", "video", "audio", "document", "sticker"];
 // Un estado solo reemplaza a otro "anterior" (Meta puede enviarlos desordenados)
 const ORDEN_ESTADO = { sent: 1, delivered: 2, read: 3, failed: 4 };
 
 const fechaDeTimestamp = (timestamp) =>
   timestamp ? new Date(Number(timestamp) * 1000) : new Date();
 
-// Texto, archivo, etc. de un mensaje según su tipo
-const leerContenido = (m) => {
-  if (m.type === "text") return { body: m.text?.body };
-  if (TIPOS_MEDIA.includes(m.type)) {
-    const media = m[m.type] || {};
-    return {
-      body: media.caption || null,
-      id_media: media.id,
-      mime_type: media.mime_type,
-      nombre_archivo: media.filename || null,
-    };
-  }
-  if (m.type === "location") {
-    const { name, address, latitude, longitude } = m.location || {};
-    return {
-      body: [name, address, `${latitude},${longitude}`].filter(Boolean).join(" - "),
-    };
-  }
-  if (m.type === "contacts") {
-    return {
-      body: (m.contacts || [])
-        .map(
-          (c) =>
-            `${c.name?.formatted_name || ""} ${(c.phones || []).map((p) => p.phone).join(", ")}`.trim()
-        )
-        .join("\n"),
-    };
-  }
-  if (m.type === "interactive") {
-    const i = m.interactive || {};
-    return { body: i.button_reply?.title || i.list_reply?.title || i.nfm_reply?.body || null };
-  }
-  if (m.type === "button") return { body: m.button?.text };
-  if (m.type === "reaction") {
-    return {
-      body: m.reaction?.emoji ? `Reaccionó ${m.reaction.emoji}` : "Quitó su reacción",
-    };
-  }
-  return { body: m.errors?.[0]?.title || null };
-};
-
-// Si el estado del mensaje llegó antes que el mensaje (fila "saliente"), se completa
 const guardarMensaje = async (datos) => {
-  const existente = await MensajeWsp.findOne({ where: { id_mensaje: datos.id_mensaje } });
-  if (!existente) {
-    try {
-      return await MensajeWsp.create(datos);
-    } catch (error) {
-      // Meta reintentó el webhook mientras se guardaba
-      if (error.name === "SequelizeUniqueConstraintError") return;
-      throw error;
-    }
-  }
-  if (existente.tipo === "saliente") {
-    const { estado, ...contenido } = datos;
-    await existente.update(contenido);
+  try {
+    await MensajeWsp.create(datos);
+  } catch (error) {
+    // Meta reintentó el webhook: el mensaje ya estaba guardado
+    if (error.name !== "SequelizeUniqueConstraintError") throw error;
   }
 };
 
-const guardarEstado = async (s, numero_negocio) => {
-  const estado = s.status;
-  const error = s.errors?.[0]
-    ? `${s.errors[0].code} ${s.errors[0].title} ${s.errors[0].error_data?.details || ""}`.trim()
-    : null;
+// Estado (enviado, entregado, leído) de un mensaje enviado que ya está guardado
+const guardarEstado = async (s) => {
   const existente = await MensajeWsp.findOne({ where: { id_mensaje: s.id } });
-  if (!existente) {
-    // Mensaje enviado por API desde otro sistema: Meta no manda su contenido, solo su estado
-    return guardarMensaje({
-      id_mensaje: s.id,
-      chat: s.recipient_id,
-      numero_negocio,
-      enviado_por_mi: true,
-      tipo: "saliente",
-      estado,
-      error,
-      fecha: fechaDeTimestamp(s.timestamp),
-    });
-  }
-  if ((ORDEN_ESTADO[estado] || 0) > (ORDEN_ESTADO[existente.estado] || 0)) {
-    await existente.update({ estado, error: error || existente.error });
+  if (!existente) return;
+  if ((ORDEN_ESTADO[s.status] || 0) > (ORDEN_ESTADO[existente.estado] || 0)) {
+    const error = s.errors?.[0]
+      ? `${s.errors[0].code} ${s.errors[0].title} ${s.errors[0].error_data?.details || ""}`.trim()
+      : existente.error;
+    await existente.update({ estado: s.status, error });
   }
 };
 
@@ -131,7 +66,7 @@ const verificarWebhookWsp = (req = request, res = response) => {
   res.sendStatus(403);
 };
 
-// POST: mensajes recibidos, ecos de la app WhatsApp Business y estados de los enviados
+// POST: mensajes de texto recibidos, los enviados desde la app WhatsApp Business y sus estados
 const recibirMensajeWsp = async (req = request, res = response) => {
   if (!firmaValida(req)) return res.sendStatus(401);
   const { object, entry } = req.body || {};
@@ -145,6 +80,7 @@ const recibirMensajeWsp = async (req = request, res = response) => {
             (value.contacts || []).map((c) => [c.wa_id, c.profile?.name])
           );
           for (const m of value.messages || []) {
+            if (m.type !== "text") continue;
             await guardarMensaje({
               id_mensaje: m.id,
               chat: m.from,
@@ -152,24 +88,25 @@ const recibirMensajeWsp = async (req = request, res = response) => {
               nombre: nombres[m.from] || null,
               enviado_por_mi: false,
               tipo: m.type,
-              ...leerContenido(m),
+              body: m.text?.body,
               fecha: fechaDeTimestamp(m.timestamp),
             });
           }
           for (const s of value.statuses || []) {
-            await guardarEstado(s, numero_negocio);
+            await guardarEstado(s);
           }
         }
         // Mensajes que el negocio envió desde la app WhatsApp Business (coexistencia)
         if (field === "smb_message_echoes") {
           for (const m of value.message_echoes || []) {
+            if (m.type !== "text") continue;
             await guardarMensaje({
               id_mensaje: m.id,
               chat: m.to,
               numero_negocio,
               enviado_por_mi: true,
               tipo: m.type,
-              ...leerContenido(m),
+              body: m.text?.body,
               fecha: fechaDeTimestamp(m.timestamp),
             });
           }
@@ -195,7 +132,7 @@ const getChatsWsp = async (req = request, res = response) => {
            COUNT(*) OVER (PARTITION BY chat) AS total
          FROM tb_mensaje_wsp
        )
-       SELECT TOP 200 m.chat, m.body, m.tipo, m.fecha, m.enviado_por_mi, m.total, n.nombre
+       SELECT TOP 200 m.chat, m.body, m.fecha, m.enviado_por_mi, m.total, n.nombre
        FROM ult m
        OUTER APPLY (
          SELECT TOP 1 x.nombre FROM tb_mensaje_wsp x
@@ -242,20 +179,7 @@ const getMensajesxChat = async (req = request, res = response) => {
     }
     const mensajes = await MensajeWsp.findAll({
       where: { chat, ...filtroAntesDe },
-      attributes: [
-        "id",
-        "chat",
-        "nombre",
-        "enviado_por_mi",
-        "tipo",
-        "body",
-        "id_media",
-        "mime_type",
-        "nombre_archivo",
-        "estado",
-        "error",
-        "fecha",
-      ],
+      attributes: ["id", "chat", "nombre", "enviado_por_mi", "body", "estado", "error", "fecha"],
       order: [
         ["fecha", "DESC"],
         ["id", "DESC"],
@@ -276,34 +200,9 @@ const getMensajesxChat = async (req = request, res = response) => {
   }
 };
 
-// Descarga un archivo de un mensaje desde Meta (su URL requiere el token y expira en minutos)
-const getMediaWsp = async (req = request, res = response) => {
-  const { id_media } = req.params;
-  try {
-    const mensaje = await MensajeWsp.findOne({ where: { id_media }, attributes: ["id"] });
-    if (!mensaje) {
-      return res.status(404).json({ ok: false, msg: "El archivo no existe" });
-    }
-    const headers = { Authorization: `Bearer ${process.env.WSP_CLOUD_TOKEN}` };
-    const { data: media } = await axios.get(`${GRAPH_URL}/${id_media}`, { headers });
-    const archivo = await axios.get(media.url, { headers, responseType: "stream" });
-    res.setHeader("Content-Type", media.mime_type || "application/octet-stream");
-    res.setHeader("Cache-Control", "private, max-age=86400");
-    archivo.data.pipe(res);
-  } catch (error) {
-    // Meta conserva los archivos recibidos solo por un tiempo limitado
-    const msg = error.response?.status === 404 ? "El archivo ya no está disponible en WhatsApp" : `${error}`;
-    res.status(error.response?.status === 404 ? 404 : 500).json({
-      ok: false,
-      msg,
-    });
-  }
-};
-
 module.exports = {
   verificarWebhookWsp,
   recibirMensajeWsp,
   getChatsWsp,
   getMensajesxChat,
-  getMediaWsp,
 };
