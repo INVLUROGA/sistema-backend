@@ -156,7 +156,15 @@ app.use(express.static("public"));
 // Los huelleros ZKTeco envían las tramas (ATTLOG, OPERLOG...) como texto plano.
 // Va antes de json/urlencoded para que /iclock siempre reciba el texto crudo.
 app.use("/iclock", express.text({ type: "*/*", limit: "50mb" }));
-app.use(express.json({ limit: "50mb" }));
+app.use(
+  express.json({
+    limit: "50mb",
+    // El webhook de WhatsApp Cloud API valida la firma de Meta sobre el body crudo
+    verify: (req, res, buf) => {
+      if (req.originalUrl.startsWith("/api/wsp/webhook")) req.rawBody = buf;
+    },
+  }),
+);
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(require("./routes/zk.router.js"));
 

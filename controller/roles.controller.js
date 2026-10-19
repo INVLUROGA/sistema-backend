@@ -548,6 +548,13 @@ const seccionGET = async (req = request, res = response) => {
               icon: "uil-calender",
               url: "/gestion-metas",
             },
+            {
+              key: "adm-mensajesWsp",
+              label: "Mensajes WhatsApp",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/mensajes-wsp",
+            },
           ],
         },
         {
