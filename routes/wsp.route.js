@@ -7,6 +7,7 @@ const {
   recibirMensajeWsp,
   getChatsWsp,
   getMensajesxChat,
+  gestionarChatWsp,
 } = require("../controller/mensajeWsp.controller.js");
 const { validarJWT } = require("../middlewares/validarJWT.js");
 const router = Router();
@@ -21,6 +22,7 @@ router.get("/webhook", verificarWebhookWsp);
 router.post("/webhook", recibirMensajeWsp);
 router.get("/chats", validarJWT, getChatsWsp);
 router.get("/mensajes/:chat", validarJWT, getMensajesxChat);
+router.put("/chats/:chat/gestionar", validarJWT, gestionarChatWsp);
 // router.get('/')
 
 module.exports = router;

@@ -47,6 +47,10 @@ const MensajeWsp = db.define(
     fecha: {
       type: DataTypes.DATE,
     },
+    // usuario que tomó el chat como lead ("Agregar a mi lead"); se guarda en todos los mensajes del chat
+    gestionadoPor: {
+      type: DataTypes.STRING(150),
+    },
   },
   {
     tableName: "tb_mensaje_wsp",

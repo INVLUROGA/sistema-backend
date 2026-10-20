@@ -1037,12 +1037,14 @@ const loginUsuario = async (req = request, res = response) => {
   }
 };
 const revalidarToken = async (req, res) => {
-  const { uid, name, rol_user, id_user } = req;
+  const { uid, rol_user, id_user } = req;
   const user = await Usuario.findOne({ where: { uid: uid } });
+  // mismo nombre que en el login (el modelo Usuario no tiene "name")
+  const name = user.nombres_user;
   let ip_user = extraerIpUser(req, res);
   const token = await generarJWT(
     uid,
-    user.name,
+    name,
     user.rol_user,
     ip_user,
     user.id_user,

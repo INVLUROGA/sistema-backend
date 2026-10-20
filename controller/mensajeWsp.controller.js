@@ -3,6 +3,7 @@ const crypto = require("crypto");
 const { Op, QueryTypes } = require("sequelize");
 const { db } = require("../database/sequelizeConnection");
 const { MensajeWsp } = require("../models/MensajeWsp");
+const { Usuario } = require("../models/Usuarios");
 
 /**
  * Webhook de WhatsApp Cloud API (Meta). Solo se guardan los mensajes de texto.
@@ -129,10 +130,12 @@ const getChatsWsp = async (req = request, res = response) => {
       `WITH ult AS (
          SELECT *,
            ROW_NUMBER() OVER (PARTITION BY chat ORDER BY fecha DESC, id DESC) AS fila,
-           COUNT(*) OVER (PARTITION BY chat) AS total
+           COUNT(*) OVER (PARTITION BY chat) AS total,
+           MAX(gestionadoPor) OVER (PARTITION BY chat) AS gestionado_chat
          FROM tb_mensaje_wsp
        )
-       SELECT TOP 200 m.chat, m.body, m.fecha, m.enviado_por_mi, m.total, n.nombre
+       SELECT TOP 200 m.chat, m.body, m.fecha, m.enviado_por_mi, m.total, n.nombre,
+         m.gestionado_chat AS gestionadoPor
        FROM ult m
        OUTER APPLY (
          SELECT TOP 1 x.nombre FROM tb_mensaje_wsp x
@@ -200,9 +203,46 @@ const getMensajesxChat = async (req = request, res = response) => {
   }
 };
 
+// "Agregar a mi lead": el usuario conectado toma el chat. Un chat solo puede tener un responsable
+const gestionarChatWsp = async (req = request, res = response) => {
+  const { chat } = req.params;
+  try {
+    const gestionado = await MensajeWsp.findOne({
+      where: { chat, gestionadoPor: { [Op.ne]: null } },
+      attributes: ["gestionadoPor"],
+    });
+    if (gestionado) {
+      return res
+        .status(400)
+        .json({ ok: false, msg: `Este chat ya es lead de ${gestionado.gestionadoPor}` });
+    }
+    // el nombre se lee de la BD: req.name puede venir vacío tras renovar el token
+    const usuario = await Usuario.findOne({
+      where: { id_user: req.id_user },
+      attributes: ["nombres_user", "apellidos_user"],
+    });
+    const gestionadoPor =
+      `${usuario?.nombres_user || ""} ${usuario?.apellidos_user || ""}`.trim() || req.name;
+    const [actualizados] = await MensajeWsp.update({ gestionadoPor }, { where: { chat } });
+    if (!actualizados) {
+      return res.status(404).json({ ok: false, msg: "El chat no existe" });
+    }
+    res.status(200).json({
+      ok: true,
+      gestionadoPor,
+      msg: "success",
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: `Error en el servidor, en controller(gestionarChatWsp) de mensajes wsp, hable con el administrador: ${error}`,
+    });
+  }
+};
+
 module.exports = {
   verificarWebhookWsp,
   recibirMensajeWsp,
   getChatsWsp,
   getMensajesxChat,
+  gestionarChatWsp,
 };
