@@ -272,28 +272,14 @@ const gestionarChatWsp = async (req = request, res = response) => {
       await transaction.rollback();
       return res.status(404).json({ ok: false, msg: "El chat no existe" });
     }
-    // datos del chat: ultimo nombre conocido del contacto y ultimo mensaje
-    const conNombre = await MensajeWsp.findOne({
-      where: { chat, nombre: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: "" }] } },
-      attributes: ["nombre"],
-      order: [["fecha", "DESC"], ["id", "DESC"]],
-      transaction,
-    });
-    const ultimo = await MensajeWsp.findOne({
-      where: { chat },
-      attributes: ["body"],
-      order: [["fecha", "DESC"], ["id", "DESC"]],
-      transaction,
-    });
-    const [nombres = "", ...apellidos] = String(conNombre?.nombre ?? "").trim().split(/\s+/);
-    // el resto de campos queda vacio (id_* = 0); id_empl es el colaborador del usuario para que pueda editarlo
+    // lead con campos vacios (id_* = 0) salvo el celular del chat; id_empl es el colaborador del usuario para que pueda editarlo
     const lead = await ProspectoLead.create(
       {
         uid_comentario: uuid.v4(),
         fecha_registro: new Date(),
         id_empl: req.id_colaborador ?? 0,
-        nombres,
-        apellidos: apellidos.join(" "),
+        nombres: "",
+        apellidos: "",
         // si el cliente usa nombre de usuario de WhatsApp el chat no es un numero
         celular: /^\d+$/.test(chat) ? chat.slice(-9) : "",
         ubigeo_distrito_residencia: "",
@@ -302,7 +288,7 @@ const gestionarChatWsp = async (req = request, res = response) => {
         id_pgm: 0,
         id_estado: 0,
         id_nivel_interes: 0,
-        observacion: ultimo?.body ? `MENSAJE DE WHATSAPP: ${ultimo.body}`.slice(0, 500) : "",
+        observacion: "",
         id_cli: 0,
       },
       { transaction },
