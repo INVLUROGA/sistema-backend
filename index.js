@@ -67,9 +67,9 @@ cron.schedule("* * * * *", () => {
 });
 // Cada 10 min: si Meta quitó la app de la cuenta de WhatsApp, se vuelve a suscribir
 // para que el webhook /api/wsp/webhook siga recibiendo los mensajes
-cron.schedule("*/10 * * * *", () => {
-  verificarSuscripcionWsp();
-});
+// cron.schedule("*/10 * * * *", () => {
+//   verificarSuscripcionWsp();
+// });
 // 4:30 pm hora de Perú (antes "30 21 * * *" en UTC: sin zona horaria, un servidor
 // local en hora de Perú lo ejecutaba a las 9:30 pm y enviaba los avisos otra vez).
 // Aunque el cron corra en varios servidores, cada aviso se envía una sola vez
