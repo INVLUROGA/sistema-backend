@@ -27,8 +27,34 @@ const guardarMensaje = async (datos) => {
     await MensajeWsp.create(datos);
   } catch (error) {
     // Meta reintentó el webhook: el mensaje ya estaba guardado
-    if (error.name !== "SequelizeUniqueConstraintError") throw error;
+    if (error.name === "SequelizeUniqueConstraintError") return;
+    // Datos que nunca se podrán guardar: con un 500 Meta reintentaría el envío para siempre
+    if (error.name === "SequelizeValidationError") {
+      return console.error("Mensaje wsp no guardado:", datos.id_mensaje, error.message);
+    }
+    throw error;
   }
+};
+
+/**
+ * Chat del cliente. Si usa nombre de usuario, Meta puede enviar solo su BSUID (user_id) sin
+ * el número: se usa el chat donde ya están sus mensajes y, si es nuevo, el BSUID.
+ * Cuando llega con número, los mensajes que se guardaron con el BSUID pasan al chat del número.
+ */
+const resolverChat = async (numero, idUsuario) => {
+  if (numero) {
+    if (idUsuario) {
+      await MensajeWsp.update({ chat: numero }, { where: { chat: idUsuario } });
+    }
+    return numero;
+  }
+  if (!idUsuario) return null;
+  const anterior = await MensajeWsp.findOne({
+    where: { id_usuario_wsp: idUsuario },
+    attributes: ["chat"],
+    order: [["id", "DESC"]],
+  });
+  return anterior?.chat || idUsuario;
 };
 
 // Estado (enviado, entregado, leído) de un mensaje enviado que ya está guardado
@@ -77,16 +103,23 @@ const recibirMensajeWsp = async (req = request, res = response) => {
       for (const { field, value = {} } of changes) {
         const numero_negocio = value.metadata?.display_phone_number || null;
         if (field === "messages") {
-          const nombres = Object.fromEntries(
-            (value.contacts || []).map((c) => [c.wa_id, c.profile?.name])
-          );
+          // Nombre de perfil o, si no tiene, su nombre de usuario; por número (wa_id) o BSUID (user_id)
+          const nombres = {};
+          for (const c of value.contacts || []) {
+            const nombre = c.profile?.name || (c.profile?.username ? `@${c.profile.username}` : null);
+            if (c.wa_id) nombres[c.wa_id] = nombre;
+            if (c.user_id) nombres[c.user_id] = nombre;
+          }
           for (const m of value.messages || []) {
             if (m.type !== "text") continue;
+            const chat = await resolverChat(m.from, m.from_user_id);
+            if (!chat) continue;
             await guardarMensaje({
               id_mensaje: m.id,
-              chat: m.from,
+              chat,
+              id_usuario_wsp: m.from_user_id || null,
               numero_negocio,
-              nombre: nombres[m.from] || null,
+              nombre: nombres[m.from] || nombres[m.from_user_id] || null,
               enviado_por_mi: false,
               tipo: m.type,
               body: m.text?.body,
@@ -101,9 +134,12 @@ const recibirMensajeWsp = async (req = request, res = response) => {
         if (field === "smb_message_echoes") {
           for (const m of value.message_echoes || []) {
             if (m.type !== "text") continue;
+            const chat = await resolverChat(m.to, m.to_user_id);
+            if (!chat) continue;
             await guardarMensaje({
               id_mensaje: m.id,
-              chat: m.to,
+              chat,
+              id_usuario_wsp: m.to_user_id || null,
               numero_negocio,
               enviado_por_mi: true,
               tipo: m.type,

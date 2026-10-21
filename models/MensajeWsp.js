@@ -16,10 +16,15 @@ const MensajeWsp = db.define(
       type: DataTypes.STRING(150), // wamid.xxx
       allowNull: false,
     },
-    // wa_id del cliente (ej. 51999999999): agrupa los mensajes por conversación
+    // wa_id del cliente (ej. 51999999999): agrupa los mensajes por conversación.
+    // Si el cliente usa nombre de usuario y Meta no envía su número, es su BSUID (ej. PE.1349120865...)
     chat: {
-      type: DataTypes.STRING(30),
+      type: DataTypes.STRING(60),
       allowNull: false,
+    },
+    // BSUID del cliente (user_id de Meta): une sus mensajes aunque a veces llegue sin número
+    id_usuario_wsp: {
+      type: DataTypes.STRING(150),
     },
     // número del negocio que recibió/envió el mensaje (display_phone_number)
     numero_negocio: {
