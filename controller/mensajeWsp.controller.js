@@ -4,6 +4,8 @@ const { Op, QueryTypes } = require("sequelize");
 const { db } = require("../database/sequelizeConnection");
 const { MensajeWsp } = require("../models/MensajeWsp");
 const { Usuario } = require("../models/Usuarios");
+const { ProspectoLead } = require("../models/ProspectoLead");
+const uuid = require("uuid");
 
 /**
  * Webhook de WhatsApp Cloud API (Meta). Solo se guardan los mensajes de texto.
@@ -239,15 +241,18 @@ const getMensajesxChat = async (req = request, res = response) => {
   }
 };
 
-// "Agregar a mi lead": el usuario conectado toma el chat. Un chat solo puede tener un responsable
+// "Agregar a mi lead": el usuario conectado toma el chat y se registra automaticamente como su lead
+// (sin pasar por el formulario). Un chat solo puede tener un responsable
 const gestionarChatWsp = async (req = request, res = response) => {
   const { chat } = req.params;
+  const transaction = await db.transaction();
   try {
     const gestionado = await MensajeWsp.findOne({
       where: { chat, gestionadoPor: { [Op.ne]: null } },
       attributes: ["gestionadoPor"],
     });
     if (gestionado) {
+      await transaction.rollback();
       return res
         .status(400)
         .json({ ok: false, msg: `Este chat ya es lead de ${gestionado.gestionadoPor}` });
@@ -259,16 +264,58 @@ const gestionarChatWsp = async (req = request, res = response) => {
     });
     const gestionadoPor =
       `${usuario?.nombres_user || ""} ${usuario?.apellidos_user || ""}`.trim() || req.name;
-    const [actualizados] = await MensajeWsp.update({ gestionadoPor }, { where: { chat } });
+    const [actualizados] = await MensajeWsp.update(
+      { gestionadoPor },
+      { where: { chat }, transaction },
+    );
     if (!actualizados) {
+      await transaction.rollback();
       return res.status(404).json({ ok: false, msg: "El chat no existe" });
     }
+    // datos del chat: ultimo nombre conocido del contacto y ultimo mensaje
+    const conNombre = await MensajeWsp.findOne({
+      where: { chat, nombre: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: "" }] } },
+      attributes: ["nombre"],
+      order: [["fecha", "DESC"], ["id", "DESC"]],
+      transaction,
+    });
+    const ultimo = await MensajeWsp.findOne({
+      where: { chat },
+      attributes: ["body"],
+      order: [["fecha", "DESC"], ["id", "DESC"]],
+      transaction,
+    });
+    const [nombres = "", ...apellidos] = String(conNombre?.nombre ?? "").trim().split(/\s+/);
+    // el resto de campos queda vacio (id_* = 0); id_empl es el colaborador del usuario para que pueda editarlo
+    const lead = await ProspectoLead.create(
+      {
+        uid_comentario: uuid.v4(),
+        fecha_registro: new Date(),
+        id_empl: req.id_colaborador ?? 0,
+        nombres,
+        apellidos: apellidos.join(" "),
+        // si el cliente usa nombre de usuario de WhatsApp el chat no es un numero
+        celular: /^\d+$/.test(chat) ? chat.slice(-9) : "",
+        ubigeo_distrito_residencia: "",
+        id_canal: 0,
+        id_medio_comunicacion: 0,
+        id_pgm: 0,
+        id_estado: 0,
+        id_nivel_interes: 0,
+        observacion: ultimo?.body ? `MENSAJE DE WHATSAPP: ${ultimo.body}`.slice(0, 500) : "",
+        id_cli: 0,
+      },
+      { transaction },
+    );
+    await transaction.commit();
     res.status(200).json({
       ok: true,
       gestionadoPor,
+      lead,
       msg: "success",
     });
   } catch (error) {
+    await transaction.rollback();
     res.status(500).json({
       error: `Error en el servidor, en controller(gestionarChatWsp) de mensajes wsp, hable con el administrador: ${error}`,
     });
