@@ -123,8 +123,8 @@ test("cada marcación guarda label_estado: colaborador, activo para [programa] o
   restaurar();
 
   const insert = consultas.find((c) => /INSERT INTO dbo\.zk_Transactions/.test(c.query));
-  assert.match(insert.query, /\(UserCode, Device, PunchTime, UploadTime, label_estado\)/);
-  assert.match(insert.query, /VALUES \(@UserCode, @Device, @PunchTime, .*, @label\)/s);
+  assert.match(insert.query, /\(UserCode, Device, PunchTime, UploadTime, label_estado, dni\)/);
+  assert.match(insert.query, /VALUES \(@UserCode, @Device, @PunchTime, .*, @label, NULLIF\(@dni, ''\)\)/s);
   // El cálculo va dentro del IF NOT EXISTS: las repetidas no se recalculan ni se insertan
   assert.match(insert.query, /IF NOT EXISTS \([\s\S]*\)\s*BEGIN[\s\S]*INSERT INTO[\s\S]*END/);
   // Día en hora de Perú y membresía vigente ese día según el seguimiento
