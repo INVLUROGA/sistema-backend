@@ -10,7 +10,7 @@ const {
   ProgramaTraining,
   SemanasTraining,
 } = require("../models/ProgramaTraining");
-const { Cliente } = require("../models/Usuarios");
+const { Cliente, Empleado } = require("../models/Usuarios");
 const { ImagePT } = require("../models/Image");
 const { ExtensionMembresia } = require("../models/ExtensionMembresia");
 const reporteSeguimientoService = require("../services/reporteSeguimientoService");
@@ -74,6 +74,14 @@ const getSeguimientos = async (req = request, res = response) => {
                   where: {
                     id_empresa: 598,
                   },
+                  include: [
+                    {
+                      // empleado que hizo la venta (tb_venta.id_empl)
+                      model: Empleado,
+                      attributes: ["nombre_empl", "apPaterno_empl", "apMaterno_empl"],
+                      required: false,
+                    },
+                  ],
                 },
                 {
                   model: ProgramaTraining,

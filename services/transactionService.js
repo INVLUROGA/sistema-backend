@@ -124,6 +124,7 @@ async function avisarSinMembresia({ numero, dia, id_cli, nombre }) {
 // Función para insertar una transacción en dbo.zk_Transactions
 // Ignora las marcaciones ya guardadas (el equipo reenvía su historial al reiniciarse).
 // label_estado se fija al recibir la marcación (colaborador / activo para [programa] / sin membresía).
+// dni se copia de zk_Users.dni (ver database/migrations/20261023_zk_transactions_dni.sql).
 // Retorna cuántas marcaciones nuevas se insertaron.
 async function insertTransaction(data, deviceSN) {
   const pool = await poolPromise;
@@ -134,8 +135,8 @@ async function insertTransaction(data, deviceSN) {
         )
         BEGIN
         ${SQL_CALCULAR_LABEL}
-        INSERT INTO dbo.zk_Transactions (UserCode, Device, PunchTime, UploadTime, label_estado)
-        VALUES (@UserCode, @Device, @PunchTime, FORMAT(SYSDATETIMEOFFSET(), 'yyyy-MM-dd HH:mm:ss zzz'), @label);
+        INSERT INTO dbo.zk_Transactions (UserCode, Device, PunchTime, UploadTime, label_estado, dni)
+        VALUES (@UserCode, @Device, @PunchTime, FORMAT(SYSDATETIMEOFFSET(), 'yyyy-MM-dd HH:mm:ss zzz'), @label, NULLIF(@dni, ''));
         -- Con qué estado quedó la marcación, y datos para avisar al cliente
         SELECT @label AS label, @dni AS dni, CONVERT(CHAR(10), @dia, 23) AS dia,
                (SELECT TOP (1) c.id_cli FROM dbo.tb_clientes c

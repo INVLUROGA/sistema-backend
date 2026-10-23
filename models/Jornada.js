@@ -87,6 +87,18 @@ const contrato_empleado = db.define("tb_contrato_empleado", {
   sueldo: {
     type: DataTypes.DECIMAL(10, 2),
   },
+  tipo_pago: {
+    // MENSUAL | QUINCENAL | SEMANAL | DIARIO
+    type: DataTypes.STRING(20),
+  },
+  tipo_jornada: {
+    // COMPLETA | PART-TIME
+    type: DataTypes.STRING(20),
+  },
+  fecha_pago: {
+    // fecha del ultimo pago o del primer pago
+    type: DataTypes.DATE,
+  },
   observacion: {
     type: DataTypes.STRING(260),
   },
@@ -270,6 +282,25 @@ const jornadaPlanilla = db.define("jornada_planilla", {
   fecha_hasta: {
     type: DataTypes.DATE,
   },
+  sueldo: {
+    type: DataTypes.DECIMAL(10, 2),
+  },
+  tipo_pago: {
+    // MENSUAL | QUINCENAL | SEMANAL | DIARIO
+    type: DataTypes.STRING(20),
+  },
+  tipo_jornada: {
+    // COMPLETA | PART-TIME
+    type: DataTypes.STRING(20),
+  },
+  fecha_pago: {
+    // fecha del ultimo pago o del primer pago
+    type: DataTypes.DATE,
+  },
+  uid_jornada: {
+    // horario semanal del contrato (tb_jornada_semanas, semana 1)
+    type: DataTypes.STRING(300),
+  },
   id_enterprice: {
     type: DataTypes.INTEGER,
   },
@@ -305,7 +336,7 @@ DiasLaborables.sync()
 
 // Sincroniza el modelo con la base de datos (crea la tabla si no existe)
 contrato_empleado
-  .sync()
+  .sync({ alter: true })
   .then(() => {
     console.log("La tabla contrato_empleado ha sido creada o ya existe.");
   })
@@ -352,7 +383,7 @@ Jornada.sync()
   });
 
 jornadaPlanilla
-  .sync()
+  .sync({ alter: true })
   .then(() => {
     console.log("La tabla jornadaPlanilla ha sido creada o ya existe.");
   })

@@ -5,8 +5,10 @@ const { Proveedor } = require("../models/Proveedor");
 const { Empleado, Cliente, Usuario } = require("../models/Usuarios");
 const { Parametros } = require("../models/Parametros");
 const { detalleVenta_membresias } = require("../models/Venta");
-const { jornadaPlanilla } = require("../models/Jornada");
-const { Marcacion } = require("../models/Marcacion");
+const { jornadaPlanilla, Jornada } = require("../models/Jornada");
+const uuid = require("uuid");
+const { sql, poolPromise } = require("../database/connectionSQLserver");
+const { fechaHoraLima } = require("../services/transactionService");
 const { DiasNoLaborables } = require("../models/feriado.model");
 const { TiemposEspeciales } = require("../models/TiemposEspeciales.model");
 const postContratosEmpl = async (req = request, res = response) => {
@@ -44,7 +46,8 @@ const obtenerPlanillasxEmpl = async (req = request, res = response) => {
 
     // const empleado = await Empleado.findOne({where: {}})
     const planillas = await jornadaPlanilla.findAll({
-      where: { uid_empleado: uid_empl },
+      where: { uid_empleado: uid_empl, flag: true },
+      order: [["fecha_desde", "DESC"]],
     });
     res.status(200).json(planillas);
   } catch (error) {
@@ -62,19 +65,45 @@ const obtenerAsistenciasxEmpl = async (req = request, res = response) => {
     const planilla = await jornadaPlanilla.findOne({
       where: { id: id_planilla },
     });
+    const dni = String(empleado?.numDoc_empl ?? "").trim();
+    if (!planilla || !dni) {
+      return res.status(200).json([]);
+    }
 
-    const marcaciones = await Marcacion.findAll({
-      where: {
-        dni: empleado.numDoc_empl,
-        tiempo_marcacion_new: {
-          [Op.between]: [
-            new Date(planilla.fecha_desde).setUTCHours(0, 0, 0, 0),
-            new Date(planilla.fecha_hasta).setUTCHours(23, 59, 59, 999),
-          ],
-        },
-      },
+    // Periodo en días de Perú; sin fecha_hasta el periodo llega hasta hoy
+    const desde = new Date(planilla.fecha_desde).toISOString().slice(0, 10);
+    const hasta = planilla.fecha_hasta
+      ? new Date(planilla.fecha_hasta).toISOString().slice(0, 10)
+      : fechaHoraLima(new Date()).fecha;
+    const inicio = new Date(`${desde}T00:00:00-05:00`);
+    const fin = new Date(`${hasta}T00:00:00-05:00`);
+    fin.setUTCDate(fin.getUTCDate() + 1); // hasta el final del día "hasta"
+
+    // Marcaciones del huellero (zk_Transactions) por DNI: zk_Transactions.dni = tb_empleados.numDoc_empl
+    const pool = await poolPromise;
+    const result = await pool
+      .request()
+      .input("dni", sql.VarChar(30), dni)
+      .input("inicio", sql.DateTimeOffset, inicio)
+      .input("fin", sql.DateTimeOffset, fin)
+      .query(`
+        SELECT t.Id, t.Device, t.PunchTime
+        FROM dbo.zk_Transactions t
+        WHERE t.dni = @dni
+          AND t.PunchTime >= @inicio AND t.PunchTime < @fin
+        ORDER BY t.PunchTime ASC, t.Id ASC
+      `);
+
+    // El reporte del frontend lee tiempo_marcacion_new como hora de Perú en formato UTC (dayjs.utc)
+    const marcaciones = result.recordset.map((t) => {
+      const { fecha, hora } = fechaHoraLima(t.PunchTime);
+      return {
+        id: t.Id,
+        dni,
+        nombre_dispostivo: t.Device,
+        tiempo_marcacion_new: `${fecha}T${hora}.000Z`,
+      };
     });
-    console.log(planilla.fecha_desde, planilla.fecha_hasta);
     res.status(200).json(marcaciones);
   } catch (error) {
     console.log(error);
@@ -91,6 +120,124 @@ const obtenerPlanillaxID = async (req = request, res = response) => {
       where: { id: id_planilla },
     });
     res.status(200).json(planilla);
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+    });
+  }
+};
+const updatePlanillaxID = async (req = request, res = response) => {
+  try {
+    const { id_planilla } = req.params;
+    const {
+      fecha_desde,
+      observacion,
+      sueldo,
+      tipo_pago,
+      tipo_jornada,
+      fecha_pago,
+    } = req.body;
+    const planilla = await jornadaPlanilla.findOne({
+      where: { id: id_planilla, flag: true },
+    });
+    if (!planilla) {
+      return res.status(404).json({ msg: "Planilla no encontrada" });
+    }
+    await planilla.update({
+      fecha_desde,
+      observacion,
+      sueldo,
+      tipo_pago,
+      tipo_jornada,
+      fecha_pago,
+    });
+    res.status(200).json(planilla);
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+    });
+  }
+};
+const deletePlanillaxID = async (req = request, res = response) => {
+  try {
+    const { id_planilla } = req.params;
+    const planilla = await jornadaPlanilla.findOne({
+      where: { id: id_planilla, flag: true },
+    });
+    if (!planilla) {
+      return res.status(404).json({ msg: "Planilla no encontrada" });
+    }
+    await planilla.update({ flag: false });
+    res.status(200).json({ msg: "Planilla eliminada correctamente" });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+    });
+  }
+};
+// Columnas de tb_jornada_semanas con el horario de cada día ("HH:mm"; "00:00" = no trabaja)
+const COLUMNAS_JORNADA = [
+  "LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO", "DOMINGO",
+].flatMap((dia) => [`${dia}_ENTRADA`, `${dia}_SALIDA`]);
+const FORMATO_HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+// Horario semanal del contrato (planilla). jornada = null si aún no tiene.
+const obtenerJornadaxPlanilla = async (req = request, res = response) => {
+  try {
+    const { id_planilla } = req.params;
+    const planilla = await jornadaPlanilla.findOne({
+      where: { id: id_planilla, flag: true },
+    });
+    if (!planilla) {
+      return res.status(404).json({ msg: "Planilla no encontrada" });
+    }
+    const jornada = planilla.uid_jornada
+      ? await Jornada.findOne({ where: { uid_jornada: planilla.uid_jornada } })
+      : null;
+    res.status(200).json({ jornada });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+    });
+  }
+};
+// Guarda el horario semanal del contrato: se repite todas las semanas del periodo.
+// Body: { LUNES_ENTRADA: "07:00", LUNES_SALIDA: "15:00", ... }
+const updateJornadaxPlanilla = async (req = request, res = response) => {
+  try {
+    const { id_planilla } = req.params;
+    const planilla = await jornadaPlanilla.findOne({
+      where: { id: id_planilla, flag: true },
+    });
+    if (!planilla) {
+      return res.status(404).json({ msg: "Planilla no encontrada" });
+    }
+    const horario = {};
+    for (const columna of COLUMNAS_JORNADA) {
+      const hora = req.body[columna] || "00:00";
+      if (!FORMATO_HORA.test(hora)) {
+        return res.status(400).json({ msg: `Hora no válida en ${columna}` });
+      }
+      horario[columna] = hora;
+    }
+
+    let jornada = planilla.uid_jornada
+      ? await Jornada.findOne({ where: { uid_jornada: planilla.uid_jornada } })
+      : null;
+    if (jornada) {
+      await jornada.update(horario);
+    } else {
+      const uid_jornada = uuid.v4();
+      jornada = await Jornada.create({
+        ...horario,
+        uid_jornada,
+        semana: "1",
+        observacion: `planilla ${planilla.id}`,
+        id_enterprice: planilla.id_enterprice,
+      });
+      await planilla.update({ uid_jornada });
+    }
+    res.status(200).json({ jornada });
   } catch (error) {
     res.status(500).json({
       error: error.message,
@@ -255,6 +402,10 @@ module.exports = {
   obtenerPlanillasxEmpl,
   obtenerAsistenciasxEmpl,
   obtenerPlanillaxID,
+  updatePlanillaxID,
+  deletePlanillaxID,
+  obtenerJornadaxPlanilla,
+  updateJornadaxPlanilla,
   getobtenerPlanillaEmpleadoActivos,
   obtenerDiasNoLaborables,
   postDiasNoLaborables,
