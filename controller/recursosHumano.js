@@ -7,6 +7,7 @@ const { Parametros } = require("../models/Parametros");
 const { detalleVenta_membresias } = require("../models/Venta");
 const { jornadaPlanilla, Jornada } = require("../models/Jornada");
 const uuid = require("uuid");
+const { db } = require("../database/sequelizeConnection");
 const { sql, poolPromise } = require("../database/connectionSQLserver");
 const { fechaHoraLima } = require("../services/transactionService");
 const { DiasNoLaborables } = require("../models/feriado.model");
@@ -181,7 +182,8 @@ const COLUMNAS_JORNADA = [
 ].flatMap((dia) => [`${dia}_ENTRADA`, `${dia}_SALIDA`]);
 const FORMATO_HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-// Horario semanal del contrato (planilla). jornada = null si aún no tiene.
+// Horario del contrato (planilla): una semana, o dos que se alternan (intersemana).
+// semanas = [] si aún no tiene.
 const obtenerJornadaxPlanilla = async (req = request, res = response) => {
   try {
     const { id_planilla } = req.params;
@@ -191,18 +193,22 @@ const obtenerJornadaxPlanilla = async (req = request, res = response) => {
     if (!planilla) {
       return res.status(404).json({ msg: "Planilla no encontrada" });
     }
-    const jornada = planilla.uid_jornada
-      ? await Jornada.findOne({ where: { uid_jornada: planilla.uid_jornada } })
-      : null;
-    res.status(200).json({ jornada });
+    const semanas = planilla.uid_jornada
+      ? await Jornada.findAll({
+          where: { uid_jornada: planilla.uid_jornada },
+          order: [["semana", "ASC"]],
+        })
+      : [];
+    res.status(200).json({ fecha_desde: planilla.fecha_desde, semanas });
   } catch (error) {
     res.status(500).json({
       error: error.message,
     });
   }
 };
-// Guarda el horario semanal del contrato: se repite todas las semanas del periodo.
-// Body: { LUNES_ENTRADA: "07:00", LUNES_SALIDA: "15:00", ... }
+// Guarda el horario del contrato. Las semanas se repiten en ciclo desde la fecha_desde de la
+// planilla (semana 1 = la semana en que empezó el trabajo; con intersemana: 1, 2, 1, 2...).
+// Body: { semanas: [{ LUNES_ENTRADA: "07:00", LUNES_SALIDA: "15:00", ... }, {...}?] }
 const updateJornadaxPlanilla = async (req = request, res = response) => {
   try {
     const { id_planilla } = req.params;
@@ -212,32 +218,42 @@ const updateJornadaxPlanilla = async (req = request, res = response) => {
     if (!planilla) {
       return res.status(404).json({ msg: "Planilla no encontrada" });
     }
-    const horario = {};
-    for (const columna of COLUMNAS_JORNADA) {
-      const hora = req.body[columna] || "00:00";
-      if (!FORMATO_HORA.test(hora)) {
-        return res.status(400).json({ msg: `Hora no válida en ${columna}` });
+    const { semanas } = req.body;
+    if (!Array.isArray(semanas) || semanas.length < 1 || semanas.length > 2) {
+      return res.status(400).json({ msg: "Envía 1 semana, o 2 si es intersemana" });
+    }
+    const horarios = [];
+    for (const [i, semana] of semanas.entries()) {
+      const horario = {};
+      for (const columna of COLUMNAS_JORNADA) {
+        const hora = semana?.[columna] || "00:00";
+        if (!FORMATO_HORA.test(hora)) {
+          return res.status(400).json({ msg: `Hora no válida en semana ${i + 1}, ${columna}` });
+        }
+        horario[columna] = hora;
       }
-      horario[columna] = hora;
+      horarios.push(horario);
     }
 
-    let jornada = planilla.uid_jornada
-      ? await Jornada.findOne({ where: { uid_jornada: planilla.uid_jornada } })
-      : null;
-    if (jornada) {
-      await jornada.update(horario);
-    } else {
-      const uid_jornada = uuid.v4();
-      jornada = await Jornada.create({
-        ...horario,
-        uid_jornada,
-        semana: "1",
-        observacion: `planilla ${planilla.id}`,
-        id_enterprice: planilla.id_enterprice,
-      });
-      await planilla.update({ uid_jornada });
-    }
-    res.status(200).json({ jornada });
+    const uid_jornada = planilla.uid_jornada || uuid.v4();
+    await db.transaction(async (transaction) => {
+      // Se reemplazan las semanas del contrato (pasar de intersemana a una semana quita la 2)
+      await Jornada.destroy({ where: { uid_jornada }, transaction });
+      await Jornada.bulkCreate(
+        horarios.map((horario, i) => ({
+          ...horario,
+          uid_jornada,
+          semana: String(i + 1),
+          observacion: `planilla ${planilla.id}`,
+          id_enterprice: planilla.id_enterprice,
+        })),
+        { transaction }
+      );
+      if (!planilla.uid_jornada) {
+        await planilla.update({ uid_jornada }, { transaction });
+      }
+    });
+    res.status(200).json({ ok: true });
   } catch (error) {
     res.status(500).json({
       error: error.message,
