@@ -9,6 +9,7 @@ const {
   deletePlanillaxID,
   obtenerJornadaxPlanilla,
   updateJornadaxPlanilla,
+  obtenerColaboradoresConContrato,
   postContratosEmpl,
   PostTiemposEspeciale,
   updateTiemposEspecialxID,
@@ -42,6 +43,7 @@ router.put("/put-planilla/:id_planilla", updatePlanillaxID);
 router.put("/delete-planilla/:id_planilla", deletePlanillaxID);
 router.get("/jornada-planilla/:id_planilla", obtenerJornadaxPlanilla);
 router.put("/jornada-planilla/:id_planilla", updateJornadaxPlanilla);
+router.get("/colaboradores-con-contrato/:id_enterprice", obtenerColaboradoresConContrato);
 
 router.get(
   "/dias-laborables/:id_empresa/:arrayFecha",
