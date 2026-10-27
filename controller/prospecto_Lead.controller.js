@@ -3,10 +3,12 @@ const { ProspectoLead } = require("../models/ProspectoLead");
 const { TareaProspecto } = require("../models/TareaProspecto");
 const uuid = require("uuid");
 const { Empleado } = require("../models/Usuarios");
-const { Sequelize } = require("sequelize");
+const { Sequelize, Op, QueryTypes } = require("sequelize");
+const { db } = require("../database/sequelizeConnection");
 const { Parametros } = require("../models/Parametros");
 const { Distritos } = require("../models/Distritos");
 const { Comentario } = require("../models/Modelos");
+const { Usuario } = require("../models/Usuarios");
 const { Cliente } = require("../models/Usuarios");
 const { Venta, detalleVenta_membresias } = require("../models/Venta");
 const {
@@ -282,6 +284,169 @@ const getTareasReporte = async (req = request, res = response) => {
     });
   }
 };
+// Clientes en seguimiento que no estan en prospectos (ni por id_cli ni por celular), sin repetidos:
+// uno por DNI y por celular, se queda el de vencimiento mas reciente. Datos de su ultima membresia
+const getClientesSinProspecto = async (req = request, res = response) => {
+  try {
+    const filas = await db.query(
+      `WITH seg AS (
+         SELECT s.*, ROW_NUMBER() OVER (PARTITION BY s.id_cli ORDER BY s.id_membresia DESC) AS fila,
+           (SELECT COUNT(DISTINCT x.id_membresia) FROM tb_seguimientos x
+             WHERE x.flag = 1 AND x.id_cli = s.id_cli) AS cantidad_membresias
+         FROM tb_seguimientos s WHERE s.flag = 1
+       )
+       SELECT c.id_cli, c.nombre_cli, c.apPaterno_cli, c.apMaterno_cli, c.numDoc_cli, c.tel_cli, c.email_cli,
+         seg.fecha_vencimiento, seg.cantidad_membresias, p.name_pgm, m.tarifa_monto, v.fecha_venta,
+         CONCAT(e.nombre_empl, ' ', e.apPaterno_empl, ' ', e.apMaterno_empl) AS vendedor
+       FROM seg
+       JOIN tb_clientes c ON c.id_cli = seg.id_cli
+       LEFT JOIN detalle_ventaMembresia m ON m.id = seg.id_membresia
+       LEFT JOIN tb_venta v ON v.id = m.id_venta
+       LEFT JOIN tb_ProgramaTraining p ON p.id_pgm = m.id_pgm
+       LEFT JOIN tb_empleados e ON e.id_empl = v.id_empl
+       WHERE seg.fila = 1
+       ORDER BY seg.fecha_vencimiento DESC`,
+      { type: QueryTypes.SELECT },
+    );
+    const leads = await ProspectoLead.findAll({
+      where: { flag: true },
+      attributes: ["id_cli", "celular"],
+      raw: true,
+    });
+    const cel9 = (cel) => String(cel ?? "").replace(/\D/g, "").slice(-9);
+    const cliEnLead = new Set(leads.map((l) => l.id_cli).filter(Boolean));
+    const celEnLead = new Set(leads.map((l) => cel9(l.celular)).filter((c) => c.length === 9));
+    const vistos = new Set();
+    const clientes = [];
+    for (const f of filas) {
+      const cel = cel9(f.tel_cli);
+      const dni = String(f.numDoc_cli ?? "").trim();
+      if (cliEnLead.has(f.id_cli) || (cel.length === 9 && celEnLead.has(cel))) continue;
+      const claves = [dni && `dni:${dni}`, cel.length === 9 && `cel:${cel}`].filter(Boolean);
+      if (claves.some((k) => vistos.has(k))) continue;
+      claves.forEach((k) => vistos.add(k));
+      clientes.push(f);
+    }
+    res.status(200).json({ ok: true, clientes });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: "Hable con el encargado de sistema",
+    });
+  }
+};
+// Estado comercial CONVERTIDO (tb_parametros, comercial / estado)
+const ID_ESTADO_CONVERTIDO = 1673;
+// Al vender una membresia: si el cliente ya esta como prospecto (por id_cli o por celular) no se crea;
+// si no esta, se registra como prospecto nuevo con los datos de la venta y del cliente.
+// No lanza error: un problema aqui no debe afectar la venta
+const registrarProspectoEnVenta = async (id_venta, id_pgm = 0) => {
+  try {
+    const venta = await Venta.findByPk(id_venta, {
+      attributes: ["id", "id_cli", "id_empl", "fecha_venta"],
+    });
+    if (!venta?.id_cli) return null;
+    const cliente = await Cliente.findOne({
+      where: { id_cli: venta.id_cli },
+      attributes: [
+        "id_cli",
+        "nombre_cli",
+        "apPaterno_cli",
+        "apMaterno_cli",
+        "tel_cli",
+        "ubigeo_distrito_cli",
+      ],
+    });
+    if (!cliente) return null;
+    // celular: solo digitos y ultimos 9 (ignora +51, espacios, guiones)
+    const celular = String(cliente.tel_cli ?? "").replace(/\D/g, "").slice(-9);
+    const existente = await ProspectoLead.findOne({
+      where: {
+        flag: true,
+        [Op.or]: [
+          { id_cli: venta.id_cli },
+          ...(celular.length === 9 ? [{ celular: { [Op.like]: `%${celular}` } }] : []),
+        ],
+      },
+      attributes: ["id"],
+    });
+    if (existente) return null;
+    return await ProspectoLead.create({
+      uid_comentario: uuid.v4(),
+      fecha_registro: venta.fecha_venta || new Date(),
+      id_empl: venta.id_empl ?? 0,
+      nombres: cliente.nombre_cli ?? "",
+      apellidos: [cliente.apPaterno_cli, cliente.apMaterno_cli].filter(Boolean).join(" "),
+      celular,
+      ubigeo_distrito_residencia: cliente.ubigeo_distrito_cli ?? "",
+      id_canal: 0,
+      id_medio_comunicacion: 0,
+      id_pgm: id_pgm ?? 0,
+      id_estado: ID_ESTADO_CONVERTIDO,
+      id_nivel_interes: 0,
+      observacion: `REGISTRADO AUTOMATICAMENTE POR LA VENTA ${venta.id}`,
+      id_cli: venta.id_cli,
+    });
+  } catch (error) {
+    console.log("Error en registrarProspectoEnVenta:", error);
+    return null;
+  }
+};
+// Comentarios de los leads vinculados al cliente (id_cli). No se copian al cliente:
+// se buscan por el uid_comentario de cada lead; cada comentario lleva el id del lead
+const getComentariosClienteLead = async (req = request, res = response) => {
+  try {
+    const { id_cli } = req.params;
+    if (!Number(id_cli)) {
+      return res.status(200).json({ ok: true, comentarios: [] });
+    }
+    const leads = await ProspectoLead.findAll({
+      where: { id_cli, flag: true },
+      attributes: ["id", "uid_comentario"],
+      raw: true,
+    });
+    const idLeadxUid = new Map(leads.map((l) => [l.uid_comentario, l.id]));
+    if (!idLeadxUid.size) {
+      return res.status(200).json({ ok: true, comentarios: [] });
+    }
+    const comentarios = await Comentario.findAll({
+      where: { uid_location: [...idLeadxUid.keys()], flag: true },
+      attributes: ["fec_registro", "id_comentario", "comentario_com", "uid_location"],
+      order: [["fec_registro", "desc"]],
+      include: [
+        {
+          model: Usuario,
+          attributes: [
+            [
+              Sequelize.fn(
+                "CONCAT",
+                Sequelize.col("nombres_user"),
+                " ",
+                Sequelize.col("apellidos_user"),
+              ),
+              "nombres_apellidos_user",
+            ],
+            "uid",
+          ],
+        },
+      ],
+    });
+    res.status(200).json({
+      ok: true,
+      comentarios: comentarios.map((c) => ({
+        ...c.toJSON(),
+        id_prospecto: idLeadxUid.get(c.uid_location),
+      })),
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: "Hable con el encargado de sistema",
+    });
+  }
+};
 // Membresías compradas por el cliente vinculado al lead (id_cli).
 const getMembresiasClienteLead = async (req = request, res = response) => {
   try {
@@ -343,6 +508,9 @@ const getMembresiasClienteLead = async (req = request, res = response) => {
   }
 };
 module.exports = {
+  getClientesSinProspecto,
+  registrarProspectoEnVenta,
+  getComentariosClienteLead,
   getPuedeEditarProspectoLead,
   getMembresiasClienteLead,
   getTareasReporte,

@@ -53,6 +53,7 @@ const {
 // Al final de los imports: los modelos ya están cargados en el orden de siempre
 // (cargarlo antes cambia ese orden y rompe la dependencia circular Usuarios <-> Parametros)
 const membresiaService = require("../services/membresiaService");
+const { registrarProspectoEnVenta } = require("./prospecto_Lead.controller");
 
 // Cargar el plugin
 dayjs.extend(utc);
@@ -118,6 +119,12 @@ const postVenta = async (req = request, res = response) => {
       await detalleVenta_membresias.bulkCreate(ventasMembresiasConIdVenta);
       // crea el seguimiento solo de esta venta
       await obtenerDataSeguimientoPorVenta(req.ventaID);
+      // si el cliente no esta como prospecto, se registra automaticamente;
+      // solo con una membresia de precio mayor a cero (no regalos ni canjes)
+      const membresiaPagada = req.ventaProgramas.find((m) => Number(m.tarifa_monto) > 0);
+      if (membresiaPagada) {
+        await registrarProspectoEnVenta(req.ventaID, membresiaPagada.id_pgm);
+      }
       // await postFlujoCaja({
       //   id_empresa: 598,
       //   id_estado: 1423,
