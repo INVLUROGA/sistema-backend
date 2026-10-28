@@ -11,6 +11,8 @@ const LABELS_ESTADO = {
   // el huellero lo reconoce pero no lo deja entrar
   INACTIVA: "membresia inactiva",
 };
+// tb_clientes.tipoCli_cli (id_param) de los clientes a los que aplica "sin membresía" y su aviso de WhatsApp
+const TIPO_CLI_SIN_MEMBRESIA = 84;
 
 // Calcula @label para @UserCode según el día (Perú) de @PunchTime. Por DNI: zk_Users.dni =
 // tb_empleados.numDoc_empl / tb_clientes.numDoc_cli; el programa sale del seguimiento
@@ -39,7 +41,8 @@ const SQL_CALCULAR_LABEL = `
             THEN @LabelColaborador
           WHEN @tieneMembresia = 1 AND ISNULL(@usuarioActivo, 1) = 1 THEN LEFT(CONCAT(@LabelActivoPara, @programa), 50)
           WHEN @tieneMembresia = 1 THEN @LabelInactiva
-          WHEN EXISTS (SELECT 1 FROM dbo.tb_clientes c WHERE c.flag = 1 AND LTRIM(RTRIM(c.numDoc_cli)) = @dni)
+          -- "Sin membresía" solo aplica a clientes de tipo @TipoCliSinMembresia (tb_clientes.tipoCli_cli)
+          WHEN EXISTS (SELECT 1 FROM dbo.tb_clientes c WHERE c.flag = 1 AND c.tipoCli_cli = @TipoCliSinMembresia AND LTRIM(RTRIM(c.numDoc_cli)) = @dni)
             THEN @LabelSinMembresia
           ELSE NULL
         END;
@@ -49,7 +52,8 @@ const inputsLabels = (request) =>
     .input("LabelColaborador", sql.VarChar(50), LABELS_ESTADO.COLABORADOR)
     .input("LabelActivoPara", sql.VarChar(50), LABELS_ESTADO.ACTIVO_PARA)
     .input("LabelSinMembresia", sql.VarChar(50), LABELS_ESTADO.SIN_MEMBRESIA)
-    .input("LabelInactiva", sql.VarChar(50), LABELS_ESTADO.INACTIVA);
+    .input("LabelInactiva", sql.VarChar(50), LABELS_ESTADO.INACTIVA)
+    .input("TipoCliSinMembresia", sql.Int, TIPO_CLI_SIN_MEMBRESIA);
 
 // Teléfono de tb_clientes.tel_cli -> número de WhatsApp para UltraMsg (51 + celular de Perú).
 // Acepta "951473211", "+51 951 473 211", "51951473211". Devuelve null si no es un celular válido.
@@ -140,10 +144,11 @@ async function insertTransaction(data, deviceSN) {
         -- Con qué estado quedó la marcación, y datos para avisar al cliente
         SELECT @label AS label, @dni AS dni, CONVERT(CHAR(10), @dia, 23) AS dia,
                (SELECT TOP (1) c.id_cli FROM dbo.tb_clientes c
-                WHERE c.flag = 1 AND LTRIM(RTRIM(c.numDoc_cli)) = @dni ORDER BY c.id_cli DESC) AS id_cli,
+                WHERE c.flag = 1 AND c.tipoCli_cli = @TipoCliSinMembresia AND LTRIM(RTRIM(c.numDoc_cli)) = @dni ORDER BY c.id_cli DESC) AS id_cli,
                (SELECT TOP (1) RTRIM(Name) FROM dbo.zk_Users WHERE UserCode = @UserCode) AS nombre,
+               -- El aviso de WhatsApp solo va a clientes de tipo @TipoCliSinMembresia
                (SELECT TOP (1) LTRIM(RTRIM(c.tel_cli)) FROM dbo.tb_clientes c
-                WHERE c.flag = 1 AND LTRIM(RTRIM(c.numDoc_cli)) = @dni AND NULLIF(LTRIM(RTRIM(c.tel_cli)), '') IS NOT NULL
+                WHERE c.flag = 1 AND c.tipoCli_cli = @TipoCliSinMembresia AND LTRIM(RTRIM(c.numDoc_cli)) = @dni AND NULLIF(LTRIM(RTRIM(c.tel_cli)), '') IS NOT NULL
                 ORDER BY c.id_cli DESC) AS telefono;
         END
     `;
