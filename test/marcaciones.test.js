@@ -132,17 +132,21 @@ test("cada marcación guarda label_estado: colaborador, activo para [programa] o
   // Vigente desde la fecha de venta (hora Perú), aunque la membresía empiece después
   assert.match(insert.query, /COALESCE\(CAST\(SWITCHOFFSET\(v\.fecha_venta, '-05:00'\) AS DATE\), CAST\(m\.fecha_inicio AS DATE\)\) <= @dia/);
   assert.match(insert.query, /CAST\(s\.fecha_vencimiento AS DATE\) >= @dia/);
-  // Orden de prioridad: colaborador > activo para [programa] > (desactivado a mano) > sin membresía
-  const orden = ["@LabelColaborador", "@LabelActivoPara", "@LabelInactiva", "@LabelSinMembresia"].map((l) => insert.query.indexOf(l));
+  // Orden de prioridad: colaborador > activo para [programa] > (desactivado a mano) > sin membresía (tipo 84) > canje
+  const orden = ["@LabelColaborador", "@LabelActivoPara", "@LabelInactiva", "@LabelSinMembresia", "@LabelCanje"].map((l) => insert.query.indexOf(l));
   assert.deepEqual([...orden].sort((a, b) => a - b), orden);
+  // "Sin membresía" (y su WhatsApp) solo para clientes tipo 84
+  assert.match(insert.query, /c\.tipoCli_cli = @TipoCliSinMembresia[^\n]*\n\s*THEN @LabelSinMembresia/);
+  assert.equal(insert.inputs.TipoCliSinMembresia, 84);
   assert.deepEqual(
     {
       colaborador: insert.inputs.LabelColaborador,
       activoPara: insert.inputs.LabelActivoPara,
       sinMembresia: insert.inputs.LabelSinMembresia,
       inactiva: insert.inputs.LabelInactiva,
+      canje: insert.inputs.LabelCanje,
     },
-    { colaborador: "Es colaborador", activoPara: "activo para ", sinMembresia: "cliente sin membresia", inactiva: "membresia inactiva" }
+    { colaborador: "Es colaborador", activoPara: "activo para ", sinMembresia: "cliente sin membresia", inactiva: "membresia inactiva", canje: "canje" }
   );
 });
 

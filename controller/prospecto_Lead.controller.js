@@ -102,9 +102,23 @@ const getProspectosLead = async (req = request, res = response) => {
         },
       ],
     });
+    // Clientes vinculados con membresía vigente hoy (día Perú) según el seguimiento
+    const idsCli = [...new Set(prospectosLeads.map((p) => p.id_cli).filter(Boolean))];
+    const activos = idsCli.length
+      ? await db.query(
+          `SELECT DISTINCT id_cli FROM tb_seguimientos
+           WHERE flag = 1 AND id_cli IN (:idsCli)
+             AND CAST(fecha_vencimiento AS DATE) >= CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '-05:00') AS DATE)`,
+          { type: QueryTypes.SELECT, replacements: { idsCli } },
+        )
+      : [];
+    const cliActivos = new Set(activos.map((a) => a.id_cli));
     res.status(200).json({
       msg: true,
-      prospectosLeads,
+      prospectosLeads: prospectosLeads.map((p) => ({
+        ...p.toJSON(),
+        ...tipoProspecto(p.id_cli, cliActivos),
+      })),
     });
   } catch (error) {
     console.log(error);
@@ -115,6 +129,18 @@ const getProspectosLead = async (req = request, res = response) => {
     });
   }
 };
+// Tipo del lead: PROSPECTO (sin cliente vinculado), ACTIVO (cliente con membresía vigente) o INACTIVO
+const TIPOS_PROSPECTO = {
+  PROSPECTO: { tipo: "PROSPECTO", tipo_color: "#8b5cf6" }, // morado
+  ACTIVO: { tipo: "ACTIVO", tipo_color: "#22c55e" }, // verde
+  INACTIVO: { tipo: "INACTIVO", tipo_color: "#ef4444" }, // rojo
+};
+const tipoProspecto = (id_cli, cliActivos) =>
+  !id_cli
+    ? TIPOS_PROSPECTO.PROSPECTO
+    : cliActivos.has(id_cli)
+      ? TIPOS_PROSPECTO.ACTIVO
+      : TIPOS_PROSPECTO.INACTIVO;
 const getProspectoLeadPorID = async (req = request, res = response) => {
   try {
     const { id } = req.params;

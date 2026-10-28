@@ -10,6 +10,8 @@ const LABELS_ESTADO = {
   // Cliente con membresía vigente pero desactivado a mano (zk_Users.IsActive = 0):
   // el huellero lo reconoce pero no lo deja entrar
   INACTIVA: "membresia inactiva",
+  // Cliente sin membresía vigente de otro tipo (tb_clientes.tipoCli_cli <> 84): no recibe WhatsApp
+  CANJE: "canje",
 };
 // tb_clientes.tipoCli_cli (id_param) de los clientes a los que aplica "sin membresía" y su aviso de WhatsApp
 const TIPO_CLI_SIN_MEMBRESIA = 84;
@@ -44,6 +46,8 @@ const SQL_CALCULAR_LABEL = `
           -- "Sin membresía" solo aplica a clientes de tipo @TipoCliSinMembresia (tb_clientes.tipoCli_cli)
           WHEN EXISTS (SELECT 1 FROM dbo.tb_clientes c WHERE c.flag = 1 AND c.tipoCli_cli = @TipoCliSinMembresia AND LTRIM(RTRIM(c.numDoc_cli)) = @dni)
             THEN @LabelSinMembresia
+          WHEN EXISTS (SELECT 1 FROM dbo.tb_clientes c WHERE c.flag = 1 AND LTRIM(RTRIM(c.numDoc_cli)) = @dni)
+            THEN @LabelCanje
           ELSE NULL
         END;
 `;
@@ -53,6 +57,7 @@ const inputsLabels = (request) =>
     .input("LabelActivoPara", sql.VarChar(50), LABELS_ESTADO.ACTIVO_PARA)
     .input("LabelSinMembresia", sql.VarChar(50), LABELS_ESTADO.SIN_MEMBRESIA)
     .input("LabelInactiva", sql.VarChar(50), LABELS_ESTADO.INACTIVA)
+    .input("LabelCanje", sql.VarChar(50), LABELS_ESTADO.CANJE)
     .input("TipoCliSinMembresia", sql.Int, TIPO_CLI_SIN_MEMBRESIA);
 
 // Teléfono de tb_clientes.tel_cli -> número de WhatsApp para UltraMsg (51 + celular de Perú).
