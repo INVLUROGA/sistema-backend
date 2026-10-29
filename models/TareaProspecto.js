@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 const { db } = require("../database/sequelizeConnection");
 
-// Tareas realizadas sobre un lead (tb_prospectoLeads).
+// Tareas realizadas sobre un lead (tb_prospectoLeads) o, si no es prospecto, sobre un cliente (id_cli).
 // id_tarea: 1 Llamar a lead, 2 Seguimiento escrito a lead, 3 Enviar link de pago,
 //           4 Agendar visita, 5 Visita agendada
 const TareaProspecto = db.define(
@@ -13,6 +13,9 @@ const TareaProspecto = db.define(
       primaryKey: true,
     },
     id_prospecto: {
+      type: DataTypes.INTEGER,
+    },
+    id_cli: {
       type: DataTypes.INTEGER,
     },
     id_tarea: {

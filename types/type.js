@@ -58,7 +58,7 @@
   },
   {
     key: "cliente-prospecto",
-    label: "Prospectos",
+    label: "Gestión del día",
     isTitle: false,
     icon: "uil-calender",
     url: "/gestion-prospecto",

@@ -253,18 +253,19 @@ const deleteProspectoLead = async (req = request, res = response) => {
     });
   }
 };
-// Registra una tarea sobre el lead; la fecha es la del momento del registro.
+// Registra una tarea sobre el lead (id_prospecto) o sobre el cliente (id_cli); la fecha es la del momento del registro.
 const postTareaProspectoLead = async (req = request, res = response) => {
   try {
-    const { id_prospecto, id_tarea, observacion } = req.body;
-    if (!id_prospecto || !id_tarea) {
+    const { id_prospecto, id_cli, id_tarea, observacion } = req.body;
+    if ((!id_prospecto && !id_cli) || !id_tarea) {
       return res.status(400).json({
         ok: false,
-        msg: "Faltan id_prospecto o id_tarea",
+        msg: "Faltan id_prospecto/id_cli o id_tarea",
       });
     }
     const tarea = await TareaProspecto.create({
-      id_prospecto,
+      id_prospecto: id_prospecto || null,
+      id_cli: id_prospecto ? null : id_cli,
       id_tarea,
       observacion: observacion || null,
       fecha: new Date(),
@@ -283,6 +284,23 @@ const getTareasProspectoLead = async (req = request, res = response) => {
     const { id_prospecto } = req.params;
     const tareas = await TareaProspecto.findAll({
       where: { id_prospecto, flag: true },
+      order: [["fecha", "desc"]],
+    });
+    res.status(200).json({ ok: true, tareas });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: "Error al obtener las tareas. Hable con el encargado de sistema",
+    });
+  }
+};
+// Tareas de un cliente que no es prospecto (socio de seguimiento).
+const getTareasClienteLead = async (req = request, res = response) => {
+  try {
+    const { id_cli } = req.params;
+    const tareas = await TareaProspecto.findAll({
+      where: { id_cli, flag: true },
       order: [["fecha", "desc"]],
     });
     res.status(200).json({ ok: true, tareas });
@@ -321,7 +339,7 @@ const getClientesSinProspecto = async (req = request, res = response) => {
              WHERE x.flag = 1 AND x.id_cli = s.id_cli) AS cantidad_membresias
          FROM tb_seguimientos s WHERE s.flag = 1
        )
-       SELECT c.id_cli, c.nombre_cli, c.apPaterno_cli, c.apMaterno_cli, c.numDoc_cli, c.tel_cli, c.email_cli,
+       SELECT c.id_cli, c.nombre_cli, c.apPaterno_cli, c.apMaterno_cli, c.numDoc_cli, c.tel_cli, c.email_cli, c.uid_comentario,
          seg.fecha_vencimiento, seg.cantidad_membresias, p.name_pgm, m.tarifa_monto, v.fecha_venta,
          CONCAT(e.nombre_empl, ' ', e.apPaterno_empl, ' ', e.apMaterno_empl) AS vendedor
        FROM seg
@@ -547,4 +565,5 @@ module.exports = {
   deleteProspectoLead,
   postTareaProspectoLead,
   getTareasProspectoLead,
+  getTareasClienteLead,
 };

@@ -23,6 +23,10 @@ const {
 const {
   getReporteSeguimientoClientes,
 } = require("../controller/reporteSeguimientoClientes.controller");
+const {
+  getOrdenMeses,
+  putOrdenMes,
+} = require("../controller/reporteOrdenMes.controller");
 const router = Router();
 /**
  * /api/reporte
@@ -66,5 +70,9 @@ router.get(
   "/reporte/programa/obtener-membresias-x-fecha-x-programa",
   getReporteDeMembresiasxFechaxPrograma
 );
+
+// orden de los meses del comparativo-mensual-ventas
+router.get("/orden-meses", getOrdenMeses);
+router.put("/orden-meses", putOrdenMes);
 
 module.exports = router;
