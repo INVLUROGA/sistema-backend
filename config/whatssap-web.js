@@ -75,12 +75,13 @@ const enviarImagenWsp = async (numberWsp, image) => {
   }
 };
 
-const enviarDocumentoxWsp = async (numberWsp, httpDoc) => {
+const enviarDocumentoxWsp = async (numberWsp, httpDoc, filename = "contrato.pdf", caption = "") => {
   const data = qs.stringify({
     token: process.env.TOKEN_ULTRAMSG,
     to: numberWsp,
-    filename: "contrato.pdf",
+    filename: filename,
     document: httpDoc,
+    caption: caption,
   });
 
   const config = {

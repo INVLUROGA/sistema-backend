@@ -2,9 +2,9 @@ const { request, response } = require("express");
 const { enviarDocumentoxWsp } = require("../config/whatssap-web");
 
 const postDocWsp = async (req = request, res = response) => {
-  const { telefono, httpDoc } = req.body;
+  const { telefono, httpDoc, nombreArchivo, mensaje } = req.body;
   try {
-    await enviarDocumentoxWsp(telefono, httpDoc);
+    await enviarDocumentoxWsp(telefono, httpDoc, nombreArchivo, mensaje);
     res.status(201).json({
       msg: "ok",
     });
