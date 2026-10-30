@@ -36,7 +36,8 @@ const TareaProspecto = db.define(
   { tableName: "tb_tareas_prospecto" },
 );
 
-TareaProspecto.sync()
+// alter: agrega a la tabla existente las columnas nuevas del modelo (id_cli)
+TareaProspecto.sync({ alter: true })
   .then(() => {
     console.log("La tabla TareaProspecto ha sido creada o ya existe.");
   })

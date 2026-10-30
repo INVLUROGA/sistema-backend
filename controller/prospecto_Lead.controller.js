@@ -256,7 +256,7 @@ const deleteProspectoLead = async (req = request, res = response) => {
 // Registra una tarea sobre el lead (id_prospecto) o sobre el cliente (id_cli); la fecha es la del momento del registro.
 const postTareaProspectoLead = async (req = request, res = response) => {
   try {
-    const { id_prospecto, id_cli, id_tarea, observacion } = req.body;
+    const { id_prospecto, id_cli, id_tarea, observacion, fecha } = req.body;
     if ((!id_prospecto && !id_cli) || !id_tarea) {
       return res.status(400).json({
         ok: false,
@@ -268,7 +268,8 @@ const postTareaProspectoLead = async (req = request, res = response) => {
       id_cli: id_prospecto ? null : id_cli,
       id_tarea,
       observacion: observacion || null,
-      fecha: new Date(),
+      // fecha elegida en el modal; si no llega o es invalida, la actual
+      fecha: fecha && !isNaN(new Date(fecha)) ? new Date(fecha) : new Date(),
     });
     res.status(200).json({ ok: true, tarea });
   } catch (error) {
