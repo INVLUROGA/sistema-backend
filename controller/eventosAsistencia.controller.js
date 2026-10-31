@@ -338,7 +338,37 @@ const cambiarEstadoPersona = async (req = request, res = response) => {
   }
 };
 
+/**
+ * PUT /api/eventos-asistencia/personas/:pin/dni   body: { dni }
+ * Corrige el DNI de la persona en la BD (el PIN del huellero no cambia).
+ */
+const editarDniPersona = async (req = request, res = response) => {
+  try {
+    const { status, ...resultado } = await personaHuelleroService.editarDniPersona(req.params.pin, req.body?.dni);
+    res.status(status).json(resultado);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ ok: false, msg: "Hable con el administrador" });
+  }
+};
+
+/**
+ * POST /api/eventos-asistencia/personas/:pin/mover-huellas   body: { pinDestino, dedos? }
+ * Mueve huellas de la persona :pin a otra (BD y huelleros). Sin dedos = todas.
+ */
+const moverHuellas = async (req = request, res = response) => {
+  try {
+    const { status, ...resultado } = await personaHuelleroService.moverHuellas(req.params.pin, req.body);
+    res.status(status).json(resultado);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ ok: false, msg: "Hable con el administrador" });
+  }
+};
+
 module.exports = {
+  moverHuellas,
+  editarDniPersona,
   obtenerAsistenciasCliente,
   cambiarEstadoPersona,
   obtenerReporteAsistencia,

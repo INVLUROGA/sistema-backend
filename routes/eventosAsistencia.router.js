@@ -13,6 +13,8 @@ const {
   obtenerReporteAsistencia,
   cambiarEstadoPersona,
   obtenerAsistenciasCliente,
+  editarDniPersona,
+  moverHuellas,
 } = require("../controller/eventosAsistencia.controller");
 const router = Router();
 /**
@@ -31,5 +33,7 @@ router.post("/sincronizar", sincronizarHuelleros);
 router.post("/personas/:pin/reenviar", reenviarPersona);
 router.post("/personas/:pin/huellas", agregarHuella);
 router.put("/personas/:pin/estado", cambiarEstadoPersona);
+router.put("/personas/:pin/dni", editarDniPersona);
+router.post("/personas/:pin/mover-huellas", moverHuellas);
 
 module.exports = router;

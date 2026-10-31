@@ -518,6 +518,125 @@ async function agregarHuella(pinTexto, { dedo: dedoTexto, binaryData } = {}) {
   }
 }
 
+/// Mueve huellas de una persona a otra (ej. se registró la huella con el DNI equivocado): en la BD
+/// pasan al destino conservando el dedo, y en los huelleros se borran del origen y se dan de alta en
+/// el destino, en ese orden. Todo va en una sola transacción. Si el destino ya tiene huella en alguno
+/// de esos dedos no se mueve nada. dedos vacío o sin enviar = todas las huellas del origen.
+/// Retorna { ok, status, msg, origen, destino, dedos, huelleros }.
+async function moverHuellas(pinTexto, { pinDestino: pinDestinoTexto, dedos: dedosBody } = {}, ahora = Date.now()) {
+  const pin = Number(pinTexto);
+  const pinDestino = Number(pinDestinoTexto);
+  if (!Number.isInteger(pin) || pin <= 0 || pin > 999999999) {
+    return { ok: false, status: 400, msg: "La persona de origen no es válida" };
+  }
+  if (!Number.isInteger(pinDestino) || pinDestino <= 0 || pinDestino > 999999999) {
+    return { ok: false, status: 400, msg: "Elige a la persona que recibirá las huellas" };
+  }
+  if (pin === pinDestino) {
+    return { ok: false, status: 400, msg: "El origen y el destino son la misma persona" };
+  }
+  const dedosPedidos = Array.isArray(dedosBody) ? [...new Set(dedosBody.map(Number))] : [];
+  if (dedosPedidos.some((d) => !Number.isInteger(d) || d < 0 || d > 9)) {
+    return { ok: false, status: 400, msg: "Los dedos deben ser números del 0 al 9" };
+  }
+
+  const pool = await poolPromise;
+  const transaccion = new sql.Transaction(pool);
+  await transaccion.begin();
+  try {
+    const personas = await new sql.Request(transaccion)
+      .input("Origen", sql.Int, pin)
+      .input("Destino", sql.Int, pinDestino)
+      .query("SELECT UserCode, RTRIM(Name) AS Name FROM dbo.zk_Users WHERE UserCode IN (@Origen, @Destino)");
+    const origen = personas.recordset.find((p) => p.UserCode === pin);
+    const destino = personas.recordset.find((p) => p.UserCode === pinDestino);
+    if (!origen || !destino) {
+      await transaccion.rollback();
+      return { ok: false, status: 404, msg: `No existe la persona ${!origen ? pin : pinDestino}` };
+    }
+
+    const { recordset: huellas } = await new sql.Request(transaccion)
+      .input("Origen", sql.Int, pin)
+      .input("Destino", sql.Int, pinDestino)
+      .query(
+        "SELECT UserCode, DataIndex, BinaryData FROM dbo.zk_UserData64 WHERE UserCode IN (@Origen, @Destino) AND DataLabel = 'FP'"
+      );
+    const huellasOrigen = huellas.filter(
+      (h) => h.UserCode === pin && (dedosPedidos.length === 0 || dedosPedidos.includes(h.DataIndex))
+    );
+    if (huellasOrigen.length === 0) {
+      await transaccion.rollback();
+      return { ok: false, status: 404, msg: `${origen.Name} no tiene huellas en esos dedos` };
+    }
+    const dedos = huellasOrigen.map((h) => h.DataIndex).sort((a, b) => a - b);
+    const ocupados = huellas.filter((h) => h.UserCode === pinDestino && dedos.includes(h.DataIndex)).map((h) => h.DataIndex);
+    if (ocupados.length > 0) {
+      await transaccion.rollback();
+      return {
+        ok: false,
+        status: 409,
+        msg: `${destino.Name} ya tiene huella en el dedo ${ocupados.join(", ")}. Elimínala primero o no muevas ese dedo.`,
+      };
+    }
+
+    const filtroDedos = dedos.map((_, i) => `@d${i}`).join(", ");
+    const update = new sql.Request(transaccion).input("Origen", sql.Int, pin).input("Destino", sql.Int, pinDestino);
+    dedos.forEach((d, i) => update.input(`d${i}`, sql.Int, d));
+    await update.query(`
+      UPDATE dbo.zk_UserData64
+      SET UserCode = @Destino
+      WHERE UserCode = @Origen AND DataLabel = 'FP' AND DataIndex IN (${filtroDedos})
+    `);
+
+    // Primero los borrados en el origen y después las altas en el destino, 1 s entre cada uno
+    // (mismo criterio que encolarEnOrden) para que la cola los entregue en este orden
+    let id = Math.floor(ahora / 1000) % 1000000000;
+    const borrados = huellasOrigen.map((h) => accPushService.comandoEliminarHuella(id++, { pin, dedo: h.DataIndex }));
+    const altas = huellasOrigen.map((h) =>
+      accPushService.comandoAltaHuella(id++, {
+        pin: pinDestino,
+        dedo: h.DataIndex,
+        plantilla: quitarRelleno(h.BinaryData.toString("base64")),
+      })
+    );
+    let huelleros = [];
+    const pedidosBorrado = [];
+    for (const [orden, CMD] of [...borrados, ...altas].entries()) {
+      const encolado = await new sql.Request(transaccion)
+        .input("CMD", sql.VarChar(sql.MAX), CMD)
+        .input("orden", sql.Int, orden)
+        .query(`
+          INSERT INTO dbo.zk_QueueCMD (DeviceSN, CMD, CreationTime)
+          OUTPUT inserted.DeviceSN
+          SELECT DeviceSN, @CMD, FORMAT(DATEADD(second, @orden, SYSDATETIMEOFFSET()), 'yyyy-MM-dd HH:mm:ss zzz')
+          FROM dbo.zk_Devices
+          WHERE IsActive = 1
+        `);
+      huelleros = encolado.recordset.map((d) => d.DeviceSN);
+      if (orden < borrados.length) pedidosBorrado.push(...huelleros.map((DeviceSN) => ({ DeviceSN, CMD })));
+    }
+    // Para seguir el borrado en el origen en la página (igual que eliminarHuella)
+    await commandService.registrarPedidos(transaccion, pedidosBorrado);
+
+    await transaccion.commit();
+    console.log(
+      `[zk-personas] Huella(s) del dedo ${dedos.join(", ")} movidas de ${origen.Name} (${pin}) a ${destino.Name} (${pinDestino}); enviado a: ${huelleros.join(", ") || "ningún huellero activo"}`
+    );
+    return {
+      ok: true,
+      status: 200,
+      msg: "Huellas movidas",
+      origen: { pin, nombre: origen.Name },
+      destino: { pin: pinDestino, nombre: destino.Name },
+      dedos,
+      huelleros,
+    };
+  } catch (error) {
+    await transaccion.rollback().catch(() => {});
+    throw error;
+  }
+}
+
 /// Activa o desactiva a una persona (botón Activo/Inactivo): cambia zk_Users.IsActive y lo envía a
 /// los huelleros activos en una sola transacción. Inactiva = sin autorización de acceso (el equipo
 /// la reconoce pero no la deja entrar); activa = acceso según la franja horaria configurada.
@@ -587,6 +706,39 @@ async function cambiarEstadoPersona(pinTexto, activoBody, ahora = Date.now()) {
   }
 }
 
+/// Corrige el DNI de una persona (botón Editar DNI): solo cambia zk_Users.dni, que es lo que cruza
+/// con tb_clientes en los reportes. El PIN del huellero no cambia (cambiarlo obligaría a borrar y
+/// volver a registrar a la persona y sus huellas en el equipo), así que no se envía nada al huellero.
+/// Retorna { ok, status, msg, persona }.
+async function editarDniPersona(pinTexto, dniBody) {
+  const pin = Number(pinTexto);
+  if (!Number.isInteger(pin) || pin <= 0 || pin > 999999999) {
+    return { ok: false, status: 400, msg: "El PIN no es válido" };
+  }
+  const dniTexto = String(dniBody ?? "").trim();
+  if (!/^\d{1,9}$/.test(dniTexto) || parseInt(dniTexto, 10) === 0) {
+    return { ok: false, status: 400, msg: "El DNI debe ser numérico (hasta 9 dígitos)" };
+  }
+
+  const pool = await poolPromise;
+  const result = await pool
+    .request()
+    .input("UserCode", sql.Int, pin)
+    .input("Dni", sql.VarChar(30), dniTexto)
+    .query(`
+      UPDATE dbo.zk_Users
+      SET dni = @Dni, UpdateTime = FORMAT(SYSDATETIMEOFFSET(), 'yyyy-MM-dd HH:mm:ss zzz')
+      WHERE UserCode = @UserCode;
+      SELECT RTRIM(Name) AS Name FROM dbo.zk_Users WHERE UserCode = @UserCode;
+    `);
+  if (result.rowsAffected[0] === 0) {
+    return { ok: false, status: 404, msg: `No existe una persona con el PIN ${pin}` };
+  }
+  const { Name } = result.recordset[0];
+  console.log(`[zk-personas] ${Name} (PIN ${pin}) DNI cambiado a ${dniTexto}`);
+  return { ok: true, status: 200, msg: "DNI actualizado", persona: { pin, nombre: Name, dni: dniTexto } };
+}
+
 // PINs (DNI) que tienen al menos una huella guardada en dbo.zk_UserData64
 async function pinesConHuella() {
   const pool = await poolPromise;
@@ -599,6 +751,8 @@ async function pinesConHuella() {
 module.exports = {
   pinDesdeDni,
   pinesConHuella,
+  editarDniPersona,
+  moverHuellas,
   cambiarEstadoPersona,
   agregarHuella,
   reenviarPersona,
