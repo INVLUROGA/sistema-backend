@@ -331,7 +331,9 @@ const getTareasReporte = async (req = request, res = response) => {
 };
 // Clientes en seguimiento que no estan en prospectos (ni por id_cli ni por celular), sin repetidos:
 // uno por DNI y por celular, se queda el de vencimiento mas reciente. Datos de su ultima membresia
+// ?incluirProspectos=1: no se quitan los clientes que ya estan en prospectos (gestion-prospecto)
 const getClientesSinProspecto = async (req = request, res = response) => {
+  const incluirProspectos = ["1", "true"].includes(String(req.query.incluirProspectos ?? ""));
   try {
     const filas = await db.query(
       `WITH seg AS (
@@ -366,7 +368,7 @@ const getClientesSinProspecto = async (req = request, res = response) => {
     for (const f of filas) {
       const cel = cel9(f.tel_cli);
       const dni = String(f.numDoc_cli ?? "").trim();
-      if (cliEnLead.has(f.id_cli) || (cel.length === 9 && celEnLead.has(cel))) continue;
+      if (!incluirProspectos && (cliEnLead.has(f.id_cli) || (cel.length === 9 && celEnLead.has(cel)))) continue;
       const claves = [dni && `dni:${dni}`, cel.length === 9 && `cel:${cel}`].filter(Boolean);
       if (claves.some((k) => vistos.has(k))) continue;
       claves.forEach((k) => vistos.add(k));
