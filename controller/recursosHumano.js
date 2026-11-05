@@ -144,6 +144,8 @@ const updatePlanillaxID = async (req = request, res = response) => {
       tipo_pago,
       tipo_jornada,
       fecha_pago,
+      grupo,
+      id_gasto,
     } = req.body;
     const planilla = await jornadaPlanilla.findOne({
       where: { id: id_planilla, flag: true },
@@ -158,6 +160,8 @@ const updatePlanillaxID = async (req = request, res = response) => {
       tipo_pago,
       tipo_jornada,
       fecha_pago,
+      grupo,
+      id_gasto,
     });
     res.status(200).json(planilla);
   } catch (error) {
@@ -289,6 +293,63 @@ function diasLaborables(desde, hasta, semanasJornada) {
   return dias;
 }
 
+const aMinutos = (hora) => {
+  const [h, m] = hora.split(":").map(Number);
+  return h * 60 + m;
+};
+const aFecha = (fecha) => new Date(fecha).toISOString().slice(0, 10);
+const ENTIDADES_TIEMPOS_ESPECIALES = ["permiso", "tardanza", "hora-extra", "salida-temprana"];
+
+// Faltas y tardanzas del periodo, aplicando los registros de perfil-colaborador > Recursos Humanos:
+// - permiso con goce: los días que cubre no son falta ni tardanza. Sin goce: el día se trata como siempre.
+// - tardanza con goce: sus minutos se restan de la tardanza de ese día. Sin goce: no cambia nada.
+// - salida temprana sin goce: sus minutos se devuelven para descontarlos, solo si ese día tenía horario y
+//   marcó (una falta ya descuenta el día completo). Con goce: no se descuenta.
+function calcularAsistencia({ laborables, ayer, primeraMarcacion, tiempos }) {
+  const conGoce = (entidad) => tiempos.filter((t) => t.entidad === entidad && t.conGoceSueldo);
+  const permisos = conGoce("permiso").map((t) => [aFecha(t.fechaDesde), aFecha(t.fechaHasta)]);
+  const conPermiso = (fecha) => permisos.some(([ini, fin]) => fecha >= ini && fecha <= fin);
+  const sumarMinutos = (registros, fecha) =>
+    registros
+      .filter((t) => aFecha(t.fechaDesde) === fecha)
+      .reduce((total, t) => total + (Number(t.minutos) || 0), 0);
+
+  // faltas hasta ayer: hoy aún puede marcar
+  const laborablesHastaAyer = laborables.filter((d) => d.fecha <= ayer);
+  const faltas = laborablesHastaAyer.filter((d) => !primeraMarcacion.has(d.fecha));
+  const dias_no_asistio = faltas.filter((d) => !conPermiso(d.fecha)).length;
+
+  const tardanzasConGoce = conGoce("tardanza");
+  let minutos_tardanza = 0;
+  let dias_tardanza = 0;
+  let minutos_tardanza_justificados = 0;
+  laborables
+    .filter((d) => primeraMarcacion.has(d.fecha) && !conPermiso(d.fecha))
+    .forEach((d) => {
+      const tarde = aMinutos(primeraMarcacion.get(d.fecha)) - aMinutos(d.entrada);
+      if (tarde <= 0) return;
+      const justificados = Math.min(tarde, sumarMinutos(tardanzasConGoce, d.fecha));
+      minutos_tardanza_justificados += justificados;
+      minutos_tardanza += tarde - justificados;
+      if (tarde > justificados) dias_tardanza++;
+    });
+
+  const salidasSinGoce = tiempos.filter((t) => t.entidad === "salida-temprana" && !t.conGoceSueldo);
+  const minutos_salida_sin_goce = laborables
+    .filter((d) => primeraMarcacion.has(d.fecha))
+    .reduce((total, d) => total + sumarMinutos(salidasSinGoce, d.fecha), 0);
+
+  return {
+    dias_laborables: laborablesHastaAyer.length,
+    dias_no_asistio,
+    dias_permiso_goce: faltas.length - dias_no_asistio,
+    minutos_tardanza,
+    dias_tardanza,
+    minutos_tardanza_justificados,
+    minutos_salida_sin_goce,
+  };
+}
+
 // Colaboradores con contrato (planilla): el contrato más reciente de cada uno.
 // estado_empl indica si el colaborador sigue activo; semanas_jornada = 0 si no tiene jornada,
 // 2 si es intersemana. El cargo (cargo_empl) se traduce en el frontend.
@@ -296,13 +357,29 @@ function diasLaborables(desde, hasta, semanasJornada) {
 // hasta ayer (hoy aún puede marcar) o hasta fecha_hasta. null si el contrato no tiene horario.
 // minutos_tardanza: en los días asistidos con horario (hasta hoy), primera marcación - hora de entrada,
 // en minutos completos, como el reporte de asistencia. null si el contrato no tiene horario.
+// Con ?mes=1..12&anio=YYYY (opcionales, van juntos): el contrato más reciente que estuvo vigente en ese mes,
+// y las marcaciones, faltas y tardanzas se cuentan solo dentro de ese mes.
 const obtenerColaboradoresConContrato = async (req = request, res = response) => {
   try {
     const { id_enterprice } = req.params;
+    const { mes, anio } = req.query;
+    let inicioMes = null;
+    let finMes = null;
+    if (mes !== undefined || anio !== undefined) {
+      const mesNum = Number(mes);
+      const anioNum = Number(anio);
+      if (!Number.isInteger(mesNum) || mesNum < 1 || mesNum > 12 || !Number.isInteger(anioNum) || anioNum < 2000 || anioNum > 2100) {
+        return res.status(400).json({ error: "mes y anio deben enviarse juntos: mes de 1 a 12 y anio válido" });
+      }
+      inicioMes = `${anioNum}-${String(mesNum).padStart(2, "0")}-01`;
+      finMes = new Date(Date.UTC(anioNum, mesNum, 0)).toISOString().slice(0, 10);
+    }
     const pool = await poolPromise;
     const result = await pool
       .request()
       .input("id_enterprice", sql.Int, id_enterprice)
+      .input("inicio_mes", sql.VarChar(10), inicioMes)
+      .input("fin_mes", sql.VarChar(10), finMes)
       .query(`
         WITH ultimo AS (
           SELECT p.*,
@@ -310,9 +387,12 @@ const obtenerColaboradoresConContrato = async (req = request, res = response) =>
                  COUNT(*) OVER (PARTITION BY p.uid_empleado) AS cantidad_contratos
           FROM dbo.jornada_planillas p
           WHERE p.flag = 1 AND p.id_enterprice = @id_enterprice
+            AND (@fin_mes IS NULL OR CAST(p.fecha_desde AS DATE) <= CAST(@fin_mes AS DATE))
+            AND (@inicio_mes IS NULL OR p.fecha_hasta IS NULL OR CAST(p.fecha_hasta AS DATE) >= CAST(@inicio_mes AS DATE))
         )
         SELECT u.id, u.uid_empleado, u.fecha_desde, u.fecha_hasta, u.uid_jornada, u.sueldo, u.tipo_pago,
                u.tipo_jornada, u.fecha_pago, u.observacion, u.cantidad_contratos,
+               u.id_gasto, g.nombre_gasto AS concepto,
                (SELECT COUNT(*) FROM dbo.tb_jornada_semanas j WHERE j.uid_jornada = u.uid_jornada) AS semanas_jornada,
                e.id_empl, e.nombre_empl, e.apPaterno_empl, e.apMaterno_empl, e.numDoc_empl,
                e.cargo_empl, e.estado_empl,
@@ -336,6 +416,8 @@ const obtenerColaboradoresConContrato = async (req = request, res = response) =>
                   AND CAST(SWITCHOFFSET(t.PunchTime, '-05:00') AS DATE) >= CAST(u.fecha_desde AS DATE)
                   AND (u.fecha_hasta IS NULL
                        OR CAST(SWITCHOFFSET(t.PunchTime, '-05:00') AS DATE) <= CAST(u.fecha_hasta AS DATE))
+                  AND (@inicio_mes IS NULL OR CAST(SWITCHOFFSET(t.PunchTime, '-05:00') AS DATE) >= CAST(@inicio_mes AS DATE))
+                  AND (@fin_mes IS NULL OR CAST(SWITCHOFFSET(t.PunchTime, '-05:00') AS DATE) <= CAST(@fin_mes AS DATE))
                 GROUP BY CAST(SWITCHOFFSET(t.PunchTime, '-05:00') AS DATE)
                 ) x
                ) AS fechas_asistidas,
@@ -344,6 +426,7 @@ const obtenerColaboradoresConContrato = async (req = request, res = response) =>
                 WHERE i.uid_location = e.uid_avatar ORDER BY i.id DESC) AS avatar
         FROM ultimo u
         JOIN dbo.tb_empleados e ON e.uid = u.uid_empleado AND e.flag = 1
+        LEFT JOIN dbo.tb_parametros_gastos g ON g.id = u.id_gasto
         WHERE u.n = 1
         ORDER BY e.estado_empl DESC, e.nombre_empl ASC
       `);
@@ -359,10 +442,17 @@ const obtenerColaboradoresConContrato = async (req = request, res = response) =>
       : [];
     const ayer = fechaHoraLima(new Date(Date.now() - 86400000)).fecha;
     const hoy = fechaHoraLima(new Date()).fecha;
-    const aMinutos = (hora) => {
-      const [h, m] = hora.split(":").map(Number);
-      return h * 60 + m;
-    };
+    const idsColaboradores = [...new Set(result.recordset.map((c) => c.id_empl))];
+    const tiemposEspeciales = idsColaboradores.length
+      ? await TiemposEspeciales.findAll({
+          where: {
+            flag: true,
+            entidad: ENTIDADES_TIEMPOS_ESPECIALES,
+            id_colaborador: idsColaboradores,
+          },
+          raw: true,
+        })
+      : [];
 
     const colaboradores = result.recordset.map(({ fechas_asistidas, ...c }) => {
       // fecha -> hora de la primera marcación ("HH:mm")
@@ -371,32 +461,38 @@ const obtenerColaboradoresConContrato = async (req = request, res = response) =>
       );
       const desde = new Date(c.fecha_desde).toISOString().slice(0, 10);
       const finContrato = c.fecha_hasta ? new Date(c.fecha_hasta).toISOString().slice(0, 10) : null;
-      const hasta = finContrato && finContrato < hoy ? finContrato : hoy;
+      const hasta = [finContrato, hoy, finMes].filter(Boolean).sort()[0];
       const semanasJornada = jornadas.filter((j) => j.uid_jornada === c.uid_jornada);
+      const tiempos = tiemposEspeciales.filter((t) => t.id_colaborador === c.id_empl);
+      // horas extras del periodo: no dependen del horario (pueden ser en un día libre o feriado)
+      const inicioPeriodo = inicioMes && inicioMes > desde ? inicioMes : desde;
+      const minutos_extra = tiempos
+        .filter((t) => t.entidad === "hora-extra")
+        .filter((t) => aFecha(t.fechaDesde) >= inicioPeriodo && aFecha(t.fechaDesde) <= hasta)
+        .reduce((total, t) => total + (Number(t.minutos) || 0), 0);
       if (semanasJornada.length === 0) {
         return {
           ...c,
           dias_asistidos: primeraMarcacion.size,
           dias_laborables: null,
           dias_no_asistio: null,
+          dias_permiso_goce: null,
           minutos_tardanza: null,
           dias_tardanza: null,
+          minutos_tardanza_justificados: null,
+          minutos_salida_sin_goce: null,
+          minutos_extra,
         };
       }
-      const laborables = diasLaborables(desde, hasta, semanasJornada);
-      // faltas hasta ayer: hoy aún puede marcar
-      const laborablesHastaAyer = laborables.filter((d) => d.fecha <= ayer);
-      const tardanzas = laborables
-        .filter((d) => primeraMarcacion.has(d.fecha))
-        .map((d) => aMinutos(primeraMarcacion.get(d.fecha)) - aMinutos(d.entrada))
-        .filter((minutos) => minutos > 0);
+      // el ciclo de semanas siempre se cuenta desde el inicio del contrato; luego se recorta al mes
+      const laborables = diasLaborables(desde, hasta, semanasJornada).filter(
+        (d) => !inicioMes || d.fecha >= inicioMes
+      );
       return {
         ...c,
         dias_asistidos: primeraMarcacion.size,
-        dias_laborables: laborablesHastaAyer.length,
-        dias_no_asistio: laborablesHastaAyer.filter((d) => !primeraMarcacion.has(d.fecha)).length,
-        minutos_tardanza: tardanzas.reduce((total, minutos) => total + minutos, 0),
-        dias_tardanza: tardanzas.length,
+        minutos_extra,
+        ...calcularAsistencia({ laborables, ayer, primeraMarcacion, tiempos }),
       };
     });
     res.status(200).json(colaboradores);
@@ -498,9 +594,16 @@ const PostTiemposEspeciale = async (req = request, res = response) => {
 const GetTiemposEspeciales = async (req = request, res = response) => {
   try {
     const { entidad, id_empresa } = req.params;
-    const tiempoEspeciales = await TiemposEspeciales.findAll({
-      where: { flag: true, entidad, id_empresa },
-    });
+    const { id_colaborador } = req.query;
+    const where = { flag: true, entidad, id_empresa };
+    // ?id_colaborador= (opcional): solo los registros de ese colaborador
+    if (id_colaborador !== undefined) {
+      if (!Number.isInteger(Number(id_colaborador))) {
+        return res.status(400).json({ msg: "id_colaborador no es válido" });
+      }
+      where.id_colaborador = Number(id_colaborador);
+    }
+    const tiempoEspeciales = await TiemposEspeciales.findAll({ where });
     res
       .status(200)
       .json({ msg: "TiemposEspeciales obtenidos", tiempoEspeciales });
@@ -558,6 +661,27 @@ const updateTiemposEspecialxID = async (req = request, res = response) => {
   }
 };
 
+// FLUJO DE CAJA: todos los contratos (planillas) de los colaboradores activos, con su
+// "fecha desde"/"fecha hasta" y el concepto (id_gasto). El front decide mes a mes
+// cuál contrato está vigente para cada persona.
+const obtenerSueldosxConceptoFlujoCaja = async (req = request, res = response) => {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request().query(`
+      SELECT u.id, u.uid_empleado, u.sueldo, u.tipo_pago, u.grupo, u.id_gasto,
+             u.fecha_desde, u.fecha_hasta, u.id_enterprice,
+             e.nombre_empl, e.apPaterno_empl, e.apMaterno_empl, e.cargo_empl
+      FROM dbo.jornada_planillas u
+      JOIN dbo.tb_empleados e ON e.uid = u.uid_empleado AND e.flag = 1 AND e.estado_empl = 1
+      WHERE u.flag = 1 AND u.fecha_desde IS NOT NULL
+    `);
+    res.status(200).json(result.recordset);
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+    });
+  }
+};
 module.exports = {
   postContratosEmpl,
   postPlanillaxEmpl,
@@ -569,6 +693,7 @@ module.exports = {
   obtenerJornadaxPlanilla,
   updateJornadaxPlanilla,
   obtenerColaboradoresConContrato,
+  obtenerSueldosxConceptoFlujoCaja,
   getobtenerPlanillaEmpleadoActivos,
   obtenerDiasNoLaborables,
   postDiasNoLaborables,

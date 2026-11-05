@@ -106,6 +106,7 @@ const obtenerEmpleadosxEstadoxEmpresa = async (
         "email_corporativo",
         "uid_contactsEmergencia",
         "id_empresa",
+        "orden",
         ["estado_empl", "estado"],
       ],
       where: { id_empresa, estado_empl: id_estado, flag: true },
@@ -117,7 +118,17 @@ const obtenerEmpleadosxEstadoxEmpresa = async (
           model: ImagePT,
         },
       ],
-      order: [["id_empl", "desc"]],
+      // Primero los que tienen orden; los demás siguen del más reciente al más antiguo
+      order: [
+        [
+          Sequelize.literal(
+            "CASE WHEN [tb_empleado].[orden] IS NULL THEN 1 ELSE 0 END",
+          ),
+          "ASC",
+        ],
+        ["orden", "ASC"],
+        ["id_empl", "desc"],
+      ],
     });
     res.status(201).json({
       msg: true,

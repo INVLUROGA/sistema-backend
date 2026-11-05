@@ -112,6 +112,26 @@ const Empleado = db.define("tb_empleado", {
   telefono_empl: {
     type: DataTypes.STRING,
   },
+  //Medidas
+  medidaPolo: {
+    type: DataTypes.STRING(20),
+  },
+  medidaShort: {
+    type: DataTypes.STRING(20),
+  },
+  medidaCasaca: {
+    type: DataTypes.STRING(20),
+  },
+  medidaChompa: {
+    type: DataTypes.STRING(20),
+  },
+  medidaPantalon: {
+    type: DataTypes.STRING(20),
+  },
+  medidaBata: {
+    type: DataTypes.STRING(20),
+    defaultValue: "-",
+  },
   //Informacion de empleo
   fecContrato_empl: {
     type: DataTypes.DATEONLY,
@@ -129,6 +149,12 @@ const Empleado = db.define("tb_empleado", {
     type: DataTypes.DECIMAL(18, 2),
   },
   tipoContrato_empl: {
+    type: DataTypes.INTEGER,
+  },
+  id_turno: {
+    type: DataTypes.INTEGER,
+  },
+  orden: {
     type: DataTypes.INTEGER,
   },
   uid_comentario: {

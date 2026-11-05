@@ -301,6 +301,14 @@ const jornadaPlanilla = db.define("jornada_planilla", {
     // horario semanal del contrato (tb_jornada_semanas, semana 1)
     type: DataTypes.STRING(300),
   },
+  grupo: {
+    // DATOS PARA FLUJO DE CAJA: rubro (tb_parametros_gastos -> parametro_grupo.param_label)
+    type: DataTypes.STRING(300),
+  },
+  id_gasto: {
+    // DATOS PARA FLUJO DE CAJA: concepto (tb_parametros_gastos.id)
+    type: DataTypes.INTEGER,
+  },
   id_enterprice: {
     type: DataTypes.INTEGER,
   },
