@@ -301,14 +301,18 @@ const aFecha = (fecha) => new Date(fecha).toISOString().slice(0, 10);
 const ENTIDADES_TIEMPOS_ESPECIALES = ["permiso", "tardanza", "hora-extra", "salida-temprana"];
 
 // Faltas y tardanzas del periodo, aplicando los registros de perfil-colaborador > Recursos Humanos:
-// - permiso con goce: los días que cubre no son falta ni tardanza. Sin goce: el día se trata como siempre.
-// - tardanza con goce: sus minutos se restan de la tardanza de ese día. Sin goce: no cambia nada.
+// - permiso: en los días de su rango la tardanza es 0, con o sin goce. Además, con goce esos días no son falta.
+// - tardanza sin goce: si ese día tenía horario y marcó, sus minutos reemplazan a los calculados con el huellero
+//   y se descuentan del sueldo (una falta ya descuenta el día completo; el permiso tiene prioridad).
+// - tardanza con goce: sus minutos se restan de la tardanza de ese día.
 // - salida temprana sin goce: sus minutos se devuelven para descontarlos, solo si ese día tenía horario y
 //   marcó (una falta ya descuenta el día completo). Con goce: no se descuenta.
 function calcularAsistencia({ laborables, ayer, primeraMarcacion, tiempos }) {
   const conGoce = (entidad) => tiempos.filter((t) => t.entidad === entidad && t.conGoceSueldo);
-  const permisos = conGoce("permiso").map((t) => [aFecha(t.fechaDesde), aFecha(t.fechaHasta)]);
-  const conPermiso = (fecha) => permisos.some(([ini, fin]) => fecha >= ini && fecha <= fin);
+  const enRango = (registros, fecha) =>
+    registros.some((t) => fecha >= aFecha(t.fechaDesde) && fecha <= aFecha(t.fechaHasta));
+  const permisos = tiempos.filter((t) => t.entidad === "permiso");
+  const permisosConGoce = conGoce("permiso");
   const sumarMinutos = (registros, fecha) =>
     registros
       .filter((t) => aFecha(t.fechaDesde) === fecha)
@@ -317,16 +321,20 @@ function calcularAsistencia({ laborables, ayer, primeraMarcacion, tiempos }) {
   // faltas hasta ayer: hoy aún puede marcar
   const laborablesHastaAyer = laborables.filter((d) => d.fecha <= ayer);
   const faltas = laborablesHastaAyer.filter((d) => !primeraMarcacion.has(d.fecha));
-  const dias_no_asistio = faltas.filter((d) => !conPermiso(d.fecha)).length;
+  const dias_no_asistio = faltas.filter((d) => !enRango(permisosConGoce, d.fecha)).length;
 
   const tardanzasConGoce = conGoce("tardanza");
+  const tardanzasSinGoce = tiempos.filter((t) => t.entidad === "tardanza" && !t.conGoceSueldo);
   let minutos_tardanza = 0;
   let dias_tardanza = 0;
   let minutos_tardanza_justificados = 0;
   laborables
-    .filter((d) => primeraMarcacion.has(d.fecha) && !conPermiso(d.fecha))
+    .filter((d) => primeraMarcacion.has(d.fecha) && !enRango(permisos, d.fecha))
     .forEach((d) => {
-      const tarde = aMinutos(primeraMarcacion.get(d.fecha)) - aMinutos(d.entrada);
+      const registrados = sumarMinutos(tardanzasSinGoce, d.fecha);
+      const tarde = registrados > 0
+        ? registrados
+        : aMinutos(primeraMarcacion.get(d.fecha)) - aMinutos(d.entrada);
       if (tarde <= 0) return;
       const justificados = Math.min(tarde, sumarMinutos(tardanzasConGoce, d.fecha));
       minutos_tardanza_justificados += justificados;
@@ -470,6 +478,21 @@ const obtenerColaboradoresConContrato = async (req = request, res = response) =>
         .filter((t) => t.entidad === "hora-extra")
         .filter((t) => aFecha(t.fechaDesde) >= inicioPeriodo && aFecha(t.fechaDesde) <= hasta)
         .reduce((total, t) => total + (Number(t.minutos) || 0), 0);
+      // rangos de permisos, para que el reporte de asistencia (VER) muestre lo mismo que la planilla
+      const permisos = tiempos
+        .filter((t) => t.entidad === "permiso")
+        .map((t) => ({
+          desde: aFecha(t.fechaDesde),
+          hasta: aFecha(t.fechaHasta),
+          conGoceSueldo: Boolean(t.conGoceSueldo),
+        }));
+      const tardanzas_registradas = tiempos
+        .filter((t) => t.entidad === "tardanza")
+        .map((t) => ({
+          fecha: aFecha(t.fechaDesde),
+          minutos: Number(t.minutos) || 0,
+          conGoceSueldo: Boolean(t.conGoceSueldo),
+        }));
       if (semanasJornada.length === 0) {
         return {
           ...c,
@@ -482,6 +505,8 @@ const obtenerColaboradoresConContrato = async (req = request, res = response) =>
           minutos_tardanza_justificados: null,
           minutos_salida_sin_goce: null,
           minutos_extra,
+          permisos,
+          tardanzas_registradas,
         };
       }
       // el ciclo de semanas siempre se cuenta desde el inicio del contrato; luego se recorta al mes
@@ -492,6 +517,8 @@ const obtenerColaboradoresConContrato = async (req = request, res = response) =>
         ...c,
         dias_asistidos: primeraMarcacion.size,
         minutos_extra,
+        permisos,
+        tardanzas_registradas,
         ...calcularAsistencia({ laborables, ayer, primeraMarcacion, tiempos }),
       };
     });

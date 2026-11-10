@@ -87,6 +87,10 @@ const getProspectosLead = async (req = request, res = response) => {
           attributes: [
             "id_cli",
             "uid",
+            "nombre_cli",
+            "apPaterno_cli",
+            "apMaterno_cli",
+            "tel_cli",
             [
               Sequelize.fn(
                 "CONCAT",

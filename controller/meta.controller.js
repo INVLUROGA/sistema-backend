@@ -314,8 +314,19 @@ const getMetasAsesorxMeta = async (req, res) => {
   }
 };
 // Ultima meta registrada de cada asesor, con el mes de la meta general
+// Con ?mes=1..12&anio=YYYY (opcionales, van juntos): solo se consideran las metas de ese mes
 const getUltimaMetaxAsesor = async (req, res) => {
   try {
+    const filtrarPorMes = req.query.mes !== undefined || req.query.anio !== undefined;
+    const filtroMes = Number(req.query.mes);
+    const filtroAnio = Number(req.query.anio);
+    if (
+      filtrarPorMes &&
+      (!Number.isInteger(filtroMes) || filtroMes < 1 || filtroMes > 12 ||
+        !Number.isInteger(filtroAnio) || filtroAnio < 2000 || filtroAnio > 2100)
+    ) {
+      return res.status(400).json({ error: "mes y anio deben enviarse juntos: mes de 1 a 12 y anio válido" });
+    }
     const metasAsesor = await MetaVSAsesor.findAll({
       where: { flag: true },
       attributes: ["id", "id_meta", "id_asesor", "meta_asesor", "createdAt"],
@@ -339,6 +350,7 @@ const getUltimaMetaxAsesor = async (req, res) => {
     for (const ma of metasAsesor) {
       const meta = metasxId.get(ma.id_meta);
       if (!meta || ultimas.has(ma.id_asesor)) continue;
+      if (filtrarPorMes && (meta.mes !== filtroMes || meta.anio !== filtroAnio)) continue;
       const asesor = meta.asesores.find((a) => a.id === ma.id);
       ultimas.set(ma.id_asesor, {
         id_asesor: ma.id_asesor,

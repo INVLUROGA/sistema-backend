@@ -306,7 +306,7 @@ const seccionGET = async (req = request, res = response) => {
             },
             {
               key: "reporte-pagos-operadores",
-              label: "PAGOS DE OPERADORES",
+              label: "PAGOS A OPERADORES",
               icon: "uil-calender",
               url: "/reporte-admin/pagos-operadores",
               parentKey: "reporte-fc",
@@ -835,7 +835,7 @@ const seccionGET = async (req = request, res = response) => {
             },
             {
               key: "ventas-reservasmf",
-              label: "Reservas MonkFit",
+              label: "Reservas Monkey Fit",
               icon: "uil-calender",
               url: "/gestion-monkfit",
               parentKey: "ventas-reservasmf",
