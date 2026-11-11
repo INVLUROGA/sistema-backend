@@ -84,20 +84,20 @@ const seccionGET = async (req = request, res = response) => {
       MENU_ITEMS = [
         {
           key: "cita",
-          label: "Citas",
+          label: "Nutrición",
           url: "/citas",
           icon: "uil-home-alt",
           children: [
             {
               key: "citas-NUT",
-              label: "Citas nutricionista",
+              label: "Citas",
               isTitle: false,
               icon: "uil-calender",
               url: "/crear-citas-nutricion",
             },
             {
               key: "hist-citas-NUT",
-              label: "Historial de citas nutricionista",
+              label: "Historial de citas",
               isTitle: false,
               icon: "uil-calender",
               url: "/history-citas-nutricion",
@@ -152,10 +152,24 @@ const seccionGET = async (req = request, res = response) => {
             },
             {
               key: "ventas-seguimiento",
+              label: "Socios activos",
+              icon: "uil-calender",
+              url: "/seguimiento",
+              parentKey: "ventas-seguimiento",
+            },
+            {
+              key: "ventas-seguimiento",
               label: "Seguimiento",
               icon: "uil-calender",
               url: "/seguimiento",
               parentKey: "ventas-seguimiento",
+            },
+            {
+              key: "cliente-prospecto",
+              label: "CRM",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-prospecto",
             },
           ],
         },
@@ -179,31 +193,24 @@ const seccionGET = async (req = request, res = response) => {
               icon: "uil-calender",
               url: "/contrato-clientes",
             },
-            {
-              key: "cliente-prospecto",
-              label: "Gestión del día",
-              isTitle: false,
-              icon: "uil-calender",
-              url: "/gestion-prospecto",
-            },
           ],
         },
         {
           key: "cita",
-          label: "Citas",
+          label: "Nutrición",
           url: "/citas",
           icon: "uil-home-alt",
           children: [
             {
               key: "citas-NUT",
-              label: "Citas nutricionista",
+              label: "Citas",
               isTitle: false,
               icon: "uil-calender",
               url: "/crear-citas-nutricion",
             },
             {
               key: "hist-citas-NUT",
-              label: "Historial de citas nutricionista",
+              label: "Historial de citas",
               isTitle: false,
               icon: "uil-calender",
               url: "/history-citas-nutricion",
@@ -297,13 +304,13 @@ const seccionGET = async (req = request, res = response) => {
               url: "/reporte-admin/flujo-caja",
               parentKey: "reporte-fc",
             },
-            {
-              key: "reporte-pagos-operadores",
-              label: "AUDITORIA DE GASTOS",
-              icon: "uil-calender",
-              url: "/reporte-admin/auditoria-gasto",
-              parentKey: "reporte-fc",
-            },
+            // {
+            //   key: "reporte-pagos-operadores",
+            //   label: "AUDITORIA DE GASTOS",
+            //   icon: "uil-calender",
+            //   url: "/reporte-admin/auditoria-gasto",
+            //   parentKey: "reporte-fc",
+            // },
             {
               key: "reporte-pagos-operadores",
               label: "PAGOS A OPERADORES",
@@ -748,13 +755,6 @@ const seccionGET = async (req = request, res = response) => {
           url: "/resumen-general",
           children: [
             {
-              key: "r-comparativo-mensual",
-              icon: "uil-calender",
-              label: "Comparativo Mensual",
-              url: "/reporte/comparativo-mensual",
-              parentKey: "socios-montos",
-            },
-            {
               key: "resumen-ejecutivo",
               label: "RESUMEN EJECUTIVO",
               isTitle: false,
@@ -768,6 +768,20 @@ const seccionGET = async (req = request, res = response) => {
               url: "/reporte/comparativo-mensual-ventas",
               parentKey: "socios-montos",
             },
+            {
+              key: "ventas-seguimiento",
+              label: "Cantidad socios comparativo por mes",
+              icon: "uil-calender",
+              url: "/reporte/seguimiento-x-mes",
+              parentKey: "ventas-seguimiento-x-mes",
+            },
+            {
+              key: "r-resumenComparativo",
+              label: "comparativo categorias / edad / origen / otros",
+              url: "/reporte/resumen-comparativo",
+              icon: "uil-calender",
+              parentKey: "resumen-comparativo",
+            },
           ],
         },
         {
@@ -779,7 +793,7 @@ const seccionGET = async (req = request, res = response) => {
             {
               key: "r-renovaciones-mes",
               icon: "uil-calender",
-              label: "VENTAS por ASESOR",
+              label: "VENTAS POR CANAL",
               url: "/reporte/ranking-por-asesor",
               parentKey: "socios-montos",
             },
@@ -792,7 +806,7 @@ const seccionGET = async (req = request, res = response) => {
             },
             {
               key: "r-comisiones",
-              label: "COMISIONES",
+              label: "CALCULADORA COMISIONAL",
               isTitle: false,
               icon: "uil-money-bill",
               url: "/reporte/comisiones",
@@ -827,13 +841,6 @@ const seccionGET = async (req = request, res = response) => {
               parentKey: "ventas-seguimiento",
             },
             {
-              key: "ventas-seguimiento",
-              label: "Cantidad socios comparativo por mes",
-              icon: "uil-calender",
-              url: "/reporte/seguimiento-x-mes",
-              parentKey: "ventas-seguimiento-x-mes",
-            },
-            {
               key: "ventas-reservasmf",
               label: "Reservas Monkey Fit",
               icon: "uil-calender",
@@ -847,44 +854,13 @@ const seccionGET = async (req = request, res = response) => {
               url: "/clientes-monkeyFit",
               parentKey: "clientes-monkeyFit",
             },
-          ],
-        },
-        {
-          key: "reportes",
-          label: "MARKETING",
-          url: "/reporte",
-          icon: "uil-home-alt",
-          children: [
-            // {
-            //   key: "r-totalVentas",
-            //   label: "Total de ventas",
-            //   url: "/reporte/total-ventas",
-            //   parentKey: "reportes-total",
-            // },
             {
-              key: "r-resumenComparativo",
-              label: "comparativo categorias / edad / origen / otros",
-              url: "/reporte/resumen-comparativo",
-              parentKey: "resumen-comparativo",
+              key: "cliente-prospecto",
+              label: "CRM",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-prospecto",
             },
-            // {
-            //   key: "r-resumenComparativoxmes",
-            //   label: "resumen comparativo por mes",
-            //   url: "/reporte/comparativo-resumen-x-mes",
-            //   parentKey: "comparativo-resumen-x-mes",
-            // },
-            // {
-            //   key: "r-reporte-demografico",
-            //   label: "reporte demografico",
-            //   url: "/reporte/reporte-demografico",
-            //   parentKey: "reporte-demografico",
-            // },
-            // {
-            //   key: "r-reporte-demografico",
-            //   label: "reporte demografico por membresia",
-            //   url: "/reporte/reporte-demografico-membresia",
-            //   parentKey: "reporte-demografico-membresia",
-            // },
           ],
         },
         {
@@ -895,7 +871,7 @@ const seccionGET = async (req = request, res = response) => {
           children: [
             {
               key: "gestion-eventos-asistencia",
-              label: "Eventos asistencia",
+              label: "Huellas asistencia",
               isTitle: false,
               icon: "uil-calender",
               url: "/gestion-eventos-asistencia",
@@ -914,13 +890,13 @@ const seccionGET = async (req = request, res = response) => {
               icon: "uil-calender",
               url: "/gestion-clientes",
             },
-            {
-              key: "cliente-membresia-socios",
-              label: "Membresias de socios",
-              isTitle: false,
-              icon: "uil-calender",
-              url: "/reporte-clientes-membresia",
-            },
+            // {
+            //   key: "cliente-membresia-socios",
+            //   label: "Membresias de socios",
+            //   isTitle: false,
+            //   icon: "uil-calender",
+            //   url: "/reporte-clientes-membresia",
+            // },
             {
               key: "cliente-contratos",
               label: "Contratos de socios",
@@ -928,80 +904,58 @@ const seccionGET = async (req = request, res = response) => {
               icon: "uil-calender",
               url: "/contrato-clientes",
             },
-            {
-              key: "cliente-prospecto",
-              label: "Gestión del día",
-              isTitle: false,
-              icon: "uil-calender",
-              url: "/gestion-prospecto",
-            },
           ],
         },
         {
           key: "cita",
-          label: "Citas",
+          label: "Nutrición",
           url: "/citas",
           icon: "uil-home-alt",
           children: [
             {
               key: "citas-NUT",
-              label: "Citas nutricionista",
+              label: "Citas",
               isTitle: false,
               icon: "uil-calender",
               url: "/crear-citas-nutricion",
             },
             {
               key: "hist-citas-NUT",
-              label: "Historial de citas nutricionista",
+              label: "Historial de citas",
               isTitle: false,
               icon: "uil-calender",
               url: "/history-citas-nutricion",
             },
           ],
         },
-        {
-          key: "cong-reg",
-          label: "gestión CAMBIOS",
-          icon: "uil-home-alt",
-          children: [
-            {
-              key: "canje-gestion",
-              label: "Gestion de canjes",
-              isTitle: false,
-              icon: "uil-calender",
-              url: "/gestion-canjes",
-            },
-            {
-              key: "canje-reporte",
-              label: "REPORTE DE CANJE",
-              isTitle: false,
-              icon: "uil-calender",
-              url: "/reporte-canje",
-            },
-            {
-              key: "congreg",
-              label: "Congelamientos y regalos",
-              isTitle: false,
-              icon: "uil-calender",
-              url: "/extension-membresia",
-            },
-          ],
-        },
-        {
-          key: "reportes-nuevo-local",
-          label: "NUEVO LOCAL",
-          url: "/reporte",
-          icon: "uil-home-alt",
-          children: [
-            {
-              key: "ventas-seguimiento",
-              label: "venta optima segun aforo",
-              icon: "uil-calender",
-              url: "/reporte/reporte-seguimiento",
-              parentKey: "ventas-ventas-seguimiento",
-            },
-          ],
-        },
+        // {
+        //   key: "cong-reg",
+        //   label: "gestión CAMBIOS",
+        //   icon: "uil-home-alt",
+        //   children: [
+        //     {
+        //       key: "canje-gestion",
+        //       label: "Gestion de canjes",
+        //       isTitle: false,
+        //       icon: "uil-calender",
+        //       url: "/gestion-canjes",
+        //     },
+        //     {
+        //       key: "canje-reporte",
+        //       label: "REPORTE DE CANJE",
+        //       isTitle: false,
+        //       icon: "uil-calender",
+        //       url: "/reporte-canje",
+        //     },
+        //     {
+        //       key: "congreg",
+        //       label: "Congelamientos y regalos",
+        //       isTitle: false,
+        //       icon: "uil-calender",
+        //       url: "/extension-membresia",
+        //     },
+        //   ],
+        // },
       ];
     }
     if (modulo === "mod-user-inventario") {

@@ -112,7 +112,7 @@ const obtenerFileInternoxUidLocation = async (
   try {
     const { id_seccionVisible, uid_location } = req.params;
     const documentosInternos = await DocumentosInternos.findAll({
-      where: { id_seccionVisible, uid_location },
+      where: { id_seccionVisible, uid_location, flag: true },
       include: [
         {
           model: ImagePT,
