@@ -294,6 +294,17 @@ app.use("/api/circus", require("./routes/routersCircus/servicios.router.js"));
 
 app.use("/api/canjes", require("./routes/canjes.router.js"));
 app.use("/api/penalidad", require("./routes/penalidad.router.js"));
+app.use(
+  "/api/calendario-marketing",
+  validarJWT,
+  require("./routes/calendarioMarketing.router.js"),
+);
+app.use(
+  "/api/canje-marketing",
+  validarJWT,
+  require("./routes/canjeStatus.router.js"),
+);
+app.use("/api/actas", validarJWT, require("./routes/actas.router.js"));
 app.use("/api/operadores-pago", require("./routes/formaPago.route.js"));
 //Escuchar peticiones
 app.listen(env.PORT || 3001, env.IP, () => {
