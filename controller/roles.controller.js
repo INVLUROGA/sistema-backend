@@ -1247,8 +1247,6 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-calender",
           url: "/status-nutricion",
         },
-        // {
-        //   key: "dashboard",
         //   label: "Dashboard",
         //   url: "/home",
         //   icon: "uil-dashboard",
