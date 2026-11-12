@@ -93,8 +93,15 @@ cron.schedule(
 cron.schedule("0 6 * * *", async () => {
   // await actualizarSeguimientos();
   await actualizarClientesSeguimiento();
-  await cumpleaniosColaboradores()
 });
+// 8am hora de Perú: aviso por WhatsApp de los colaboradores que cumplen años hoy
+cron.schedule(
+  "0 5 * * *",
+  () => {
+    cumpleaniosColaboradores();
+  },
+  { timezone: "America/Lima" },
+);
 // 3am hora de Perú en cualquier servidor (antes "0 8 * * *" sin zona horaria: un servidor
 // en hora de Perú lo corría a las 8am y se guardaba el dia dos veces en tb_leadsDia)
 cron.schedule(
