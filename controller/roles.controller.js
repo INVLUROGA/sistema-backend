@@ -1194,10 +1194,10 @@ const seccionGET = async (req = request, res = response) => {
           url: "/resultados-generales",
         },
         {
-          label: "3. status infuencer / canje",
+          label: "3. status infuencer / canjes",
           isTitle: false,
           icon: "uil-calender",
-          url: "/status-influencer-canje",
+          url: "/status-influencer-canjes",
         },
         {
           label: "4. RESULTADO ASESORES",
