@@ -1,7 +1,7 @@
 const { Op } = require("sequelize");
 const { enviarMensajesWsp } = require("../../config/whatssap-web");
 const { detalleVenta_membresias, Venta } = require("../../models/Venta");
-const { campaniasMeta } = require("../Redes/Campaniasmeta");
+const { campaniasMeta } = require("../Redes/CampaniasMeta");
 const { enviarWspUsuario } = require("../../helpers/enviarWspUsuario");
 
 // El server corre en UTC y Perú es UTC-5 todo el año (no tiene horario de

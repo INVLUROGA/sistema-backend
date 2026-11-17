@@ -45,6 +45,9 @@ const {
 const {
   registrarAdsDiario,
 } = require("./middlewares/EventosCron/registrarAdsDiario.js");
+const {
+  registrarSeguidoresDiario,
+} = require("./middlewares/EventosCron/registrarSeguidoresDiario.js");
 const { FacturasMeta } = require("./middlewares/Redes/FacturasMeta.js");
 const {
   actualizarSeguimientos,
@@ -108,6 +111,14 @@ cron.schedule(
   "0 3 * * *",
   () => {
     registrarAdsDiario();
+  },
+  { timezone: "America/Lima" },
+);
+// 11:55pm hora de Perú: guarda los seguidores de Facebook e Instagram del dia en tb_seguidores_redes
+cron.schedule(
+  "55 23 * * *",
+  () => {
+    registrarSeguidoresDiario();
   },
   { timezone: "America/Lima" },
 );
@@ -282,7 +293,6 @@ app.use("/api/cita", validarJWT, require("./routes/cita.router.js"));
 app.use("/api/prospecto", validarJWT, require("./routes/prospecto.router.js"));
 app.use(
   "/api/prospectos-redes",
-  validarJWT,
   require("./routes/prospectoRedes.router.js"),
 );
 app.use("/api/auditoria", validarJWT, require("./routes/auditoria.router.js"));

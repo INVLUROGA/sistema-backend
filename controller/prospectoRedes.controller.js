@@ -3,6 +3,7 @@ const { leadsxDia } = require("../models/Venta");
 const {
   campaniasMetaPorCampania,
 } = require("../middlewares/Redes/CampaniasMeta");
+const { db } = require("../database/sequelizeConnection");
 
 // Prospectos por red y por dia (tb_leadsDia: id_red, fecha, cantidad, monto).
 // Las filas de Meta las registra cada dia el cron registrarAdsDiario.
@@ -68,7 +69,79 @@ const getCampaniasMeta = async (req = request, res = response) => {
   }
 };
 
+// Seguidores por red y por dia (tb_seguidores_redes, lo llena el cron registrarSeguidoresDiario).
+// ?desde=YYYY-MM-DD&hasta=YYYY-MM-DD
+// La fecha sale como texto YYYY-MM-DD: leida como Date el driver la corre un dia segun la TZ del servidor.
+const getSeguidoresRedes = async (req = request, res = response) => {
+  const { desde, hasta } = req.query;
+  if (!FORMATO_FECHA.test(desde ?? "") || !FORMATO_FECHA.test(hasta ?? "")) {
+    return res.status(400).json({
+      ok: false,
+      msg: "Envia desde y hasta con formato YYYY-MM-DD",
+    });
+  }
+  if (desde > hasta) {
+    return res.status(400).json({
+      ok: false,
+      msg: "La fecha desde no puede ser mayor que hasta",
+    });
+  }
+  try {
+    const [seguidoresRedes] = await db.query(
+      `SELECT s.id, s.id_red, p.label_param AS red, s.seguidores, s.likes, s.comentarios,
+              CONVERT(varchar(10), s.fecha, 23) AS fecha
+       FROM tb_seguidores_redes s
+       LEFT JOIN tb_parametros p ON p.id_param = s.id_red
+       WHERE s.flag = 1 AND s.fecha BETWEEN :desde AND :hasta
+       ORDER BY s.fecha DESC, s.id_red`,
+      { replacements: { desde, hasta } },
+    );
+    res.status(200).json({
+      desde,
+      hasta,
+      seguidoresRedes,
+    });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      msg: "Hable con el encargado de sistema",
+      error: error.message,
+    });
+  }
+};
+
+// FAKE DATA: publicaciones de prueba hasta tener el token de Meta con
+// instagram_basic, instagram_manage_comments y pages_read_user_content.
+// Mismos campos que se armaran con la data real:
+// IG /{ig-id}/media: timestamp, media_type, caption, like_count, comments_count, permalink
+// FB /{page-id}/posts: created_time, message, reactions, comments, shares, permalink_url
+const publicacionesFake = [
+  { id: "ig_1", id_red: 2065, red: "INSTAGRAM", fecha: "2026-11-13T23:10:00Z", tipo: "REEL", texto: "Transformación de 12 semanas de nuestra alumna 💪", likes: 412, comentarios: 38, compartidos: null, enlace: "https://www.instagram.com/p/fake1/" },
+  { id: "fb_1", id_red: 2064, red: "FACEBOOK", fecha: "2026-11-13T21:00:00Z", tipo: "PHOTO", texto: "Nuevos horarios de diciembre en CHANGE - The Slim Studio", likes: 54, comentarios: 6, compartidos: 3, enlace: "https://www.facebook.com/fake1" },
+  { id: "ig_2", id_red: 2065, red: "INSTAGRAM", fecha: "2026-11-12T17:30:00Z", tipo: "CAROUSEL_ALBUM", texto: "5 errores comunes al empezar a entrenar", likes: 287, comentarios: 21, compartidos: null, enlace: "https://www.instagram.com/p/fake2/" },
+  { id: "fb_2", id_red: 2064, red: "FACEBOOK", fecha: "2026-11-11T15:45:00Z", tipo: "VIDEO", texto: "Clase funcional en vivo 🔥", likes: 96, comentarios: 14, compartidos: 9, enlace: "https://www.facebook.com/fake2" },
+  { id: "ig_3", id_red: 2065, red: "INSTAGRAM", fecha: "2026-11-10T22:00:00Z", tipo: "IMAGE", texto: "Promo Black Friday: 20% en programas de 3 meses", likes: 530, comentarios: 77, compartidos: null, enlace: "https://www.instagram.com/p/fake3/" },
+  { id: "fb_3", id_red: 2064, red: "FACEBOOK", fecha: "2026-11-09T14:20:00Z", tipo: "PHOTO", texto: "Testimonio: 8 kg menos en 2 meses", likes: 71, comentarios: 9, compartidos: 4, enlace: "https://www.facebook.com/fake3" },
+];
+
+// Ultimas publicaciones de Facebook e Instagram (por ahora FAKE DATA).
+// ?red=FACEBOOK|INSTAGRAM (opcional) &limite=N (opcional, por defecto 20)
+const getPublicacionesRedes = async (req = request, res = response) => {
+  const red = req.query.red?.toUpperCase();
+  const limite = Math.max(1, Math.min(Number(req.query.limite) || 20, 100));
+  const publicaciones = publicacionesFake
+    .filter((p) => !red || p.red === red)
+    .sort((a, b) => b.fecha.localeCompare(a.fecha))
+    .slice(0, limite);
+  res.status(200).json({
+    fakeData: true,
+    publicaciones,
+  });
+};
+
 module.exports = {
   getProspectosRedes,
   getCampaniasMeta,
+  getSeguidoresRedes,
+  getPublicacionesRedes,
 };
