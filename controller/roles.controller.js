@@ -180,6 +180,20 @@ const seccionGET = async (req = request, res = response) => {
           icon: "uil-home-alt",
           children: [
             {
+              key: "gestion-eventos-asistencia",
+              label: "Huellas asistencia",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-eventos-asistencia",
+            },
+            {
+              key: "reporte-asistencia-huellero",
+              label: "Reporte de asistencia",
+              isTitle: false,
+              icon: "uil-chart-line",
+              url: "/reporte-asistencia-huellero",
+            },
+            {
               key: "cliente-gestion-socios",
               label: "Gestion de socios",
               isTitle: false,
