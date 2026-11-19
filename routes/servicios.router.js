@@ -7,12 +7,15 @@ const {
   getComentarioxID,
   putComentarioxID,
   deleteComentarioxID,
+  getComentariosCRMxMes,
 } = require("../controller/servicios.controller");
 const router = Router();
 /**
  * /api/servicios
  */
 router.post("/comentario/post", postComentario);
+// Reporte de tareas: comentarios CRM del mes (?mes=&anio=). Ruta aparte para no chocar con /comentario/:location
+router.get("/comentario-crm/reporte", getComentariosCRMxMes);
 router.get(`/comentario/:location`, getComentarioxLOCATION);
 router.get(`/comentario/:id`, getComentarioxID);
 router.put(`/comentario/put/:id_comentario`, putComentarioxID);

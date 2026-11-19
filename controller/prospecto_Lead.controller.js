@@ -271,6 +271,8 @@ const postTareaProspectoLead = async (req = request, res = response) => {
       id_prospecto: id_prospecto || null,
       id_cli: id_prospecto ? null : id_cli,
       id_tarea,
+      // id_empl del usuario logueado (validarJWT lo deja en req.id_colaborador)
+      id_empl: req.id_colaborador ?? null,
       observacion: observacion || null,
       // fecha elegida en el modal; si no llega o es invalida, la actual
       fecha: fecha && !isNaN(new Date(fecha)) ? new Date(fecha) : new Date(),

@@ -24,6 +24,10 @@ const Comentario = db.define("tb_comentarios", {
   fec_registro: {
     type: DataTypes.DATE,
   },
+  model: {
+    type: DataTypes.STRING(100),
+    defaultValue: "",
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
@@ -121,7 +125,14 @@ ContactoEmergencia.hasOne(Parametros, {
 });
 
 Comentario.sync()
-  .then(() => {
+  .then(async () => {
+    // la tabla ya existia sin model: se agrega la columna si falta (varchar(100) default '')
+    const qi = db.getQueryInterface();
+    const columnas = await qi.describeTable(Comentario.getTableName());
+    if (!columnas.model) {
+      await qi.addColumn(Comentario.getTableName(), "model", { type: DataTypes.STRING(100), allowNull: true, defaultValue: "" });
+      console.log("Columna model agregada a tb_comentarios.");
+    }
     console.log("La tabla Comentario ha sido drop o ya existe.");
   })
   .catch((error) => {

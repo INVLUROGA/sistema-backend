@@ -21,6 +21,10 @@ const TareaProspecto = db.define(
     id_tarea: {
       type: DataTypes.INTEGER,
     },
+    // Asesor (id_colaborador del usuario logueado) que registro la tarea
+    id_empl: {
+      type: DataTypes.INTEGER,
+    },
     fecha: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,

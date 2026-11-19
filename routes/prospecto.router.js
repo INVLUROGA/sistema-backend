@@ -41,7 +41,7 @@ router.put("/lead/id/:id", validarJWT, putProspectoLead);
 router.get("/lead/puede-editar/:id", validarJWT, getPuedeEditarProspectoLead);
 router.put("/lead/delete/id/:id", deleteProspectoLead);
 
-router.post("/lead/tarea", postTareaProspectoLead);
+router.post("/lead/tarea", validarJWT, postTareaProspectoLead);
 router.get("/lead/tareas/reporte", getTareasReporte);
 router.get("/lead/tarea/:id_prospecto", getTareasProspectoLead);
 router.get("/lead/tarea-cliente/:id_cli", getTareasClienteLead);
