@@ -49,6 +49,9 @@ const {
   registrarSeguidoresDiario,
 } = require("./middlewares/EventosCron/registrarSeguidoresDiario.js");
 const {
+  registrarPublicacionesDiario,
+} = require("./middlewares/EventosCron/registrarPublicacionesDiario.js");
+const {
   registrarMetricasSemanalesMeta,
 } = require("./middlewares/Redes/MetricasSemanalesMeta.js");
 const { FacturasMeta } = require("./middlewares/Redes/FacturasMeta.js");
@@ -122,6 +125,15 @@ cron.schedule(
   "55 23 * * *",
   () => {
     registrarSeguidoresDiario();
+  },
+  { timezone: "America/Lima" },
+);
+// 11:45pm hora de Perú: guarda/actualiza en tb_publicaciones_redes las ultimas 50 publicaciones
+// de Facebook e Instagram (likes, comentarios y compartidos al dia)
+cron.schedule(
+  "45 23 * * *",
+  () => {
+    registrarPublicacionesDiario(50);
   },
   { timezone: "America/Lima" },
 );
