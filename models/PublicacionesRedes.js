@@ -46,6 +46,12 @@ const PublicacionesRedes = db.define("tb_publicaciones_redes", {
     allowNull: false,
     defaultValue: 0,
   },
+  // Instagram: insights "views"; Facebook: insights "post_media_view"
+  n_visualizaciones: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
   flag: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,

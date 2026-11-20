@@ -153,33 +153,37 @@ const getMetricasSemanalesRedes = async (req = request, res = response) => {
   }
 };
 
-// FAKE DATA: publicaciones de prueba hasta tener el token de Meta con
-// instagram_basic, instagram_manage_comments y pages_read_user_content.
-// Mismos campos que se armaran con la data real:
-// IG /{ig-id}/media: timestamp, media_type, caption, like_count, comments_count, permalink
-// FB /{page-id}/posts: created_time, message, reactions, comments, shares, permalink_url
-const publicacionesFake = [
-  { id: "ig_1", id_red: 2065, red: "INSTAGRAM", fecha: "2026-11-13T23:10:00Z", tipo: "REEL", texto: "Transformación de 12 semanas de nuestra alumna 💪", likes: 412, comentarios: 38, compartidos: null, enlace: "https://www.instagram.com/p/fake1/" },
-  { id: "fb_1", id_red: 2064, red: "FACEBOOK", fecha: "2026-11-13T21:00:00Z", tipo: "PHOTO", texto: "Nuevos horarios de diciembre en CHANGE - The Slim Studio", likes: 54, comentarios: 6, compartidos: 3, enlace: "https://www.facebook.com/fake1" },
-  { id: "ig_2", id_red: 2065, red: "INSTAGRAM", fecha: "2026-11-12T17:30:00Z", tipo: "CAROUSEL_ALBUM", texto: "5 errores comunes al empezar a entrenar", likes: 287, comentarios: 21, compartidos: null, enlace: "https://www.instagram.com/p/fake2/" },
-  { id: "fb_2", id_red: 2064, red: "FACEBOOK", fecha: "2026-11-11T15:45:00Z", tipo: "VIDEO", texto: "Clase funcional en vivo 🔥", likes: 96, comentarios: 14, compartidos: 9, enlace: "https://www.facebook.com/fake2" },
-  { id: "ig_3", id_red: 2065, red: "INSTAGRAM", fecha: "2026-11-10T22:00:00Z", tipo: "IMAGE", texto: "Promo Black Friday: 20% en programas de 3 meses", likes: 530, comentarios: 77, compartidos: null, enlace: "https://www.instagram.com/p/fake3/" },
-  { id: "fb_3", id_red: 2064, red: "FACEBOOK", fecha: "2026-11-09T14:20:00Z", tipo: "PHOTO", texto: "Testimonio: 8 kg menos en 2 meses", likes: 71, comentarios: 9, compartidos: 4, enlace: "https://www.facebook.com/fake3" },
-];
-
-// Ultimas publicaciones de Facebook e Instagram (por ahora FAKE DATA).
-// ?red=FACEBOOK|INSTAGRAM (opcional) &limite=N (opcional, por defecto 20)
+// Ultimas publicaciones de Facebook e Instagram (tb_publicaciones_redes, la llena el cron
+// registrarPublicacionesDiario con las ultimas 50 de cada red).
+// ?red=FACEBOOK|INSTAGRAM (opcional) &limite=N (opcional, por defecto 50, max 200)
+// fecha sale como texto ISO en UTC (ej. 2026-11-05T13:36:03Z).
 const getPublicacionesRedes = async (req = request, res = response) => {
-  const red = req.query.red?.toUpperCase();
-  const limite = Math.max(1, Math.min(Number(req.query.limite) || 20, 100));
-  const publicaciones = publicacionesFake
-    .filter((p) => !red || p.red === red)
-    .sort((a, b) => b.fecha.localeCompare(a.fecha))
-    .slice(0, limite);
-  res.status(200).json({
-    fakeData: true,
-    publicaciones,
-  });
+  const red = req.query.red?.toUpperCase() || null;
+  const limite = Math.max(1, Math.min(Number(req.query.limite) || 50, 200));
+  try {
+    const [publicaciones] = await db.query(
+      `SELECT TOP (:limite) s.id, s.id_red, p.label_param AS red, s.id_publicacion,
+              CONVERT(varchar(19), SWITCHOFFSET(s.fecha, '+00:00'), 126) + 'Z' AS fecha,
+              s.tipo, s.publicacion AS texto, s.n_likes AS likes,
+              s.n_comentarios AS comentarios, s.n_compartidos AS compartidos,
+              s.n_visualizaciones AS visualizaciones
+       FROM tb_publicaciones_redes s
+       LEFT JOIN tb_parametros p ON p.id_param = s.id_red
+       WHERE s.flag = 1 AND (:red IS NULL OR p.label_param = :red)
+       ORDER BY s.fecha DESC, s.id_red`,
+      { replacements: { limite, red } },
+    );
+    res.status(200).json({
+      fakeData: false,
+      publicaciones,
+    });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      msg: "Hable con el encargado de sistema",
+      error: error.message,
+    });
+  }
 };
 
 module.exports = {
