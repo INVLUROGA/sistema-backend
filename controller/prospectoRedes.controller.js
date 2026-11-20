@@ -110,6 +110,49 @@ const getSeguidoresRedes = async (req = request, res = response) => {
   }
 };
 
+// Seguidores, likes y comentarios por red en bloques de 7 dias (tb_metricas_semanales_redes,
+// lo llena el cron registrarMetricasSemanalesMeta). ?desde=YYYY-MM-DD&hasta=YYYY-MM-DD: semanas que se cruzan con el rango.
+// seguidores / seguidores_ganados / seguidores_perdidos pueden venir null (Instagram solo tiene el ultimo año).
+const getMetricasSemanalesRedes = async (req = request, res = response) => {
+  const { desde, hasta } = req.query;
+  if (!FORMATO_FECHA.test(desde ?? "") || !FORMATO_FECHA.test(hasta ?? "")) {
+    return res.status(400).json({
+      ok: false,
+      msg: "Envia desde y hasta con formato YYYY-MM-DD",
+    });
+  }
+  if (desde > hasta) {
+    return res.status(400).json({
+      ok: false,
+      msg: "La fecha desde no puede ser mayor que hasta",
+    });
+  }
+  try {
+    const [metricasSemanales] = await db.query(
+      `SELECT m.id, m.id_red, p.label_param AS red,
+              CONVERT(varchar(10), m.semana_inicio, 23) AS semana_inicio,
+              CONVERT(varchar(10), m.semana_fin, 23) AS semana_fin,
+              m.seguidores, m.seguidores_ganados, m.seguidores_perdidos, m.posts, m.likes, m.comentarios
+       FROM tb_metricas_semanales_redes m
+       LEFT JOIN tb_parametros p ON p.id_param = m.id_red
+       WHERE m.flag = 1 AND m.semana_fin >= :desde AND m.semana_inicio <= :hasta
+       ORDER BY m.semana_inicio, m.id_red`,
+      { replacements: { desde, hasta } },
+    );
+    res.status(200).json({
+      desde,
+      hasta,
+      metricasSemanales,
+    });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      msg: "Hable con el encargado de sistema",
+      error: error.message,
+    });
+  }
+};
+
 // FAKE DATA: publicaciones de prueba hasta tener el token de Meta con
 // instagram_basic, instagram_manage_comments y pages_read_user_content.
 // Mismos campos que se armaran con la data real:
@@ -143,5 +186,6 @@ module.exports = {
   getProspectosRedes,
   getCampaniasMeta,
   getSeguidoresRedes,
+  getMetricasSemanalesRedes,
   getPublicacionesRedes,
 };

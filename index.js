@@ -48,6 +48,9 @@ const {
 const {
   registrarSeguidoresDiario,
 } = require("./middlewares/EventosCron/registrarSeguidoresDiario.js");
+const {
+  registrarMetricasSemanalesMeta,
+} = require("./middlewares/Redes/MetricasSemanalesMeta.js");
 const { FacturasMeta } = require("./middlewares/Redes/FacturasMeta.js");
 const {
   actualizarSeguimientos,
@@ -119,6 +122,15 @@ cron.schedule(
   "55 23 * * *",
   () => {
     registrarSeguidoresDiario();
+  },
+  { timezone: "America/Lima" },
+);
+// 11:50pm hora de Perú: actualiza tb_metricas_semanales_redes (seguidores, likes y comentarios de
+// Facebook e Instagram en bloques de 7 dias desde el primer post)
+cron.schedule(
+  "50 23 * * *",
+  () => {
+    registrarMetricasSemanalesMeta();
   },
   { timezone: "America/Lima" },
 );

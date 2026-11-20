@@ -15,6 +15,7 @@ const {
   getUsuario,
   getUsuarios,
   putUsuario,
+  putEstadoUsuario,
   deleteUsuario,
   loginUsuario,
   getUsuariosClientexID,
@@ -156,6 +157,7 @@ router.post("/post-usuario", postUsuario);
 router.get("/get-tb-usuarios", validarJWT, getUsuarios);
 router.get("/get-usuario/:uid_user", getUsuario);
 router.put("/put-usuario/:id_user", putUsuario);
+router.put("/estado-usuario/:id_user", validarJWT, putEstadoUsuario);
 router.post("/delete-usuario/:id_user", deleteUsuario);
 
 router.post("/login", loginUsuario);

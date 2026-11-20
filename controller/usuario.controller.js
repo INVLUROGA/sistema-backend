@@ -895,6 +895,35 @@ const putUsuario = async (req = request, res = response) => {
     });
   }
 };
+// Activa o desactiva un usuario (estado_user). Un usuario inactivo no puede iniciar sesion
+// y su sesion abierta deja de funcionar (validarJWT). No se puede desactivar a uno mismo.
+const putEstadoUsuario = async (req = request, res = response) => {
+  const { id_user } = req.params;
+  const { estado_user } = req.body;
+  if (typeof estado_user !== "boolean") {
+    return res.status(400).json({ ok: false, msg: "Envia estado_user como true o false" });
+  }
+  if (!estado_user && Number(id_user) === Number(req.id_user)) {
+    return res.status(400).json({ ok: false, msg: "No puedes desactivar tu propio usuario" });
+  }
+  try {
+    const usuario = await Usuario.findOne({ where: { id_user, flag: true } });
+    if (!usuario) {
+      return res.status(404).json({ ok: false, msg: `No existe un usuario con el id "${id_user}"` });
+    }
+    await usuario.update({ estado_user });
+    res.status(200).json({
+      ok: true,
+      msg: estado_user ? "Usuario activado" : "Usuario desactivado",
+    });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      msg: "Error al cambiar el estado del usuario. Hable con el encargado de sistema",
+      error: error.message,
+    });
+  }
+};
 const loginUsuario = async (req = request, res = response) => {
   const { usuario_user, password_user } = req.body;
 
@@ -912,6 +941,13 @@ const loginUsuario = async (req = request, res = response) => {
       return res.status(400).json({
         ok: false,
         msg: "Contraseña incorrecta",
+      });
+    }
+    // Usuario desactivado en Gestion de usuarios: no puede iniciar sesion
+    if (usuario.estado_user === false) {
+      return res.status(403).json({
+        ok: false,
+        msg: "Usuario inactivo. Comuniquese con el administrador",
       });
     }
     let ip_user = extraerIpUser(req, res);
@@ -1317,6 +1353,7 @@ const getParientesxEntidad = async (req = request, res = response) => {
 module.exports = {
   postFiles,
   postPariente,
+  putEstadoUsuario,
   //Cliente
   postUsuarioCliente,
   getUsuarioClientes,

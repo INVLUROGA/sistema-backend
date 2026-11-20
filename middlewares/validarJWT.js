@@ -21,7 +21,8 @@ const validarJWT = async (req, res = response, next) => {
     if (!usuario) {
       return res.status(401).json({ ok: false, msg: "Usuario no existe" });
     }
-    if (!usuario.flag) {
+    // Usuario eliminado (flag) o desactivado en Gestion de usuarios (estado_user): su sesion deja de funcionar
+    if (!usuario.flag || usuario.estado_user === false) {
       // << tu “flag” de inactivo / baneado
       return res.status(403).json({ ok: false, msg: "Cuenta inactiva" });
     }
