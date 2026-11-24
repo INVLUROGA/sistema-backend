@@ -584,13 +584,13 @@ const seccionGET = async (req = request, res = response) => {
               icon: "uil-calender",
               url: "/centro-archivos",
             },
-            // {
-            //   key: "adm-gestion-tc",
-            //   label: "Gestion de TC",
-            //   isTitle: false,
-            //   icon: "uil-calender",
-            //   url: "/gestion-tc",
-            // },
+            {
+              key: "adm-gestion-tc",
+              label: "Gestion de TC",
+              isTitle: false,
+              icon: "uil-calender",
+              url: "/gestion-tc",
+            },
             {
               key: "adm-audit",
               label: "Auditoria",
