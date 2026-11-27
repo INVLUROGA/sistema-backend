@@ -16,8 +16,17 @@ const {
   SemanasTraining,
   TarifaTraining,
 } = require("../models/ProgramaTraining");
+// prefijo de la observacion de los leads que crea registrarProspectoEnVenta
+const OBS_REGISTRO_AUTOMATICO = "REGISTRADO AUTOMATICAMENTE POR LA VENTA";
+// Estado NUEVO SOCIO (id 1673, = ID_ESTADO_CONVERTIDO): no se guarda sin socio vinculado (id_cli)
+const MSG_FALTA_SOCIO = "Para guardar con estado NUEVO SOCIO vincula el socio";
+const faltaSocioEnNuevoSocio = ({ id_estado, id_cli }) =>
+  Number(id_estado) === ID_ESTADO_CONVERTIDO && !Number(id_cli);
 const postProspectoLead = async (req = request, res = response) => {
   try {
+    if (faltaSocioEnNuevoSocio(req.body)) {
+      return res.status(400).json({ ok: false, msg: MSG_FALTA_SOCIO });
+    }
     const uid = uuid.v4();
 
     const prospecto = new ProspectoLead({
@@ -37,7 +46,14 @@ const postProspectoLead = async (req = request, res = response) => {
 const getProspectosLead = async (req = request, res = response) => {
   try {
     const prospectosLeads = await ProspectoLead.findAll({
-      where: { flag: true },
+      // sin los leads creados por registrarProspectoEnVenta (observacion "REGISTRADO AUTOMATICAMENTE POR LA VENTA ...")
+      where: {
+        flag: true,
+        [Op.or]: [
+          { observacion: null },
+          { observacion: { [Op.notLike]: `${OBS_REGISTRO_AUTOMATICO}%` } },
+        ],
+      },
       order: [["id", "desc"]],
       include: [
         {
@@ -192,6 +208,15 @@ const putProspectoLead = async (req = request, res = response) => {
         ok: false,
         msg: "Este lead pertenece a otro asesor, no puedes editarlo",
       });
+    }
+    // el estado / socio que quedarian despues de editar (lo que no se envia se mantiene)
+    if (
+      faltaSocioEnNuevoSocio({
+        id_estado: req.body.id_estado ?? prospectoLead.id_estado,
+        id_cli: req.body.id_cli ?? prospectoLead.id_cli,
+      })
+    ) {
+      return res.status(400).json({ ok: false, msg: MSG_FALTA_SOCIO });
     }
 
     await prospectoLead.update(req.body);
@@ -349,7 +374,7 @@ const getClientesSinProspecto = async (req = request, res = response) => {
          FROM tb_seguimientos s WHERE s.flag = 1
        )
        SELECT c.id_cli, c.nombre_cli, c.apPaterno_cli, c.apMaterno_cli, c.numDoc_cli, c.tel_cli, c.email_cli, c.uid_comentario,
-         seg.fecha_vencimiento, seg.cantidad_membresias, p.name_pgm, m.tarifa_monto, v.fecha_venta,
+         seg.fecha_vencimiento, seg.cantidad_membresias, p.name_pgm, m.tarifa_monto, v.fecha_venta, v.id_empl AS id_empl_venta,
          CONCAT(e.nombre_empl, ' ', e.apPaterno_empl, ' ', e.apMaterno_empl) AS vendedor
        FROM seg
        JOIN tb_clientes c ON c.id_cli = seg.id_cli
@@ -438,7 +463,7 @@ const registrarProspectoEnVenta = async (id_venta, id_pgm = 0) => {
       id_pgm: id_pgm ?? 0,
       id_estado: ID_ESTADO_CONVERTIDO,
       id_nivel_interes: 0,
-      observacion: `REGISTRADO AUTOMATICAMENTE POR LA VENTA ${venta.id}`,
+      observacion: `${OBS_REGISTRO_AUTOMATICO} ${venta.id}`,
       id_cli: venta.id_cli,
     });
   } catch (error) {

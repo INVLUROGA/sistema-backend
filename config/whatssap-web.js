@@ -75,7 +75,12 @@ const enviarImagenWsp = async (numberWsp, image) => {
   }
 };
 
-const enviarDocumentoxWsp = async (numberWsp, httpDoc, filename = "contrato.pdf", caption = "") => {
+const enviarDocumentoxWsp = async (
+  numberWsp,
+  httpDoc,
+  filename = "contrato.pdf",
+  caption = "",
+) => {
   const data = qs.stringify({
     token: process.env.TOKEN_ULTRAMSG,
     to: numberWsp,
@@ -139,10 +144,41 @@ const enviarTextConImagenWsp = async (numberWsp, image, bodyMsg) => {
   }
 };
 
+const enviarVideoConImagenWsp = async (numberWsp, video, bodyMsg) => {
+  const data = qs.stringify({
+    token: process.env.TOKEN_ULTRAMSG,
+    to: numberWsp,
+    video: video,
+    caption: bodyMsg,
+  });
+
+  const config = {
+    method: "post",
+    url: "https://api.ultramsg.com/instance102151/messages/video",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    data: data,
+  };
+
+  try {
+    const response = await axios(config);
+    console.log(JSON.stringify(response.data), numberWsp);
+    // UltraMsg puede responder HTTP 200 con { error } (ej. video muy pesado o URL inaccesible)
+    if (response.data?.error) {
+      return { ok: false, msg: JSON.stringify(response.data.error) };
+    }
+    return { ok: true, data: response.data };
+  } catch (error) {
+    console.error(error.message || error, numberWsp);
+    return { ok: false, msg: error.message || "Error desconocido" };
+  }
+};
 module.exports = {
   enviarMensajesWsp,
   enviarStickerWsp,
   enviarImagenWsp,
   enviarTextConImagenWsp,
   enviarDocumentoxWsp,
+  enviarVideoConImagenWsp,
 };

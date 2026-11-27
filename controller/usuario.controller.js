@@ -416,7 +416,16 @@ const putUsuarioCliente = async (req = request, res = response) => {
       observacion: `Se edito: El cliente de id ${cliente.id}`,
     };
     await capturarAUDIT(formAUDIT);
-    await cliente.update(req.body);
+    const { createdAt, ...bodyCliente } = req.body;
+    await cliente.update(bodyCliente);
+    // Fecha de registro: Sequelize ignora createdAt en instance.update, se actualiza aparte
+    if (createdAt && dayjs(createdAt).isValid()) {
+      await Cliente.update(
+        { createdAt: dayjs(createdAt).toDate() },
+        { where: { uid: uid_cliente }, silent: true }
+      );
+      await cliente.reload();
+    }
     res.status(200).json({
       msg: "success",
       cliente,

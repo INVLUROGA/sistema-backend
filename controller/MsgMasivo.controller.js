@@ -2,6 +2,7 @@ const {
   enviarMensajesWsp,
   enviarImagenWsp,
   enviarTextConImagenWsp,
+  enviarVideoConImagenWsp,
 } = require("../config/whatssap-web");
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
@@ -9,7 +10,7 @@ const enviarMasivoAlwsp = async () => {
   const numerosDup = [
     
     { numero: "933102718" },
-    { numero: "986 578 004" },
+    { numero: "986578004" },
   ];
 
   // Normaliza y deduplica por número
@@ -32,25 +33,23 @@ const enviarMasivoAlwsp = async () => {
       console.log({ persona, numero });
 
       try {
-        const imagenResp = await enviarTextConImagenWsp(
+        const imagenResp = await enviarVideoConImagenWsp(
           numero,
-          "https://archivosluroga.blob.core.windows.net/articulos-lugares/30septiembre2026.jpeg",
+          "",
           `
-*¡OFERTA FLASH CHANGE!*
+*CHANGE | Mañana se cierra el BLACK WEEK*⏳
 
-Este es el momento de *renovar, llevarte más* y continuar con tu objetivo. 
+Nadie planea dejar de entrenar. *PASA*: una semana complicada, luego otra… y cuando te das cuenta, toca empezar de nuevo.
 
-🎁 Hasta 4 semanas adicionales en tu renovación.
+🏖️ ¨*Y el VERANO llega igual.*
 
-🏷️ Precios especiales de renovación por tiempo limitado.
+Hoy todavía puedes asegurar *más semanas con menor inversión, y darte el tiempo para ver resultados.*
 
-🎉 Sorteamos 4 membresías de *12 semanas*
+El domingo vas a querer lo mismo, *pero ya sin este beneficio.*
 
-📅 El sorteo será este lunes 5 a las 7:00 p. m.
+🔴 Solo hasta mañana, sábado 28. No se extiende. Hasta agotar 15 cupos. 
 
-*Válida solo por HOY.*
-
-¡Renueva hoy y aprovecha todos estos beneficios!
+Responde CHANGE ahora, antes de dejarlo para después.
 `,
         );
         if (!imagenResp.ok) {
