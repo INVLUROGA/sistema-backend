@@ -6,6 +6,7 @@ const { db } = require("./database/sequelizeConnection.js");
 const { validarJWT } = require("./middlewares/validarJWT.js");
 const cron = require("node-cron");
 const { alertaUsuarioUnica } = require("./middlewares/eventosCron.js");
+const { initSocket } = require("./config/socket.js");
 
 //***********************************************/
 //***********DISPOSITIVOS ZKTECO*****************/
@@ -348,6 +349,9 @@ app.use(
 app.use("/api/actas", validarJWT, require("./routes/actas.router.js"));
 app.use("/api/operadores-pago", require("./routes/formaPago.route.js"));
 //Escuchar peticiones
-app.listen(env.PORT || 3001, env.IP, () => {
+// Servidor http compartido por express y socket.io (citas en tiempo real)
+const server = require("http").createServer(app);
+initSocket(server, allowedOrigins);
+server.listen(env.PORT || 3001, env.IP, () => {
   console.log(`Servidor corriendo en el puerto ${env.IP}${env.PORT || 3001}`);
 });

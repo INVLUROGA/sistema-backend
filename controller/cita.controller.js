@@ -16,6 +16,7 @@ const {
   recalcularSeguimientosPorCliente,
 } = require("../middlewares/EventosCron/obtenerDataSeguimientos");
 const { ServiciosCircus } = require("../models/modelsCircus/Servicios");
+const { emitirCambioCita } = require("../config/socket");
 dayjs.locale("es");
 
 const getVentasFilter = async (req = request, res = response) => {
@@ -315,6 +316,7 @@ const postCita = async (req = request, res = response) => {
       id_empl,
     });
     await cita.save();
+    emitirCambioCita(req, "agregar", cita);
     await recalcularSeguimientosPorCliente(id_cli);
     const cliente = await Cliente.findOne({ where: { id_cli: id_cli } });
     const objSexoTst = {
@@ -387,6 +389,7 @@ const deleteCita = async (req = request, res = response) => {
     const cita = await Cita.findOne({ where: { flag: true, id } });
 
     await cita.update({ flag: false });
+    emitirCambioCita(req, "eliminar", cita);
     await recalcularSeguimientosPorCliente(cita.id_cli);
     res.status(200).json({
       ok: true,
@@ -407,6 +410,7 @@ const putCita = async (req = request, res = response) => {
   try {
     const cita = await Cita.findOne({ where: { flag: true, id } });
     await cita.update(req.body);
+    emitirCambioCita(req, "editar", cita);
     await recalcularSeguimientosPorCliente(cita.id_cli);
     const cliente = await Cliente.findOne({ where: { id_cli: cita.id_cli } });
     if (isUpdateTime) {

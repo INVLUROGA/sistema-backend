@@ -33,23 +33,21 @@ const enviarMasivoAlwsp = async () => {
       console.log({ persona, numero });
 
       try {
-        const imagenResp = await enviarVideoConImagenWsp(
+        const imagenResp = await enviarTextConImagenWsp(
           numero,
-          "",
+          "https://archivosluroga.blob.core.windows.net/actas/black_friday_image.jpeg",
           `
-*CHANGE | Mañana se cierra el BLACK WEEK*⏳
+*¡HOY ES EL ÚLTIMO DÍA DE BLACK WEEK EN CHANGE!*
 
-Nadie planea dejar de entrenar. *PASA*: una semana complicada, luego otra… y cuando te das cuenta, toca empezar de nuevo.
+Si estabas pensando en renovar, continuar entrenando o retomar tu entrenamiento, ¡esta es tu oportunidad!
 
-🏖️ ¨*Y el VERANO llega igual.*
+💪 Aprovecha  y consigue *más semanas de entrenamiento con una menor inversión.*
 
-Hoy todavía puedes asegurar *más semanas con menor inversión, y darte el tiempo para ver resultados.*
+Estamos llegando a los últimos cupos disponibles y esta promoción termina HOY.
 
-El domingo vas a querer lo mismo, *pero ya sin este beneficio.*
+No dejes para después una decisión que puede ayudarte a seguir avanzando en tus *resultados.*
 
-🔴 Solo hasta mañana, sábado 28. No se extiende. Hasta agotar 15 cupos. 
-
-Responde CHANGE ahora, antes de dejarlo para después.
+📲 Escríbenos ahora y asegura tu renovación o tu cupo con Black Week.
 `,
         );
         if (!imagenResp.ok) {
